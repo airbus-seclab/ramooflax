@@ -1,0 +1,8 @@
+.*
+*.o
+*.d
+*.bin
+*.map
+*.pyc
+*.config
+!.gitignore

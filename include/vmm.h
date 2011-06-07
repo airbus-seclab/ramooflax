@@ -1,0 +1,128 @@
+/*
+** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License along
+** with this program; if not, write to the Free Software Foundation, Inc.,
+** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+#ifndef __VMM_H__
+#define __VMM_H__
+
+#include <types.h>
+#include <segmem.h>
+#include <pagemem.h>
+#include <pool.h>
+#include <dev.h>
+#include <ctrl.h>
+
+/*
+** General VMM settings
+*/
+#define VMM_MIN_STACK_SIZE               ((size_t)(2*PAGE_SIZE))
+#define VMM_MIN_RAM_SZ                   ((size_t)(128<<20))
+
+#define vmm_code_seg_idx                 1
+#define vmm_data_seg_idx                 2
+#define vmm_tss_seg_idx                  3
+
+#define vmm_code_sel                     gdt_krn_seg_sel(vmm_code_seg_idx)
+#define vmm_data_sel                     gdt_krn_seg_sel(vmm_data_seg_idx)
+#define vmm_tss_sel                      gdt_krn_seg_sel(vmm_tss_seg_idx)
+
+#define VMM_GDT_NR_DESC                  1+1+1+2*1 /* null:code:data:tss64 */
+
+#define vmm_int32_desc(dsc,_isr_)        int32_desc(dsc,vmm_code_sel,_isr_)
+#define vmm_int64_desc(dsc,_isr_)        int64_desc(dsc,vmm_code_sel,_isr_)
+
+#define VMM_IDT_NR_DESC                  256
+#define VMM_IDT_ISR_ALGN                  16
+
+#define vaddr_canon(_addr_)              addr_canon(_addr_,info->vmm.cpu.nr_vbits)
+#define paddr_canon(_addr_)              addr_canon(_addr_,info->vmm.cpu.nr_pbits)
+
+/*
+** VMM data structures
+*/
+typedef struct vmm_paging
+{
+   pml4e_t     *pml4;  /* strictly aligned */
+   pdp_t       *pdp;   /* strictly aligned */
+   pd64_t      *pd;    /* strictly aligned */
+
+} __attribute__((packed)) vmm_pgmem_t;
+
+typedef struct vmm_segmentation
+{
+   seg_desc_t   gdt[VMM_GDT_NR_DESC];   /* 8B aligned */
+   int64_desc_t idt[VMM_IDT_NR_DESC];   /* 8B aligned */
+   tss64_t      tss;
+
+} __attribute__((packed)) vmm_sgmem_t;
+
+typedef union cpu_skill
+{
+   struct
+   {
+      uint32_t  pg_1G:1;
+      uint32_t  asid_tlb:1;
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) cpu_skill_t;
+
+typedef struct vmm_cpu
+{
+   vmm_sgmem_t *sg;      /* strictly aligned */
+   vmm_pgmem_t pg;
+   cpu_skill_t skillz;
+
+} __attribute__((packed)) vmm_cpu_t;
+
+/*
+** VMM structure
+*/
+typedef struct vmm
+{
+   vmm_cpu_t  cpu;              /* vmm cpu info */
+   vmm_pool_t pool;             /* vmm page pool */
+   vmm_ctrl_t ctrl;             /* vmm controller */
+   offset_t   entry;            /* vmm entry point */
+   offset_t   base;             /* vmm relocation addr */
+   size_t     size;             /* vmm loaded elf size */
+   offset_t   stack_bottom;     /* vmm stack bottom location */
+
+} __attribute__((packed)) vmm_t;
+
+/*
+** Functions
+*/
+#ifdef __INIT__
+
+void vmm_init();
+void vmm_start() __attribute__((regparm(1)));
+
+#ifdef __SVM__
+#include <svm_vmm.h>
+#define vmm_cpu_init_arch()   svm_vmm_init()
+#define vmm_cpu_start_arch()  svm_vmm_start(info->vm.cpu.gpr,info->vmm.entry)
+#else
+#include <vmx_vmm.h>
+#define vmm_cpu_init_arch()   vmx_vmm_init()
+#define vmm_cpu_start_arch()  vmx_vmm_start(info->vm.cpu.gpr)
+#endif
+
+#endif
+
+#endif
