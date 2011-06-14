@@ -1,5 +1,5 @@
 #+LANGUAGE: en
-#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: H:3 num:nil toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS: TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
 #+EXPORT_EXCLUDE_TAGS: exclude
 #+STARTUP: showall
@@ -115,3 +115,10 @@ You can either buy one or use the USB Gadget DBGP provided into the linux kernel
 To be able to use such a Gadget, you need a /device/ USB controller as found in embedded ARM development boards or smartphones.
 
 Once again, please read documentation in =docs/= to have usage examples of the client API.
+
+An example remote client configuration can be to have a development board attached using USB to the hypervisor.
+The development board runs the debug device using the Gadget API and forwards USB traffic from the exposed /dev/ttyGSx
+through a TCP socket using socat:
+#+BEGIN_EXAMPLE
+$ socat GOPEN:/dev/ttyGS0,echo=0,raw TCP-LISTEN:1234,reuseaddr
+#+END_EXAMPLE
