@@ -1,0 +1,117 @@
+#+LANGUAGE: en
+#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+EXPORT_EXCLUDE_TAGS: exclude
+#+STARTUP: showall
+
+* What is Ramooflax ?
+
+Ramooflax is a free and open source (GPLv2) virtualization tool.
+
+Ramooflax aims at analyzing/debugging/controlling modern operating systems and complex software pieces
+as well as real life BIOS running on a *physical* machine.
+
+Ramooflax provides a small hypervisor and a remote client allowing high-level access to the features implemented into the hypervisor.
+
+* On what hardware does it run ?
+
+Ramooflax has been implemented for the PC world. That is Intel and AMD x86 32 and 64 bits.
+
+Ramooflax relies on *modern* hardware virtualization extensions (Intel EPT and AMD RVI) that can be found in recent CPUs
+such as Intel Corei7 or AMD Phenom II.
+
+* How does it work ?
+
+Ramooflax starts during the boot process of the machine. It can be seen as the first operating system started by the BIOS.
+
+Once started, Ramooflax will automatically virtualize the running BIOS and all the /to be run/ software pieces.
+
+For instance, if you already have installed an operating system, it will be started as a virtual machine.
+
+Ramooflax is an hypervisor dedicated to only one virtual machine, running in a virtualized environment which is as close as
+its native environment.
+
+Ramooflax needs to be installed on a bootable storage (ie USB key with GRUB).
+
+* Documentation
+
+Documentation can be found under =docs/=. Here is a brief description of the files:
+ - ramooflax_fr.pdf is a french article describing ramooflax
+ - ramooflax_slides_fr.pdf is a french presentation held at SSTIC 2011
+ - ramooflax_en.pdf and ramooflax_slides_en.pdf are the correspondinng english versions
+ - info_data_t.mm is a freemind map which describes data structures of the hypervisor
+
+* Obtain Ramooflax
+
+$ git clone git@github.com:sduverger/ramooflax.git
+
+* Software requirements
+
+Ramooflax has only be compiled/tested using gcc-4.4.
+
+The setup and vmm kernels are 64 bits ELF. They need *x86_64-linux-gnu-ld* to be properly linked.
+
+$ sudo apt-get install gcc-4.4 gcc-4.4-multilib binutils-x86-64-linux-gnu
+
+* Configuration
+
+First cleanup everything (to be sure)
+
+$ make distclean
+
+Then you can call the specific configuration menu to choose your components
+
+$ make config
+
+Under the /build/ menu you will be able to choose from Intel or AMD CPU manufacturer, which control device you want to use,
+debug device and so on.
+
+For the time being it is recommended to use EHCI as controlling device and UART as debugging one (this is the default).
+
+* Limitations
+
+Only AMD is supported. Intel is under development. Notice that multi-cores are not supported too.
+
+You will only have one core while running virtualized.
+
+It is recommended to read the detailed articles under =docs/=.
+
+* Building
+
+Once configured you can run
+
+$ make
+
+This will build the loader, setup and vmm binaries.
+
+* Installing
+
+We provide an install script
+
+$ make install
+
+It is only here for convenience. It only mounts the device associated to the directory specified
+at configuration time (install submenu), copies built binaries then unmount device.
+
+You need to setup your system (ie /etc/fstab) before installing and most important prepare by yourself
+the bootable storage on which ramooflax is to be installed.
+
+It is recommended to use GRUB 1 (legacy) with the following entry:
+#+BEGIN_EXAMPLE
+title  Ramooflax
+root   (hd0,0)
+kernel /loader.bin
+module /setup.bin
+module /vmm.bin
+#+END_EXAMPLE
+
+* Using
+
+If you use the EHCI Debug device configuration to control the hypervisor from the remote client, you will need
+a USB debug device on the client side.
+
+You can either buy one or use the USB Gadget DBGP provided into the linux kernel since 2.6.36 release.
+
+To be able to use such a Gadget, you need a /device/ USB controller as found in embedded ARM development boards or smartphones.
+
+Once again, please read documentation in =docs/= to have usage examples of the client API.
