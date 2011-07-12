@@ -250,6 +250,21 @@ __nak:
    return 0;
 }
 
+static void __gdb_vmm_rw_pmem(offset_t addr, size_t sz, uint8_t wr)
+{
+   vm_access_t access;
+
+   access.addr = addr;
+   access.len  = sz;
+   access.wr   = wr;
+
+   if(!__vm_remote_access_pmem(&access))
+   {
+      debug(GDB, "memory access failure\n");
+      gdb_err_mem();
+   }
+}
+
 static void gdb_vmm_rd_pmem(uint8_t *data, size_t len)
 {
    loc_t  addr;
@@ -259,12 +274,7 @@ static void gdb_vmm_rd_pmem(uint8_t *data, size_t len)
       return;
 
    debug(GDB_CMD, "reading physical memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(!__vm_remote_access_pmem(addr.linear, 0, sz, 1))
-   {
-      debug(GDB, "memory access failure\n");
-      gdb_err_mem();
-      return;
-   }
+   __gdb_vmm_rw_pmem(addr.linear, sz, 1);
 }
 
 static void gdb_vmm_wr_pmem(uint8_t *data, size_t len)
@@ -276,12 +286,7 @@ static void gdb_vmm_wr_pmem(uint8_t *data, size_t len)
       return;
 
    debug(GDB_CMD, "writing physical memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(!__vm_remote_access_pmem(addr.linear, 0, sz, 0))
-   {
-      debug(GDB, "memory access failure\n");
-      gdb_err_mem();
-      return;
-   }
+   __gdb_vmm_rw_pmem(addr.linear, sz, 0);
 }
 
 static void gdb_vmm_rd_vmem(uint8_t *data, size_t len)
