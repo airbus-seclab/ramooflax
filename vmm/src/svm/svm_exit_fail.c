@@ -319,10 +319,41 @@ static void svm_vmexit_show_basic()
 	 ,ctrls->exit_info_2.raw);
 }
 
-static void svm_vmexit_show()
+void svm_vmexit_show()
 {
    svm_vmexit_show_basic();
    svm_vmexit_show_insn();
+
+   {
+      offset_t vaddr;
+      int      mode;
+      uint8_t  data[0x20];
+      
+      vm_get_code_addr(&vaddr, 0, &mode);
+      vm_read_mem(vaddr, data, sizeof(data));
+      
+      int i;
+      printf("EIP bytes\n");
+      for(i=0 ; i<0x20 ; i++)
+	 printf("%x ", data[i]);
+      printf("\n");
+   }
+
+   {
+      offset_t vaddr;
+      int      mode;
+      uint8_t  data[0x20];
+      
+      vm_get_stack_addr(&vaddr, 0, &mode);
+      vm_read_mem(vaddr, data, sizeof(data));
+      
+      int i;
+      printf("ESP bytes\n");
+      for(i=0 ; i<0x20 ; i++)
+	 printf("%x ", data[i]);
+      printf("\n");
+   }
+
    svm_vmexit_show_gpr();
    svm_vmexit_show_cr();
    svm_vmexit_show_segments();

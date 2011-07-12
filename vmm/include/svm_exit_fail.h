@@ -23,6 +23,7 @@
 /*
 ** Functions
 */
+void  svm_vmexit_show();
 void  svm_vmexit_failure();
 
 #endif
