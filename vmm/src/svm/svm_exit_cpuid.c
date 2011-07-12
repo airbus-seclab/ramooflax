@@ -18,6 +18,7 @@
 #include <svm_exit_cpuid.h>
 #include <svm_cpuid.h>
 #include <info_data.h>
+#include <debug.h>
 
 extern info_data_t *info;
 

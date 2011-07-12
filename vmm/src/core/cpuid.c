@@ -52,6 +52,14 @@ static int __resolve_cpuid()
       break;
    }
 
+   debug(CPUID, "cpuid 0x%x | 0x%x 0x%x 0x%x 0x%x\n"
+	 ,idx
+	 ,info->vm.cpu.gpr->rax.low
+	 ,info->vm.cpu.gpr->rbx.low
+	 ,info->vm.cpu.gpr->rcx.low
+	 ,info->vm.cpu.gpr->rdx.low
+      );
+
    return CPUID_SUCCESS;
 }
 
