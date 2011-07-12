@@ -23,13 +23,11 @@
 #include <io.h>
 
 #define DEV_UART_BUFF_LEN          (64)
-#define DEV_UART_NEED_PROXY        -1
 
 typedef struct uart_device
 {
    uint8_t            buffer[DEV_UART_BUFF_LEN];
    uint32_t           index;
-#ifndef __UART_PROXY__
    uint16_t           base;
    serial_ier_reg_t   ier;
    serial_iir_reg_t   iir;
@@ -40,7 +38,6 @@ typedef struct uart_device
    serial_msr_reg_t   msr;
    serial_dla_t       dla;
    uint8_t            scr;
-#endif
 } uart_t;
 
 /*

@@ -18,6 +18,7 @@
 #include <vm.h>
 #include <paging.h>
 #include <dev_io_ports.h>
+#include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
@@ -90,45 +91,45 @@ void vm_rewind_rip(offset_t offset)
    __post_access(__rip);
 }
 
-int __vm_local_access_pmem(offset_t paddr, uint8_t *data, size_t len, uint8_t wr)
+int __vm_local_access_pmem(vm_access_t *access)
 {
    loc_t src, dst;
 
-   if(vmm_area_range(paddr, len))
+   if(vmm_area_range(access->addr, access->len))
       return 0;
 
-   if(wr)
+   if(access->wr)
    {
-      dst.linear = paddr;
-      src.u8 = data;
+      dst.linear = access->addr;
+      src.addr = access->data;
    }
    else
    {
-      dst.u8 = data;
-      src.linear = paddr;
+      dst.addr = access->data;
+      src.linear = access->addr;
    }
 
-   memcpy(dst.addr, src.addr, len);
+   memcpy(dst.addr, src.addr, access->len);
    return 1;
 }
 
-int __vm_remote_access_pmem(offset_t paddr, uint8_t __unused__ *data,
-			    size_t len, uint8_t wr)
+int __vm_remote_access_pmem(vm_access_t *access)
 {
    loc_t  loc;
-   size_t done;
-
-   if(vmm_area_range(paddr, len))
+   size_t done, len;
+   
+   if(vmm_area_range(access->addr, access->len))
       return 0;
 
-   loc.linear = paddr;
+   loc.linear = access->addr;
 
-   if(wr)
+   if(access->wr)
    {
-      ctrl_write(loc.u8, len);
+      ctrl_write(loc.u8, access->len);
       return 1;
    }
 
+   len = access->len;
    while(len)
    {
       done = ctrl_read(loc.u8, len);
@@ -139,31 +140,35 @@ int __vm_remote_access_pmem(offset_t paddr, uint8_t __unused__ *data,
    return 1;
 }
 
-static int __vm_access_mem(cr3_reg_t *cr3, offset_t vaddr, vm_access_mem_op_t op,
-			   uint8_t *data, size_t len, uint8_t wr)
+int __vm_access_mem(vm_access_t *access)
 {
-   offset_t paddr, nxt;
-   size_t   psz, sz;
+   offset_t vaddr, nxt;
+   size_t   psz, len;
 
-   if(!len)
+   if(!access->len)
       return 1;
 
    if(!__paging())
-      return op(vaddr, data, len, wr);
+      return access->operator(access);
+
+   vaddr = access->addr;
+   len   = access->len;
 
    while(len)
    {
-      if(!__pg_walk(cr3, vaddr, &paddr, &psz))
+      if(!__pg_walk(access->cr3, vaddr, &access->addr, &psz))
+      {
+	 debug(VM_ACCESS, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
 	 return 0;
+      }
 
       nxt = __align_next(vaddr, psz);
-      sz  = min(len, (nxt - vaddr));
+      access->len = min(len, (nxt - vaddr));
 
-      if(!op(paddr, data, sz, wr))
+      if(!access->operator(access))
 	 return 0;
 
-      len  -= sz;
-      data += sz;
+      len  -= access->len;
       vaddr = nxt;
    }
 
@@ -172,32 +177,86 @@ static int __vm_access_mem(cr3_reg_t *cr3, offset_t vaddr, vm_access_mem_op_t op
 
 int __vm_recv_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
 {
-   return __vm_access_mem(cr3, vaddr, __vm_remote_access_pmem, 0, len, 0);
+   vm_access_t access;
+
+   access.cr3  = cr3;
+   access.addr = vaddr;
+   access.data = (void*)0;
+   access.len  = len;
+   access.wr   = 0;
+   access.operator = __vm_remote_access_pmem;
+
+   return __vm_access_mem(&access);
 }
 
 int __vm_send_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
 {
-   return __vm_access_mem(cr3, vaddr, __vm_remote_access_pmem, 0, len, 1);
+   vm_access_t access;
+
+   access.cr3  = cr3;
+   access.addr = vaddr;
+   access.data = (void*)0;
+   access.len  = len;
+   access.wr   = 1;
+   access.operator = __vm_remote_access_pmem;
+
+   return __vm_access_mem(&access);
 }
 
 int __vm_read_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
 {
-   return __vm_access_mem(cr3, vaddr, __vm_local_access_pmem, data, len, 0);
+   vm_access_t access;
+
+   access.cr3  = cr3;
+   access.addr = vaddr;
+   access.data = (void*)data;
+   access.len  = len;
+   access.wr   = 0;
+   access.operator = __vm_local_access_pmem;
+
+   return __vm_access_mem(&access);
 }
 
 int __vm_write_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
 {
-   return __vm_access_mem(cr3, vaddr, __vm_local_access_pmem, data, len, 1);
+   vm_access_t access;
+
+   access.cr3  = cr3;
+   access.addr = vaddr;
+   access.data = (void*)data;
+   access.len  = len;
+   access.wr   = 1;
+   access.operator = __vm_local_access_pmem;
+
+   return __vm_access_mem(&access);
 }
 
 int vm_read_mem(offset_t vaddr, uint8_t *data, size_t len)
 {
-   return __vm_access_mem(&__cr3, vaddr, __vm_local_access_pmem, data, len, 0);
+   vm_access_t access;
+
+   access.cr3  = &__cr3;
+   access.addr = vaddr;
+   access.data = (void*)data;
+   access.len  = len;
+   access.wr   = 0;
+   access.operator = __vm_local_access_pmem;
+
+   return __vm_access_mem(&access);
 }
 
 int vm_write_mem(offset_t vaddr, uint8_t *data, size_t len)
 {
-   return __vm_access_mem(&__cr3, vaddr, __vm_local_access_pmem, data, len, 1);
+   vm_access_t access;
+
+   access.cr3  = &__cr3;
+   access.addr = vaddr;
+   access.data = (void*)data;
+   access.len  = len;
+   access.wr   = 1;
+   access.operator = __vm_local_access_pmem;
+
+   return __vm_access_mem(&access);
 }
 
 int vm_enter_pmode()
@@ -206,9 +265,9 @@ int vm_enter_pmode()
 
    info->vm.cpu.dflt_excp = VM_PMODE_EXCP_BITMAP;
 
-   __allow_io_range(KBD_START_PORT, KBD_END_PORT);
    __pg_set_entry(&info->vm.cpu.pg.pm.pml4[0], PG_USR|PG_RW, page_nr(pdp));
    __allow_soft_int();
+   __allow_io_range(KBD_START_PORT, KBD_END_PORT);
 
    return 1;
 }
@@ -219,9 +278,9 @@ int vm_enter_rmode()
 
    info->vm.cpu.dflt_excp = VM_RMODE_EXCP_BITMAP;
 
-   __deny_io_range(KBD_START_PORT, KBD_END_PORT);
    __pg_set_entry(&info->vm.cpu.pg.rm->pml4[0], PG_USR|PG_RW, page_nr(pdp));
    __deny_soft_int();
+   __deny_io_range(KBD_START_PORT, KBD_END_PORT);
 
    return 1;
 }

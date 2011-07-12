@@ -224,7 +224,7 @@ int dev_pic(pic_t *pic, io_insn_t *io)
 {
    io_size_t sz = { .available = 1 };
 
-   if(io->d)
+   if(io->in)
       return __dev_pic_status(pic, io);
    else
    {

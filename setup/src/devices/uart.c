@@ -20,8 +20,6 @@
 void dev_uart_init(uart_t *uart, uint16_t base)
 {
    uart->index = 0;
-
-#ifndef __UART_PROXY__
    uart->base  = base;
 
    uart->iir.no_int_pending = 1;
@@ -34,5 +32,4 @@ void dev_uart_init(uart_t *uart, uint16_t base)
    uart->msr.raw = 0;
    uart->dla.raw = 0;
    uart->scr     = 0;
-#endif
 }

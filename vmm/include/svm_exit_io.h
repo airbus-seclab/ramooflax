@@ -24,7 +24,7 @@
 */
 struct io_insn;
 
-int    svm_vmexit_resolve_io();
-void   __svm_io_init(struct io_insn*);
+int  svm_vmexit_resolve_io();
+int  __svm_io_init(struct io_insn*);
 
 #endif

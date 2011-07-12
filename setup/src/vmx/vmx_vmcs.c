@@ -41,12 +41,6 @@ void vmx_vmcs_exec_controls_io_init(info_data_t *info)
 {
    vmcs_exec_ctl_t *ctls = exec_ctrls(info);
 
-   vmx_deny_io_range( info->vm.cpu.vmc, PIC1_START_PORT, PIC1_END_PORT );
-   vmx_deny_io_range( info->vm.cpu.vmc, PIC2_START_PORT, PIC2_END_PORT );
-   vmx_deny_io_range( info->vm.cpu.vmc, COM1_START_PORT, COM1_END_PORT );
-   vmx_deny_io_range( info->vm.cpu.vmc, KBD_START_PORT, KBD_END_PORT );
-   vmx_deny_io( info->vm.cpu.vmc, PS2_SYS_CTRL_PORT_A );
-
    ctls->proc.usio = 1;
 
    ctls->io_bitmap_a.low = (uint32_t)info->vm.cpu.vmc->io_bitmap_a;

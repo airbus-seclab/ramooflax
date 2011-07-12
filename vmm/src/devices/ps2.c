@@ -25,13 +25,13 @@ int dev_ps2(ps2_t *ps2, io_insn_t *io)
 {
    io_size_t sz = { .available = 1 };
 
-   if( ! dev_io_insn( io, &ps2->raw, &sz ) )
+   if(!dev_io_insn(io, &ps2->raw, &sz))
       return 0;
 
-   if( ps2->fast_reset )
-      panic( "ps2 fast reset !" );
+   if(ps2->fast_reset)
+      panic("ps2 fast reset !");
 
-   dev_a20_set( (uint8_t)ps2->enabled_a20 );
+   dev_a20_set((uint8_t)ps2->enabled_a20);
    return 1;
 }
 

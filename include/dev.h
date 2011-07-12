@@ -51,7 +51,6 @@ typedef struct hardware_information_data
 void  dev_init();
 #else
 int   dev_access();
-int   dev_proxify(io_insn_t*);
 void  dev_a20_set(uint8_t);
 #endif
 

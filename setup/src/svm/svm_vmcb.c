@@ -18,7 +18,6 @@
 #include <vm.h>
 #include <svm_guest.h>
 #include <info_data.h>
-#include <dev_io_ports.h>
 
 extern info_data_t *info;
 
@@ -103,10 +102,6 @@ void svm_vmcb_controls_init()
 void svm_vmcb_io_controls_init()
 {
    vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-   svm_deny_io_range(info->vm.cpu.vmc, COM1_START_PORT, COM1_END_PORT);
-   svm_deny_io_range(info->vm.cpu.vmc, KBD_START_PORT, KBD_END_PORT);
-   svm_deny_io(info->vm.cpu.vmc, PS2_SYS_CTRL_PORT_A);
 
    ctrls->sys_insn_bitmap.io_insn = 1;
    ctrls->io_bitmap_addr.raw = (offset_t)info->vm.cpu.vmc->io_bitmap;

@@ -103,6 +103,7 @@ typedef struct vm_device
    ps2_t       ps2;       /* vm virtual ps2 sys ctrl */
    kbd_t       kbd;       /* vm virtual kbd ctrl */
    uart_t      uart;      /* vm com1 proxy */
+   uint8_t     pic1_icw2; /* irq rebase */
 
 } __attribute__((packed)) vm_dev_t;
 
@@ -116,6 +117,20 @@ typedef struct vm
 
 } __attribute__((packed)) vm_t;
 
+struct vm_access;
+
+typedef int (*vm_access_mem_op_t)(struct vm_access*);
+
+typedef struct vm_access
+{
+   cr3_reg_t          *cr3;      /* translate virt to phys vm addr */
+   offset_t           addr;      /* vm addr (virt or phys) */
+   void               *data;
+   size_t             len;       /* total bytes */
+   uint8_t            wr;        /* write access */
+   vm_access_mem_op_t operator;  /* memcpy, remote, io */
+
+} __attribute__((packed)) vm_access_t;
 
 /*
 ** Functions
@@ -127,9 +142,9 @@ void  vm_get_stack_addr(offset_t*, offset_t, int*);
 void  vm_update_rip(offset_t);
 void  vm_rewind_rip(offset_t);
 
-typedef int (*vm_access_mem_op_t)(offset_t, uint8_t*, size_t, uint8_t);
-int   __vm_local_access_pmem(offset_t, uint8_t*, size_t, uint8_t);
-int   __vm_remote_access_pmem(offset_t, uint8_t*, size_t, uint8_t);
+int   __vm_local_access_pmem(vm_access_t*);
+int   __vm_remote_access_pmem(vm_access_t*);
+int   __vm_access_mem(vm_access_t*);
 
 int   __vm_recv_mem(cr3_reg_t*, offset_t, size_t);
 int   __vm_send_mem(cr3_reg_t*, offset_t, size_t);

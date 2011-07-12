@@ -23,8 +23,7 @@
 */
 struct io_insn;
 
-int    vmx_vmexit_resolve_io();
-void   __vmx_io_init(struct io_insn*);
-int    __vmx_io_setup(struct io_insn*);
+int   vmx_vmexit_resolve_io();
+int   __vmx_io_init(struct io_insn*);
 
 #endif

@@ -23,7 +23,7 @@ extern info_data_t *info;
 
 int __dev_kbd_ctrl(kbd_t *kbd, io_insn_t *io)
 {
-   if(io->d)
+   if(io->in)
       info->vm.cpu.gpr->rax.blow = in(io->port);
    else
    {
@@ -36,7 +36,7 @@ int __dev_kbd_ctrl(kbd_t *kbd, io_insn_t *io)
 
 int __dev_kbd_data(kbd_t *kbd, io_insn_t *io)
 {
-   if(io->d)
+   if(io->in)
    {
       info->vm.cpu.gpr->rax.blow = in(io->port);
 
@@ -72,7 +72,7 @@ int dev_kbd(kbd_t *kbd, io_insn_t *io)
       return __dev_kbd_data(kbd, io);
    }
 
-   if(io->d)
+   if(io->in)
       info->vm.cpu.gpr->rax.blow = in(io->port);
    else
       out(info->vm.cpu.gpr->rax.blow, io->port);

@@ -76,13 +76,24 @@
 /*
 ** read/write to io ports
 */
+#define insb(_d_,_p_)   asm volatile ("insb"::"D"(_d_),"d"(_p_))
+#define outsb(_d_,_p_)  asm volatile ("outsb"::"S"(_d_),"d"(_p_))
+
 #define outb(_d_,_p_)   asm volatile ("outb %%al,  %%dx"::"a"(_d_),"d"(_p_))
+#define outw(_d_,_p_)   asm volatile ("outw %%ax,  %%dx"::"a"(_d_),"d"(_p_))
 #define outl(_d_,_p_)   asm volatile ("outl %%eax, %%dx"::"a"(_d_),"d"(_p_))
 
 #define inb(_p_)						\
    ({								\
       uint8_t _d_;						\
       asm volatile ("inb %%dx,%%al":"=a"(_d_):"d"(_p_));	\
+      _d_;							\
+   })
+
+#define inw(_p_)						\
+   ({								\
+      uint16_t _d_;						\
+      asm volatile ("inw %%dx,%%ax":"=a"(_d_):"d"(_p_));	\
       _d_;							\
    })
 

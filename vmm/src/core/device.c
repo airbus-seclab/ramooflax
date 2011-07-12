@@ -24,26 +24,6 @@
 
 extern info_data_t *info;
 
-int dev_proxify(io_insn_t *io)
-{
-   io_size_t sz = { .available = 1 };
-   uint8_t   data;
-
-   if(io->d)
-   {
-      data = in(io->port);
-      debug(DEV, "proxy io in  0x%x data 0x%x\n", io->port, data);
-      return dev_io_insn(io, &data, &sz);
-   }
-   else
-   {
-      dev_io_insn(io, &data, &sz);
-      debug(DEV, "proxy io out 0x%x data 0x%x\n", io->port, data);
-      out(data, io->port);
-      return 1;
-   }
-}
-
 void dev_a20_set(uint8_t on)
 {
    if(!__rmode())
@@ -62,12 +42,6 @@ int dev_access()
 
    __io_init(&io);
 
-   /* if(range(io.port, PIC1_START_PORT, PIC1_END_PORT)) */
-   /*    return dev_pic(&info->vm.dev.pic[0], &io); */
-
-   /* if(range(io.port, PIC2_START_PORT, PIC2_END_PORT)) */
-   /*    return dev_pic(&info->vm.dev.pic[1], &io); */
-
    if(io.port == PS2_SYS_CTRL_PORT_A)
       return dev_ps2(&info->vm.dev.ps2, &io);
 
@@ -75,16 +49,9 @@ int dev_access()
       return dev_kbd(&info->vm.dev.kbd, &io);
 
    if(range(io.port, COM1_START_PORT, COM1_END_PORT))
-   {
-      int rc = dev_uart(&info->vm.dev.uart, &io);
-#ifdef __UART_PROXY__
-      if(rc == DEV_UART_NEED_PROXY)
-	 return dev_proxify(&io);
-#endif
-      return rc;
-   }
+      return dev_uart(&info->vm.dev.uart, &io);
 
-   return 0;
+   return dev_io_proxify(&io);
 }
 
 

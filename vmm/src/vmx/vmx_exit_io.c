@@ -38,24 +38,26 @@ int vmx_vmexit_resolve_io()
    return 1;
 }
 
-void __vmx_io_init(io_insn_t *io)
+int __vmx_io_init(io_insn_t *io)
 {
-   vmx_io_t         *vmx;
-   vmcs_exit_info_t *exit = exit_info(info);
-
-   vmcs_read( exit->qualification );
-   vmx = (vmx_io_t*)&exit->qualification.io_insn;
-
-   io->sz   = vmx->sz + 1;
-   io->d    = vmx->d;
-   io->s    = vmx->s;
-   io->rep  = vmx->rep;
-   io->port = vmx->port;
-}
-
-int __vmx_io_setup(io_insn_t *io)
-{
+   /* XXX: check if we can use both structures for ins/outs io:
+   ** vmcs_exit_information_qualification_io_insn
+   ** vmcs_exit_information_vmx_instruction_information
+   */
    return 0;
+
+   /* vmx_io_t         *vmx; */
+   /* vmcs_exit_info_t *exit = exit_info(info); */
+
+   /* vmcs_read( exit->qualification ); */
+   /* vmx = (vmx_io_t*)&exit->qualification.io_insn; */
+
+   /* io->sz   = vmx->sz + 1; */
+   /* io->d    = vmx->d; */
+   /* io->s    = vmx->s; */
+   /* io->rep  = vmx->rep; */
+   /* io->port = vmx->port; */
+
 /*
    vmcs_read( state->ds.selector );
    vmcs_read( state->es.selector );
