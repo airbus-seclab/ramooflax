@@ -19,6 +19,8 @@
 #define __GDB_SSTEP_H__
 
 #include <types.h>
+#include <cr.h>
+#include <msr.h>
 
 #define GDB_SSTEP_USER   0
 #define GDB_SSTEP_VMM    1

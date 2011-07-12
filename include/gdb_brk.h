@@ -19,6 +19,7 @@
 #define __GDB_BRK_H__
 
 #include <types.h>
+#include <dr.h>
 
 #define GDB_DFLT_BRK_NR    20
 #define GDB_BRK_USER        0
