@@ -33,31 +33,21 @@ static void __uart_fifo_init(uint16_t port)
    serial_fcr_reg_t  fcr;
    serial_efr_reg_t  efr;
 
-   /* configure efr and allow fcr settings  */
    uart_enable_efr_registers(port);
-
    efr.raw = 0;
    efr.ctl = 1;
-   efr.a_rts = 1;
    out(efr.raw, SERIAL_EFR(port));
 
-   /* reset lcr to access normal registers */
+   fcr.enable = 0;
+   fcr.dma = 0;
+   out(fcr.raw, SERIAL_FCR(port));
+
    out(0, SERIAL_LCR(port));
 
-   /*
-   ** Manage fifo:
-   **  - enable
-   **  - clear it
-   **  - set RX trigger level
-   **  - no dma
-   */
-   fcr.enable = 1;
-   fcr.rx = 1;
-   fcr.tx = 1;
-   fcr.dma = 0;
-   fcr.tx_trigger = 0;
-   fcr.rx_trigger = SERIAL_FCR_RX_FIFO_8;
-   out(fcr.raw, SERIAL_FCR(port));
+   efr.raw = 0;
+   efr.a_rts = 1;
+   efr.a_cts = 1;
+   out(efr.raw, SERIAL_EFR(port));
 }
 
 static void __uart_common_init(uint16_t port)
@@ -82,11 +72,11 @@ static void __uart_common_init(uint16_t port)
    */
    mcr.raw = in(SERIAL_MCR(port));
    mcr.aux2 = 1;
-   out(mcr.raw, SERIAL_MCR(port));
+   /* out(mcr.raw, SERIAL_MCR(port)); */
 
    /* trigger interrupt on byte received */
    ier.raw = 0;
-   ier.recv = 1;
+   /* ier.recv = 1; */
    out(ier.raw, SERIAL_IER(port));
 
    /* flush input */
@@ -142,3 +132,4 @@ size_t uart_write(uint8_t *data, size_t n)
    __uart_write(SERIAL_COM1, &buf, n);
    return buf.sz;
 }
+
