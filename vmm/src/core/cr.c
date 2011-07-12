@@ -40,6 +40,8 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
       cr0_reg_t cr0;
       cr0.raw = get_cr0();
       cr0.cd = guest->cd;
+
+      debug(CR, "cr0 cache disable = %d\n", cr0.cd);
       set_cr0(cr0.raw);
    }
 
@@ -67,6 +69,8 @@ int __resolve_cr3_wr(cr3_reg_t *guest)
    else
       __cr3.low = guest->low;
 
+   debug(CR, "wr cr3 0x%X\n", guest->raw);
+
    __ncr3.pml4.pwt = guest->pwt;
    __ncr3.pml4.pcd = guest->pcd;
 
@@ -82,6 +86,8 @@ int __resolve_cr3_wr(cr3_reg_t *guest)
 int __resolve_cr4_wr(cr4_reg_t *guest)
 {
    uint32_t cr4_update = __cr4.low ^ guest->low;
+
+   debug(CR, "wr cr4 0x%X\n", guest->raw);
 
    if(cr4_update & (CR4_PAE|CR4_PSE|CR4_PGE))
       __flush_tlb_glb();
