@@ -212,7 +212,8 @@ typedef union vmcb_exit_info_1
       uint64_t    addr16:1; /* address size : 16,32,64 */
       uint64_t    addr32:1;
       uint64_t    addr64:1;
-      uint64_t    rsrvd:6;
+      uint64_t    seg:3;    /* outs seg es=0,cs,ss,ds,fs,gs */
+      uint64_t    rsrvd:3;
       uint64_t    port:16;  /* port number */
 
    } __attribute__((packed)) io;
