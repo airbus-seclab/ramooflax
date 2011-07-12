@@ -6,5 +6,4 @@ obj :=	entry.o		\
 	smap.o		\
 	vmem.o		\
 	intr.o		\
-	vmm.o		\
-	mp.o		\
+	vmm.o

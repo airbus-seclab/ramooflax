@@ -732,18 +732,6 @@ static void gdb_enable()
    ctrl_set_active();
    gdb_brk_enable();
    gdb_vmm_enable();
-
-   {
-      vmm_ctrl_dbg_sts_t *sts = &info->vmm.ctrl.dbg.status;
-      debug(GDB_CMD,
-	    "gdb status: hlt %d acked %d cr3 %d keep %d dr6 %d traps %d\n"
-	    , sts->vm_hlt
-	    , sts->acked
-	    , sts->cr3
-	    , sts->keep_cr3
-	    , sts->dr6
-	    , sts->traps);
-   }
 }
 
 static void gdb_reset()

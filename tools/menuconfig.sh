@@ -32,9 +32,9 @@ function building()
     do
 	$dialog --menu "" 10 50 10 \
 	    "cpu" "select manufacturer" \
-	    "control" "select control device" \
-	    "debug" "select debug output device" \
-	    "proxy" "select various proxy modes"
+	    "dev" "select devices" \
+	    "proxy" "select proxy modes" \
+	    "debug" "select debug info"
 
 	if [ $? -ne 0 ];then
 	    break
@@ -43,12 +43,12 @@ function building()
 	ans=$(<$answer) ; :>$answer
 	if [ $ans == "cpu" ];then
 	    build_proc
-	elif [ $ans == "control" ];then
-	    build_ctrl
-	elif [ $ans == "debug" ];then
-	    build_debug
+	elif [ $ans == "dev" ];then
+	    build_dev
 	elif [ $ans == "proxy" ];then
 	    build_proxy
+	elif [ $ans == "debug" ];then
+	    build_debuginfo
 	fi
     done
 }
@@ -71,6 +71,27 @@ function build_proc()
     if [ $? -eq 0 ];then
 	$CONFIG_ARCH=$(<$answer) ; :>$answer
     fi
+}
+
+function build_dev()
+{
+    while /bin/true;
+    do
+	$dialog --menu "" 10 50 10 \
+	    "control" "select control device" \
+	    "debug" "select debug output device"
+
+	if [ $? -ne 0 ];then
+	    break
+	fi
+
+	ans=$(<$answer) ; :>$answer
+	if [ $ans == "control" ];then
+	    build_ctrl
+	elif [ $ans == "debug" ];then
+	    build_debug
+	fi
+    done
 }
 
 function build_ctrl()
@@ -139,6 +160,152 @@ function installing()
     fi
 }
 
+function build_debuginfo()
+{
+    $dialog --separate-output --checklist \
+	"Enable/disable various debug info" 20 70 10 \
+	"CONFIG_DEBUG" "global debugging feature" $CONFIG_DEBUG \
+	"CONFIG_VMEXIT_TRACE" "show vmexit count on each debug line" $CONFIG_VMEXIT_TRACE \
+	"CONFIG_VMM_DBG" "" $CONFIG_VMM_DBG \
+	"CONFIG_VM_ACCESS_DBG" "" $CONFIG_VM_ACCESS_DBG \
+	"CONFIG_MP_DBG" " " $CONFIG_MP_DBG \
+	"CONFIG_PG_DBG" " " $CONFIG_PG_DBG \
+	"CONFIG_SMAP_DBG" " " $CONFIG_SMAP_DBG \
+	"CONFIG_PMEM_DBG" " " $CONFIG_PMEM_DBG \
+	"CONFIG_CPU_DBG" " " $CONFIG_CPU_DBG \
+	"CONFIG_EHCI_DBG" " " $CONFIG_EHCI_DBG \
+	"CONFIG_UART_DBG" " " $CONFIG_UART_DBG \
+	"CONFIG_EMU_DBG" " " $CONFIG_EMU_DBG \
+	"CONFIG_DIS_DBG" " " $CONFIG_DIS_DBG \
+	"CONFIG_EMU_INSN_DBG" " " $CONFIG_EMU_INSN_DBG \
+	"CONFIG_DIS_INSN_DBG" " " $CONFIG_DIS_INSN_DBG \
+	"CONFIG_PVL_DBG" " " $CONFIG_PVL_DBG \
+	"CONFIG_INSN_DBG" " " $CONFIG_INSN_DBG \
+	"CONFIG_CPUID_DBG" " " $CONFIG_CPUID_DBG \
+	"CONFIG_CR_DBG" " " $CONFIG_CR_DBG \
+	"CONFIG_DR_DBG" " " $CONFIG_DR_DBG \
+	"CONFIG_MSR_DBG" " " $CONFIG_MSR_DBG \
+	"CONFIG_IRQ_DBG" " " $CONFIG_IRQ_DBG \
+	"CONFIG_INT_DBG" " " $CONFIG_INT_DBG \
+	"CONFIG_IO_DBG" " " $CONFIG_IO_DBG \
+	"CONFIG_EXCP_DBG" " " $CONFIG_EXCP_DBG \
+	"CONFIG_GP_DBG" " " $CONFIG_GP_DBG \
+	"CONFIG_BP_DBG" " " $CONFIG_BP_DBG \
+	"CONFIG_DB_DBG" " " $CONFIG_DB_DBG \
+	"CONFIG_PF_DBG" " " $CONFIG_PF_DBG \
+	"CONFIG_PF_VERBOSE_DBG" " " $CONFIG_PF_VERBOSE_DBG \
+	"CONFIG_SMI_DBG" " " $CONFIG_SMI_DBG \
+	"CONFIG_CTRL_DBG" " " $CONFIG_CTRL_DBG \
+	"CONFIG_GDB_DBG" " " $CONFIG_GDB_DBG \
+	"CONFIG_GDB_PKT_DBG" " " $CONFIG_GDB_PKT_DBG \
+	"CONFIG_GDB_CMD_DBG" " " $CONFIG_GDB_CMD_DBG \
+	"CONFIG_GDB_PARSE_DBG" " " $CONFIG_GDB_PARSE_DBG \
+	"CONFIG_DEV_DBG" " " $CONFIG_DEV_DBG \
+	"CONFIG_DEV_PIC_DBG" " " $CONFIG_DEV_PIC_DBG \
+	"CONFIG_DEV_UART_DBG" " " $CONFIG_DEV_UART_DBG \
+	"CONFIG_DEV_IO_DBG" " " $CONFIG_DEV_IO_DBG \
+	"CONFIG_DEV_PS2_DBG" " " $CONFIG_DEV_PS2_DBG \
+	"CONFIG_DEV_KBD_DBG" " " $CONFIG_DEV_KBD_DBG \
+	"CONFIG_SVM_DBG" " " $CONFIG_SVM_DBG \
+	"CONFIG_SVM_IDT_DBG" " " $CONFIG_SVM_IDT_DBG \
+	"CONFIG_SVM_EXCP_DBG" " " $CONFIG_SVM_EXCP_DBG \
+	"CONFIG_SVM_EXCP_GP_DBG" " " $CONFIG_SVM_EXCP_GP_DBG \
+	"CONFIG_SVM_EXCP_PF_DBG" " " $CONFIG_SVM_EXCP_PF_DBG \
+	"CONFIG_SVM_NPF_DBG" " " $CONFIG_SVM_NPF_DBG \
+	"CONFIG_SVM_INT_DBG" " " $CONFIG_SVM_INT_DBG \
+	"CONFIG_SVM_IO_DBG" " " $CONFIG_SVM_IO_DBG \
+	"CONFIG_SVM_IRQ_DBG" " " $CONFIG_SVM_IRQ_DBG \
+	"CONFIG_SVM_CPUID_DBG" " " $CONFIG_SVM_CPUID_DBG \
+	"CONFIG_SVM_MSR_DBG" " " $CONFIG_SVM_MSR_DBG \
+	"CONFIG_SVM_CR_DBG" " " $CONFIG_SVM_CR_DBG \
+	"CONFIG_VMX_DBG" " " $CONFIG_VMX_DBG \
+	"CONFIG_VMX_IDT_DBG" " " $CONFIG_VMX_IDT_DBG \
+	"CONFIG_VMX_EXCP_DBG" " " $CONFIG_VMX_EXCP_DBG \
+	"CONFIG_VMX_EXCP_PF_DBG" " " $CONFIG_VMX_EXCP_PF_DBG \
+	"CONFIG_VMX_EXCP_GP_DBG" " " $CONFIG_VMX_EXCP_GP_DBG \
+	"CONFIG_VMX_INT_DBG" " " $CONFIG_VMX_INT_DBG \
+	"CONFIG_VMX_IO_DBG" " " $CONFIG_VMX_IO_DBG \
+	"CONFIG_VMX_IRQ_DBG" " " $CONFIG_VMX_IRQ_DBG \
+	"CONFIG_VMX_CPUID_DBG" " " $CONFIG_VMX_CPUID_DBG \
+	"CONFIG_VMX_MSR_DBG" " " $CONFIG_VMX_MSR_DBG \
+	"CONFIG_VMX_CR_DBG" " " $CONFIG_VMX_CR_DBG
+
+    if [ $? -eq 0 ];then
+	ans=$(<$answer) ; :>$answer
+
+	CONFIG_DEBUG="off"
+	CONFIG_VMEXIT_TRACE="off"
+
+	CONFIG_VMM_DBG="off"
+	CONFIG_VM_ACCESS_DBG="off"
+	CONFIG_MP_DBG="off"
+	CONFIG_PG_DBG="off"
+	CONFIG_SMAP_DBG="off"
+	CONFIG_PMEM_DBG="off"
+	CONFIG_CPU_DBG="off"
+	CONFIG_EHCI_DBG="off"
+	CONFIG_UART_DBG="off"
+	CONFIG_EMU_DBG="off"
+	CONFIG_DIS_DBG="off"
+	CONFIG_EMU_INSN_DBG="off"
+	CONFIG_DIS_INSN_DBG="off"
+	CONFIG_PVL_DBG="off"
+	CONFIG_INSN_DBG="off"
+	CONFIG_CPUID_DBG="off"
+	CONFIG_CR_DBG="off"
+	CONFIG_DR_DBG="off"
+	CONFIG_MSR_DBG="off"
+	CONFIG_IRQ_DBG="off"
+	CONFIG_INT_DBG="off"
+	CONFIG_IO_DBG="off"
+	CONFIG_EXCP_DBG="off"
+	CONFIG_GP_DBG="off"
+	CONFIG_BP_DBG="off"
+	CONFIG_DB_DBG="off"
+	CONFIG_PF_DBG="off"
+	CONFIG_PF_VERBOSE_DBG="off"
+	CONFIG_SMI_DBG="off"
+	CONFIG_CTRL_DBG="off"
+	CONFIG_GDB_DBG="off"
+	CONFIG_GDB_PKT_DBG="off"
+	CONFIG_GDB_CMD_DBG="off"
+	CONFIG_GDB_PARSE_DBG="off"
+	CONFIG_DEV_DBG="off"
+	CONFIG_DEV_PIC_DBG="off"
+	CONFIG_DEV_UART_DBG="off"
+	CONFIG_DEV_IO_DBG="off"
+	CONFIG_DEV_PS2_DBG="off"
+	CONFIG_DEV_KBD_DBG="off"
+	CONFIG_SVM_DBG="off"
+	CONFIG_SVM_IDT_DBG="off"
+	CONFIG_SVM_EXCP_DBG="off"
+	CONFIG_SVM_EXCP_GP_DBG="off"
+	CONFIG_SVM_EXCP_PF_DBG="off"
+	CONFIG_SVM_NPF_DBG="off"
+	CONFIG_SVM_INT_DBG="off"
+	CONFIG_SVM_IO_DBG="off"
+	CONFIG_SVM_IRQ_DBG="off"
+	CONFIG_SVM_CPUID_DBG="off"
+	CONFIG_SVM_MSR_DBG="off"
+	CONFIG_SVM_CR_DBG="off"
+	CONFIG_VMX_DBG="off"
+	CONFIG_VMX_IDT_DBG="off"
+	CONFIG_VMX_EXCP_DBG="off"
+	CONFIG_VMX_EXCP_PF_DBG="off"
+	CONFIG_VMX_EXCP_GP_DBG="off"
+	CONFIG_VMX_INT_DBG="off"
+	CONFIG_VMX_IO_DBG="off"
+	CONFIG_VMX_IRQ_DBG="off"
+	CONFIG_VMX_CPUID_DBG="off"
+	CONFIG_VMX_MSR_DBG="off"
+	CONFIG_VMX_CR_DBG="off"
+
+	for v in $ans;do
+	    eval $v="on"
+	done
+    fi
+}
+
 function commit()
 {
     confout="${conf}" ; :>$confout
@@ -148,6 +315,73 @@ function commit()
     echo "CONFIG_PRINT=$CONFIG_PRINT" >> $confout
     echo "CONFIG_MSR_PROXY=$CONFIG_MSR_PROXY" >> $confout
     echo "CONFIG_INST_DIR=$CONFIG_INST_DIR" >> $confout
+
+    echo "CONFIG_DEBUG=$CONFIG_DEBUG" >> $confout
+    echo "CONFIG_VMEXIT_TRACE=$CONFIG_VMEXIT_TRACE" >> $confout
+
+    echo "CONFIG_VMM_DBG=$CONFIG_VMM_DBG" >> $confout
+    echo "CONFIG_VM_ACCESS_DBG=$CONFIG_VM_ACCESS_DBG" >> $confout
+    echo "CONFIG_MP_DBG=$CONFIG_MP_DBG" >> $confout
+    echo "CONFIG_PG_DBG=$CONFIG_PG_DBG" >> $confout
+    echo "CONFIG_SMAP_DBG=$CONFIG_SMAP_DBG" >> $confout
+    echo "CONFIG_PMEM_DBG=$CONFIG_PMEM_DBG" >> $confout
+    echo "CONFIG_CPU_DBG=$CONFIG_CPU_DBG" >> $confout
+    echo "CONFIG_EHCI_DBG=$CONFIG_EHCI_DBG" >> $confout
+    echo "CONFIG_UART_DBG=$CONFIG_UART_DBG" >> $confout
+    echo "CONFIG_EMU_DBG=$CONFIG_EMU_DBG" >> $confout
+    echo "CONFIG_DIS_DBG=$CONFIG_DIS_DBG" >> $confout
+    echo "CONFIG_EMU_INSN_DBG=$CONFIG_EMU_INSN_DBG" >> $confout
+    echo "CONFIG_DIS_INSN_DBG=$CONFIG_DIS_INSN_DBG" >> $confout
+    echo "CONFIG_PVL_DBG=$CONFIG_PVL_DBG" >> $confout
+    echo "CONFIG_INSN_DBG=$CONFIG_INSN_DBG" >> $confout
+    echo "CONFIG_CPUID_DBG=$CONFIG_CPUID_DBG" >> $confout
+    echo "CONFIG_CR_DBG=$CONFIG_CR_DBG" >> $confout
+    echo "CONFIG_DR_DBG=$CONFIG_DR_DBG" >> $confout
+    echo "CONFIG_MSR_DBG=$CONFIG_MSR_DBG" >> $confout
+    echo "CONFIG_IRQ_DBG=$CONFIG_IRQ_DBG" >> $confout
+    echo "CONFIG_INT_DBG=$CONFIG_INT_DBG" >> $confout
+    echo "CONFIG_IO_DBG=$CONFIG_IO_DBG" >> $confout
+    echo "CONFIG_EXCP_DBG=$CONFIG_EXCP_DBG" >> $confout
+    echo "CONFIG_GP_DBG=$CONFIG_GP_DBG" >> $confout
+    echo "CONFIG_BP_DBG=$CONFIG_BP_DBG" >> $confout
+    echo "CONFIG_DB_DBG=$CONFIG_DB_DBG" >> $confout
+    echo "CONFIG_PF_DBG=$CONFIG_PF_DBG" >> $confout
+    echo "CONFIG_PF_VERBOSE_DBG=$CONFIG_PF_VERBOSE_DBG" >> $confout
+    echo "CONFIG_SMI_DBG=$CONFIG_SMI_DBG" >> $confout
+    echo "CONFIG_CTRL_DBG=$CONFIG_CTRL_DBG" >> $confout
+    echo "CONFIG_GDB_DBG=$CONFIG_GDB_DBG" >> $confout
+    echo "CONFIG_GDB_PKT_DBG=$CONFIG_GDB_PKT_DBG" >> $confout
+    echo "CONFIG_GDB_CMD_DBG=$CONFIG_GDB_CMD_DBG" >> $confout
+    echo "CONFIG_GDB_PARSE_DBG=$CONFIG_GDB_PARSE_DBG" >> $confout
+    echo "CONFIG_DEV_DBG=$CONFIG_DEV_DBG" >> $confout
+    echo "CONFIG_DEV_PIC_DBG=$CONFIG_DEV_PIC_DBG" >> $confout
+    echo "CONFIG_DEV_UART_DBG=$CONFIG_DEV_UART_DBG" >> $confout
+    echo "CONFIG_DEV_IO_DBG=$CONFIG_DEV_IO_DBG" >> $confout
+    echo "CONFIG_DEV_PS2_DBG=$CONFIG_DEV_PS2_DBG" >> $confout
+    echo "CONFIG_DEV_KBD_DBG=$CONFIG_DEV_KBD_DBG" >> $confout
+    echo "CONFIG_SVM_DBG=$CONFIG_SVM_DBG" >> $confout
+    echo "CONFIG_SVM_IDT_DBG=$CONFIG_SVM_IDT_DBG" >> $confout
+    echo "CONFIG_SVM_EXCP_DBG=$CONFIG_SVM_EXCP_DBG" >> $confout
+    echo "CONFIG_SVM_EXCP_GP_DBG=$CONFIG_SVM_EXCP_GP_DBG" >> $confout
+    echo "CONFIG_SVM_EXCP_PF_DBG=$CONFIG_SVM_EXCP_PF_DBG" >> $confout
+    echo "CONFIG_SVM_NPF_DBG=$CONFIG_SVM_NPF_DBG" >> $confout
+    echo "CONFIG_SVM_INT_DBG=$CONFIG_SVM_INT_DBG" >> $confout
+    echo "CONFIG_SVM_IO_DBG=$CONFIG_SVM_IO_DBG" >> $confout
+    echo "CONFIG_SVM_IRQ_DBG=$CONFIG_SVM_IRQ_DBG" >> $confout
+    echo "CONFIG_SVM_CPUID_DBG=$CONFIG_SVM_CPUID_DBG" >> $confout
+    echo "CONFIG_SVM_MSR_DBG=$CONFIG_SVM_MSR_DBG" >> $confout
+    echo "CONFIG_SVM_CR_DBG=$CONFIG_SVM_CR_DBG" >> $confout
+    echo "CONFIG_VMX_DBG=$CONFIG_VMX_DBG" >> $confout
+    echo "CONFIG_VMX_IDT_DBG=$CONFIG_VMX_IDT_DBG" >> $confout
+    echo "CONFIG_VMX_EXCP_DBG=$CONFIG_VMX_EXCP_DBG" >> $confout
+    echo "CONFIG_VMX_EXCP_PF_DBG=$CONFIG_VMX_EXCP_PF_DBG" >> $confout
+    echo "CONFIG_VMX_EXCP_GP_DBG=$CONFIG_VMX_EXCP_GP_DBG" >> $confout
+    echo "CONFIG_VMX_INT_DBG=$CONFIG_VMX_INT_DBG" >> $confout
+    echo "CONFIG_VMX_IO_DBG=$CONFIG_VMX_IO_DBG" >> $confout
+    echo "CONFIG_VMX_IRQ_DBG=$CONFIG_VMX_IRQ_DBG" >> $confout
+    echo "CONFIG_VMX_CPUID_DBG=$CONFIG_VMX_CPUID_DBG" >> $confout
+    echo "CONFIG_VMX_MSR_DBG=$CONFIG_VMX_MSR_DBG" >> $confout
+    echo "CONFIG_VMX_CR_DBG=$CONFIG_VMX_CR_DBG" >> $confout
 }
 
 #

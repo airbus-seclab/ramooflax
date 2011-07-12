@@ -20,102 +20,18 @@
 
 #include <print.h>
 
-#define __ENABLE_DEBUG__
-
-#ifdef  __ENABLE_DEBUG__
-
 /*
-** INIT debugging (video output)
+** Prevent self debugging
 */
-#ifdef __INIT__
-
-#define VMM_DBG
-#define MP_DBG
-//#define PG_DBG
-//#define SMAP_DBG
-#define PMEM_DBG
-#define CPU_DBG
-#define EHCI_DBG
-#define UART_DBG
-
-
-#else
-/*
-** VMM debugging (uart/ehci output)
-*/
-#define DEBUG_VMEXIT_TRACE
-
-#define VMM_DBG
-#define MP_DBG
-//#define PG_DBG
-
-#if !defined(__EHCI_PRINT__)
+#if defined __INIT__ || !defined(__EHCI_PRINT__)
+#if defined EHCI_COND_DBG
 #define EHCI_DBG
 #endif
-
-#if !defined(__UART_PRINT__)
-#define UART_DBG
 #endif
 
-#define EMU_DBG
-#define DIS_DBG
-//#define EMU_INSN_DBG
-//#define DIS_INSN_DBG
-//#define PVL_DBG
-#define INSN_DBG
-#define CPUID_DBG
-#define CR_DBG
-#define DR_DBG
-#define MSR_DBG
-#define IRQ_DBG
-#define INT_DBG
-#define IO_DBG
-#define EXCP_DBG
-#define GP_DBG
-#define BP_DBG
-#define DB_DBG
-#define PF_DBG
-//#define PF_VERBOSE_DBG
-#define SMI_DBG
-#define CTRL_DBG
-
-#define GDB_DBG
-#define GDB_PKT_DBG
-#define GDB_CMD_DBG
-//#define GDB_PARSE_DBG
-
-//#define DEV_DBG
-//#define DEV_PIC_DBG
-//#define DEV_UART_DBG
-//#define DEV_IO_DBG
-//#define DEV_PS2_DBG
-//#define DEV_KBD_DBG
-
-#define SVM_DBG
-#define SVM_IDT_DBG
-#define SVM_EXCP_DBG
-#define SVM_EXCP_GP_DBG
-#define SVM_EXCP_PF_DBG
-#define SVM_NPF_DBG
-#define SVM_INT_DBG
-#define SVM_IO_DBG
-#define SVM_IRQ_DBG
-#define SVM_CPUID_DBG
-#define SVM_MSR_DBG
-#define SVM_CR_DBG
-
-//#define VMX_DBG
-//#define VMX_IDT_DBG
-//#define VMX_EXCP_DBG
-//#define VMX_EXCP_PF_DBG
-//#define VMX_EXCP_GP_DBG
-//#define VMX_INT_DBG
-//#define VMX_IO_DBG
-//#define VMX_IRQ_DBG
-//#define VMX_CPUID_DBG
-//#define VMX_MSR_DBG
-//#define VMX_CR_DBG
-
+#if defined __INIT__ || !defined(__UART_PRINT__)
+#if defined UART_COND_DBG
+#define UART_DBG
 #endif
 #endif
 
@@ -126,6 +42,12 @@
 #define __DEBUG_VMM_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
 #else
 #define __DEBUG_VMM_DBG(fmt,fct,...) ({})
+#endif
+
+#if defined VM_ACCESS_DBG
+#define __DEBUG_VM_ACCESS_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_VM_ACCESS_DBG(fmt,fct,...) ({})
 #endif
 
 #if defined MP_DBG
@@ -498,7 +420,7 @@
 ** Debug macro
 */
 #ifndef __INIT__
-#ifdef DEBUG_VMEXIT_TRACE
+#ifdef __DEBUG_VMEXIT_TRACE__
 #ifdef __SVM__
 #define __exit_code__  info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_code.low
 #else
@@ -514,6 +436,7 @@
 	     , __exit_code__						\
 	 );								\
      printf, ## __VA_ARGS__)
+
 #endif
 #endif
 

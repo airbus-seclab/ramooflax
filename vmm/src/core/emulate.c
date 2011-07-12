@@ -231,7 +231,7 @@ static int emulate_pushf()
 /*
 ** RFLAGS inspection
 */
-static int emulate_pre_inspect_rflags(ud_t *disasm, offset_t addend)
+static int emulate_pre_inspect_rflags(offset_t addend)
 {
    int          mode;
    offset_t     vaddr;
@@ -239,7 +239,7 @@ static int emulate_pre_inspect_rflags(ud_t *disasm, offset_t addend)
 
    if(!gdb_singlestep_enabled())
    {
-      debug(EMU, "should not trap %s when not single-stepping\n", ud_insn_asm(disasm));
+      debug(EMU, "should not be trapped when not single-stepping\n");
       return EMU_FAIL;
    }
 
@@ -261,18 +261,18 @@ static int emulate_pre_inspect_rflags(ud_t *disasm, offset_t addend)
    return EMU_SUCCESS_LET_RIP;
 }
 
-static int emulate_popf(ud_t *disasm)
+static int emulate_popf()
 {
    __allow_popf();
-   return emulate_pre_inspect_rflags(disasm, 0);
+   return emulate_pre_inspect_rflags(0);
 }
 
-static int emulate_iret(ud_t *disasm, size_t sz)
+static int emulate_iret(size_t sz)
 {
    offset_t addend = 2*sz;
 
    __allow_iret();
-   return emulate_pre_inspect_rflags(disasm, addend);
+   return emulate_pre_inspect_rflags(addend);
 }
 
 static int emulate_sysenter()
@@ -421,13 +421,13 @@ int __emulate_insn(ud_t *disasm)
       break;
 
    case UD_Iiretw:
-      rc = emulate_iret(disasm, 2);
+      rc = emulate_iret(2);
       break;
    case UD_Iiretd:
-      rc = emulate_iret(disasm, 4);
+      rc = emulate_iret(4);
       break;
    case UD_Iiretq:
-      rc = emulate_iret(disasm, 8);
+      rc = emulate_iret(8);
       break;
 
    case UD_Iclts:
@@ -443,7 +443,7 @@ int __emulate_insn(ud_t *disasm)
    case UD_Ipopfw:
    case UD_Ipopfd:
    case UD_Ipopfq:
-      rc = emulate_popf(disasm);
+      rc = emulate_popf();
       break;
 
    case UD_Iint1:
