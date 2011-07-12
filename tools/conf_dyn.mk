@@ -28,10 +28,6 @@ USE_UART := 1
 CFLG_CONFIG += -D__UART_PRINT__
 endif
 
-ifeq ($(CONFIG_UART_PROXY),on)
-CFLG_CONFIG += -D__UART_PROXY__
-endif
-
 ifeq ($(CONFIG_MSR_PROXY),on)
 CFLG_CONFIG += -D__MSR_PROXY__
 endif

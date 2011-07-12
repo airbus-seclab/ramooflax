@@ -117,15 +117,12 @@ function build_proxy()
 {
     $dialog --separate-output --checklist \
 	"Enable/Disable proxy modes" 20 70 10 \
-	"CONFIG_UART_PROXY" \
-	"vm operations on uart1 are proxyfied" $CONFIG_UART_PROXY \
 	"CONFIG_MSR_PROXY" \
 	"vm operations on msrs are proxyfied" $CONFIG_MSR_PROXY
 
     if [ $? -eq 0 ];then
 	ans=$(<$answer) ; :>$answer
 
-	CONFIG_UART_PROXY="off"
 	CONFIG_MSR_PROXY="off"
 
 	for v in $ans;do
@@ -149,7 +146,6 @@ function commit()
     echo "CONFIG_ARCH=$CONFIG_ARCH" >> $confout
     echo "CONFIG_CTRL=$CONFIG_CTRL" >> $confout
     echo "CONFIG_PRINT=$CONFIG_PRINT" >> $confout
-    echo "CONFIG_UART_PROXY=$CONFIG_UART_PROXY" >> $confout
     echo "CONFIG_MSR_PROXY=$CONFIG_MSR_PROXY" >> $confout
     echo "CONFIG_INST_DIR=$CONFIG_INST_DIR" >> $confout
 }
