@@ -450,6 +450,7 @@ typedef struct ehci_debug_port_info
    usb_dbg_desc_t                desc;
    uint8_t                       addr;
    uint8_t                       port;
+   size_t                        fails;
 
 } __attribute__((packed)) dbgp_info_t;
 
@@ -457,6 +458,7 @@ typedef struct ehci_debug_port_info
 ** Functions
 */
 #define DBGP_RETRY      1000
+#define DBGP_FAIL_TRSH     5
 #define DBGP_DEV_ADDR    127
 #define DBGP_PKT_SZ        8
 #define DBGP_INVALID       0
@@ -466,7 +468,8 @@ typedef struct ehci_debug_port_info
 
 #ifdef __INIT__
 void ehci_init();
-void ehci_full_init();
+void ehci_full_init(dbgp_info_t*);
+void ehci_fast_init(dbgp_info_t*);
 void ehci_controller_preinit(dbgp_info_t*);
 void ehci_controller_postinit(dbgp_info_t*);
 
@@ -487,6 +490,7 @@ void ehci_ports_identify(dbgp_info_t*);
 
 void dbgp_enable(dbgp_info_t*);
 void dbgp_own(dbgp_info_t*);
+void dbgp_release(dbgp_info_t*);
 void dbgp_configure(dbgp_info_t*);
 
 void __ehci_port_own(dbgp_info_t*);

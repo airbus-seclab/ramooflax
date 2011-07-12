@@ -38,13 +38,22 @@ void ehci_init()
    usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
    if((usbcmd.run && !usbsts.hlt) && cfgflg.cf)
-      ehci_dbgp_fast_init(dbgp_i);
+      ehci_fast_init(dbgp_i);
    else
       ehci_full_init(dbgp_i);
+
+   debug(EHCI, "ehci ready -- status:\n");
+}
+
+void ehci_fast_init(dbgp_info_t *dbgp_i)
+{
+   debug(EHCI, "ehci fast init\n");
+   ehci_dbgp_fast_init(dbgp_i);
 }
 
 void ehci_full_init(dbgp_info_t *dbgp_i)
 {
+   debug(EHCI, "ehci full init\n");
    ehci_controller_preinit(dbgp_i);
    ehci_dbgp_full_init(dbgp_i);
    ehci_controller_postinit(dbgp_i);
@@ -182,12 +191,14 @@ void ehci_reset(dbgp_info_t *dbgp_i)
 
 void ehci_dbgp_full_init(dbgp_info_t *dbgp_i)
 {
+   debug(EHCI, "ehci dbgp full init\n");
    ehci_detect(dbgp_i, EHCI_PSC_DBC2DD);
    ehci_dbgp_init(dbgp_i);
 }
 
 void ehci_dbgp_fast_init(dbgp_info_t *dbgp_i)
 {
+   debug(EHCI, "ehci dbgp fast init\n");
    ehci_detect(dbgp_i, EHCI_PSC_DBC2RST);
    ehci_dbgp_init(dbgp_i);
 }
@@ -223,8 +234,13 @@ void ehci_dbgp_stealth_reinit(dbgp_info_t *dbgp_i)
    portsc.raw = dbgp_i->ehci_psc->raw;
    if(portsc.own)
    {
-      debug(EHCI, "reset port owner\n");
+       debug(EHCI, "reset port owner\n");
       __ehci_port_own(dbgp_i);
+      ehci_dbgp_full_init(dbgp_i);
+   }
+   else if(portsc.reset)
+   {
+      debug(EHCI, "port is in reset state\n");
       ehci_dbgp_full_init(dbgp_i);
    }
    else
@@ -505,6 +521,17 @@ void dbgp_own(dbgp_info_t *dbgp_i)
    dbgp_i->ehci_dbg->ctrl.raw = ctrl.raw;
 }
 
+void dbgp_release(dbgp_info_t *dbgp_i)
+{
+   ehci_dbgp_ctrl_reg_t ctrl;
+
+   ctrl.raw = dbgp_i->ehci_dbg->ctrl.raw;
+   ctrl.enbl = 0;
+   ctrl.ownd = 0;
+   ctrl.used = 0;
+   dbgp_i->ehci_dbg->ctrl.raw = ctrl.raw;
+}
+
 void ehci_detect(dbgp_info_t *dbgp_i, int transition)
 {
    dbgp_own(dbgp_i);
@@ -520,6 +547,77 @@ void ehci_detect(dbgp_info_t *dbgp_i, int transition)
    } while(transition != EHCI_PSC_RST2HS);
 
    debug(EHCI,"high-speed device connected\n");
+}
+
+void __ehci_light_show(dbgp_info_t *dbgp_i)
+{
+   ehci_usbcmd_reg_t usbcmd;
+   ehci_usbsts_reg_t usbsts;
+   ehci_cfgflg_reg_t cfgflg;
+   ehci_portsc_reg_t portsc;
+   ehci_dbgp_reg_t   dbgp;
+
+   usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
+   usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
+   cfgflg.raw = dbgp_i->ehci_opr->cfgflg.raw;
+   portsc.raw = dbgp_i->ehci_psc->raw;
+   dbgp.ctrl.raw = dbgp_i->ehci_dbg->ctrl.raw;
+   dbgp.pid.raw  = dbgp_i->ehci_dbg->pid.raw;
+
+   debug(EHCI,
+	 "D e%d o%d w%d r%d x%x p%x | "
+	 "E r%d h%d c%d | "
+	 "P e%d c%d s%d r%d\n"
+	 ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr
+	 ,dbgp.ctrl.err, dbgp.ctrl.excp
+	 ,dbgp.pid.raw
+	 ,usbcmd.run,usbsts.hlt,cfgflg.cf
+	 ,portsc.enbl, portsc.conn, portsc.suspend, portsc.reset);
+}
+
+void __ehci_show(dbgp_info_t *dbgp_i)
+{
+   ehci_usbcmd_reg_t usbcmd;
+   ehci_usbsts_reg_t usbsts;
+   ehci_cfgflg_reg_t cfgflg;
+   ehci_portsc_reg_t portsc;
+   ehci_dbgp_reg_t   dbgp;
+
+   usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
+   usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
+   cfgflg.raw = dbgp_i->ehci_opr->cfgflg.raw;
+   portsc.raw = dbgp_i->ehci_psc->raw;
+
+   dbgp.ctrl.raw = dbgp_i->ehci_dbg->ctrl.raw;
+   dbgp.pid.raw  = dbgp_i->ehci_dbg->pid.raw;
+   dbgp.dev.raw  = dbgp_i->ehci_dbg->dev.raw;
+   dbgp.data.raw = dbgp_i->ehci_dbg->data.raw;
+
+   debug(EHCI,"###### dbgp:\n"
+	 " - ctrl en %d own %d wr %d usd %d len %d\n"
+	 " - err %d excp 0x%x\n"
+	 " - pid tkn 0x%x snd 0x%x rcv 0x%x\n"
+	 " - addr %d ep %d\n"
+	 " - data 0x%X\n"
+	 ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr,dbgp.ctrl.used,dbgp.ctrl.dlen
+	 ,dbgp.ctrl.err, dbgp.ctrl.excp
+	 ,dbgp.pid.tkn,dbgp.pid.snd,dbgp.pid.rcv
+	 ,dbgp.dev.addr, dbgp.dev.ep
+	 ,dbgp.data.raw);
+
+   debug(EHCI,"###### ehci ctrl:\n"
+	 " - cmd rst %d run %d\n"
+	 " - sts err %d pch %d hlt %d\n"
+	 " - cfg %d\n",
+	 usbcmd.rst, usbcmd.run,
+	 usbsts.sys_err, usbsts.port_change, usbsts.hlt,
+	 cfgflg.cf);
+
+   debug(EHCI,"###### psc:\n"
+	 " - en %d en_chg %d con %d con_chg %d own %d\n"
+	 " - susp %d rst %d line 0x%x \n",
+	 portsc.enbl, portsc.enbl_chg, portsc.conn, portsc.conn_chg, portsc.own,
+	 portsc.suspend, portsc.reset, portsc.line_sts);
 }
 
 /*
@@ -588,6 +686,7 @@ void dbgp_enable(dbgp_info_t *dbgp_i)
    dbgp_i->ehci_dbg->ctrl.raw = ctrl.raw;
 
    __ehci_port_hide(dbgp_i);
+   __ehci_light_show(dbgp_i);
 }
 
 /* void __dbgp_enable_without_ehci_cfg(dbgp_info_t *dbgp_i) */
@@ -859,52 +958,16 @@ __emit:
    debug(EHCI, "__dbgp_emit retry exhausted\n");
 
 __failure:
+   if(++dbgp_i->fails > DBGP_FAIL_TRSH)
+   {
+      dbgp_i->fails = 0;
+      dbgp_release(dbgp_i);
+      ehci_dbgp_fast_init(dbgp_i);
+   }
+
+   __ehci_light_show(dbgp_i);
    debug(EHCI, "__dbgp_emit failure\n");
    return DBGP_EMIT_FAIL;
-}
-
-void __ehci_show(dbgp_info_t *dbgp_i)
-{
-   ehci_usbcmd_reg_t usbcmd;
-   ehci_usbsts_reg_t usbsts;
-   ehci_cfgflg_reg_t cfgflg;
-   ehci_portsc_reg_t portsc;
-   ehci_dbgp_reg_t   dbgp;
-
-   usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
-   usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
-   cfgflg.raw = dbgp_i->ehci_opr->cfgflg.raw;
-   portsc.raw = dbgp_i->ehci_psc->raw;
-
-   dbgp.ctrl.raw = dbgp_i->ehci_dbg->ctrl.raw;
-   dbgp.pid.raw  = dbgp_i->ehci_dbg->pid.raw;
-   dbgp.dev.raw  = dbgp_i->ehci_dbg->dev.raw;
-   dbgp.data.raw = dbgp_i->ehci_dbg->data.raw;
-
-   debug(EHCI,"###### dbgp err 0x%x:\n"
-	  " - ctrl en %d own %d wr %d usd %d len %d\n"
-	  " - pid tkn 0x%x snd 0x%x rcv 0x%x\n"
-	  " - addr %d ep %d\n"
-	  " - data 0x%X\n",
-	  dbgp.ctrl.excp, dbgp.ctrl.enbl, dbgp.ctrl.ownd,
-	  dbgp.ctrl.wr, dbgp.ctrl.used, dbgp.ctrl.dlen,
-	  dbgp.pid.tkn, dbgp.pid.snd, dbgp.pid.rcv,
-	  dbgp.dev.addr, dbgp.dev.ep,
-	  dbgp.data.raw);
-
-   debug(EHCI,"###### ehci ctrl:\n"
-	  " - cmd rst %d run %d\n"
-	  " - sts err %d pch %d hlt %d\n"
-	  " - cfg %d\n",
-	  usbcmd.rst, usbcmd.run,
-	  usbsts.sys_err, usbsts.port_change, usbsts.hlt,
-	  cfgflg.cf);
-
-   debug(EHCI,"###### psc:\n"
-	  " - en %d en_chg %d con %d con_chg %d own %d\n"
-	  " - susp %d rst %d line 0x%x \n",
-	  portsc.enbl, portsc.enbl_chg, portsc.conn, portsc.conn_chg, portsc.own,
-	  portsc.suspend, portsc.reset, portsc.line_sts);
 }
 
 static size_t __dbgp_rw(uint8_t *data, size_t n, dbgp_rw_t fn)
@@ -922,7 +985,8 @@ static size_t __dbgp_rw(uint8_t *data, size_t n, dbgp_rw_t fn)
    {
       if(!fn(&info->hrd.dev.dbgp, &buf))
       {
-	 debug(EHCI,"__dbgp_rw: cnt %D from 0x%X bytes [0x%X]\n"
+	 debug(EHCI,"__dbgp_rw(%s): cnt %D from 0x%X bytes [0x%X]\n\n"
+	       ,(fn==_dbgp_read)?"read":"write"
 	       ,cnt, buf.data.linear, *buf.data.u64);
 	 return cnt;
       }
@@ -940,7 +1004,8 @@ static size_t __dbgp_rw(uint8_t *data, size_t n, dbgp_rw_t fn)
       buf.sz = last;
       if(!fn(&info->hrd.dev.dbgp, &buf))
       {
-	 debug(EHCI,"__dbgp_rw: cnt %D from 0x%X bytes [0x%X]\n"
+	 debug(EHCI,"__dbgp_rw(%s): cnt %D from 0x%X bytes [0x%X]\n\n"
+	       ,(fn==_dbgp_read)?"read":"write"
 	       ,cnt, buf.data.linear, *buf.data.u64);
 	 return cnt;
       }
