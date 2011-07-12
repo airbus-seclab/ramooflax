@@ -5,4 +5,5 @@
 *.map
 *.pyc
 *.config
+*.patch
 !.gitignore
