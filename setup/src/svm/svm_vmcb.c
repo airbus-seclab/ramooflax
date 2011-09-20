@@ -21,20 +21,29 @@
 
 extern info_data_t *info;
 
-void svm_vmcb_init()
+void svm_vmcb_msr_controls_init()
 {
-   svm_vmcb_controls_init();
-   svm_vmcb_io_controls_init();
-   svm_vmcb_msr_controls_init();
-   svm_vmcb_guest_state_init();
+#ifdef __MSR_PROXY__
+   svm_deny_msr_rw_range(info->vm.cpu.vmc, 0, 0x2000-1);
+   svm_deny_msr_rw_range(info->vm.cpu.vmc, 0xc0000000, 0xc0001fff-1);
+   svm_deny_msr_rw_range(info->vm.cpu.vmc, 0xc0010000, 0xc0011fff-1);
+#else
+   svm_deny_msr_rw(info->vm.cpu.vmc, AMD_EFER_MSR);
+#endif
+
+   vm_ctrls.sys_insn_bitmap.msr_insn = 1;
+   vm_ctrls.msr_bitmap_addr.raw = (offset_t)info->vm.cpu.vmc->msr_bitmap;
 }
 
-void svm_vmcb_controls_init()
+static void svm_vmcb_io_controls_init()
 {
-   amd_svm_feat_t    svm_feat;
-   vmcb_ctrls_area_t *ctrls;
+   vm_ctrls.sys_insn_bitmap.io_insn = 1;
+   vm_ctrls.io_bitmap_addr.raw = (offset_t)info->vm.cpu.vmc->io_bitmap;
+}
 
-   ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
+static void svm_vmcb_controls_init()
+{
+   amd_svm_feat_t svm_feat;
 
    cpuid_amd_svm_features(svm_feat);
    if(svm_feat.asid_nr < 1)
@@ -43,48 +52,46 @@ void svm_vmcb_controls_init()
    if(!svm_feat.lbr)
       panic("no lbr virtualization");
 
-   ctrls->lbr.raw = 1ULL;
+   vm_ctrls.lbr.raw = 1ULL;
 
-   ctrls->exception_bitmap.raw = info->vm.cpu.dflt_excp;
+   vm_ctrls.exception_bitmap.raw = info->vm.cpu.dflt_excp;
 
-   ctrls->cr_read_bitmap  = VMCB_CR_R_BITMAP;
-   ctrls->cr_write_bitmap = VMCB_CR_W_BITMAP;
+   vm_ctrls.cr_read_bitmap  = VMCB_CR_R_BITMAP;
+   vm_ctrls.cr_write_bitmap = VMCB_CR_W_BITMAP;
 
-   ctrls->sys_insn_bitmap.cr0_sel_write = 1;
+   vm_ctrls.sys_insn_bitmap.cr0_sel_write = 1;
 
-   ctrls->sys_insn_bitmap.cpuid      = 1;
-   ctrls->sys_insn_bitmap.task_sw    = 1;
-   ctrls->sys_insn_bitmap.freez      = 1;
-   ctrls->sys_insn_bitmap.shutdown   = 1;
+   vm_ctrls.sys_insn_bitmap.cpuid      = 1;
+   vm_ctrls.sys_insn_bitmap.task_sw    = 1;
+   vm_ctrls.sys_insn_bitmap.freez      = 1;
+   vm_ctrls.sys_insn_bitmap.shutdown   = 1;
 
-   ctrls->vmm_insn_bitmap.vmrun      = 1;
-   ctrls->vmm_insn_bitmap.vmmcall    = 1;
-   ctrls->vmm_insn_bitmap.vmload     = 1;
-   ctrls->vmm_insn_bitmap.vmsave     = 1;
+   vm_ctrls.vmm_insn_bitmap.vmrun      = 1;
+   vm_ctrls.vmm_insn_bitmap.vmmcall    = 1;
+   vm_ctrls.vmm_insn_bitmap.vmload     = 1;
+   vm_ctrls.vmm_insn_bitmap.vmsave     = 1;
 
-   ctrls->vmm_insn_bitmap.skinit     = 1;
-   ctrls->vmm_insn_bitmap.rdtscp     = 1;
-   ctrls->vmm_insn_bitmap.icebp      = 1;
-   ctrls->vmm_insn_bitmap.monitor    = 1;
-   ctrls->vmm_insn_bitmap.mwait      = 1;
-   ctrls->vmm_insn_bitmap.mwait_cond = 1;
+   vm_ctrls.vmm_insn_bitmap.skinit     = 1;
+   vm_ctrls.vmm_insn_bitmap.rdtscp     = 1;
+   vm_ctrls.vmm_insn_bitmap.icebp      = 1;
+   vm_ctrls.vmm_insn_bitmap.monitor    = 1;
+   vm_ctrls.vmm_insn_bitmap.mwait      = 1;
+   vm_ctrls.vmm_insn_bitmap.mwait_cond = 1;
 
-   info->vm.asid_nr               = svm_feat.asid_nr;
-   ctrls->sys_insn_bitmap.invlpga = 1;
-   ctrls->tlb_ctrl.guest_asid     = 1;
-   ctrls->npt.raw                 = 1UL;
-   ctrls->ncr3.pml4.addr          = page_nr(info->vm.cpu.pg.rm->pml4);
+   info->vm.asid_nr                 = svm_feat.asid_nr;
+   vm_ctrls.sys_insn_bitmap.invlpga = 1;
+   vm_ctrls.tlb_ctrl.guest_asid     = 1;
+   vm_ctrls.npt.raw                 = 1UL;
+   vm_ctrls.ncr3.pml4.addr          = page_nr(info->vm.cpu.pg.pml4);
 
-   ctrls->sys_insn_bitmap.hlt     = 0;
-   ctrls->sys_insn_bitmap.intn    = 1;
-   ctrls->vmm_insn_bitmap.stgi    = 1;
-   ctrls->vmm_insn_bitmap.clgi    = 1;
+   vm_ctrls.sys_insn_bitmap.intn    = 1;
+   vm_ctrls.vmm_insn_bitmap.stgi    = 1;
+   vm_ctrls.vmm_insn_bitmap.clgi    = 1;
 
-   ctrls->sys_insn_bitmap.init    = 1;
-   ctrls->sys_insn_bitmap.nmi     = 1;
+   vm_ctrls.sys_insn_bitmap.init    = 1;
+   vm_ctrls.sys_insn_bitmap.nmi     = 1;
 
-   ctrls->sys_insn_bitmap.intr    = 0;
-   ctrls->int_ctrl.v_ign_tpr      = 1;
+   vm_ctrls.int_ctrl.v_ign_tpr      = 1;
 
    /*
    ** XXX: SMI not intercepted may disable interrupts
@@ -99,26 +106,10 @@ void svm_vmcb_controls_init()
    */
 }
 
-void svm_vmcb_io_controls_init()
+void svm_vmcb_init()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-   ctrls->sys_insn_bitmap.io_insn = 1;
-   ctrls->io_bitmap_addr.raw = (offset_t)info->vm.cpu.vmc->io_bitmap;
-}
-
-void svm_vmcb_msr_controls_init()
-{
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-#ifdef __MSR_PROXY__
-   svm_deny_msr_rw_range(info->vm.cpu.vmc, 0, 0x2000-1);
-   svm_deny_msr_rw_range(info->vm.cpu.vmc, 0xc0000000, 0xc0001fff-1);
-   svm_deny_msr_rw_range(info->vm.cpu.vmc, 0xc0010000, 0xc0011fff-1);
-#else
-   svm_deny_msr_rw(info->vm.cpu.vmc, AMD_EFER_MSR);
-#endif
-
-   ctrls->sys_insn_bitmap.msr_insn = 1;
-   ctrls->msr_bitmap_addr.raw = (offset_t)info->vm.cpu.vmc->msr_bitmap;
+   svm_vmcb_controls_init();
+   svm_vmcb_io_controls_init();
+   svm_vmcb_msr_controls_init();
+   svm_vmcb_guest_state_init();
 }

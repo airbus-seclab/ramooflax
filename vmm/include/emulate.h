@@ -37,7 +37,7 @@
 int   emulate();
 void  emulate_unsupported(ud_t*);
 int   emulate_int15();
-
+int   emulate_clts();
 int   __emulate_insn(ud_t*);
 int   __emulate_exception(uint8_t);
 int   __emulate_hard_interrupt(uint8_t);

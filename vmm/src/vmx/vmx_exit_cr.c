@@ -24,50 +24,76 @@
 
 extern info_data_t *info;
 
+static int vmx_vmexit_resolve_lmsw(uint16_t val)
+{
+   raw64_t cr0;
+
+   cr0.raw   = vm_exec_ctrls.cr0_read_shadow.raw & ~(0xfULL);
+   cr0.wlow |= val & 0xf;
+
+   return __resolve_cr_wr_with(0, (raw64_t*)&cr0.raw);
+}
+
+/* XXX: read cr0/cr4 will not trap !!! */
+void __vmx_vmexit_cr_update_mask()
+{
+   if((info->vmm.ctrl.usr.cr_rd & (1<<0)) || (info->vmm.ctrl.usr.cr_wr & (1<<0)))
+      vm_exec_ctrls.cr0_mask.raw = -1UL;
+   else
+      vm_exec_ctrls.cr0_mask.raw = info->vm.cr0_dft_mask.raw;
+
+   vmcs_read(vm_exec_ctrls.proc);
+   if((info->vmm.ctrl.usr.cr_rd & (1<<3)))
+      vm_exec_ctrls.proc.cr3s = 1;
+   else
+      vm_exec_ctrls.proc.cr3s = 0;
+
+   if((info->vmm.ctrl.usr.cr_rd & (1<<4)) || (info->vmm.ctrl.usr.cr_wr & (1<<4)))
+      vm_exec_ctrls.cr4_mask.raw = -1UL;
+   else
+      vm_exec_ctrls.cr4_mask.raw = info->vm.cr4_dft_mask.raw;
+
+   vmcs_dirty(vm_exec_ctrls.cr0_mask);
+   vmcs_dirty(vm_exec_ctrls.proc);
+   vmcs_dirty(vm_exec_ctrls.cr4_mask);
+}
+
 int vmx_vmexit_resolve_cr_access()
 {
-   vmcs_exit_info_t    *exit;
-   vmcs_guest_t        *state;
-   vmcs_exit_info_cr_t *cr_access;
+   vmcs_exit_info_cr_t *access;
    uint8_t             gpr;
+   int                 rc;
 
-   exit = exit_info(info);
-   state = guest_state(info);
+   vmcs_read(vm_exit_info.qualification);
+   access = &vm_exit_info.qualification.cr;
+   gpr = GPR64_RAX - (access->gpr & GPR64_RAX);
 
-   vmcs_read( exit->qualification );
-   cr_access = &exit->qualification.cr_access;
-   gpr = 7 - (cr_access->gpr & 7);
-
-   switch( cr_access->type )
+   switch(access->type)
    {
    case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_MOV_T_CR:
-      return resolve_cr( 1, gpr, cr_access->nr );
+      rc = __resolve_cr(1, access->nr, gpr);
+      break;
    case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_MOV_F_CR:
-      return resolve_cr( 0, cr_access->nr, gpr );
+      rc = __resolve_cr(0, access->nr, gpr);
+      break;
+   case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_LMSW:
+      if(access->lmsw_op)
+	 return 0;
+      rc = vmx_vmexit_resolve_lmsw(info->vm.cpu.gpr->raw[gpr].wlow);
+      break;
+   case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_CLTS:
+      rc = emulate_clts();
+      break;
+   default:
+      return 0;
+   }
+
+   if(rc == CR_SUCCESS)
+   {
+      vmcs_read(vm_exit_info.insn_len);
+      vm_update_rip(vm_exit_info.insn_len.raw);
+      return 1;
    }
 
    return 0;
 }
-
-uint32_t __vmx_vmexit_mov_from_cr(uint8_t cr)
-{
-   vmcs_exec_ctl_t *ctrls = exec_ctrls(info);
-
-   if( cr == 0 )
-   {
-      vmcs_read( ctrls->cr0_mask );
-      return (((~ctrls->cr0_mask.low) & __cr0.low) | (ctrls->cr0_mask.low & __cr0_shadow.low));
-   }
-   else if( cr == 2 )
-      return get_cr2();
-   else if( cr == 3 )
-      return __cr3_shadow.low;
-   else if( cr == 4 )
-   {
-      vmcs_read( ctrls->cr4_mask );
-      return (((~ctrls->cr4_mask.low) & __cr4.low) | (ctrls->cr4_mask.low & __cr4_shadow.low));
-   }
-
-   return 0;
-}
-

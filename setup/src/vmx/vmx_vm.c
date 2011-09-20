@@ -19,31 +19,31 @@
 #include <vmx_vmcs.h>
 #include <vmx_msr.h>
 #include <vmx_insn.h>
-#include <klibc.h>
+#include <debug.h>
 #include <info_data.h>
 
-void vmx_vm_init(info_data_t *info)
+extern info_data_t *info;
+
+void vmx_vm_init()
 {
-   vmx_basic_info_msr_t  vmx_info;
-   uint32_t              vmx_err;
-   raw64_t               vmcs_addr;
+   vmx_insn_err_t vmx_err;
+   raw64_t        vmcs_addr;
 
-   /* setup rev id needed by vmclear */
-   read_msr_vmx_basic_info( vmx_info );
-   info->vm.cpu.vmc->vm_cpu_vmcs.revision_id = info->vm.vmcs.revision_id = vmx_info.revision_id;
+   info->vm.cpu.vmc->vm_cpu_vmcs.revision_id = info->vm.vmx_info.revision_id;
+   info->vm.vmcs.revision_id = info->vm.vmx_info.revision_id;
 
-   vmcs_addr.low = (uint32_t)&info->vm.cpu.vmc->vm_cpu_vmcs;
-   vmcs_addr.high = 0;
+   info->vm.dr_shadow[4].raw = 0xffff0ff0;
+   info->vm.dr_shadow[5].raw = 0x400;
 
-   /* clear vmcs launch state */
-   if( ! vmx_vmclear( &vmx_err, &vmcs_addr.raw ) )
-      panic( "vmclear failed (%d) !\n", vmx_err );
+   vmcs_addr.raw = (offset_t)&info->vm.cpu.vmc->vm_cpu_vmcs;
 
-   /* mark current-vmcs valid/active */
-   if( ! vmx_vmload( &vmx_err, &vmcs_addr.raw ) )
-      panic( "vmload failed (%d) !\n", vmx_err );
+   if(!vmx_vmclear(&vmx_err, &vmcs_addr.raw))
+      panic("vmclear failed (%d) !\n", vmx_err.raw);
 
-   vmx_vmcs_init( info );
-   vmx_vmcs_encode( info );
-   vmx_vmcs_commit( info );
+   if(!vmx_vmload(&vmx_err, &vmcs_addr.raw))
+      panic("vmload failed (%d) !\n", vmx_err.raw);
+
+   vmx_vmcs_init(info);
+   vmx_vmcs_encode(info);
+   vmx_vmcs_commit(info);
 }

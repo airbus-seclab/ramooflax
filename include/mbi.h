@@ -19,6 +19,7 @@
 #define __MULTIBOOT_H__
 
 #include <grub_mbi.h>
+#include <types.h>
 
 typedef multiboot_info_t        mbi_t;
 typedef multiboot_module_t      module_t;
@@ -35,6 +36,12 @@ typedef multiboot_memory_map_t  memory_map_t;
 
 #define __mbh__                 __attribute__ ((section(".mbh"),aligned(4)))
 
+/*
+** Functions
+*/
+typedef int (*mbi_opt_hdl_t)(char*, void*);
+
+int  mbi_get_opt(module_t*, char*, mbi_opt_hdl_t, void*);
 
 #endif
 

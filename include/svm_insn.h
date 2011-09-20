@@ -26,7 +26,7 @@
 void      svm_vmrun();
 void      svm_vmexit();
 
-#define   svm_vmsave(vmcb_paddr) asm volatile ( "vmsave %%eax"::"eax"(vmcb_paddr) )
-#define   svm_vmload(vmcb_paddr) asm volatile ( "vmload %%eax"::"eax"(vmcb_paddr) )
+#define   svm_vmsave(vmcb_paddr) asm volatile ( "vmsave %%rax"::"rax"(vmcb_paddr) )
+#define   svm_vmload(vmcb_paddr) asm volatile ( "vmload %%rax"::"rax"(vmcb_paddr) )
 
 #endif

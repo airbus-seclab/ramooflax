@@ -2,7 +2,8 @@ obj :=	idt.o			\
 	intr.o			\
 	excp.o			\
 	device.o		\
-	pf.o			\
+	mmu_walk.o		\
+	npt_walk.o		\
 	db.o			\
 	cpuid.o			\
 	cr.o			\

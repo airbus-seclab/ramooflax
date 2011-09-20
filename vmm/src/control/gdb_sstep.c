@@ -49,6 +49,7 @@ void gdb_singlestep_save_context()
       return;
 
    /* XXX: need syscall/sysret support too */
+   __pre_access(__sysenter_cs);
    info->vmm.ctrl.dbg.stp.ctx.sysenter_cs.raw = __sysenter_cs.raw;
 
    debug(GDB_CMD,"save context sysenter_cs 0x%X\n", __sysenter_cs.raw);
@@ -61,6 +62,7 @@ void gdb_singlestep_restore_context()
 	 info->vmm.ctrl.dbg.stp.ctx.sysenter_cs.raw);
 
    __sysenter_cs.raw = info->vmm.ctrl.dbg.stp.ctx.sysenter_cs.raw;
+   __post_access(__sysenter_cs);
 }
 
 int gdb_singlestep_enable(uint8_t requestor)
@@ -74,6 +76,7 @@ int gdb_singlestep_enable(uint8_t requestor)
    gdb_singlestep_save_context();
 
    gdb_singlestep_set_rflags(&__rflags);
+   __post_access(__rflags);
    gdb_protect_db_excp();
 
    return 1;
@@ -88,6 +91,7 @@ void gdb_singlestep_disable()
    gdb_singlestep_restore_context();
 
    gdb_singlestep_restore_rflags(&__rflags);
+   __post_access(__rflags);
    gdb_release_db_excp();
 }
 

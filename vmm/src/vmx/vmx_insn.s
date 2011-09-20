@@ -44,7 +44,7 @@ entry:
 ** VM-exit
 **
 ** XXX: we should sub "push all" cycle number
-**	(sampled via setup) from eax,edx
+**	(sampled via setup) from rax,rdx
 **	returned by "rdtsc" before calling
 **	vmx_vmexit_handler()
 */
@@ -67,6 +67,10 @@ vmx_vmexit:
 	push	%r15
 
 	rdtsc
+	mov	%edx, %edi
+	shl	$32, %rdi
+	mov	%eax, %edi
+
 	xor	%rbp, %rbp
 	call	vmx_vmexit_handler
 
@@ -95,55 +99,46 @@ vmx_vmresume:
 /*
 ** VM-entry failure
 **
-** Handle vmresume failure
-**
-** esp + 16 [  vmx_err     ]
-** esp + 12 [  format str  ]
-** esp +  8 [  func name   ]
-** esp +  4 [  fake_ret @  ]
-** esp +  0 [  panic @     ]
-**
 ** Params:
-**	EAX = mem32 VMX error code ptr = @vmx_err (esp+12)
+**	RDI = mem64 VMX error code ptr = @vmx_err
 */
-vmx_vmresume_failure:
-	mov	%esp, %eax
-	push	$vmx_vmresume_failure_fmt
-	push	$vmx_vmresume_failure_fnm
-	push	$0xbadc0de
-	push	$__panic
-	jmp	vmx_check_error
+__vmx_vmresume_failure_wrapper:
+	sub	$8, %rsp
+	mov	%rsp, %rdi
+	call	vmx_check_error
+	movl	(%rdi), %edi
+	jmp	vmx_vmresume_failure
 
 /*
 ** VM write
 **
 ** params:
-**	EAX = mem32 VMX error code ptr
-**	EDX = value to write
-**	ECX = VMCS field encoding
+**	RDI = mem64 VMX error code ptr
+**	RSI = value to write
+**	RDX = VMCS field encoding
 **
 ** returns:
 **	0 on failure
 **	1 on success
 */
 __vmx_vmwrite:
-	vmwrite	%edx, %ecx
+	vmwrite	%rsi, %rdx
 	jmp	vmx_check_error
 
 /*
 ** VM read
 **
 ** params:
-**	EAX = mem32 VMX error code ptr
-**	EDX = mem32 read value ptr
-**	ECX = VMCS field encoding
+**	RDI = mem64 VMX error code ptr
+**	RDI = mem64 read value ptr
+**	RDX = VMCS field encoding
 **
 ** returns:
 **	0 on failure
 **	1 on success
 */
 __vmx_vmread:
-	vmread	%ecx, (%edx)
+	vmread	%rdx, (%rsi)
 	jmp	vmx_check_error
 
 /*
@@ -153,32 +148,31 @@ vmx_check_error:
 	jz	vmx_fail_valid
 	jc	vmx_fail_invalid
 vmx_success:
-	mov	$1, %eax
+	mov	$1, %rax
 	ret
 
 /*
 ** VM Fail Valid : ZF=1
 **
 ** read VMCS instruction error (0x4400)
-** store it to (%eax)
+** store it to (%rdi)
 */
 vmx_fail_valid:
-	push	%ecx
-	mov	$0x4400, %ecx
-	vmread	%ecx, (%eax)
-	pop	%ecx
+	push	%rdx
+	mov	$0x4400, %rdx
+	vmread	%rdx, (%rdi)
+	pop	%rdx
 	jmp	vmx_fail
 
 /*
 ** VM Fail Invalid : CF=1
 **
-** no VMCS instruction error code
-** but inform "C" error pointer
+** VMCS instruction error code is 0
 */
 vmx_fail_invalid:
-	movl	$0, (%eax)
+	movl	$0, (%rdi)
 
 vmx_fail:
-	xor	%eax, %eax
+	xor	%rax, %rax
 	ret
 

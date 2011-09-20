@@ -20,70 +20,84 @@
 
 #include <types.h>
 #include <vmx_vmcs_enc.h>
-
-/*
-** vmcs meta accessor
-*/
-typedef struct vmcs_field_access
-{
-   vmcs_field_enc_t enc;
-   uint8_t          r:1;  /* (1) field is synchro with vmcs */
-   uint8_t          w:1;  /* (0) field is synchro with vmcs */
-
-} __attribute__((packed)) vmcs_field_access_t;
+#include <vmx_insn.h>
+#include <print.h>
 
 /*
 ** macro to declare vmcs fields
 */
-#define vmcs_t(_x_)							\
-   struct { _x_; vmcs_field_access_t __vmcs_access; } __attribute__((packed))
+#define vmcs_t(_ft_,_fn_)   _ft_ _fn_; vmcs_field_enc_t _fn_##_enc
 
 /*
 ** Functions
 */
-struct information_data;
+#ifndef __INIT__
+void vmx_vmcs_collect();
+#endif
 
-void    vmx_vmcs_encode(struct information_data*);
-void    vmx_vmcs_commit(struct information_data*);
-void    vmx_vmcs_collect(struct information_data*);
-void    __vmcs_read(raw64_t*, vmcs_field_access_t*);
-void    __vmcs_flush(raw64_t*, vmcs_field_access_t*);
+void vmx_vmcs_commit();
 
-#define vmcs_dirty(_field_)		  \
+void __vmcs_force_read(raw64_t*, vmcs_field_enc_t)  __regparm__(2);
+void __vmcs_force_flush(raw64_t*, vmcs_field_enc_t) __regparm__(2);
+
+/*
+** Wrappers
+*/
+#define vmcs_fake_it(_fld_)             (_fld_##_enc.fake = 1)
+#define vmcs_encode(_fld_,_eNc_)	(_fld_##_enc.raw  = _eNc_)
+#define vmcs_is_dirty(_fld_)            (_fld_##_enc.dirty != 0)
+#define vmcs_set_read(_fld_)	        (_fld_##_enc.read = 1)
+
+#define vmcs_dirty(_fld_)		  \
    ({					  \
-      if(! _field_.__vmcs_access.w)	  \
+      if(!_fld_##_enc.dirty)		  \
       {					  \
-	 _field_.__vmcs_access.r = 1;	  \
-	 _field_.__vmcs_access.w = 1;	  \
+	 _fld_##_enc.read  = 1;		  \
+	 _fld_##_enc.dirty = 1;		  \
       }					  \
    })
 
-#define vmcs_read(_field_)						\
-   ({									\
-      if(! _field_.__vmcs_access.r)					\
-      {									\
-	 __vmcs_read((raw64_t*)&_field_.raw, &_field_.__vmcs_access);	\
-	 /*printf("vmread("#_field_")\n");*/				\
-      }									\
+#define vmcs_force_read(_fld_)					\
+   __vmcs_force_read((raw64_t*)&_fld_.raw, _fld_##_enc);	\
+
+#define vmcs_force_flush(_fld_)					\
+   __vmcs_force_flush((raw64_t*)&_fld_.raw, _fld_##_enc);	\
+
+#define vmcs_read(_fld_)		\
+   ({					\
+      if(!_fld_##_enc.read)		\
+      {					\
+	 vmcs_force_read(_fld_);	\
+	 _fld_##_enc.read = 1;		\
+      }					\
    })
 
-#define vmcs_flush(_field_)						\
-   ({									\
-      _field_.__vmcs_access.r = 0;					\
-      if(_field_.__vmcs_access.w)					\
-	 vmcs_force_flush(_field_);					\
+#define vmcs_flush(_fld_)		\
+   ({					\
+      _fld_##_enc.read = 0;		\
+      if(_fld_##_enc.dirty)		\
+      {					\
+	 _fld_##_enc.dirty = 0;		\
+	 vmcs_force_flush(_fld_);	\
+      }					\
    })
 
-#define vmcs_encode(_field_,_encoding_)					\
-   ({									\
-      _field_.__vmcs_access.w = 1;					\
-      _field_.__vmcs_access.enc.raw = _encoding_;			\
+#define vmcs_flush_fixed(_fld_,_fx_)		\
+   ({						\
+      _fld_##_enc.read = 0;			\
+      if(_fld_##_enc.dirty)			\
+      {						\
+	 _fld_##_enc.dirty = 0;			\
+	 vmx_set_fixed(_fld_.raw, _fx_);	\
+	 vmcs_force_flush(_fld_);		\
+      }						\
    })
 
-#define vmcs_force_flush(_field_)					\
-   ({									\
-      /*printf("vmwrite("#_field_")\n");*/				\
-      __vmcs_flush((raw64_t*)&_field_.raw, &_field_.__vmcs_access);	\
+#define vmcs_cond(_will_wr_,_fld_)	\
+   ({					\
+      vmcs_read(_fld_);			\
+      if(_will_wr_)			\
+	 _fld_##_enc.dirty = 1;		\
    })
 
 #endif

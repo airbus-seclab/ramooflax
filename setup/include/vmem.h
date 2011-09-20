@@ -18,11 +18,16 @@
 #ifndef __VMEM_H__
 #define __VMEM_H__
 
+#ifdef __SVM__
+#include <svm_npt.h>
+#else
+#include <vmx_ept.h>
+#endif
+
 /*
 ** Functions
 */
 void  vmem_init();
-
 
 #endif
 

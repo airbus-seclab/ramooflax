@@ -127,14 +127,16 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    if(io->in)
    {
       io->src.addr = device;
-      io->dst.linear = io->seg.raw + (info->vm.cpu.gpr->rdi.raw & io->msk);
+      __string_io_linear(io->dst.linear, io);
+
       if(!__io_insn_string_in(io, sz))
 	 return 0;
    }
    else
    {
-      io->dst.addr   = device;
-      io->src.linear = io->seg.raw + (info->vm.cpu.gpr->rsi.raw & io->msk);
+      io->dst.addr = device;
+      __string_io_linear(io->src.linear, io);
+
       if(!__io_insn_string_out(io, sz))
 	 return 0;
    }
@@ -260,7 +262,7 @@ static int dev_io_simple_proxify(io_insn_t *io)
       case 4: data.raw  = inl(io->port); break;
       }
 
-      //debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, data.raw);
+      debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, data.raw);
       return __io_insn_simple(io, &data, &sz);
    }
    else
@@ -268,7 +270,7 @@ static int dev_io_simple_proxify(io_insn_t *io)
       if(!__io_insn_simple(io, &data, &sz))
 	 return 0;
 
-      //debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, data.raw);
+      debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, data.raw);
 
       switch(io->sz)
       {

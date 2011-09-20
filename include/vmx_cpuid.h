@@ -57,4 +57,28 @@
 	    );								\
    })
 
+/*
+** CPUID_EXT_HIGHEST extended 
+*/
+#define CPUID_EXT_HIGHEST                  0x80000000
+#define cpuid_ext_highest()		\
+   ({					\
+      uint32_t eax;			\
+      __cpuid_1(CPUID_EXT_HIGHEST,eax);	\
+      eax;				\
+   })
+
+/*
+** If not available then 36 bits physical addr
+*/
+#define CPUID_MAX_ADDR                     0x80000008
+#define cpuid_max_paddr()		\
+   ({					\
+      offset_t max;			\
+      uint32_t eax;			\
+      __cpuid_1(CPUID_MAX_ADDR,eax);	\
+      max = (1ULL<<(eax & 0xff)) - 1;	\
+   })
+
+
 #endif

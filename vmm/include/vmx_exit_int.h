@@ -21,15 +21,40 @@
 #include <types.h>
 
 /*
-** XXX
+** preempting while guest is in realmode
+** makes irq handlers being called at
+** pmode exception handlers index
+** because we did not remap the pic
+**
+** In realmode, no exception error code
+** is pushed. We must inform idt handler
+** that we are preempting realmode
+** to get a standard stack layout
+**
+** cf. vm.c
 */
-#define preempt()                 fixme /*asm volatile( "sti ; nop ; cli" )*/
+#define preempt()				\
+   ({						\
+      irq_msg.rmode   = __rmode()?1:0;		\
+      irq_msg.preempt = 1;			\
+      asm volatile ("sti ; nop ; cli");		\
+      irq_msg.preempt = 0;			\
+   })
 
 /*
 ** Functions
 */
-void  __vmx_vmexit_setup_interrupt_window_exiting(uint8_t, uint8_t);
-void  __vmx_vmexit_inject_interrupt(uint8_t);
+/* void  __vmx_vmexit_setup_interrupt_window_exiting(uint8_t, uint8_t); */
+/* void  __vmx_vmexit_inject_interrupt(uint8_t); */
 
+#define __vmx_vmexit_inject_intn(_vector)			\
+   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,	\
+				 VMCS_IDT_INFO_TYPE_SW_INT,	\
+				 _vector)
+
+#define __vmx_vmexit_inject_interrupt(_vector)			\
+   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,	\
+				 VMCS_IDT_INFO_TYPE_HW_INT,	\
+				 _vector)
 
 #endif

@@ -22,24 +22,48 @@
 #include <cr.h>
 #include <pagemem.h>
 
+typedef enum
+{
+   NPG_OP_MAP = 0,
+   NPG_OP_UNMAP,
+   NPG_OP_REMAP,
+
+} npg_op_type_t;
+
+typedef void (*npg_op_fnc_t)(offset_t, uint64_t);
+
+typedef struct npg_operator
+{
+   npg_op_fnc_t        fnc[3];
+   size_t              sz, shf;
+   struct npg_operator *nxt;
+
+} __attribute__((packed)) npg_op_t;
+
 /*
-** Functions
+** Nested mapping functions
 */
-void pg_map_512G(offset_t, uint32_t);
-void pg_map_1G(offset_t, uint32_t);
-void pg_map_2M(offset_t, uint32_t);
-void pg_map_4K(offset_t, uint32_t);
-void pg_map(offset_t, offset_t, uint32_t);
+void npg_map(offset_t, offset_t, uint64_t);
+void npg_unmap(offset_t, offset_t);
+void npg_setup_a20();
 
-void pg_unmap_512G(offset_t);
-void pg_unmap_1G(offset_t);
-void pg_unmap_2M(offset_t);
-void pg_unmap_4K(offset_t);
-void pg_unmap(offset_t, offset_t);
-
+#ifndef __INIT__
+/*
+** Classical && Nested walking functions
+*/
 int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*);
-int  pg_walk(offset_t, offset_t*, size_t*);
-int  pg_nested_walk(offset_t, offset_t*);
-void pg_show(offset_t);
+int    pg_walk(offset_t, offset_t*, size_t*);
+int   npg_walk(offset_t, offset_t*);
+
+static inline void pg_show(offset_t vaddr)
+{
+   size_t   psz;
+   offset_t paddr;
+   offset_t naddr;
+
+   if(pg_walk(vaddr, &paddr, &psz))
+      npg_walk(paddr, &naddr);
+}
+#endif
 
 #endif

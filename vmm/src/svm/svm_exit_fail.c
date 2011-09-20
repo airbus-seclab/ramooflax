@@ -88,85 +88,77 @@ static char* svm_vmexit_interrupt_info_string[] = {
 
 static void svm_vmexit_show_gpr()
 {
-   vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-
-   debug(SVM,
-	 "-\n"
-	 "eax = 0x%x eax = 0x%x (vmcb)\n"
-	 "ebx = 0x%x ecx = 0x%x\n"
-	 "edx = 0x%x ebp = 0x%x\n"
-	 "esi = 0x%x edi = 0x%x\n"
-	 "eip = 0x%x esp = 0x%x\n"
-	 "dr6 = 0x%x dr7 = 0x%x\n"
-	 ,info->vm.cpu.gpr->rax.low
-	 ,info->vm.cpu.vmc->vm_vmcb.state_area.rax.low
-	 ,info->vm.cpu.gpr->rbx.low
-	 ,info->vm.cpu.gpr->rcx.low
-	 ,info->vm.cpu.gpr->rdx.low
-	 ,info->vm.cpu.gpr->rbp.low
-	 ,info->vm.cpu.gpr->rsi.low
-	 ,info->vm.cpu.gpr->rdi.low
-	 ,state->rip.low,state->rsp.low
-	 ,state->dr6.raw,state->dr7.raw);
+   printf("-\n"
+	  "eip = 0x%x eax = 0x%x (vmcb)\n"
+	  "esp = 0x%x ebp = 0x%x\n"
+	  "eax = 0x%x ebx = 0x%x\n"
+	  "ecx = 0x%x edx = 0x%x\n"
+	  "esi = 0x%x edi = 0x%x\n"
+	  "dr6 = 0x%X dr7 = 0x%X\n"
+	  ,vm_state.rip.low
+	  ,vm_state.rax.low
+	  ,vm_state.rsp.low
+	  ,info->vm.cpu.gpr->rbp.low
+	  ,info->vm.cpu.gpr->rax.low
+	  ,info->vm.cpu.gpr->rbx.low
+	  ,info->vm.cpu.gpr->rcx.low
+	  ,info->vm.cpu.gpr->rdx.low
+	  ,info->vm.cpu.gpr->rsi.low
+	  ,info->vm.cpu.gpr->rdi.low
+	  ,vm_state.dr6.raw
+	  ,vm_state.dr7.raw);
 }
 
 static void svm_vmexit_show_cr()
 {
-   vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-   debug(SVM,
-	 "-\n"
-	 "cpl             : %d\n"
-	 "cr0             : 0x%x\n"
-	 "cr2             : 0x%X\n"
-	 "cr3             : 0x%X\n"
-	 "cr4             : 0x%x\n"
-	 "tpr             : 0x%x\n"
-	 "eflags          : 0x%x (vm:%d rf:%d iopl:%d if:%d tf:%d)\n"
-	 "efer            : 0x%x (lma:%d lme:%d)\n"
-	 "gdtr (limit)    : 0x%x (0x%x)\n"
-	 "idtr (limit)    : 0x%x (0x%x)\n"
-	 ,state->cpl
-	 ,state->cr0.low
-	 ,state->cr2.raw
-	 ,state->cr3.raw
-	 ,state->cr4.low
-	 ,ctrls->int_ctrl.v_tpr
-	 ,state->rflags.low,state->rflags.vm
-	 ,state->rflags.rf,state->rflags.iopl
-	 ,state->rflags.IF,state->rflags.tf
-	 ,state->efer.eax, state->efer.lma, state->efer.lme
-	 ,state->gdtr.base_addr.low, state->gdtr.limit.raw
-	 ,state->idtr.base_addr.low, state->idtr.limit.raw);
+   printf("-\n"
+	  "cpl             : %d\n"
+	  "cr0             : 0x%x\n"
+	  "cr2             : 0x%X\n"
+	  "cr3             : 0x%X\n"
+	  "cr4             : 0x%x\n"
+	  "tpr             : 0x%x\n"
+	  "eflags          : 0x%x (vm:%d rf:%d iopl:%d if:%d tf:%d)\n"
+	  "efer            : 0x%x (lma:%d lme:%d)\n"
+	  "gdtr (limit)    : 0x%x (0x%x)\n"
+	  "idtr (limit)    : 0x%x (0x%x)\n"
+	  ,vm_state.cpl
+	  ,vm_state.cr0.low
+	  ,vm_state.cr2.raw
+	  ,vm_state.cr3.raw
+	  ,vm_state.cr4.low
+	  ,vm_ctrls.int_ctrl.v_tpr
+	  ,vm_state.rflags.low,vm_state.rflags.vm
+	  ,vm_state.rflags.rf,vm_state.rflags.iopl
+	  ,vm_state.rflags.IF,vm_state.rflags.tf
+	  ,vm_state.efer.eax, vm_state.efer.lma, vm_state.efer.lme
+	  ,vm_state.gdtr.base.low, vm_state.gdtr.limit.raw
+	  ,vm_state.idtr.base.low, vm_state.idtr.limit.raw);
 }
 
 static void svm_vmexit_show_segment(vmcb_segment_desc_t *seg, char *name)
 {
-   debug(SVM,
-	 "-\n"
-	 "%s.base (limit) : 0x%x (0x%x)\n"
-	 "%s.selector     : 0x%x (idx:%d rpl:%d ti:%d)\n"
-	 "%s.access       : dpl:0x%x type:0x%x l:%d d:%d g:%d p:%d\n"
-	 ,name,seg->base_addr.low,seg->limit.raw
-	 ,name,seg->selector.raw
-	 ,seg->selector.index,seg->selector.rpl,seg->selector.ti
-	 ,name,seg->attributes.dpl,seg->attributes.type
-	 ,seg->attributes.l,seg->attributes.d
-	 ,seg->attributes.g,seg->attributes.p);
+   printf("-\n"
+	  "%s.base (limit) : 0x%x (0x%x)\n"
+	  "%s.selector     : 0x%x (idx:%d rpl:%d ti:%d)\n"
+	  "%s.access       : dpl:0x%x type:0x%x l:%d d:%d g:%d p:%d\n"
+	  ,name,seg->base.low,seg->limit.raw
+	  ,name,seg->selector.raw
+	  ,seg->selector.index,seg->selector.rpl,seg->selector.ti
+	  ,name,seg->attributes.dpl,seg->attributes.type
+	  ,seg->attributes.l,seg->attributes.d
+	  ,seg->attributes.g,seg->attributes.p);
 }
 
 static void svm_vmexit_show_segments()
 {
-   vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-
-   svm_vmexit_show_segment(&state->cs, "cs");
-   svm_vmexit_show_segment(&state->ss, "ss");
-   svm_vmexit_show_segment(&state->ds, "ds");
-   svm_vmexit_show_segment(&state->es, "es");
-   svm_vmexit_show_segment(&state->fs, "fs");
-   svm_vmexit_show_segment(&state->gs, "gs");
-   svm_vmexit_show_segment(&state->tr, "tr");
+   svm_vmexit_show_segment(&vm_state.cs, "cs");
+   svm_vmexit_show_segment(&vm_state.ss, "ss");
+   svm_vmexit_show_segment(&vm_state.ds, "ds");
+   svm_vmexit_show_segment(&vm_state.es, "es");
+   svm_vmexit_show_segment(&vm_state.fs, "fs");
+   svm_vmexit_show_segment(&vm_state.gs, "gs");
+   svm_vmexit_show_segment(&vm_state.tr, "tr");
 }
 
 static void svm_vmexit_show_insn()
@@ -174,109 +166,98 @@ static void svm_vmexit_show_insn()
    ud_t disasm;
 
    if(disassemble(&disasm))
-      debug(SVM,
-	    "-\ninsn            : \"%s\" (len %d)\n"
-	    ,ud_insn_asm(&disasm),ud_insn_len(&disasm));
+      printf("-\ninsn            : \"%s\" (len %d)\n"
+	     ,ud_insn_asm(&disasm),ud_insn_len(&disasm));
 }
 
 static void svm_vmexit_show_excp()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-   uint32_t          n = ctrls->exit_code.low - SVM_VMEXIT_EXCP_START;
+   uint32_t n = vm_ctrls.exit_code.low - SVM_VMEXIT_EXCP_START;
 
-   debug(SVM,"-\nexception : vector 0x%x err_code 0x%x\n",n,ctrls->exit_info_1.low);
+   printf("-\nexception : vector 0x%x err_code 0x%x\n",n,vm_ctrls.exit_info_1.low);
    if(n == GP_EXCP)
    {
-      gp_err_t e; e.raw = ctrls->exit_info_1.low;
-      debug(SVM,
-	    "#GP error : idx 0x%x ti %d idt %d ext %d\n"
-	    ,e.idx, e.ti, e.idt, e.ext);
+      gp_err_t e; e.raw = vm_ctrls.exit_info_1.low;
+      printf("#GP error : idx 0x%x ti %d idt %d ext %d\n"
+	     ,e.idx, e.ti, e.idt, e.ext);
    }
 }
 
 static void svm_vmexit_show_event()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-   if(range(ctrls->exit_code.low, SVM_VMEXIT_EXCP_START, SVM_VMEXIT_EXCP_END))
+   if(range(vm_ctrls.exit_code.low, SVM_VMEXIT_EXCP_START, SVM_VMEXIT_EXCP_END))
       svm_vmexit_show_excp();
-   else if(ctrls->exit_code.low == SVM_VMEXIT_INTR ||
-	   ctrls->exit_code.low == SVM_VMEXIT_SWINT)
+   else if(vm_ctrls.exit_code.low == SVM_VMEXIT_INTR ||
+	   vm_ctrls.exit_code.low == SVM_VMEXIT_SWINT)
    {
-      debug(SVM,
-	    "-\ninterrupt : tpr 0x%x irq %d prio %d ign %d mask %d vector 0x%x\n"
-	    ,ctrls->int_ctrl.v_tpr
-	    ,ctrls->int_ctrl.v_irq
-	    ,ctrls->int_ctrl.v_intr_prio
-	    ,ctrls->int_ctrl.v_ign_tpr
-	    ,ctrls->int_ctrl.v_intr_masking
-	    ,ctrls->int_ctrl.v_intr_vector
-	 );
+      printf("-\ninterrupt : tpr 0x%x irq %d prio %d ign %d mask %d vector 0x%x\n"
+	     ,vm_ctrls.int_ctrl.v_tpr
+	     ,vm_ctrls.int_ctrl.v_irq
+	     ,vm_ctrls.int_ctrl.v_intr_prio
+	     ,vm_ctrls.int_ctrl.v_ign_tpr
+	     ,vm_ctrls.int_ctrl.v_intr_masking
+	     ,vm_ctrls.int_ctrl.v_intr_vector);
    }
-   else if(ctrls->exit_code.low == SVM_VMEXIT_SMI)
+   else if(vm_ctrls.exit_code.low == SVM_VMEXIT_SMI)
    {
-      debug(SVM, "-\n%s SMI raised\n",
-	    ctrls->exit_info_1.smi.smi_rc?"External":"Internal");
+      printf("-\n%s SMI raised\n"
+	     ,vm_ctrls.exit_info_1.smi.smi_rc?"External":"Internal");
 
-      if(ctrls->exit_info_1.smi.val)
+      if(vm_ctrls.exit_info_1.smi.val)
       {
-	 debug(SVM,
-	       "----> asserted during i/o\n"
-	       "i/o insn rip   : 0x%x\n"
-	       "acc sz         : %d byte(s)\n"
-	       "direction      : %s\n"
-	       "string insn    : %s\n"
-	       "rep prefix     : %s\n"
-	       "port           : 0x%x\n"
-	       "RFLAGS.TF      : %d\n"
-	       "brk            : 0x%x\n"
-	       ,ctrls->exit_info_2.low
-	       ,(ctrls->exit_info_1.high>>4) & 0x7
-	       ,ctrls->exit_info_1.smi.d?"in":"out"
-	       ,ctrls->exit_info_1.smi.s?"yes":"no"
-	       ,ctrls->exit_info_1.smi.rep?"yes":"no"
-	       ,ctrls->exit_info_1.smi.port
-	       ,ctrls->exit_info_1.smi.tf
-	       ,ctrls->exit_info_1.smi.brk);
+	 printf("----> asserted during i/o\n"
+		"i/o insn rip   : 0x%x\n"
+		"acc sz         : %d byte(s)\n"
+		"direction      : %s\n"
+		"string insn    : %s\n"
+		"rep prefix     : %s\n"
+		"port           : 0x%x\n"
+		"RFLAGS.TF      : %d\n"
+		"brk            : 0x%x\n"
+		,vm_ctrls.exit_info_2.low
+		,(vm_ctrls.exit_info_1.high>>4) & 0x7
+		,vm_ctrls.exit_info_1.smi.d?"in":"out"
+		,vm_ctrls.exit_info_1.smi.s?"yes":"no"
+		,vm_ctrls.exit_info_1.smi.rep?"yes":"no"
+		,vm_ctrls.exit_info_1.smi.port
+		,vm_ctrls.exit_info_1.smi.tf
+		,vm_ctrls.exit_info_1.smi.brk);
       }
    }
-   else if(ctrls->exit_code.low == SVM_VMEXIT_IOIO)
+   else if(vm_ctrls.exit_code.low == SVM_VMEXIT_IOIO)
    {
-      svm_io_t *io = (svm_io_t*)&ctrls->exit_info_1;
+      svm_io_t *io = (svm_io_t*)&vm_ctrls.exit_info_1;
 
-      debug(SVM,
-	    "-\n i/o  : d %d s %d rep %d port 0x%x\n"
-	    ,io->io.d,io->io.s
-	    ,io->io.rep,io->io.port);
+      printf("-\n i/o  : d %d s %d rep %d port 0x%x\n"
+	     ,io->io.d,io->io.s
+	     ,io->io.rep,io->io.port);
    }
 }
 
 static void svm_vmexit_show_deliver()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-   if(ctrls->exit_int_info.v)
+   if(vm_ctrls.exit_int_info.v)
    {
       char *str;
 
-      if(ctrls->exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXCP)
-	 str = exception_names[ctrls->exit_int_info.vector];
+      if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXCP)
+	 str = exception_names[vm_ctrls.exit_int_info.vector];
       else
-	 str = svm_vmexit_interrupt_info_string[ctrls->exit_int_info.type];
+	 str = svm_vmexit_interrupt_info_string[vm_ctrls.exit_int_info.type];
 
-      debug(SVM,
-	    "-\nidt delivery : %s vector 0x%x err_code 0x%x\n"
-	    ,str,ctrls->exit_int_info.vector,ctrls->exit_int_info.err_code);
+      printf("-\nidt delivery    : %s vector 0x%x err_code 0x%x\n"
+	     ,str,vm_ctrls.exit_int_info.vector,vm_ctrls.exit_int_info.err_code);
    }
 }
 
-static void svm_vmexit_str(char *buffer, size_t size, uint32_t err)
+static int svm_vmexit_str(char *buffer, size_t size, uint32_t err)
 {
    char   *name;
    size_t sz;
+   int    rc = 1;
 
    if(!buffer || !size)
-      return;
+      return 0;
 
    if(err < SVM_VMEXIT_EXCP_START)
    {
@@ -295,72 +276,51 @@ static void svm_vmexit_str(char *buffer, size_t size, uint32_t err)
 	 name = "Nested Page Fault";
       else if(err == (typeof(err))SVM_VMEXIT_INVALID)
 	 name = "Invalid Guest State";
+      else
+      {
+	 name = "Invalid VM-EXIT value";
+	 rc = 0;
+      }
 
       sz = min(strlen(name), size-1);
       memcpy(buffer, name, sz);
       buffer[sz] = 0;
    }
+
+   return rc;
 }
 
-static void svm_vmexit_show_basic()
+static int svm_vmexit_show_basic()
 {
    char exit_str[64];
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
 
-   svm_vmexit_str(exit_str, sizeof(exit_str), ctrls->exit_code.low);
+   int rc = svm_vmexit_str(exit_str, sizeof(exit_str), vm_ctrls.exit_code.low);
 
-   debug(SVM,
-	 "\n         <------------------- VM-EXIT ------------------->\n\n"
-	 "reason          : %s (%d)\n"
-	 "info 1          : 0x%X\n"
-	 "info 2          : 0x%X\n"
-	 ,exit_str,ctrls->exit_code.low
-	 ,ctrls->exit_info_1.raw
-	 ,ctrls->exit_info_2.raw);
+   printf("\n         <------------------- VM-EXIT ------------------->\n\n"
+	  "reason          : %s (%d)\n"
+	  "info 1          : 0x%X\n"
+	  "info 2          : 0x%X\n"
+	  ,exit_str,vm_ctrls.exit_code.low
+	  ,vm_ctrls.exit_info_1.raw
+	  ,vm_ctrls.exit_info_2.raw);
+
+   return rc;
 }
 
-void svm_vmexit_show()
+static void svm_vmexit_show_all()
 {
-   svm_vmexit_show_basic();
    svm_vmexit_show_insn();
-
-   {
-      offset_t vaddr;
-      int      mode;
-      uint8_t  data[0x20];
-      
-      vm_get_code_addr(&vaddr, 0, &mode);
-      vm_read_mem(vaddr, data, sizeof(data));
-      
-      int i;
-      printf("EIP bytes\n");
-      for(i=0 ; i<0x20 ; i++)
-	 printf("%x ", data[i]);
-      printf("\n");
-   }
-
-   {
-      offset_t vaddr;
-      int      mode;
-      uint8_t  data[0x20];
-      
-      vm_get_stack_addr(&vaddr, 0, &mode);
-      vm_read_mem(vaddr, data, sizeof(data));
-      
-      int i;
-      printf("ESP bytes\n");
-      for(i=0 ; i<0x20 ; i++)
-	 printf("%x ", data[i]);
-      printf("\n");
-   }
-
    svm_vmexit_show_gpr();
    svm_vmexit_show_cr();
    svm_vmexit_show_segments();
    svm_vmexit_show_event();
    svm_vmexit_show_deliver();
+}
 
-   debug(SVM,"\n         <----------------------------------------------->\n\n");
+void svm_vmexit_show()
+{
+   if(svm_vmexit_show_basic())
+      svm_vmexit_show_all();
 }
 
 void svm_vmexit_failure()

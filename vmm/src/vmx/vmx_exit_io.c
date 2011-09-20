@@ -16,112 +16,46 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_exit_io.h>
-#include <vmx_vmcs_acc.h>
 #include <info_data.h>
-#include <device.h>
+#include <dev.h>
 #include <debug.h>
 
 extern info_data_t *info;
 
 int vmx_vmexit_resolve_io()
 {
-   vmcs_exit_info_t *exit  = exit_info(info);
-   vmcs_guest_t     *state = guest_state(info);
-
-   if( ! dev_access() )
+   if(!dev_access())
       return 0;
 
-   vmcs_read( exit->vmexit_insn_len );
-   state->rip.low += exit->vmexit_insn_len.raw;
-   vmcs_dirty( state->rip );
-
+   vmcs_read(vm_exit_info.insn_len);
+   vm_update_rip(vm_exit_info.insn_len.raw);
    return 1;
 }
 
 int __vmx_io_init(io_insn_t *io)
 {
-   /* XXX: check if we can use both structures for ins/outs io:
-   ** vmcs_exit_information_qualification_io_insn
-   ** vmcs_exit_information_vmx_instruction_information
-   */
-   return 0;
+   vmcs_exit_info_io_t      *vmx_io;
+   vmcs_exit_info_insn_io_t *vmx_io_s;
 
-   /* vmx_io_t         *vmx; */
-   /* vmcs_exit_info_t *exit = exit_info(info); */
+   vmcs_read(vm_exit_info.qualification);
+   vmx_io = &vm_exit_info.qualification.io;
 
-   /* vmcs_read( exit->qualification ); */
-   /* vmx = (vmx_io_t*)&exit->qualification.io_insn; */
+   io->in   = vmx_io->d;
+   io->s    = vmx_io->s;
+   io->sz   = vmx_io->sz+1;
+   io->port = vmx_io->port;
 
-   /* io->sz   = vmx->sz + 1; */
-   /* io->d    = vmx->d; */
-   /* io->s    = vmx->s; */
-   /* io->rep  = vmx->rep; */
-   /* io->port = vmx->port; */
+   if(!io->s)
+      return 1;
 
-/*
-   vmcs_read( state->ds.selector );
-   vmcs_read( state->es.selector );
-   vmcs_read( state->cs.base_addr );
-   vmcs_read( state->ds.base_addr );
-   vmcs_read( state->es.base_addr );
-*/
+   vmcs_read(vm_exit_info.insn_info);
+   vmcs_read(vm_exit_info.guest_linear);
+   vmx_io_s = &vm_exit_info.insn_info.io;
 
-/*
-   vmcs_guest_reg_state_t  *reg_st;
-   vmcs_vm_exec_ctl_t      *ctls;
-   uint32_t                insn_sz;
-
-   reg_st  = &vm->arch.vmcs_region->guest_state.reg_state;
-   ctls    = &vm->arch.vmcs_region->controls.exec_ctls;
-
-   io->bck = reg_st->rflags.fields.df;
-   io->es  = (uint32_t)reg_st->es.base_addr.low;
-   io->ds  = (uint32_t)reg_st->ds.base_addr.low;
-   io->pg  = ctls->cr0_read_shadow.fields.pg;
-   io->seg = 0;
-
-   io->src.linear = (uint32_t)reg_st->cs.base_addr.low + reg_st->rip.low;
-   insn_sz        = vm->arch.vmcs_region->exit_info.vmexit_insn_len;
-
-   if( ! io->pg )
-   {
-      io->src.linear += (uint32_t)vm->mem.pmem;
-      io->dst.linear = io->src.linear + insn_sz;
-
-      if( ! ctls->cr0_read_shadow.fields.pe )
-	 io->mask = 0xffff;
-      else
-	 io->mask = 0xffffffff;
-   }
-   else
-   {
-      io->mask = 0xffffffff;
-      io->dst.linear = io->src.linear + insn_sz;
-      io->src.linear = vm_host_vaddr( vm, io->src.linear );
-      io->dst.linear = vm_host_vaddr( vm, io->dst.linear );
-
-      if( (io->dst.linear - io->src.linear) != insn_sz )
-      {
-	 DEBUG( VMX_DBG, "non contiguous memory !\n" );
-	 return 0;
-      }
-   }
-
-   while( io->src.linear < io->dst.linear )
-   {
-      if( *io->src.u8 == X86_PREFIX_ADDR )
-      {
-	 if( ! ctls->cr0_read_shadow.fields.pe )
-	    io->mask = 0xffffffff;
-	 else
-	    io->mask = 0xffff;
-      }
-      else if( ! io->d && *io->src.u8 == X86_PREFIX_ES )
-	 io->seg = 1;
-
-      io->src.u8++;
-   }
+   io->addr = (vmx_io_s->addr!=2)?vmx_io_s->addr+1:4;
+   io->back = vm_state.rflags.df;
+   io->rep  = vmx_io->rep;
+   io->msk  = (1ULL<<(16*io->addr)) - 1;
 
    return 1;
-*/
 }

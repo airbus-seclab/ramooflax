@@ -42,13 +42,13 @@ void smap_parse(mbi_t *mbi, smap_t *smap, offset_t *area, offset_t *acme)
       if(mme->size > sizeof(smap_e_t))
       {
 	 debug(SMAP,"smap entry: base 0x%X | len 0x%X | type %d\n",
-	       sme->base_addr, sme->len, sme->type );
+	       sme->base, sme->len, sme->type );
 	 panic("smap entry too big");
       }
 
-      top = sme->base_addr + sme->len;
+      top = sme->base + sme->len;
 
-      if(sme->type == SMAP_TYPE_AVL && sme->base_addr == 0x100000ULL)
+      if(sme->type == SMAP_TYPE_AVL && sme->base == 0x100000ULL)
 	 *area = top;
 
       mmap.linear += mme->size + sizeof(mme->size);
@@ -78,8 +78,8 @@ void smap_init(mbi_t *mbi, smap_t *smap, offset_t top)
 
       memcpy((void*)sme_o, (void*)sme_i, sizeof(smap_e_t));
 
-      if(sme_o->type == SMAP_TYPE_AVL && sme_o->base_addr == 0x100000ULL)
-	 sme_o->len = top - sme_o->base_addr;
+      if(sme_o->type == SMAP_TYPE_AVL && sme_o->base == 0x100000ULL)
+	 sme_o->len = top - sme_o->base;
 
       mmap.linear += mme->size + sizeof(mme->size);
       sme_o++;

@@ -69,24 +69,23 @@ typedef struct vmm_segmentation
 
 } __attribute__((packed)) vmm_sgmem_t;
 
-typedef union cpu_skill
+typedef union vmm_cpu_skill
 {
    struct
    {
       uint32_t  pg_1G:1;
-      uint32_t  asid_tlb:1;
 
    } __attribute__((packed));
 
    raw32_t;
 
-} __attribute__((packed)) cpu_skill_t;
+} __attribute__((packed)) vmm_cpu_skill_t;
 
 typedef struct vmm_cpu
 {
-   vmm_sgmem_t *sg;      /* strictly aligned */
-   vmm_pgmem_t pg;
-   cpu_skill_t skillz;
+   vmm_sgmem_t     *sg;      /* strictly aligned */
+   vmm_pgmem_t     pg;
+   vmm_cpu_skill_t skillz;
 
 } __attribute__((packed)) vmm_cpu_t;
 
@@ -111,16 +110,16 @@ typedef struct vmm
 #ifdef __INIT__
 
 void vmm_init();
-void vmm_start() __attribute__((regparm(1)));
+void vmm_start() __regparm__(1);
 
 #ifdef __SVM__
 #include <svm_vmm.h>
-#define vmm_cpu_init_arch()   svm_vmm_init()
-#define vmm_cpu_start_arch()  svm_vmm_start(info->vm.cpu.gpr,info->vmm.entry)
+#define vmm_vmc_init()   svm_vmm_init()
+#define vmm_vmc_start()  svm_vmm_start(info->vm.cpu.gpr,info->vmm.entry)
 #else
 #include <vmx_vmm.h>
-#define vmm_cpu_init_arch()   vmx_vmm_init()
-#define vmm_cpu_start_arch()  vmx_vmm_start(info->vm.cpu.gpr)
+#define vmm_vmc_init()   vmx_vmm_init()
+#define vmm_vmc_start()  vmx_vmm_start(info->vm.cpu.gpr)
 #endif
 
 #endif

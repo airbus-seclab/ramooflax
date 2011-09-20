@@ -27,23 +27,23 @@ extern info_data_t *info;
 
 int __resolve_cr0_wr(cr0_reg_t *guest)
 {
-   uint32_t cr0_update = __cr0.low ^ guest->low;
+   uint32_t cr0_update;
+
+   __pre_access(__cr4);
+
+   cr0_update = __cr0.low ^ guest->low;
+
+   debug(CR, "wr cr0 0x%x\n", guest->low);
 
    if(__invalid_cr0_setup(guest) || __invalid_cr0_lmode_check(guest, cr0_update))
    {
+      debug(CR, "invalid cr0 setup\n");
       __inject_exception(GP_EXCP, 0, 0);
       return CR_FAULT;
    }
 
-   if(cr0_update & CR0_CD)
-   {
-      cr0_reg_t cr0;
-      cr0.raw = get_cr0();
-      cr0.cd = guest->cd;
-
-      debug(CR, "cr0 cache disable = %d\n", cr0.cd);
-      set_cr0(cr0.raw);
-   }
+   if(cr0_update & (CR0_NW|CR0_CD))
+      __cr0_cache_update(guest);
 
    if(cr0_update & (CR0_PE|CR0_PG))
       __flush_tlb_glb();
@@ -56,9 +56,7 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
 	 vm_enter_pmode();
    }
 
-   __cr0.low = guest->low;
-   __post_access_restrictive(__cr0, 0);
-
+   __cr0_update(guest);
    return CR_SUCCESS;
 }
 
@@ -71,62 +69,72 @@ int __resolve_cr3_wr(cr3_reg_t *guest)
 
    debug(CR, "wr cr3 0x%X\n", guest->raw);
 
-   __ncr3.pml4.pwt = guest->pwt;
-   __ncr3.pml4.pcd = guest->pcd;
+   __update_npg_cache(guest);
 
    __flush_tlb();
    __post_access(__cr3);
-
-   if(info->vmm.ctrl.dbg.status.cr3 && __cr3.low == info->vmm.ctrl.dbg.stored_cr3.low)
-      debug(CR, "kernel reloaded active cr3\n");
-
    return CR_SUCCESS;
 }
 
 int __resolve_cr4_wr(cr4_reg_t *guest)
 {
-   uint32_t cr4_update = __cr4.low ^ guest->low;
+   uint32_t cr4_update;
 
-   debug(CR, "wr cr4 0x%X\n", guest->raw);
+   __pre_access(__cr4);
+
+   cr4_update = __cr4.low ^ guest->low;
+
+   debug(CR, "wr cr4 0x%x\n", guest->low);
 
    if(cr4_update & (CR4_PAE|CR4_PSE|CR4_PGE))
       __flush_tlb_glb();
 
-   __cr4.low = guest->low;
-   __post_access_restrictive(__cr4, 4);
-
+   __cr4_update(guest);
    return CR_SUCCESS;
 }
 
-static int __resolve_cr_wr(uint8_t cr, uint8_t gpr)
+int __resolve_cr_wr_with(uint8_t cr, raw64_t *val)
 {
-   int      rc;
-   uint64_t creg = info->vm.cpu.gpr->raw[gpr].raw;
+   int rc;
 
    gdb_cr_wr_event(cr);
 
    if(cr == 0)
-      rc = __resolve_cr0_wr((cr0_reg_t*)&creg);
+      rc = __resolve_cr0_wr((cr0_reg_t*)val);
    else if(cr == 3)
-      rc = __resolve_cr3_wr((cr3_reg_t*)&creg);
+      rc = __resolve_cr3_wr((cr3_reg_t*)val);
    else if(cr == 4)
-      rc = __resolve_cr4_wr((cr4_reg_t*)&creg);
+      rc = __resolve_cr4_wr((cr4_reg_t*)val);
    else
       return CR_FAIL;
 
    return rc;
 }
 
+static int __resolve_cr_wr(uint8_t cr, uint8_t gpr)
+{
+   uint64_t creg = info->vm.cpu.gpr->raw[gpr].raw;
+
+   return __resolve_cr_wr_with(cr, (raw64_t*)&creg);
+}
+
 static int __resolve_cr_rd(uint8_t cr, uint8_t gpr)
 {
    raw64_t *creg;
 
+   debug(CR, "rd cr%d\n", cr);
+
    if(cr == 0)
       creg = (raw64_t*)&__cr0.raw;
    else if(cr == 3)
+   {
       creg = (raw64_t*)&__cr3.raw;
+   }
    else if(cr == 4)
+   {
+      __pre_access(__cr4);
       creg = (raw64_t*)&__cr4.raw;
+   }
    else
       return CR_FAIL;
 
@@ -156,16 +164,3 @@ int __resolve_cr(uint8_t wr, uint8_t cr, uint8_t gpr)
 
    return __resolve_cr_rd(cr, gpr);
 }
-
-/* int resolve_cr(uint8_t wr, uint8_t src, uint8_t dst) */
-/* { */
-/*    int rc = __resolve_cr(wr, src, dst); */
-
-/*    if(rc == CR_FAIL) */
-/*       return 0; */
-
-/*    if(rc == CR_SUCCESS) */
-/*       vm_update_rip(MOV_CR_INSN_SZ); */
-
-/*    return 1; */
-/* } */

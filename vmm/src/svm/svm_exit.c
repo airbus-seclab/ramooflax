@@ -40,7 +40,7 @@ info_data_t __info_data_hdr__ *info;
 
 /* vm-exit handlers */
 static vmexit_hdlr_t svm_vmexit_resolvers[SVM_VMEXIT_RESOLVERS_NR] = {
-   resolve_intr,                          //INTR
+   resolve_default,                       //INTR
    resolve_default,                       //NMI
    resolve_default,                       //SMI
    resolve_default,                       //INIT
@@ -89,41 +89,33 @@ static vmexit_hdlr_t svm_vmexit_resolvers[SVM_VMEXIT_RESOLVERS_NR] = {
 
 static void svm_vmexit_tsc_rebase(raw64_t tsc)
 {
-   /* vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area; */
-   /* ctrls->tsc_offset.sraw -= (rdtsc() - tsc.raw); */
-
+   /* vm_ctrls.tsc_offset.sraw -= (rdtsc() - tsc.raw); */
    tsc.raw++;
 }
 
 static void svm_vmexit_pre_hdl()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-   vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-
    svm_vmsave(&info->vm.cpu.vmc->vm_vmcb);
-   info->vm.cpu.gpr->rax.raw = state->rax.raw;
-   info->vm.cpu.gpr->rsp.raw = state->rsp.raw;
+   info->vm.cpu.gpr->rax.raw = vm_state.rax.raw;
+   info->vm.cpu.gpr->rsp.raw = vm_state.rsp.raw;
 
-   if(ctrls->tlb_ctrl.tlb_control != VMCB_TLB_CTL_NONE)
-      ctrls->tlb_ctrl.tlb_control = VMCB_TLB_CTL_NONE;
+   svm_reset_tlb_control();
 }
 
 static void svm_vmexit_post_hdl(raw64_t tsc)
 {
-   vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-
    vmm_ctrl();
    db_post_hdl();
 
-   state->rax.raw = info->vm.cpu.gpr->rax.raw;
-   state->rsp.raw = info->vm.cpu.gpr->rsp.raw;
+   vm_state.rax.raw = info->vm.cpu.gpr->rax.raw;
+   vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    info->vm.cpu.gpr->rax.raw = (offset_t)&info->vm.cpu.vmc->vm_vmcb;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    svm_vmexit_tsc_rebase(tsc);
 }
 
-void __attribute__ ((regparm(1))) svm_vmexit_handler(raw64_t tsc)
+void __regparm__(1) svm_vmexit_handler(raw64_t tsc)
 {
    svm_vmexit_pre_hdl();
 
@@ -138,13 +130,13 @@ void __attribute__ ((regparm(1))) svm_vmexit_handler(raw64_t tsc)
 
 int svm_vmexit_resolve_dispatcher()
 {
-   uint32_t err = info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_code.low;
+   uint32_t err = vm_ctrls.exit_code.low;
 
    if(err < SVM_VMEXIT_EXCP_START || err == SVM_VMEXIT_CR0_SEL_WRITE)
       return emulate();
 
    if(err < SVM_VMEXIT_FIRST_RESOLVER)
-      return svm_vmexit_resolve_exception();
+      return resolve_exception();
 
    if(err <= SVM_VMEXIT_LAST_RESOLVER)
       return svm_vmexit_resolve(err);
@@ -157,9 +149,7 @@ int svm_vmexit_resolve_dispatcher()
 
 int svm_vmexit_idt_deliver()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-
-   if(!ctrls->exit_int_info.v)
+   if(!vm_ctrls.exit_int_info.v)
       return 1;
 
    if(__rmode())
@@ -170,14 +160,12 @@ int svm_vmexit_idt_deliver()
 
 int __svm_vmexit_idt_deliver_rmode()
 {
-   /* vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area; */
-
    /* /\* */
    /* ** we get #GP while soft/ext interrupts */
    /* ** because of idt.limit */
    /* *\/ */
-   /* if(ctrls->exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_SOFT || */
-   /*    ctrls->exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
+   /* if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_SOFT || */
+   /*    vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
    /*    return 1; */
 
    /* /\* */
@@ -185,15 +173,15 @@ int __svm_vmexit_idt_deliver_rmode()
    /* ** we have nothing to inject */
    /* ** so se resume delivering */
    /* *\/ */
-   /* if(!ctrls->event_injection.v) */
+   /* if(!vm_ctrls.event_injection.v) */
    /* { */
-   /*    if(ctrls->exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
+   /*    if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
    /*    { */
    /* 	 debug(SVM_IDT, */
    /* 		"idt deliver IRQ (rmode): 0x%x\n", */
-   /* 		ctrls->exit_int_info.vector */
+   /* 		vm_ctrls.exit_int_info.vector */
    /* 	   ); */
-   /* 	 irq_set_pending(ctrls->exit_int_info.vector - VMM_IDT_IRQ_MIN); */
+   /* 	 irq_set_pending(vm_ctrls.exit_int_info.vector - VMM_IDT_IRQ_MIN); */
    /* 	 return resolve_hard_interrupt(); */
    /*    } */
    /* } */
@@ -204,45 +192,43 @@ int __svm_vmexit_idt_deliver_rmode()
 
 int __svm_vmexit_idt_deliver_pmode()
 {
-   /* vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area; */
-
    /* /\* */
    /* ** cpu was delivering */
    /* ** we have nothing to inject */
    /* ** so we resume delivering */
    /* *\/ */
-   /* if(!ctrls->event_injection.v) */
+   /* if(!vm_ctrls.event_injection.v) */
    /* { */
-   /*    vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area; */
+   /*    vmcb_state_area_t *state = guest_state(); */
 
-   /*    if(ctrls->exit_int_info.type   == VMCB_IDT_DELIVERY_TYPE_EXCP && */
-   /* 	  ctrls->exit_int_info.vector == PG_EXCP) */
+   /*    if(vm_ctrls.exit_int_info.type   == VMCB_IDT_DELIVERY_TYPE_EXCP && */
+   /* 	  vm_ctrls.exit_int_info.vector == PG_EXCP) */
    /*    { */
    /* 	 pf_err_t err; */
    /* 	 debug(SVM_IDT, "idt deliver check #PF (0x%x, 0x%x)\n", */
-   /* 		state->cr2.low, ctrls->exit_int_info.err_code); */
+   /* 		vm_state.cr2.low, vm_ctrls.exit_int_info.err_code); */
 
-   /* 	 err.raw = ctrls->exit_int_info.err_code; */
-   /* 	 return resolve_pf(state->cr2.low, err); */
+   /* 	 err.raw = vm_ctrls.exit_int_info.err_code; */
+   /* 	 return resolve_pf(vm_state.cr2.low, err); */
    /*    } */
 
-   /*    if(ctrls->exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
+   /*    if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
    /*    { */
    /* 	 debug(SVM_IDT, */
    /* 		"idt deliver IRQ (pmode): 0x%x\n", */
-   /* 		ctrls->exit_int_info.vector */
+   /* 		vm_ctrls.exit_int_info.vector */
    /* 	   ); */
-   /* 	 irq_set_pending(ctrls->exit_int_info.vector - VMM_IDT_IRQ_MIN); */
+   /* 	 irq_set_pending(vm_ctrls.exit_int_info.vector - VMM_IDT_IRQ_MIN); */
    /* 	 return resolve_hard_interrupt(); */
    /*    } */
 
    /*    debug(SVM_IDT, "idt deliver pending (%d,0x%x) eax 0x%x !\n" */
-   /* 	     , ctrls->exit_int_info.type */
-   /* 	     , ctrls->exit_int_info.vector */
+   /* 	     , vm_ctrls.exit_int_info.type */
+   /* 	     , vm_ctrls.exit_int_info.vector */
    /* 	     , info->vm.cpu.gpr->eax.raw */
    /* 	); */
 
-   /*    ctrls->event_injection.raw = ctrls->exit_int_info.raw; */
+   /*    vm_ctrls.event_injection.raw = vm_ctrls.exit_int_info.raw; */
    /*    return 1; */
    /* } */
 
@@ -252,11 +238,11 @@ int __svm_vmexit_idt_deliver_pmode()
    /* *\/ */
 
    /* /\* exception (to be injected) while delivering exception *\/ */
-   /* if(ctrls->exit_int_info.type   == VMCB_IDT_DELIVERY_TYPE_EXCP && */
-   /*     ctrls->event_injection.type == VMCB_IDT_DELIVERY_TYPE_EXCP) */
+   /* if(vm_ctrls.exit_int_info.type   == VMCB_IDT_DELIVERY_TYPE_EXCP && */
+   /*     vm_ctrls.event_injection.type == VMCB_IDT_DELIVERY_TYPE_EXCP) */
    /* { */
-   /*    uint8_t e1 = ctrls->exit_int_info.vector; */
-   /*    uint8_t e2 = ctrls->event_injection.vector; */
+   /*    uint8_t e1 = vm_ctrls.exit_int_info.vector; */
+   /*    uint8_t e2 = vm_ctrls.event_injection.vector; */
 
    /*    if(triple_fault(e1)) */
    /*    { */
@@ -272,16 +258,16 @@ int __svm_vmexit_idt_deliver_pmode()
 
    /*    /\* handled serially *\/ */
    /*    debug(SVM_IDT, "handle serially: deliver(%d:%d)/inject(%d:%d)\n" */
-   /* 	     , ctrls->exit_int_info.type, ctrls->exit_int_info.vector */
-   /* 	     , ctrls->event_injection.type, ctrls->event_injection.vector */
+   /* 	     , vm_ctrls.exit_int_info.type, vm_ctrls.exit_int_info.vector */
+   /* 	     , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
    /* 	); */
 
    /*    return 1; */
    /* } */
 
    /* debug(SVM_IDT, "un-implemented scenario: delivering(%d:%d)/injecting(%d:%d)\n" */
-   /* 	  , ctrls->exit_int_info.type, ctrls->exit_int_info.vector */
-   /* 	  , ctrls->event_injection.type, ctrls->event_injection.vector */
+   /* 	  , vm_ctrls.exit_int_info.type, vm_ctrls.exit_int_info.vector */
+   /* 	  , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
    /*   ); */
 
    debug(SVM_IDT, "idt deliver PM: unhandled scenario\n");

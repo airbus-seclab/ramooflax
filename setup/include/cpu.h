@@ -25,4 +25,12 @@
 */
 void  cpu_init();
 
+#ifdef __SVM__
+void svm_vm_cpu_init();
+#define vm_cpu_init()   svm_vm_cpu_init()
+#else
+void vmx_vm_cpu_init();
+#define vm_cpu_init()   vmx_vm_cpu_init()
+#endif
+
 #endif

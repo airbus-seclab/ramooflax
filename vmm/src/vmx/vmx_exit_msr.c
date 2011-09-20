@@ -17,18 +17,197 @@
 */
 #include <vmx_exit_msr.h>
 #include <msr.h>
+#include <mtrr.h>
+#include <debug.h>
+#include <info_data.h>
+
+extern info_data_t *info;
+
+static int __vmx_vmexit_resolve_msr_mtrr_def(uint8_t wr)
+{
+   if(wr)
+   {
+      ia32_mtrr_def_t update;
+
+      update.low  = info->vm.mtrr_def.low  ^ info->vm.cpu.gpr->rax.low;
+      update.high = info->vm.mtrr_def.high ^ info->vm.cpu.gpr->rdx.low;
+
+      info->vm.mtrr_def.low  = info->vm.cpu.gpr->rax.low;
+      info->vm.mtrr_def.high = info->vm.cpu.gpr->rdx.low;
+
+      if(update.e)
+	 vmx_ept_remap();
+   }
+   else
+   {
+      info->vm.cpu.gpr->rax.low = info->vm.mtrr_def.low;
+      info->vm.cpu.gpr->rdx.low = info->vm.mtrr_def.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
+#ifdef __MSR_PROXY__
+static int __vmx_vmexit_resolve_msr_sysenter_cs(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_sysenter_cs.raw = info->vm.cpu.gpr->rax.low;
+      vmcs_dirty(vm_state.ia32_sysenter_cs);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_sysenter_cs);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_sysenter_cs.raw;
+   }
+
+   return MSR_SUCCESS;
+}
+
+static int __vmx_vmexit_resolve_msr_sysenter_esp(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_sysenter_esp.low  = info->vm.cpu.gpr->rax.low;
+      vm_state.ia32_sysenter_esp.high = info->vm.cpu.gpr->rdx.low;
+      vmcs_dirty(vm_state.ia32_sysenter_esp);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_sysenter_esp);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_sysenter_esp.low;
+      info->vm.cpu.gpr->rdx.low = vm_state.ia32_sysenter_esp.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
+static int __vmx_vmexit_resolve_msr_sysenter_eip(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_sysenter_eip.low  = info->vm.cpu.gpr->rax.low;
+      vm_state.ia32_sysenter_eip.high = info->vm.cpu.gpr->rdx.low;
+      vmcs_dirty(vm_state.ia32_sysenter_eip);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_sysenter_eip);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_sysenter_eip.low;
+      info->vm.cpu.gpr->rdx.low = vm_state.ia32_sysenter_eip.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
+static int __vmx_vmexit_resolve_msr_pat(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_pat.low  = info->vm.cpu.gpr->rax.low;
+      vm_state.ia32_pat.high = info->vm.cpu.gpr->rdx.low;
+      vmcs_dirty(vm_state.ia32_pat);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_pat);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_pat.low;
+      info->vm.cpu.gpr->rdx.low = vm_state.ia32_pat.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
+static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_efer.low  = info->vm.cpu.gpr->rax.low;
+      vm_state.ia32_efer.high = info->vm.cpu.gpr->rdx.low;
+      vmcs_dirty(vm_state.ia32_efer);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_efer);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_efer.low;
+      info->vm.cpu.gpr->rdx.low = vm_state.ia32_efer.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
+static int __vmx_vmexit_resolve_msr_dbgctl(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_dbgctl.low  = info->vm.cpu.gpr->rax.low;
+      vm_state.ia32_dbgctl.high = info->vm.cpu.gpr->rdx.low;
+      vmcs_dirty(vm_state.ia32_dbgctl);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_dbgctl);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_dbgctl.low;
+      info->vm.cpu.gpr->rdx.low = vm_state.ia32_dbgctl.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
+static int __vmx_vmexit_resolve_msr_perf(uint8_t wr)
+{
+   if(wr)
+   {
+      vm_state.ia32_perf.low  = info->vm.cpu.gpr->rax.low;
+      vm_state.ia32_perf.high = info->vm.cpu.gpr->rdx.low;
+      vmcs_dirty(vm_state.ia32_perf);
+   }
+   else
+   {
+      vmcs_read(vm_state.ia32_perf);
+      info->vm.cpu.gpr->rax.low = vm_state.ia32_perf.low;
+      info->vm.cpu.gpr->rdx.low = vm_state.ia32_perf.high;
+   }
+
+   return MSR_SUCCESS;
+}
+#endif
+
+int __vmx_vmexit_resolve_msr(uint8_t wr)
+{
+   switch(info->vm.cpu.gpr->rcx.low)
+   {
+   case IA32_MTRR_DEF_TYPE:
+      return __vmx_vmexit_resolve_msr_mtrr_def(wr);
+
+#ifdef __MSR_PROXY__
+   case IA32_SYSENTER_CS_MSR:
+      return __vmx_vmexit_resolve_msr_sysenter_cs(wr);
+   case IA32_SYSENTER_ESP_MSR:
+      return __vmx_vmexit_resolve_msr_sysenter_esp(wr);
+   case IA32_SYSENTER_EIP_MSR:
+      return __vmx_vmexit_resolve_msr_sysenter_eip(wr);
+   case IA32_PAT_MSR:
+      return __vmx_vmexit_resolve_msr_pat(wr);
+   case IA32_EFER_MSR:
+      return __vmx_vmexit_resolve_msr_efer(wr);
+   case IA32_DBG_CTL_MSR:
+      return __vmx_vmexit_resolve_msr_dbgctl(wr);
+   case IA32_PERF_GLB_CTL_MSR:
+      return __vmx_vmexit_resolve_msr_perf(wr);
+#endif
+
+   default:
+      return MSR_NATIVE;
+   }
+}
 
 int vmx_vmexit_resolve_msr_rd()
 {
-   return resolve_msr( 0 );
+   return resolve_msr(0);
 }
 
 int vmx_vmexit_resolve_msr_wr()
 {
-   return resolve_msr( 1 );
-}
-
-int __vmx_vmexit_resolve_msr(uint8_t wr)
-{
-   return MSR_FAIL;
+   return resolve_msr(1);
 }

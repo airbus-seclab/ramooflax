@@ -284,13 +284,13 @@ static void gdb_cmd_rd_gpr()
    gdb_add_number(__rip.raw, vlen, 1);
 
    /* fixed length eflags, cs, ss, ds, es, fs, gs */
-   gdb_add_number(__rflags.raw,      flen, 1);
-   gdb_add_number(__cs.selector.raw, flen, 1);
-   gdb_add_number(__ss.selector.raw, flen, 1);
-   gdb_add_number(__ds.selector.raw, flen, 1);
-   gdb_add_number(__es.selector.raw, flen, 1);
-   gdb_add_number(__fs.selector.raw, flen, 1);
-   gdb_add_number(__gs.selector.raw, flen, 1);
+                                gdb_add_number(__rflags.raw,      flen, 1);
+                                gdb_add_number(__cs.selector.raw, flen, 1);
+   __pre_access(__ss.selector); gdb_add_number(__ss.selector.raw, flen, 1);
+   __pre_access(__ds.selector); gdb_add_number(__ds.selector.raw, flen, 1);
+   __pre_access(__es.selector); gdb_add_number(__es.selector.raw, flen, 1);
+   __pre_access(__fs.selector); gdb_add_number(__fs.selector.raw, flen, 1);
+   __pre_access(__gs.selector); gdb_add_number(__gs.selector.raw, flen, 1);
 
    gdb_send_packet();
 }
@@ -424,7 +424,11 @@ static void gdb_cmd_wr_mem(uint8_t *data, size_t len)
    gdb_ok();
 }
 
-static int __gdb_setup_reg(uint64_t idx, raw64_t **reg, size_t *size, uint8_t sys)
+#ifdef __SVM__
+static int __gdb_setup_reg(uint64_t idx, raw64_t **reg, size_t *size, uint8_t sys, uint8_t __unused__ wr)
+#else
+static int __gdb_setup_reg(uint64_t idx, raw64_t **reg, size_t *size, uint8_t sys, uint8_t wr)
+#endif
 {
    loc_t    loc;
    offset_t *cache;
@@ -463,44 +467,44 @@ static int __gdb_setup_reg(uint64_t idx, raw64_t **reg, size_t *size, uint8_t sy
 
    switch(idx)
    {
-   case  8: loc.u64 = &__rip.raw;         goto __win;
-   case  9: loc.u64 = &__rflags.raw;      goto __win;
+   case  8: loc.u64 = &__rip.raw;        __cond_access(wr,__rip);         goto __win;
+   case  9: loc.u64 = &__rflags.raw;     __cond_access(wr,__rflags);      goto __win;
 
-   case 10: loc.u16 = &__cs.selector.raw; goto __win16;
-   case 11: loc.u16 = &__ss.selector.raw; goto __win16;
-   case 12: loc.u16 = &__ds.selector.raw; goto __win16;
-   case 13: loc.u16 = &__es.selector.raw; goto __win16;
-   case 14: loc.u16 = &__fs.selector.raw; goto __win16;
-   case 15: loc.u16 = &__gs.selector.raw; goto __win16;
+   case 10: loc.u16 = &__cs.selector.raw;__cond_access(wr,__cs.selector); goto __win16;
+   case 11: loc.u16 = &__ss.selector.raw;__cond_access(wr,__ss.selector); goto __win16;
+   case 12: loc.u16 = &__ds.selector.raw;__cond_access(wr,__ds.selector); goto __win16;
+   case 13: loc.u16 = &__es.selector.raw;__cond_access(wr,__es.selector); goto __win16;
+   case 14: loc.u16 = &__fs.selector.raw;__cond_access(wr,__fs.selector); goto __win16;
+   case 15: loc.u16 = &__gs.selector.raw;__cond_access(wr,__gs.selector); goto __win16;
    }
 
 __sys:
    switch(idx)
    {
-   case  0: loc.u64 = &__cr0.raw;            goto __win;
-   case  1: loc.u64 = &__cr2.raw;            goto __win;
-   case  2: loc.u64 = &__cr3.raw;            goto __win;
-   case  3: loc.u64 = &__cr4.raw;            goto __win;
+   case  0: loc.u64 = &__cr0.raw; __cond_access(wr,__cr0); goto __win;
+   case  1: loc.u64 = &__cr2.raw; __cond_access(wr,__cr2); goto __win;
+   case  2: loc.u64 = &__cr3.raw; __cond_access(wr,__cr3); goto __win;
+   case  3: loc.u64 = &__cr4.raw; __cond_access(wr,__cr4); goto __win;
 
    case  4: *cache = get_dr0(); loc.addr = (void*)cache; goto __win;
    case  5: *cache = get_dr1(); loc.addr = (void*)cache; goto __win;
    case  6: *cache = get_dr2(); loc.addr = (void*)cache; goto __win;
    case  7: *cache = get_dr3(); loc.addr = (void*)cache; goto __win;
 
-   case  8: loc.u64 = &__dr6.raw;            goto __win;
-   case  9: loc.u64 = &__dr7.raw;            goto __win;
-   case 10: loc.u64 = &__dbgctl.raw;         goto __win;
-   case 11: loc.u64 = &__efer.raw;           goto __win;
-   case 12: loc.u64 = &__cs.base_addr.raw;   goto __win;
-   case 13: loc.u64 = &__ss.base_addr.raw;   goto __win;
-   case 14: loc.u64 = &__ds.base_addr.raw;   goto __win;
-   case 15: loc.u64 = &__es.base_addr.raw;   goto __win;
-   case 16: loc.u64 = &__fs.base_addr.raw;   goto __win;
-   case 17: loc.u64 = &__gs.base_addr.raw;   goto __win;
-   case 18: loc.u64 = &__gdtr.base_addr.raw; goto __win;
-   case 19: loc.u64 = &__idtr.base_addr.raw; goto __win;
-   case 20: loc.u64 = &__ldtr.base_addr.raw; goto __win;
-   case 21: loc.u64 = &__tr.base_addr.raw;   goto __win;
+   case  8: loc.u64 = &__dr6.raw;       __cond_access(wr,__dr6);       goto __win;
+   case  9: loc.u64 = &__dr7.raw;       __cond_access(wr,__dr7);       goto __win;
+   case 10: loc.u64 = &__dbgctl.raw;    __cond_access(wr,__dbgctl);    goto __win;
+   case 11: loc.u64 = &__efer.raw;      __cond_access(wr,__efer);      goto __win;
+   case 12: loc.u64 = &__cs.base.raw;   __cond_access(wr,__cs.base);   goto __win;
+   case 13: loc.u64 = &__ss.base.raw;   __cond_access(wr,__ss.base);   goto __win;
+   case 14: loc.u64 = &__ds.base.raw;   __cond_access(wr,__ds.base);   goto __win;
+   case 15: loc.u64 = &__es.base.raw;   __cond_access(wr,__es.base);   goto __win;
+   case 16: loc.u64 = &__fs.base.raw;   __cond_access(wr,__fs.base);   goto __win;
+   case 17: loc.u64 = &__gs.base.raw;   __cond_access(wr,__gs.base);   goto __win;
+   case 18: loc.u64 = &__gdtr.base.raw; __cond_access(wr,__gdtr.base); goto __win;
+   case 19: loc.u64 = &__idtr.base.raw; __cond_access(wr,__idtr.base); goto __win;
+   case 20: loc.u64 = &__ldtr.base.raw; __cond_access(wr,__ldtr.base); goto __win;
+   case 21: loc.u64 = &__tr.base.raw;   __cond_access(wr,__tr.base);   goto __win;
    }
 
 __gpr:
@@ -558,7 +562,7 @@ int __gdb_setup_reg_op(uint8_t *data, size_t len,
       goto __nak;
    }
 
-   return __gdb_setup_reg(idx, reg, size, sys);
+   return __gdb_setup_reg(idx, reg, size, sys, wr);
 
 __nak:
    gdb_nak();

@@ -41,6 +41,8 @@ typedef union ps2_system_control
 
 } __attribute__((packed)) ps2_t;
 
+#define disable_a20()     out(in(0x92)&0xfc,0x92)
+
 /*
 ** Functions
 */

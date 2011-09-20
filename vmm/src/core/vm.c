@@ -18,6 +18,7 @@
 #include <vm.h>
 #include <paging.h>
 #include <dev_io_ports.h>
+#include <intr.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -58,12 +59,12 @@ static void __vm_resolve_seg_offset(offset_t *vaddr, offset_t base, offset_t off
 
 void vm_get_code_addr(offset_t *vaddr, offset_t addend, int *mode)
 {
-   __vm_resolve_seg_offset(vaddr, __cs.base_addr.raw, __rip.raw, addend, mode);
+   __vm_resolve_seg_offset(vaddr, __cs.base.raw, __rip.raw, addend, mode);
 }
 
 void vm_get_stack_addr(offset_t *vaddr, offset_t addend, int *mode)
 {
-   __vm_resolve_seg_offset(vaddr, __ss.base_addr.raw, info->vm.cpu.gpr->rsp.raw,
+   __vm_resolve_seg_offset(vaddr, __ss.base.raw, info->vm.cpu.gpr->rsp.raw,
 			   addend, mode);
 }
 
@@ -261,11 +262,9 @@ int vm_write_mem(offset_t vaddr, uint8_t *data, size_t len)
 
 int vm_enter_pmode()
 {
-   pdpe_t *pdp = info->vm.cpu.pg.pm.pdp[0];
-
    info->vm.cpu.dflt_excp = VM_PMODE_EXCP_BITMAP;
+   __update_exception_mask();
 
-   __pg_set_entry(&info->vm.cpu.pg.pm.pml4[0], PG_USR|PG_RW, page_nr(pdp));
    __allow_soft_int();
    __allow_io_range(KBD_START_PORT, KBD_END_PORT);
 
@@ -274,11 +273,9 @@ int vm_enter_pmode()
 
 int vm_enter_rmode()
 {
-   pdpe_t *pdp = info->vm.cpu.pg.rm->pdp;
-
    info->vm.cpu.dflt_excp = VM_RMODE_EXCP_BITMAP;
+   __update_exception_mask();
 
-   __pg_set_entry(&info->vm.cpu.pg.rm->pml4[0], PG_USR|PG_RW, page_nr(pdp));
    __deny_soft_int();
    __deny_io_range(KBD_START_PORT, KBD_END_PORT);
 

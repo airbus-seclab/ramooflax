@@ -8,6 +8,6 @@ else
 SUBDIRS += vmx
 endif
 
-LD            := $(LD_x64)
-CCLIB         := $(CCLIB_x64)
-EXTRA_CFLAGS  := -D__INIT__ -D__X86_64__ $(CFLG_x64)
+CCLIB         := $(CCLIB_64)
+EXTRA_CFLAGS  := $(CFLG_64) -D__INIT__
+EXTRA_LDFLAGS := $(LDFLG_64)

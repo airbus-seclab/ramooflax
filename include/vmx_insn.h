@@ -19,7 +19,8 @@
 #define __VMX_INSN_H__
 
 #include <types.h>
-#include <print.h>
+
+typedef raw32_t vmx_insn_err_t;
 
 /*
 ** VMCS VM exit info VM-instruction error field
@@ -38,7 +39,7 @@
 #define VM_INSN_ERROR_VMPTRLD_INVL_PHYS              9
 #define VM_INSN_ERROR_VMPTRLD_VMXON                 10
 #define VM_INSN_ERROR_VMPTRLD_INVL_REV              11
-#define VM_INSN_ERROR_VMRW_INVL_VMCS                12
+#define VM_INSN_ERROR_VMRW_INVL_VMCS_FIELD          12
 #define VM_INSN_ERROR_VMWRITE_RO_VMCS               13
 #define VM_INSN_ERROR_VMXON_IN_VMXROOT              15
 #define VM_INSN_ERROR_VMENTRY_INVL_EXEC_VMCS        16
@@ -55,22 +56,38 @@
 /*
 ** Functions
 */
-uint32_t  vmx_vmxon(uint64_t*)                __attribute__ ((regparm(1)));
-uint32_t  vmx_vmclear(uint32_t*, uint64_t*)   __attribute__ ((regparm(2)));
-uint32_t  vmx_vmload(uint32_t*, uint64_t*)    __attribute__ ((regparm(2)));
-void      vmx_vmlaunch();
+void    vmx_vmlaunch();
 
-uint32_t  __vmx_vmwrite(uint32_t*, uint32_t, uint32_t) __attribute__ ((regparm(3)));
-uint32_t  __vmx_vmread(uint32_t*, uint32_t*, uint32_t) __attribute__ ((regparm(3)));
+#define vmx_vmxon(vmcs)          __vmx_vmxon(vmcs)
+#define vmx_vmclear(err,vmcs)    __vmx_insn2(__vmx_vmclear,err,vmcs)
+#define vmx_vmload(err,vmcs)     __vmx_insn2(__vmx_vmload,err,vmcs)
+#define vmx_vmread(err,addr,enc) __vmx_insn3(__vmx_vmread,err,addr,enc)
+#define vmx_vmwrite(err,val,enc) __vmx_insn3(__vmx_vmwrite,err,val,enc)
 
-#define   __vmx_insn_debug(_insn_,_part_,_data_,_enc_)			\
-   ({ uint32_t vmx_err;							\
-      if( ! __vmx_##_insn_(&vmx_err,(_data_),(_enc_)) )			\
-	 panic( "failure " #_insn_ " " #_part_ " " #_enc_ " !\n");	\
+/*
+** VMX insn operates on 64 bits in long mode
+** so we ensure error code allocation
+*/
+#define __vmx_insn2(fn, err, vmcs)		\
+   ({						\
+      raw64_t __err;				\
+      int     __ret = fn(&__err.raw, vmcs);	\
+      (err)->raw = __err.low;			\
+      __ret;					\
    })
 
-#define   vmx_vmread(_pArT_,_pTr_,_eNc_)      __vmx_insn_debug(vmread,_pArT_,(_pTr_),_eNc_)
-#define   vmx_vmwrite(_pArT_,_daTa_,_eNc_)    __vmx_insn_debug(vmwrite,_pArT_,(_daTa_),_eNc_)
+#define __vmx_insn3(fn, err, x, enc)		\
+   ({						\
+      raw64_t __err;				\
+      int     __ret = fn(&__err.raw, x, enc);	\
+      (err)->raw = __err.low;			\
+      __ret;					\
+   })
+
+int  __vmx_vmxon(uint64_t*)                       __regparm__(1);
+int  __vmx_vmclear(uint64_t*, uint64_t*)          __regparm__(2);
+int  __vmx_vmload(uint64_t*,  uint64_t*)          __regparm__(2);
+int  __vmx_vmread(uint64_t*, uint64_t*, uint64_t) __regparm__(3);
+int  __vmx_vmwrite(uint64_t*, uint64_t, uint64_t) __regparm__(3);
 
 #endif
-

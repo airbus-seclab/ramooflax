@@ -32,8 +32,18 @@ ifeq ($(CONFIG_MSR_PROXY),on)
 CFLG_CONFIG += -D__MSR_PROXY__
 endif
 
-## Debug info flags
-ifeq ($(CONFIG_DEBUG),on)
+ifeq ($(USE_EHCI),1)
+ifeq ($(CONFIG_EHCI_FULL),on)
+CFLG_CONFIG += -D__EHCI_FULL__
+endif
+ifeq ($(CONFIG_EHCI_2ND),on)
+CFLG_CONFIG += -D__EHCI_2ND__
+endif
+endif
+
+ifeq ($(CONFIG_DEBUG_ACTIVE),on)
+CFLG_CONFIG += -D__DEBUG_ACTIVE__
+endif
 ifeq ($(CONFIG_VMEXIT_TRACE),on)
 CFLG_CONFIG += -D__DEBUG_VMEXIT_TRACE__
 endif
@@ -49,11 +59,17 @@ endif
 ifeq ($(CONFIG_PG_DBG),on)
 CFLG_CONFIG += -DPG_DBG
 endif
+ifeq ($(CONFIG_PG_W_DBG),on)
+CFLG_CONFIG += -DPG_W_DBG
+endif
 ifeq ($(CONFIG_SMAP_DBG),on)
 CFLG_CONFIG += -DSMAP_DBG
 endif
 ifeq ($(CONFIG_PMEM_DBG),on)
 CFLG_CONFIG += -DPMEM_DBG
+endif
+ifeq ($(CONFIG_VMEM_DBG),on)
+CFLG_CONFIG += -DVMEM_DBG
 endif
 ifeq ($(CONFIG_CPU_DBG),on)
 CFLG_CONFIG += -DCPU_DBG
@@ -160,6 +176,9 @@ endif
 ifeq ($(CONFIG_SVM_DBG),on)
 CFLG_CONFIG += -DSVM_DBG
 endif
+ifeq ($(CONFIG_SVM_CPU_DBG),on)
+CFLG_CONFIG += -DSVM_CPU_DBG
+endif
 ifeq ($(CONFIG_SVM_IDT_DBG),on)
 CFLG_CONFIG += -DSVM_IDT_DBG
 endif
@@ -196,8 +215,14 @@ endif
 ifeq ($(CONFIG_VMX_DBG),on)
 CFLG_CONFIG += -DVMX_DBG
 endif
+ifeq ($(CONFIG_VMX_CPU_DBG),on)
+CFLG_CONFIG += -DVMX_CPU_DBG
+endif
 ifeq ($(CONFIG_VMX_IDT_DBG),on)
 CFLG_CONFIG += -DVMX_IDT_DBG
+endif
+ifeq ($(CONFIG_VMX_EPT_DBG),on)
+CFLG_CONFIG += -DVMX_EPT_DBG
 endif
 ifeq ($(CONFIG_VMX_EXCP_DBG),on)
 CFLG_CONFIG += -DVMX_EXCP_DBG
@@ -225,7 +250,6 @@ CFLG_CONFIG += -DVMX_MSR_DBG
 endif
 ifeq ($(CONFIG_VMX_CR_DBG),on)
 CFLG_CONFIG += -DVMX_CR_DBG
-endif
 endif
 
 INST_DIR   := $(CONFIG_INST_DIR)

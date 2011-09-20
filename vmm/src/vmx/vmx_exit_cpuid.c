@@ -23,7 +23,7 @@ extern info_data_t *info;
 
 void __vmx_vmexit_resolve_cpuid(uint32_t idx)
 {
-   switch( idx )
+   switch(idx)
    {
    case CPUID_FEATURE_INFO:
       __vmx_vmexit_resolve_cpuid_feature();
@@ -35,7 +35,7 @@ void __vmx_vmexit_resolve_cpuid(uint32_t idx)
 
 void __vmx_vmexit_resolve_cpuid_feature()
 {
-   gpr_ctx_t *ctx = info->vm.cpu.gpr;   
+   gpr64_ctx_t *ctx = info->vm.cpu.gpr;
 
-   ctx->ecx.raw &= ~CPUID_ECX_FEAT_VMX;
+   ctx->rcx.low &= ~CPUID_ECX_FEAT_VMX;
 }

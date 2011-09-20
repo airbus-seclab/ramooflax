@@ -24,7 +24,6 @@
 /*
 ** Functions
 */
-int   svm_vmexit_resolve_exception();
-int   __svm_vmexit_inject_exception(uint32_t, uint32_t, uint32_t);
+int  __svm_vmexit_inject_exception(uint32_t, uint32_t, uint64_t);
 
 #endif

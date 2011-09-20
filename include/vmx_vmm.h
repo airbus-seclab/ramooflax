@@ -21,11 +21,11 @@
 #include <types.h>
 #include <pagemem.h>
 #include <vmx_vmcs.h>
-
+#include <vmx_msr.h>
 #include <excp.h>
 
-#define VM_RMODE_EXCP_BITMAP   ((1<<DF_EXCP)|(1<<GP_EXCP))
-#define VM_PMODE_EXCP_BITMAP   (0)
+#define VM_RMODE_EXCP_BITMAP   (1<<GP_EXCP|1<<MC_EXCP)
+#define VM_PMODE_EXCP_BITMAP   (1<<MC_EXCP)
 
 /*
 ** Require strict alignment
@@ -51,29 +51,45 @@ typedef struct vmx_aligned_virtual_machine_control
 */
 typedef struct vmx_bazaar
 {
-   vmcs_region_t  vmcs;
-   uint8_t        last_pending;
-   raw64_t        cr3_shadow;
-   raw64_t        int_shadow;
+   vmcs_region_t        vmcs;
+   raw64_t              int_shadow;
+   raw64_t              dr_shadow[6];
+   offset_t             max_paddr;
+   size_t               lbr_tos;
+   ia32_mtrr_cap_t      mtrr_cap;
+   ia32_mtrr_def_t      mtrr_def;
+
+   cr0_reg_t            cr0_dft_mask;
+   cr4_reg_t            cr4_dft_mask;
+
+   vmx_basic_info_msr_t vmx_info;
+   vmx_pin_ctls_msr_t   vmx_fx_pin;
+   vmx_proc_ctls_msr_t  vmx_fx_proc;
+   vmx_proc_ctls_msr_t  vmx_fx_proc2;
+   vmx_exit_ctls_msr_t  vmx_fx_exit;
+   vmx_entry_ctls_msr_t vmx_fx_entry;
+   vmx_fixed_cr_msr_t   vmx_fx_cr0;
+   vmx_fixed_cr_msr_t   vmx_fx_cr4;
+   vmx_ept_cap_msr_t    vmx_ept_cap;
 
 } vmx_bazaar_t;
 
 /*
-** Fast access to vmcs pointers
+** Access to vmcs pointers
 */
-#define guest_state(info)  ((vmcs_guest_t*)&info->vm.vmcs.guest_state)
-#define host_state(info)   ((vmcs_host_t*)&info->vm.vmcs.host_state)
-#define exec_ctrls(info)   ((vmcs_exec_ctl_t*)&info->vm.vmcs.controls.exec_ctrls)
-#define exit_ctrls(info)   ((vmcs_exit_ctl_t*)&info->vm.vmcs.controls.exit_ctrls)
-#define entry_ctrls(info)  ((vmcs_entry_ctl_t*)&info->vm.vmcs.controls.entry_ctrls)
-#define exit_info(info)    ((vmcs_exit_info_t*)&info->vm.vmcs.exit_info)
+#define vm_state        info->vm.vmcs.guest_state
+#define vm_host_state   info->vm.vmcs.host_state
+#define vm_exec_ctrls   info->vm.vmcs.controls.exec_ctrls
+#define vm_exit_ctrls   info->vm.vmcs.controls.exit_ctrls
+#define vm_entry_ctrls  info->vm.vmcs.controls.entry_ctrls
+#define vm_exit_info    info->vm.vmcs.exit_info
 
 /*
 ** Functions
 */
 #ifdef __INIT__
 void    vmx_vmm_init();
-#define vmx_vmm_start(rsp)					\
+#define vmx_vmm_start(rsp)						\
    asm volatile("mov %0, %%rsp ; jmp vmx_vmlaunch"::"m"(rsp):"memory")
 #endif
 

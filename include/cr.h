@@ -125,7 +125,15 @@ typedef union control_register_3
 #define CR4_OSFXSR_BIT       9
 #define CR4_OSXMMEXCPT_BIT  10
 #define CR4_VMXE_BIT        13
+#define CR4_SMXE_BIT        14
+#define CR4_PCIDE_BIT       17
+#define CR4_OSXSAVE_BIT     18
+#define CR4_SMEP_BIT        20
 
+#define CR4_SMEP            (1UL<<CR4_SMEP_BIT)
+#define CR4_OSXSAVE         (1UL<<CR4_OSXSAVE_BIT)
+#define CR4_PCIDE           (1UL<<CR4_PCIDE_BIT)
+#define CR4_SMXE            (1UL<<CR4_SMXE_BIT)
 #define CR4_VMXE            (1UL<<CR4_VMXE_BIT)
 #define CR4_OSXMMEXCPT      (1UL<<CR4_OSXMMEXCPT_BIT)
 #define CR4_OSFXSR          (1UL<<CR4_OSFXSR_BIT)
@@ -138,6 +146,7 @@ typedef union control_register_3
 #define CR4_DE              (1UL<<CR4_DE_BIT)
 #define CR4_TSD             (1UL<<CR4_TSD_BIT)
 #define CR4_PVI             (1UL<<CR4_PVI_BIT)
+#define CR4_VME             (1UL<<CR4_VME_BIT)
 #define CR4_VME             (1UL<<CR4_VME_BIT)
 
 typedef union control_register_4
@@ -157,7 +166,13 @@ typedef union control_register_4
       uint64_t    osxmmexcpt:1; /* simd fpu excpt */
       uint64_t    r1:2;         /* reserved */
       uint64_t    vmxe:1;       /* vmx enable */
-      uint64_t    r2:18;        /* reserved */
+      uint64_t    smxe:1;       /* smx enable */
+      uint64_t    r2:2;         /* reserved */
+      uint64_t    pcide:1;      /* process context id */
+      uint64_t    osxsave:1;    /* xsave enable */
+      uint64_t    r3:1;         /* reserved */
+      uint64_t    smep:1;       /* smep */
+      uint64_t    r4:11;        /* smep reserved */
 
    } __attribute__((packed));
 
@@ -179,6 +194,7 @@ typedef union control_register_4
 
 #define set_cr(_n_,_x_) asm volatile("mov %0, %%cr" #_n_ ::"r"(_x_))
 #define set_cr0(x)      set_cr(0,x)
+#define set_cr2(x)      set_cr(2,x)
 #define set_cr3(x)      set_cr(3,x)
 #define set_cr4(x)      set_cr(4,x)
 
@@ -209,8 +225,8 @@ int  __resolve_cr0_wr(cr0_reg_t*);
 int  __resolve_cr3_wr(cr3_reg_t*);
 int  __resolve_cr4_wr(cr4_reg_t*);
 
+int __resolve_cr_wr_with(uint8_t, raw64_t*);
 int  __resolve_cr(uint8_t, uint8_t, uint8_t);
-int    resolve_cr(uint8_t, uint8_t, uint8_t);
 #endif
 
 #endif

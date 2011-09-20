@@ -29,28 +29,28 @@ static void gdb_vmm_rd_all_sysregs(uint8_t __unused__ *data, size_t __unused__ l
 {
    size_t rlen = sizeof(uint64_t)*2;
 
-   gdb_add_number(__cr0.raw,            rlen, 1);
-   gdb_add_number(__cr2.raw,            rlen, 1);
-   gdb_add_number(__cr3.raw,            rlen, 1);
-   gdb_add_number(__cr4.raw,            rlen, 1);
-   gdb_add_number(get_dr0(),            rlen, 1);
-   gdb_add_number(get_dr1(),            rlen, 1);
-   gdb_add_number(get_dr2(),            rlen, 1);
-   gdb_add_number(get_dr3(),            rlen, 1);
-   gdb_add_number(__dr6.raw,            rlen, 1);
-   gdb_add_number(__dr7.raw,            rlen, 1);
-   gdb_add_number(__dbgctl.raw,         rlen, 1);
-   gdb_add_number(__efer.raw,           rlen, 1);
-   gdb_add_number(__cs.base_addr.raw,   rlen, 1);
-   gdb_add_number(__ss.base_addr.raw,   rlen, 1);
-   gdb_add_number(__ds.base_addr.raw,   rlen, 1);
-   gdb_add_number(__es.base_addr.raw,   rlen, 1);
-   gdb_add_number(__fs.base_addr.raw,   rlen, 1);
-   gdb_add_number(__gs.base_addr.raw,   rlen, 1);
-   gdb_add_number(__gdtr.base_addr.raw, rlen, 1);
-   gdb_add_number(__idtr.base_addr.raw, rlen, 1);
-   gdb_add_number(__ldtr.base_addr.raw, rlen, 1);
-   gdb_add_number(__tr.base_addr.raw,   rlen, 1);
+                              gdb_add_number(__cr0.raw,       rlen, 1);
+   __pre_access(__cr2);       gdb_add_number(__cr2.raw,       rlen, 1);
+                              gdb_add_number(__cr3.raw,       rlen, 1);
+   __pre_access(__cr4);       gdb_add_number(__cr4.raw,       rlen, 1);
+                              gdb_add_number(get_dr0(),       rlen, 1);
+                              gdb_add_number(get_dr1(),       rlen, 1);
+                              gdb_add_number(get_dr2(),       rlen, 1);
+                              gdb_add_number(get_dr3(),       rlen, 1);
+   __pre_access(__dr6);       gdb_add_number(__dr6.raw,       rlen, 1);
+   __pre_access(__dr7);       gdb_add_number(__dr7.raw,       rlen, 1);
+   __pre_access(__dbgctl);    gdb_add_number(__dbgctl.raw,    rlen, 1);
+                              gdb_add_number(__efer.raw,      rlen, 1);
+                              gdb_add_number(__cs.base.raw,   rlen, 1);
+                              gdb_add_number(__ss.base.raw,   rlen, 1);
+   __pre_access(__ds.base);   gdb_add_number(__ds.base.raw,   rlen, 1);
+   __pre_access(__es.base);   gdb_add_number(__es.base.raw,   rlen, 1);
+   __pre_access(__fs.base);   gdb_add_number(__fs.base.raw,   rlen, 1);
+   __pre_access(__gs.base);   gdb_add_number(__gs.base.raw,   rlen, 1);
+   __pre_access(__gdtr.base); gdb_add_number(__gdtr.base.raw, rlen, 1);
+   __pre_access(__idtr.base); gdb_add_number(__idtr.base.raw, rlen, 1);
+   __pre_access(__ldtr.base); gdb_add_number(__ldtr.base.raw, rlen, 1);
+   __pre_access(__tr.base);   gdb_add_number(__tr.base.raw,   rlen, 1);
 
    gdb_send_packet();
 }
@@ -127,13 +127,15 @@ static void gdb_vmm_get_lbr(uint8_t __unused__ *data, size_t __unused__ len)
 
    rlen = sizeof(uint64_t)*2;
 
+   __setup_lbr();
+
    ips[0] = __lbr_from();
    ips[1] = __lbr_to();
    ips[2] = __lbr_from_excp();
    ips[3] = __lbr_to_excp();
 
    for(i=0 ; i<4 ; i++)
-      gdb_add_number(__cs.base_addr.raw + ips[i], rlen, 0);
+      gdb_add_number(ips[i], rlen, 0);
 
    gdb_send_packet();
 }

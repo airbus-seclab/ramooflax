@@ -30,8 +30,11 @@
 #define long_align(addr)       __align(addr,sizeof(long))
 #define long_align_next(addr)  __align_next(addr,sizeof(long))
 
-#define mem_range(_x_addr_x_,_x_start_x_,_x_end_x_)			\
-   (((_x_addr_x_)>=(_x_start_x_)) && ((_x_addr_x_)<(_x_end_x_)))
+#define __range_inc(_v,_s,_e) (((_v) >= (_s)) && ((_v) <= (_e)))
+#define __range_exc(_v,_s,_e) (((_v) >= (_s)) && ((_v) <  (_e)))
+
+#define range(_v,_s,_e)        __range_inc(_v,_s,_e)
+#define mem_range(_a,_s,_e)    __range_exc(_a,_s,_e)
 
 #define TOP_4GB                (1ULL<<32)
 #define NULL                   ((void*)0)
@@ -53,8 +56,6 @@ typedef unsigned long          ulong_t;
 
 typedef enum { false=0, true } bool_t;
 
-#define range(_val_,_start_,_end_) (((_val_)>=(_start_))&&((_val_)<=(_end_)))
-
 /*
 ** Offset of a field from a structure
 */
@@ -66,25 +67,58 @@ typedef enum { false=0, true } bool_t;
 #define __unused__		  __attribute__ ((unused))
 
 /*
+** Register passing on abi-x86_64:
+**  1 %rdi, 2 %rsi, 3 %rdx, 4 %rcx
+*/
+#define __regparm__(_n_)	  __attribute__ ((regparm((_n_))))
+
+/*
+** Decomposition of 16 bis
+** in 8 bits
+*/
+typedef union raw_16_bits_entry
+{
+   uint16_t raw;
+   sint16_t sraw;
+   uint8_t  byte[2];
+
+   /* H/L byte access */
+   struct
+   {
+      uint8_t blow;
+      uint8_t bhigh;
+
+   } __attribute__((packed));
+
+} __attribute__((packed)) raw16_t;
+
+/*
 ** Decomposition of 32 bis
 ** in 16 and 8 bits
 */
 typedef union raw_32_bits_entry
 {
-   uint32_t   raw;
-   sint32_t   sraw;
-   uint8_t    byte[4];
+   uint32_t raw;
+   sint32_t sraw;
+   uint8_t  byte[4];
 
-   /* H/L word access */
+   /* Full decomposition */
+   struct
+   {
+      raw16_t _wlow;
+      raw16_t _whigh;
+
+   } __attribute__((packed));
+
+   /* Fast acces to lower parts */
    struct
    {
       union
       {
-	 /* H/L byte access */
 	 struct
 	 {
-	    uint16_t blow:8;
-	    uint16_t bhigh:8;
+	    uint8_t blow;
+	    uint8_t bhigh;
 
 	 } __attribute__((packed));
 
@@ -104,25 +138,31 @@ typedef union raw_32_bits_entry
 */
 typedef union raw_64_bits_entry
 {
-   uint64_t     raw;
-   sint64_t     sraw;
-   uint8_t      byte[8];
+   uint64_t raw;
+   sint64_t sraw;
+   uint8_t  byte[8];
 
-   /* H/L dword access */
+   /* Full decomposition */
+   struct
+   {
+      raw32_t _low;
+      raw32_t _high;
+
+   } __attribute__((packed));
+
+   /* Fast access to lower parts */
    struct
    {
       union
       {
-	 /* H/L word access */
 	 struct
 	 {
 	    union
 	    {
-	       /* H/L byte access */
 	       struct
 	       {
-		  uint16_t blow:8;
-		  uint16_t bhigh:8;
+		  uint8_t blow;
+		  uint8_t bhigh;
 
 	       } __attribute__((packed));
 

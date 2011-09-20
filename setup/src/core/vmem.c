@@ -17,55 +17,23 @@
 */
 #include <vmem.h>
 #include <vmm.h>
+#include <vm.h>
 #include <segmem.h>
 #include <realmem.h>
 #include <pagemem.h>
 #include <paging.h>
 #include <string.h>
+#include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-static void vm_pmode_pagemem_init()
-{
-   pg_map(0, info->area.start, PG_USR|PG_RW);
-   pg_map(info->area.end, info->hrd.mem.top, PG_USR|PG_RW);
-}
-
-static void vm_rmode_pagemem_init()
-{
-   pdpe_t   *pdp;
-   pde64_t  *pd;
-   pte64_t  *pt;
-   uint32_t p;
-   size_t   len;
-
-   pdp = info->vm.cpu.pg.rm->pdp;
-   pd  = info->vm.cpu.pg.rm->pd;
-   pt  = info->vm.cpu.pg.rm->pt;
-
-   __pg_set_entry(&pdp[0] , PG_USR|PG_RW, page_nr(pd));
-   __pg_set_entry(&pd[0]  , PG_USR|PG_RW, page_nr(pt));
-
-   for(p=0 ; p<page_nr(RM_LIMIT) ; p++)
-      __pg_set_entry(&pt[p], PG_USR|PG_RW, p);
-
-   /* XXX: we are not a 8086 and do not need to emulate wrap-around */
-   len = sizeof(pte64_t)*page_nr(RM_WRAP_LIMIT - RM_LIMIT);
-   memcpy((void*)&pt[p], (void*)&pt[0], len);
-}
-
 static void vm_pagemem_init()
 {
-   pdpe_t *pdp;
+   npg_pdpe_t *pdp = info->vm.cpu.pg.pdp[0];
 
-   vm_rmode_pagemem_init();
-   vm_pmode_pagemem_init();
-
-   /* default to real mode a20 off */
-   pdp = info->vm.cpu.pg.rm->pdp;
-   //pdp = info->vm.cpu.pg.pm.pdp[0];
-   __pg_set_entry(&info->vm.cpu.pg.rm->pml4[0], PG_USR|PG_RW, page_nr(pdp));
+   npg_init();
+   npg_set_entry(&info->vm.cpu.pg.pml4[0], npg_dft_attr, page_nr(pdp));
 }
 
 /*
@@ -95,7 +63,7 @@ static void vmm_pagemem_init()
    for(i=0 ; i<pml4e_max ; i++)
    {
       pdp = info->vmm.cpu.pg.pdp[i];
-      __pg_set_entry(&pml4[i], PG_KRN|PG_RW, page_nr(pdp));
+      pg_set_entry(&pml4[i], PG_KRN|PG_RW, page_nr(pdp));
 
       pdpe_max = min(pd_nr, PDPE_PER_PDP);
       pd_nr -= pdpe_max;
@@ -103,17 +71,17 @@ static void vmm_pagemem_init()
       for(j=0 ; j<pdpe_max ; j++)
       {
 	 if(info->vmm.cpu.skillz.pg_1G)
-	    __pg_set_large_entry(&pdp[j], PG_KRN|PG_RW, pfn++);
+	    pg_set_large_entry(&pdp[j], PG_KRN|PG_RW, pfn++);
 	 else
 	 {
 	    pd = info->vmm.cpu.pg.pd[j];
-	    __pg_set_entry(&pdp[j], PG_KRN|PG_RW, page_nr(pd));
+	    pg_set_entry(&pdp[j], PG_KRN|PG_RW, page_nr(pd));
 
 	    pde_max = min(pt_nr, PDE64_PER_PD);
 	    pt_nr -= pde_max;
 
 	    for(k=0 ; k<pde_max ; k++)
-	       __pg_set_large_entry(&pd[k], PG_KRN|PG_RW, pfn++);
+	       pg_set_large_entry(&pd[k], PG_KRN|PG_RW, pfn++);
 	 }
       }
    }

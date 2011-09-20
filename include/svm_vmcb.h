@@ -323,7 +323,7 @@ typedef struct vmcb_segment_descriptor_t
    seg_sel_t        selector;
    vmcb_seg_attr_t  attributes;
    raw32_t          limit;
-   raw64_t          base_addr;
+   raw64_t          base;
 
 } __attribute__((packed)) vmcb_segment_desc_t;
 
@@ -358,17 +358,17 @@ typedef struct vmcb_state_area_fields
    raw64_t              rsp;
    uint8_t              rsvrd4[24];
    raw64_t              rax;
-   raw_msr_entry_t      star;
-   raw_msr_entry_t      lstar;
-   raw_msr_entry_t      cstar;
-   raw_msr_entry_t      sfmask;
-   raw_msr_entry_t      kernel_gs_base;
-   raw_msr_entry_t      sysenter_cs;
-   raw_msr_entry_t      sysenter_esp;
-   raw_msr_entry_t      sysenter_eip;
+   msr_t                star;
+   msr_t                lstar;
+   msr_t                cstar;
+   msr_t                sfmask;
+   msr_t                kernel_gs_base;
+   msr_t                sysenter_cs;
+   msr_t                sysenter_esp;
+   msr_t                sysenter_eip;
    raw64_t              cr2;
    uint8_t              rsvrd5[32];
-   raw_msr_entry_t      g_pat;
+   msr_t                g_pat;
    amd_dbgctl_msr_t     dbgctl;
    raw64_t              lbr_from;
    raw64_t              lbr_to;
@@ -508,10 +508,8 @@ typedef union vmcb_area
 /*
 ** Functions
 */
+#ifdef __INIT__
 void   svm_vmcb_init();
-void   svm_vmcb_controls_init();
-void   svm_vmcb_io_controls_init();
-void   svm_vmcb_msr_controls_init();
-
+#endif
 
 #endif

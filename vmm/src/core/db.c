@@ -30,7 +30,9 @@ static void db_check_native_sstep()
    **   will do it one insn later due to TF. It's the normal
    **   behavior for these instructions
    */
-   if(__rflags.tf && !gdb_singlestep_check() && __vmexit_on_insn())
+   if(__rflags.tf &&
+      !gdb_singlestep_check() &&
+      __vmexit_on_insn())
    {
       debug(DB, "native singlestep\n");
       __inject_exception(DB_EXCP, 0, 0);

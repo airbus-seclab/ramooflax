@@ -18,162 +18,161 @@
 #include <vmx_vmcs.h>
 #include <vmx_vmm.h>
 #include <vmx_guest.h>
+#include <debug.h>
 #include <info_data.h>
-#include <dev_io_ports.h>
 
-void vmx_vmcs_init(info_data_t *info)
+extern info_data_t *info;
+
+static void vmx_vmcs_host_state_init()
 {
-   vmx_vmcs_controls_init( info );
-   vmx_vmcs_host_state_init( info );
-   vmx_vmcs_guest_state_init( info );
+   vm_host_state.cr0.raw = get_cr0();
+   vm_host_state.cr3.raw = get_cr3();
+   vm_host_state.cr4.raw = get_cr4();
+
+   rd_msr_ia32_sysenter_cs(vm_host_state.ia32_sysenter_cs);
+   rd_msr_ia32_sysenter_esp(vm_host_state.ia32_sysenter_esp);
+   rd_msr_ia32_sysenter_eip(vm_host_state.ia32_sysenter_eip);
+
+   rd_msr_ia32_perf_glb_ctl(vm_host_state.ia32_perf);
+   rd_msr_pat(vm_host_state.ia32_pat);
+   rd_msr_ia32_efer(vm_host_state.ia32_efer);
+
+   vm_host_state.rsp.raw = info->vmm.stack_bottom;
+   vm_host_state.rip.raw = info->vmm.entry;
+
+   vm_host_state.cs.raw = vmm_code_sel;
+
+   vm_host_state.ss.raw = vmm_data_sel;
+   vm_host_state.ds.raw = vmm_data_sel;
+   vm_host_state.es.raw = vmm_data_sel;
+   vm_host_state.fs.raw = vmm_data_sel;
+   vm_host_state.gs.raw = vmm_data_sel;
+
+   vm_host_state.tr.raw = vmm_tss_sel;
+
+   vm_host_state.gdtr_base.raw = (offset_t)info->vmm.cpu.sg->gdt;
+   vm_host_state.idtr_base.raw = (offset_t)info->vmm.cpu.sg->idt;
 }
 
-void vmx_vmcs_controls_init(info_data_t *info)
+static void vmx_vmcs_entry_controls_init()
 {
-   vmx_vmcs_exec_controls_init( info );
-   vmx_vmcs_exec_controls_io_init( info );
-   vmx_vmcs_exec_controls_msr_init( info );
-   vmx_vmcs_exit_controls_init( info );
-   vmx_vmcs_entry_controls_init( info );
+   vm_entry_ctrls.entry.load_ia32_perf = 1;
+   vm_entry_ctrls.entry.load_ia32_pat  = 1;
+   vm_entry_ctrls.entry.load_ia32_efer = 1;
+   vm_entry_ctrls.entry.load_dbgctl    = 1;
+
+   vm_entry_ctrls.msr_load_addr.raw = (offset_t)&info->vm.cpu.vmc->msr_entry_load;
 }
 
-void vmx_vmcs_exec_controls_io_init(info_data_t *info)
+static void vmx_vmcs_exit_controls_init()
 {
-   vmcs_exec_ctl_t *ctls = exec_ctrls(info);
+   //vm_exit_ctrls.exit.save_preempt_timer = 1;
 
-   ctls->proc.usio = 1;
+   vm_exit_ctrls.exit.host_lmode     = 1;
+   vm_exit_ctrls.exit.load_ia32_perf = 1;
+   vm_exit_ctrls.exit.load_ia32_pat  = 1;
+   vm_exit_ctrls.exit.load_ia32_efer = 1;
 
-   ctls->io_bitmap_a.low = (uint32_t)info->vm.cpu.vmc->io_bitmap_a;
-   ctls->io_bitmap_b.low = (uint32_t)info->vm.cpu.vmc->io_bitmap_b;
+   vm_exit_ctrls.exit.save_ia32_pat  = 1;
+   vm_exit_ctrls.exit.save_ia32_efer = 1;
+   vm_exit_ctrls.exit.save_dbgctl    = 1;
+
+   vm_exit_ctrls.msr_store_addr.raw = (offset_t)&info->vm.cpu.vmc->msr_exit_store;
+   vm_exit_ctrls.msr_load_addr.raw  = (offset_t)&info->vm.cpu.vmc->msr_exit_load;
 }
 
-void vmx_vmcs_exec_controls_msr_init(info_data_t *info)
+static void vmx_vmcs_exec_controls_msr_init()
 {
-   vmcs_exec_ctl_t *ctls = exec_ctrls(info);
+#ifndef __MSR_PROXY__
+   vmx_deny_msr_rw(info->vm.cpu.vmc, IA32_MTRR_DEF_TYPE);
 
-   vmx_deny_msr_rw( info->vm.cpu.vmc, IA32_MTRR_DEF_TYPE );
-   vmx_deny_msr_rw_range( info->vm.cpu.vmc, IA32_MTRR_PHYSBASE0, IA32_MTRR_PHYSMASK7 );
+   /* XXX: modifying MTRRs while enabled must be intercepted */
+   /* for(i=0 ; i<info->vm.mtrr_cap.vcnt ; i++) */
+   /* { */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_PHYSBASE0+(i*2)); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_PHYSMASK0+(i*2)+1); */
+   /* } */
 
-   ctls->proc.umsr = 1;
-   ctls->msr_bitmap.low = (uint32_t)info->vm.cpu.vmc->msr_bitmap;
+   /* if(info->vm.mtrr_cap.fix) */
+   /* { */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX64K_00000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX16K_80000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX16K_a0000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_c0000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_c8000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_d0000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_d8000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_e0000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_e8000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_f0000); */
+   /*    vmx_deny_msr_wr(info->vm.cpu.vmc, IA32_MTRR_FIX4K_f8000); */
+   /* } */
+
+   vm_exec_ctrls.proc.umsr = 1;
+#endif
+
+   vm_exec_ctrls.msr_bitmap.raw = (offset_t)info->vm.cpu.vmc->msr_bitmap;
 }
 
-void vmx_vmcs_exec_controls_init(info_data_t *info)
+static void vmx_vmcs_exec_controls_io_init()
 {
-   vmcs_exec_ctl_t           *ctls;
-   vmx_pinbased_ctls_msr_t   pin_msr;
-   vmx_procbased_ctls_msr_t  proc_msr;
-   cr0_reg_t                 cr0_f0, cr0_f1;
-   cr4_reg_t                 cr4_f0, cr4_f1;
-
-   ctls = exec_ctrls(info);
-
-   read_msr_vmx_pinbased_ctls( pin_msr );
-   read_msr_vmx_procbased_ctls( proc_msr );
-
-   /* pin based */
-   ctls->pin.eint = 1;
-   ctls->pin.nmi  = 0;
-   ctls->pin.vnmi = 0;
-
-   ctls->pin.raw &= pin_msr.allowed_1_settings;
-   ctls->pin.raw |= pin_msr.allowed_0_settings;
-
-   /* proc based */
-   ctls->proc.iwe   = 0;
-   ctls->proc.mwait = 0;
-   ctls->proc.rdpmc = 0;
-   ctls->proc.cr8l  = 0;
-   ctls->proc.cr8s  = 0;
-   ctls->proc.tprs  = 0;
-   ctls->proc.nwe   = 0;
-   ctls->proc.mdr   = 0;
-   ctls->proc.mon   = 0;
-   ctls->proc.pause = 0;
-   ctls->proc.hlt   = 1;
-   ctls->proc.invl  = 1;
-   ctls->proc.rdtsc = 0;
-   ctls->proc.tsc   = 0;
-
-   ctls->proc.raw &= proc_msr.allowed_1_settings;
-   ctls->proc.raw |= proc_msr.allowed_0_settings;
-
-   ctls->excp_bitmap.raw = info->vm.cpu.dflt_excp;
-   ctls->pagefault_err_code_mask.raw = 0;
-   ctls->pagefault_err_code_match.raw = 0;
-
-   /* cr shadow */
-   read_msr_vmx_cr0_fixed0( cr0_f0 );
-   read_msr_vmx_cr0_fixed1( cr0_f1 );
-
-   read_msr_vmx_cr4_fixed0( cr4_f0 );
-   read_msr_vmx_cr4_fixed1( cr4_f1 );
-
-   ctls->cr0_mask.low = (0UL & cr0_f1.low) | cr0_f0.low;
-   ctls->cr4_mask.low = (CR4_PSE & cr4_f1.low) | cr4_f0.low;
+   vm_exec_ctrls.proc.usio = 1;
+   vm_exec_ctrls.io_bitmap_a.raw = (offset_t)info->vm.cpu.vmc->io_bitmap_a;
+   vm_exec_ctrls.io_bitmap_b.raw = (offset_t)info->vm.cpu.vmc->io_bitmap_b;
 }
 
-void vmx_vmcs_exit_controls_init(info_data_t *info)
+static void vmx_vmcs_exec_controls_init()
 {
-   vmcs_exit_ctl_t     *ctls;
-   vmx_exit_ctls_msr_t exit_msr;
+   //vm_exec_ctrls.pin.preempt = 1;
+   vm_exec_ctrls.pin.nmi     = 1;
 
-   ctls = exit_ctrls(info);
+   vm_exec_ctrls.proc.tsc   = 1;
+   vm_exec_ctrls.proc.cr3l  = 1;
+   vm_exec_ctrls.proc.mwait = 0;
+   vm_exec_ctrls.proc.mon   = 0;
+   vm_exec_ctrls.proc.proc2 = 1;
 
-   read_msr_vmx_exit_ctls( exit_msr );
+   vm_exec_ctrls.proc2.ept    = 1;
+   vm_exec_ctrls.proc2.vpid   = 1;
+   vm_exec_ctrls.proc2.uguest = 1;
+   vm_exec_ctrls.proc2.rdtscp = 1;
 
-   ctls->exit.raw &= exit_msr.allowed_1_settings;
-   ctls->exit.raw |= exit_msr.allowed_0_settings;
+   vm_exec_ctrls.eptp.cache = VMX_EPT_MEM_TYPE_WB;
+   vm_exec_ctrls.eptp.pwl   = 3;
+   vm_exec_ctrls.eptp.addr  = page_nr(info->vm.cpu.pg.pml4);
 
-   ctls->msr_store_addr.low = (uint32_t)&info->vm.cpu.vmc->msr_exit_store;
-   ctls->msr_load_addr.low = (uint32_t)&info->vm.cpu.vmc->msr_exit_load;
+   vm_exec_ctrls.vpid.raw   = 1;
+
+   vm_exec_ctrls.excp_bitmap.raw = info->vm.cpu.dflt_excp;
+   vm_exec_ctrls.pagefault_err_code_mask.raw = 0;
+   vm_exec_ctrls.pagefault_err_code_match.raw = 0;
+
+   info->vm.cr0_dft_mask.pe = 1;
+   info->vm.cr0_dft_mask.cd = 1;
+   info->vm.cr0_dft_mask.pg = 1;
+   vm_exec_ctrls.cr0_mask.raw = info->vm.cr0_dft_mask.raw;
+
+   info->vm.cr4_dft_mask.mce  = 1;
+   info->vm.cr4_dft_mask.pae  = 1;
+   info->vm.cr4_dft_mask.pse  = 1;
+   info->vm.cr4_dft_mask.pge  = 1;
+   info->vm.cr4_dft_mask.vmxe = 1;
+   vm_exec_ctrls.cr4_mask.raw = info->vm.cr4_dft_mask.raw;
+
+   vmx_vmcs_exec_controls_io_init();
+   vmx_vmcs_exec_controls_msr_init();
 }
 
-void vmx_vmcs_entry_controls_init(info_data_t *info)
+static void vmx_vmcs_controls_init()
 {
-   vmcs_entry_ctl_t     *ctls;
-   vmx_entry_ctls_msr_t entry_msr;
-
-   ctls = entry_ctrls(info);
-
-   read_msr_vmx_entry_ctls( entry_msr );
-
-   ctls->entry.raw &= entry_msr.allowed_1_settings;
-   ctls->entry.raw |= entry_msr.allowed_0_settings;
-
-   ctls->msr_load_addr.low = (uint32_t)&info->vm.cpu.vmc->msr_entry_load;
-
+   vmx_vmcs_exec_controls_init();
+   vmx_vmcs_exit_controls_init();
+   vmx_vmcs_entry_controls_init();
 }
 
-void vmx_vmcs_host_state_init(info_data_t *info)
+void vmx_vmcs_init()
 {
-   vmcs_host_t    *state;
-
-   state = host_state(info);
-
-   state->cr0.low = get_cr0();
-   state->cr4.low = get_cr4();
-   state->cr3.low = get_cr3();
-
-   read_msr_ia32_sysenter_cs( state->ia32_sysenter_cs_msr );
-   read_msr_ia32_sysenter_esp( state->ia32_sysenter_esp_msr );
-   read_msr_ia32_sysenter_eip( state->ia32_sysenter_eip_msr );
-
-   state->rsp.low = info->vmm.stack_bottom;
-
-   /* vm-exit handler (vmm elf entry point) */
-   state->rip.low = info->vmm.entry;
-
-   /* segmentation */
-   state->cs.raw = K_CODE_SELECTOR;
-   state->ss.raw = K_DATA_SELECTOR;
-   state->tr.raw = K_TSS_SELECTOR;
-
-   state->ds.raw = state->es.raw = state->fs.raw = state->gs.raw = state->ss.raw;
-
-   state->gdtr_base_addr.low = (uint32_t)info->vmm.cpu.sg->gdt;
-   state->idtr_base_addr.low = (uint32_t)info->vmm.cpu.sg->idt;
+   vmx_vmcs_controls_init();
+   vmx_vmcs_host_state_init();
+   vmx_vmcs_guest_state_init();
 }
-
-
-

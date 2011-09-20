@@ -30,7 +30,6 @@
 
 #define SVM_IO_BITMAP_SIZE     (3*PAGE_SIZE)
 #define SVM_MSR_BITMAP_SIZE    (2*PAGE_SIZE)
-#define SVM_CR_SHADOW_NR       5
 
 /*
 ** Require strict alignment
@@ -56,10 +55,10 @@ typedef struct svm_bazaar
 } svm_bazaar_t;
 
 /*
-** Fast access to vmcb pointers
+** Access to vmcb pointers
 */
-#define guest_state(info)  ((vmcb_state_area_t*)&info->vm.cpu.vmc->vm_vmcb.state_area)
-#define guest_ctrls(info)  ((vmcs_ctrls_area_t*)&info->vm.cpu.vmc->vm_vmcb.ctrls_area)
+#define vm_state info->vm.cpu.vmc->vm_vmcb.state_area
+#define vm_ctrls info->vm.cpu.vmc->vm_vmcb.ctrls_area
 
 /*
 ** Functions

@@ -131,9 +131,9 @@ static int emulate_int15_get_ext_mem()
    raw64_t  x;
 
    for(n=0 ; n<smap->nr ; n++, sme++)
-      if(sme->type == SMAP_TYPE_AVL && sme->base_addr == 0x100000ULL)
+      if(sme->type == SMAP_TYPE_AVL && sme->base == 0x100000ULL)
       {
-	 x.raw = (sme->base_addr + sme->len) - (16<<20);
+	 x.raw = (sme->base + sme->len) - (16<<20);
 	 x.raw >>= 16;
 	 break;
       }
@@ -223,8 +223,8 @@ static int emulate_int15_smap()
    else
       gpr->rbx.low += gpr->rcx.low;
 
-   __pre_access(__es.base_addr);
-   dst.linear = __es.base_addr.low + gpr->rdi.wlow;
+   __pre_access(__es.base);
+   dst.linear = __es.base.low + gpr->rdi.wlow;
 
    if(vmm_area_range(dst.linear, gpr->rcx.low))
    {

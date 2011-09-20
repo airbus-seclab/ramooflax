@@ -101,6 +101,7 @@ typedef union irq_message
    struct
    {
       uint16_t  vector:8;
+      uint16_t  preempt:1;
       uint16_t  rmode:1;
 
    } __attribute__((packed));
@@ -126,7 +127,7 @@ void  intr_init();
 #endif
 
 int   resolve_intr();
-void  intr_hdlr(int64_r0_ctx_t*) __attribute__ ((regparm(1)));
+void  intr_hdlr(int64_r0_ctx_t*) __regparm__(1);
 
 #endif
 

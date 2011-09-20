@@ -23,54 +23,17 @@
 .globl __vmx_vmread
 .type  __vmx_vmread,"function"
 
-.globl vmx_vmxon
-.type  vmx_vmxon,"function"
+.globl __vmx_vmclear
+.type  __vmx_vmclear,"function"
 
-.globl vmx_vmclear
-.type  vmx_vmclear,"function"
+.globl __vmx_vmload
+.type  __vmx_vmload,"function"
 
-.globl vmx_vmload
-.type  vmx_vmload,"function"
+.globl __vmx_vmxon
+.type  __vmx_vmxon,"function"
 
 .globl vmx_vmlaunch
 .type  vmx_vmlaunch,"function"
-
-
-/*
-** VMX insn error checks
-*/
-vmx_check_error:
-	jz	vmx_fail_valid
-	jc	vmx_fail_invalid
-vmx_success:
-	mov	$1, %eax
-	ret
-	
-/*
-** VM Fail Valid : ZF=1
-**
-** read VMCS instruction error (0x4400)
-** store it to (%eax)
-*/
-vmx_fail_valid:
-	push	%ecx
-	mov	$0x4400, %ecx
-	vmread	%ecx, (%eax)
-	pop	%ecx
-	jmp	vmx_fail
-
-/*
-** VM Fail Invalid : CF=1
-**
-** no VMCS instruction error code
-** but inform "C" error pointer
-*/
-vmx_fail_invalid:
-	movl	$0, (%eax)
-
-vmx_fail:
-	xor	%eax, %eax
-	ret
 
 /*
 ** VM-entry
@@ -97,17 +60,17 @@ vmx_vmlaunch:
 /*
 ** VM-entry failure
 **
-** esp + 16 [  vmx_err     ]
-** esp + 12 [  format str  ]
-** esp +  8 [  func name   ]
-** esp +  4 [  fake_ret @  ]
-** esp +  0 [  panic @     ]
+** rsp + 32 [  vmx_err     ]
+** rsp + 24 [  format str  ]
+** rsp + 16 [  func name   ]
+** rsp +  8 [  fake_ret @  ]
+** rsp +  0 [  panic @     ]
 **
 ** Params:
-**	EAX = mem32 VMX error code ptr = @vmx_err (esp+12)
+**	RDI = mem64 VMX error code ptr = @vmx_err
 */
 vmx_vmlaunch_failure:
-	mov	%esp, %eax
+	mov	%rsp, %rdi
 	push	$vmx_vmlaunch_failure_fmt
 	push	$vmx_vmlaunch_failure_fnm
 	push	$0xbadc0de
@@ -118,14 +81,14 @@ vmx_vmlaunch_failure:
 ** Enter VMX root operations
 **
 ** params:
-**	EAX = mem64 VMXON region paddr
+**	RDI = mem64 VMXON region paddr
 **
 ** returns:
 **	0 on failure
 **	1 on success
 */
-vmx_vmxon:
-	vmxon	(%eax)
+__vmx_vmxon:
+	vmxon	(%rdi)
 	jc	vmx_fail
 	jmp	vmx_success
 
@@ -133,60 +96,96 @@ vmx_vmxon:
 ** Clear VMCS
 **
 ** params:
-**	EAX = mem32 VMX error code ptr
-**	EDX = mem64 VMCS region paddr
+**	RDI = mem64 VMX error code ptr
+**	RSI = mem64 VMCS region paddr
 **
 ** returns:
 **	0 on failure
 **	1 on success
 */
-vmx_vmclear:
-	vmclear (%edx)
+__vmx_vmclear:
+	vmclear (%rsi)
 	jmp	vmx_check_error
 
 /*
 ** Load VMCS
 **
 ** params:
-**	EAX = mem32 VMX error code ptr
-**	EDX = mem64 VMCS region paddr
+**	RDI = mem64 VMX error code ptr
+**	RSI = mem64 VMCS region paddr
 **
 ** returns:
 **	0 on failure
-**	1 on error
+**	1 on success
 */
-vmx_vmload:
-	vmptrld	(%edx)
+__vmx_vmload:
+	vmptrld	(%rsi)
 	jmp	vmx_check_error
 
 /*
 ** VM write
 **
 ** params:
-**	EAX = mem32 VMX error code ptr
-**	EDX = value to write
-**	ECX = VMCS field encoding
+**	RDI = mem64 VMX error code ptr
+**	RSI = value to write
+**	RDX = VMCS field encoding
 **
 ** returns:
 **	0 on failure
 **	1 on success
 */
 __vmx_vmwrite:
-	vmwrite	%edx, %ecx
+	vmwrite	%rsi, %rdx
 	jmp	vmx_check_error
 
 /*
 ** VM read
 **
 ** params:
-**	EAX = mem32 VMX error code ptr
-**	EDX = mem32 read value ptr
-**	ECX = VMCS field encoding
+**	RDI = mem64 VMX error code ptr
+**	RSI = mem64 read value ptr
+**	RDX = VMCS field encoding
 **
 ** returns:
 **	0 on failure
 **	1 on success
 */
 __vmx_vmread:
-	vmread	%ecx, (%edx)
+	vmread	%rdx, (%rsi)
 	jmp	vmx_check_error
+
+/*
+** VMX insn error checks
+*/
+vmx_check_error:
+	jz	vmx_fail_valid
+	jc	vmx_fail_invalid
+
+vmx_success:
+	mov	$1, %rax
+	ret
+
+/*
+** VM Fail Valid : ZF=1
+**
+** read VMCS instruction error (0x4400)
+** store it to (%rdi)
+*/
+vmx_fail_valid:
+	push	%rdx
+	mov	$0x4400, %rdx
+	vmread	%rdx, (%rdi)
+	pop	%rdx
+	jmp	vmx_fail
+
+/*
+** VM Fail Invalid : CF=1
+**
+** VMCS instruction error code is 0
+*/
+vmx_fail_invalid:
+	movl	$0, (%rdi)
+
+vmx_fail:
+	xor	%rax, %rax
+	ret

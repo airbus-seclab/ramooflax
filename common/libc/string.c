@@ -114,3 +114,29 @@ int hex_to_uint64(uint8_t *data, size_t len, uint64_t *value)
    *value = v;
    return 1;
 }
+
+int dec_to_uint64(uint8_t *data, size_t len, uint64_t *value)
+{
+   uint64_t v = 0, f = 1;
+
+   if(!len)
+      return 0;
+
+   len = min(len, 20);
+
+   do
+   {
+      uint8_t x = data[--len];
+
+      if(x < '0' || x > '9')
+	 return 0;
+
+      x -= '0';
+      v += x*f;
+      f *= 10;
+
+   } while(len);
+
+   *value = v;
+   return 1;
+}

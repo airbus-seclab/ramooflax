@@ -20,115 +20,271 @@
 
 #include <types.h>
 
-/**** XXX tout est a revoir ******/
+/*
+** System registers
+*/
+#define __state                 info->vm.vmcs.guest_state
+#define __host_state            info->vm.vmcs.host_state
+#define __exec_ctrls            info->vm.vmcs.controls.exec_ctrls
+#define __exit_ctrls            info->vm.vmcs.controls.exit_ctrls
+#define __entry_ctrls           info->vm.vmcs.controls.entry_ctrls
+#define __exit_info             info->vm.vmcs.exit_info
 
-#define __cs                    (info->vm.vmcs.guest_state.cs)
-#define __ds                    (info->vm.vmcs.guest_state.ds)
-#define __es                    (info->vm.vmcs.guest_state.es)
-#define __fs                    (info->vm.vmcs.guest_state.fs)
-#define __gs                    (info->vm.vmcs.guest_state.gs)
-#define __ss                    (info->vm.vmcs.guest_state.ss)
-#define __rflags                (info->vm.vmcs.guest_state.rflags)
-#define __rip                   (info->vm.vmcs.guest_state.rip)
-#define __rpl                   (info->vm.vmcs.guest_state.cs.selector.rpl)
-#define __cpl                   (info->vm.vmcs.guest_state.cs.selector.rpl)
+#define __cr0_real              __state.cr0
+#define __cr0                   __exec_ctrls.cr0_read_shadow
+#define __cr2                   __state.cr2
+#define __cr3                   __state.cr3
+#define __cr4_real              __state.cr4
+#define __cr4                   __exec_ctrls.cr4_read_shadow
+#define __rip                   __state.rip
+#define __rflags                __state.rflags
 
-#define __gdtr                  (info->vm.vmcs.guest_state.gdtr)
-#define __idtr                  (info->vm.vmcs.guest_state.idtr)
-#define __tr                    (info->vm.vmcs.guest_state.tr)
+#define __dr6                   __state.dr6
+#define __dr7                   __state.dr7
 
-#define __cr0                   (info->vm.vmcs.guest_state.cr0)
-#define __cr3                   (info->vm.vmcs.guest_state.cr3)
-#define __cr4                   (info->vm.vmcs.guest_state.cr4)
+#define __cs                    __state.cs
+#define __ds                    __state.ds
+#define __es                    __state.es
+#define __fs                    __state.fs
+#define __gs                    __state.gs
+#define __ss                    __state.ss
 
 #define __vmexit_on_insn()      __vmx_vmexit_on_insn()
 
-#define __cr0_shadow            (info->vm.vmcs.controls.exec_ctrls.cr0_read_shadow)
-#define __cr4_shadow            (info->vm.vmcs.controls.exec_ctrls.cr4_read_shadow)
-#define __cr3_shadow            (info->vm.cr3_shadow)
-#define __g_pgd                 (__cr3_shadow.low)
+#define __cpl                   __state.cs.selector.rpl
+#define __gdtr                  __state.gdtr
+#define __idtr                  __state.idtr
+#define __ldtr                  __state.ldtr
+#define __tr                    __state.tr
 
-#define __exception_bitmap      (info->vm.vmcs.controls.exec_ctrls.excp_bitmap)
-#define __resolve_pf()          __vmx_vmexit_resolve_pf()
+#define __efer                  __state.ia32_efer
+#define __dbgctl                __state.ia32_dbgctl
+#define __sysenter_cs           __state.ia32_sysenter_cs
+#define __sysenter_eip          __state.ia32_sysenter_eip
+#define __sysenter_esp          __state.ia32_sysenter_esp
 
-#define __update_asid()         __vmx_update_asid()
+#include <cpu_modes.h>
 
-#define __force_ring0()
-#define __force_ring3()
+/*
+** Segmentation
+*/
+#define VMX_CODE_32_R0_ATTR                 0xc09b
+#define VMX_CODE_16_R0_ATTR                 0x809b
+#define VMX_CODE_16_R0_CO_ATTR              0x809f
+#define VMX_CODE_16_R1_CO_ATTR              0x80bf
+#define VMX_CODE_16_R3_ATTR                 0x80fb
 
-#define __inject_exception(a,b,c) __vmx_vmexit_inject_exception(a,b,c)
-#define __inject_interrupt(_i_)   __vmx_vmexit_inject_interrupt(_i_)
-#define __setup_iwe(_on_,_nr_)    __vmx_vmexit_setup_interrupt_window_exiting(_on_,_nr_)
-#define __iwe_on()                (info->vm.vmcs.controls.exec_ctrls.proc.iwe)
-#define __pending_irq             (info->vm.last_pending)
-#define __interrupts_on()         (__rflags.IF)
-/* XXX: interrupt shadow, blocking by STI, mov SS ? */
-#define __interrupt_shadow        (info->vm.int_shadow)
-#define __safe_interrupts_on()    (__interrupts_on() && ! __interrupt_shadow.low)
-#define __blocking_by_mov_ss()					\
-   ({								\
-      vmcs_read( info->vm.vmcs.guest_state.int_state );		\
-      info->vm.vmcs.guest_state.int_state.mss = 1;		\
-      vmcs_dirty( info->vm.vmcs.guest_state.int_state );	\
-   })
-
-#define __mov_from_cr(_cr_)     __vmx_vmexit_mov_from_cr(_cr_)
-
-#define __pse()                 ((__cr4_shadow.low & CR4_PSE)?1:0)
-#define __pae()                 ((__cr4_shadow.low & CR4_PAE)?1:0)
-#define __paging()              ((__cr0_shadow.low & CR0_PG)?1:0)
-#define __rmode()               ((__cr0_shadow.low & CR0_PE)?0:1)
-#define __wp()                  ((__cr0.low & CR0_WP)?1:0)
-
-#define __allow_exception(_e_)  __vmx_allow_exception(info->vm.vmcs,_e_)
-#define __deny_exception(_e_)   __vmx_deny_exception(info->vm.vmcs,_e_)
-
-#define __pre_access(_field_)               vmcs_read(_field_)
-#define __post_access(_field_)              vmcs_dirty(_field_)
-#define __post_access_restrictive(_field_,_idx_)	\
-   ({							\
-      cr##_idx_##_reg_t f0,f1;				\
-      read_msr_vmx_cr##_idx_##_fixed0(f0);		\
-      read_msr_vmx_cr##_idx_##_fixed1(f1);		\
-      _field_.low &= f1.low;				\
-      _field_.low |= f0.low;				\
-      vmcs_dirty(_field_);				\
-   })
-
-#define __resolve_msr_arch(_wr_)            __vmx_vmexit_resolve_msr(_wr_)
-#define __resolve_cpuid_arch(_idx_)         __vmx_vmexit_resolve_cpuid(_idx_)
-#define __allow_io(_p_)                     vmx_allow_io(info->vm.cpu.vmc,_p_)
-#define __allow_io_range(_p1_,_p2_)         vmx_allow_io_range(info->vm.cpu.vmc,_p1_,_p2_)
-#define __deny_io_range(_p1_,_p2_)          vmx_deny_io_range(info->vm.cpu.vmc,_p1_,_p2_)
-#define __deny_io(_p_)                      vmx_deny_io(info->vm.cpu.vmc,_p_)
-#define __release_irq()                     vmx_release_irq()
-
-
-#define VMX_CODE_32_R0_ATTR     0xc09b
-#define VMX_CODE_16_R0_ATTR     0x809b
-#define VMX_CODE_16_R0_CO_ATTR  0x809f
-#define VMX_CODE_16_R1_CO_ATTR  0x80bf
-#define VMX_CODE_16_R3_ATTR     0x80fb
+#define VMX_DATA_32_R0_ATTR                 0xc093
+#define VMX_DATA_16_R0_ATTR                 0x8093
+#define VMX_DATA_16_R1_ATTR                 0x80b3
+#define VMX_DATA_16_R3_ATTR                 0x80f3
 
 #define __set_code16r0co_desc(_attr_)       (_attr_.raw = VMX_CODE_16_R0_CO_ATTR)
-
-#define VMX_DATA_32_R0_ATTR     0xc093
-#define VMX_DATA_16_R0_ATTR     0x8093
-#define VMX_DATA_16_R1_ATTR     0x80b3
-#define VMX_DATA_16_R3_ATTR     0x80f3
-
 #define __set_data16r0_desc(_attr_)         (_attr_.raw = VMX_DATA_16_R0_ATTR)
 #define __set_data16r3_desc(_attr_)         (_attr_.raw = VMX_DATA_16_R3_ATTR)
 
-#define VMX_TSS_32_ATTR         0x8b
+#define VMX_TSS_32_ATTR                     0x8b
 
 #define __set_tss32_desc(_attr_)            (_attr_.raw = VMX_TSS_32_ATTR)
 
 /*
+** Fields synchro
+*/
+#define __pre_access(_fld_)                 vmcs_read(_fld_)
+#define __post_access(_fld_)		    vmcs_dirty(_fld_)
+#define __cond_access(_wr_,_fld_)           vmcs_cond(_wr_,_fld_)
+
+/*
+** Paging & TLBs
+*/
+#define npg_init()                     vmx_ept_map()
+#define npg_cr3                        __exec_ctrls.eptp
+#define npg_dft_attr                   ept_dft_attr
+#define npg_get_attr(_e)               ept_pg_get_attr(_e)
+#define npg_present(_e)                ept_pg_present(_e)
+#define npg_large(_e)                  pg_large(_e)
+#define npg_zero(_e)                   ept_zero(_e)
+
+#define npg_set_entry(_e,_a,_p)            ept_pg_set_entry(_e,_a,_p)
+#define npg_set_page_entry(_e,_a,_p)       ept_pg_set_page_entry(_e,_a,_p)
+#define npg_set_large_page_entry(_e,_a,_p) ept_pg_set_large_page_entry(_e,_a,_p)
+
+#define npg_pml4e_t                    ept_pml4e_t
+#define npg_pdpe_t                     ept_pdpe_t
+#define npg_pde64_t                    ept_pde64_t
+#define npg_pte64_t                    ept_pte64_t
+
+#define npg_pml4_t                     ept_pml4_t
+#define npg_pdp_t                      ept_pdp_t
+#define npg_pd64_t                     ept_pd64_t
+#define npg_pt64_t                     ept_pt64_t
+
+#define __flush_asid_tlbs(_t)    invvpid(_t)
+#define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
+#define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
+#define __update_npg_cache(_x)  ({})
+
+/*
+** CR registers
+*/
+#define __cr0_cache_update(_guest)   \
+   ({				     \
+      /* XXX: set EPT as UC */	     \
+   })
+
+#define __cr0_update(_gst)			\
+   ({						\
+      __cr0.low = __cr0_real.low = (_gst)->low;	\
+      __post_access(__cr0);			\
+      __post_access(__cr0_real);		\
+   })
+
+#define __cr4_update(_gst)			\
+   ({						\
+      __cr4.low = __cr4_real.low = (_gst)->low;	\
+      __post_access(__cr4);			\
+      __post_access(__cr4_real);		\
+   })
+
+/*
+** Masks
+*/
+#define __exception_bitmap      __exec_ctrls.excp_bitmap
+#define __update_exception_mask()		\
+   ({						\
+      __exception_bitmap.raw =			\
+	 info->vm.cpu.dflt_excp  |		\
+	 info->vmm.ctrl.usr.excp |		\
+	 info->vmm.ctrl.dbg.excp;		\
+      vmcs_dirty(__exec_ctrls.excp_bitmap);	\
+   })
+
+#ifndef __INIT__
+#include <vmx_exit_cr.h>
+#endif
+
+#define __update_cr_read_mask()	 __vmx_vmexit_cr_update_mask()
+#define __update_cr_write_mask() __vmx_vmexit_cr_update_mask()
+
+#define __allow_dr_access()		\
+   ({					\
+      vmcs_read(vm_exec_ctrls.proc);	\
+      vm_exec_ctrls.proc.mdr = 0;	\
+      vmcs_dirty(vm_exec_ctrls.proc);	\
+   })
+
+#define __deny_dr_access()		\
+   ({					\
+      vmcs_read(vm_exec_ctrls.proc);	\
+      vm_exec_ctrls.proc.mdr = 1;	\
+      vmcs_dirty(vm_exec_ctrls.proc);	\
+   })
+
+#define __allow_pushf()	         (XXX)
+#define __deny_pushf()	         (XXX)
+#define __allow_popf()	         (XXX)
+#define __deny_popf()            (XXX)
+#define __allow_iret()           (XXX)
+#define __deny_iret()            (XXX)
+
+#define __allow_soft_int()		\
+   ({					\
+      __idtr.limit.wlow = 0x3ff;	\
+      vmcs_dirty(__idtr.limit);		\
+   })
+
+#define __deny_soft_int()						\
+   ({									\
+      __idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;	\
+      vmcs_dirty(__idtr.limit);						\
+   })
+
+#define __allow_hrdw_int()       (XXX)
+#define __deny_hrdw_int()        (XXX)
+#define __allow_icebp()          (XXX)
+#define __deny_icebp()           (XXX)
+
+/*
+** Events
+*/
+#define __exit_reason            __exit_info.reason.basic
+#define __vmexit_on_excp()       __vmx_vmexit_on_excp()
+#define __exception_vector	 __exit_info.int_info.vector
+#define __exception_error        __exit_info.int_err_code.raw
+#define __exception_fault       (__exit_info.qualification.raw & 0xffffffffUL)
+#define __injecting_exception() (__entry_ctrls.int_info.v?1:0)
+
+#define __vmx_prepare_event_injection(_ev, _type, _vector)	\
+   ({								\
+      _ev.raw    = 0;						\
+      _ev.vector = _vector;					\
+      _ev.type   = _type;					\
+      _ev.v      = 1;						\
+      vmcs_dirty(_ev);						\
+   })
+
+#define __setup_iwe(_on_,_nr_)   \
+   __vmx_vmexit_setup_interrupt_window_exiting(_on_,_nr_)
+
+#define __inject_intn(n)            __vmx_vmexit_inject_intn(n)
+#define __inject_exception(a,b,c)   __vmx_vmexit_inject_exception(a,b,c)
+#define __inject_intr(a)            __vmx_vmexit_inject_interrupt(a)
+
+#define __interrupt_shadow         (vm_state.int_state.sti || vm_state.int_state.mss)
+#define __interrupts_on()           __rflags.IF
+#define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
+#define __iwe_on()                  __exec_ctrls.proc.iwe
+
+/*
+** MSRs and IOs
+*/
+#define __resolve_msr_arch(_wr_)          __vmx_vmexit_resolve_msr(_wr_)
+#define __resolve_cpuid_arch(_idx_)       __vmx_vmexit_resolve_cpuid(_idx_)
+
+#define __allow_io(_p_)                   vmx_allow_io(info->vm.cpu.vmc,_p_)
+#define __deny_io(_p_)                    vmx_deny_io(info->vm.cpu.vmc,_p_)
+#define __allow_io_range(_p1,_p2)         vmx_allow_io_range(info->vm.cpu.vmc,_p1,_p2)
+#define __deny_io_range(_p1,_p2)          vmx_deny_io_range(info->vm.cpu.vmc,_p1,_p2)
+
+#define __string_io_linear(_tgt,_iO)			\
+   (_tgt = (__exit_info.guest_linear.raw & (_iO->msk)))
+
+/*
+** Last Branch Record
+*/
+#define __enable_lbr()				\
+   ({						\
+      /* XXX: protect MSR access from guest */	\
+      __state.ia32_dbgctl.lbr = 1;		\
+      __state.ia32_dbgctl.freeze_smm_en = 1;	\
+      vmcs_dirty(__state.ia32_dbgctl);		\
+   })
+
+#define __disable_lbr()				\
+   ({						\
+      /* XXX: release MSR access from guest */	\
+      __state.ia32_dbgctl.lbr = 0;		\
+      __state.ia32_dbgctl.freeze_smm_en = 0;	\
+      vmcs_dirty(__state.ia32_dbgctl);		\
+   })
+
+#define __setup_lbr()				\
+   ({						\
+      msr_t m;					\
+      rd_msr64(LBR_TOS_MSR, m.edx, m.eax);	\
+      info->vm.lbr_tos = m.raw;			\
+   })
+
+#define __lbr_from()       __lbr_nehalem(info->vm.lbr_tos+LBR_FROM_IP_MSR)
+#define __lbr_to()         __lbr_nehalem(info->vm.lbr_tos+LBR_TO_IP_MSR)
+#define __lbr_from_excp()  ({msr_t m;rd_msr64(LBR_LER_FROM_LIP_MSR,m.edx,m.eax);m.raw;})
+#define __lbr_to_excp()    ({msr_t m;rd_msr64(LBR_LER_TO_LIP_MSR,m.edx,m.eax);m.raw;})
+
+/*
 ** Functions
 */
-struct information_data;
-
-void vmx_vm_init(struct information_data*);
+#ifdef __INIT__
+void  vmx_vm_init();
+#endif
 
 #endif

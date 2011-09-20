@@ -16,20 +16,28 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <cpu.h>
+#include <mtrr.h>
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
+static void vmm_cpu_init_skillz()
+{
+   info->vmm.cpu.skillz.pg_1G = page_1G_supported();
+
+   debug(CPU, "vmm 1GB pages support: %s\n"
+	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no");
+}
+
+
+static void vmm_cpu_init()
+{
+   vmm_cpu_init_skillz();
+}
+
 void cpu_init()
 {
-   info->vmm.cpu.skillz.pg_1G    = page_1G_supported();
-   info->vmm.cpu.skillz.asid_tlb = __asid_tlb_supported();
-
-   debug(CPU,
-	 " - page 1G: %s\n"
-	 " - asid flush: %s\n"
-	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no"
-	 ,info->vmm.cpu.skillz.asid_tlb?"yes":"no"
-      );
+   vmm_cpu_init();
+   vm_cpu_init();
 }

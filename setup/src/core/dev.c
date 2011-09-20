@@ -25,11 +25,11 @@ extern info_data_t *info;
 
 void dev_init()
 {
-#if defined(__EHCI_CTRL__) || (defined(__EHCI_PRINT__) && defined(__ENABLE_DEBUG__))
+#if defined(__EHCI_CTRL__) || defined(__EHCI_PRINT__)
    ehci_init();
 #endif
 
-#if defined(__UART_CTRL__) || (defined(__UART_PRINT__) && defined(__ENABLE_DEBUG__))
+#if defined(__UART_CTRL__) || defined(__UART_PRINT__)
    uart_init();
 #endif
 }

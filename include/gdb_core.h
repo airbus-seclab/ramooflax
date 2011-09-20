@@ -26,7 +26,7 @@
 int    gdb_excp_event(uint32_t);
 void   gdb_stub_post();
 
-int    __gdb_active_cr3_check();
+int    __gdb_active_cr3_check(int);
 #define gdb_active_cr3_check() __gdb_active_cr3_check(3)
 
 void   gdb_traps_disable();

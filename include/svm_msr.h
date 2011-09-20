@@ -33,7 +33,7 @@
 
 typedef union amd_dbgctl_msr
 {
-   raw_msr_entry_t;
+   msr_t;
 
    struct
    {
@@ -74,7 +74,7 @@ typedef union amd_dbgctl_msr
 
 #define __amd_dbgctl_lbr(_idx_)		\
    ({					\
-      raw_msr_entry_t m;		\
+      msr_t m;				\
       rd_msr64(_idx_, m.edx, m.eax);	\
       m.raw;				\
    })
@@ -111,7 +111,7 @@ typedef union amd_syscfg_msr
 
    } __attribute__((packed));
 
-   raw_msr_entry_t;
+   msr_t;
    raw64_t;
 
 } __attribute__((packed)) amd_syscfg_msr_t;
@@ -134,13 +134,13 @@ typedef union amd_top_of_memory_msr
 
    } __attribute__((packed));
 
-   raw_msr_entry_t;
+   msr_t;
 
 } __attribute__((packed)) amd_top_mem_msr_t;
 
 #define rd_msr_topmem(_x_)		\
    ({					\
-      raw_msr_entry_t m;		\
+      msr_t m;		\
       rd_msr64(_x_,m.edx,m.eax);	\
       m.raw;				\
    })
@@ -179,7 +179,7 @@ typedef union amd_efer_msr
 
    } __attribute__((packed));
 
-   raw_msr_entry_t;
+   msr_t;
 
 } __attribute__((packed)) amd_efer_msr_t;
 
@@ -219,7 +219,7 @@ typedef union amd_vmcr_msr
 
    } __attribute__((packed));
 
-   raw_msr_entry_t;
+   msr_t;
 
 } __attribute__((packed)) amd_vmcr_msr_t;
 
@@ -253,7 +253,7 @@ typedef union amd_int_pending_msg
 
    } __attribute__((packed));
 
-   raw_msr_entry_t;
+   msr_t;
 
 } __attribute__((packed)) amd_int_pending_msg_t;
 

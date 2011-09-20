@@ -17,7 +17,7 @@
 */
 #include <dev.h>
 #include <vm.h>
-#include <pf.h>
+#include <paging.h>
 #include <dev_io_ports.h>
 #include <info_data.h>
 #include <debug.h>
@@ -32,7 +32,7 @@ void dev_a20_set(uint8_t on)
    if(on != info->vm.dev.mem.a20)
    {
       info->vm.dev.mem.a20 = on;
-      __pf_setup_a20();
+      npg_setup_a20();
    }
 }
 

@@ -27,7 +27,7 @@
 static info_data_t __info;
        info_data_t *info = &__info;
 
-void __attribute__((regparm(1))) init(mbi_t *mbi)
+void __regparm__(1) init(mbi_t *mbi)
 {
    dev_init();
    cpu_init();

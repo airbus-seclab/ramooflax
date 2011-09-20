@@ -17,6 +17,7 @@
 */
 #include <print.h>
 #include <string.h>
+#include <stack_trace.h>
 #include <asm.h>
 
 #ifndef __INIT__
@@ -31,6 +32,8 @@ void __panic(const char *fname, const char *format, ...)
    va_list params;
 
    force_interrupts_off();
+
+   stack_trace();
 
    printf("\n\n:: EVIL :: %s() :: ", fname);
 

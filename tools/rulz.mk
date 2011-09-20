@@ -35,12 +35,12 @@ endef
 
 define aggregate
 echo "    LD    $@"
-$(LD) $(LDFLAGS) -r -o $@ $^
+$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) -r -o $@ $^
 endef
 
 define link
 echo "    LD    $@"
-$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) -T $(LDSCRIPT) $^ -o $@ $(CCLIB)
+$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) $(EXTRA2_LDFLAGS) -T $(LDSCRIPT) $^ -o $@ $(CCLIB)
 endef
 
 define config

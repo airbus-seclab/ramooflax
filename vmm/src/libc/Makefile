@@ -1,1 +1,1 @@
-obj := print.o stack_trace.o pool.o paging.o base64.o string.o
+obj := print.o stack_trace.o pool.o npt_map.o base64.o string.o

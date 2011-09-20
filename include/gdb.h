@@ -86,7 +86,8 @@ typedef union vmm_ctrl_dbg_status
       uint8_t    cr3:1;        /* gdb acting on specific cr3 */
       uint8_t    keep_cr3:1;   /* remember specific cr3 over sessions */
       uint8_t    dr6:1;        /* must clean dr6 */
-      uint8_t    traps:1;      /* traps installed */
+      uint8_t    traps:1;      /* traps status */
+      uint8_t    utraps:1;     /* traps update */
 
    } __attribute__((packed));
 
@@ -95,7 +96,13 @@ typedef union vmm_ctrl_dbg_status
 } __attribute__((packed)) vmm_ctrl_dbg_sts_t;
 
 #define gdb_traps_configured()  (info->vmm.ctrl.dbg.status.traps)
-#define gdb_set_traps(_x)       (info->vmm.ctrl.dbg.status.traps = (_x))
+#define gdb_set_traps(_x)			\
+   ({						\
+      info->vmm.ctrl.dbg.status.traps  = (_x);	\
+      info->vmm.ctrl.dbg.status.utraps = 1;	\
+   })
+#define gdb_traps_need_update() (info->vmm.ctrl.dbg.status.utraps)
+#define gdb_set_traps_updated() (info->vmm.ctrl.dbg.status.utraps = 0)
 
 typedef struct vmm_ctrl_debugger
 {

@@ -26,11 +26,11 @@
 extern info_data_t *info;
        irq_msg_t   irq_msg;
 
-void __attribute__ ((regparm(1))) intr_hdlr(int64_r0_ctx_t *ctx)
+void __regparm__(1) intr_hdlr(int64_r0_ctx_t *ctx)
 {
    irq_msg.vector = ctx->nr.blow;
 
-   if(!__rmode() && irq_msg.vector < NR_EXCP)
+   if(!irq_msg.preempt && irq_msg.vector < NR_EXCP)
       vmm_excp_hdlr(ctx);
 }
 

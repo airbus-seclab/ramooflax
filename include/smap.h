@@ -27,7 +27,7 @@
 
 typedef struct smap_entry
 {
-   uint64_t    base_addr;
+   uint64_t    base;
    uint64_t    len;
    uint32_t    type;
 

@@ -356,6 +356,7 @@ void gdb_brk_hrd_insn_enable()
 
    info->vmm.ctrl.dbg.brk.hrd.status.insn = 1;
    gdb_brk_hrd_insn_set_rflags(&__rflags);
+   __post_access(__rflags);
    debug(GDB_CMD, "enabled insn hrd breakpoints\n");
 }
 
@@ -366,6 +367,7 @@ void gdb_brk_hrd_insn_disable()
 
    info->vmm.ctrl.dbg.brk.hrd.status.insn = 0;
    gdb_brk_hrd_insn_restore_rflags(&__rflags);
+   __post_access(__rflags);
    debug(GDB_CMD, "disabled insn hrd breakpoints\n");
 }
 
@@ -379,29 +381,6 @@ void gdb_brk_hrd_enable()
    debug(GDB_CMD, "enabled hrd breakpoints\n");
 }
 
-void gdb_brk_hrd_disable()
-{
-   if(!info->vmm.ctrl.dbg.brk.hrd.status.on)
-      return;
-
-   info->vmm.ctrl.dbg.brk.hrd.status.on = 0;
-   gdb_release_db_excp();
-   debug(GDB_CMD, "disabled hrd breakpoints\n");
-}
-
-/* static void __gdb_brk_hrd_restore_dr() */
-/* { */
-/*    offset_t x = 0; */
-
-/*    gdb_clean_dr6(); */
-/*    gdb_clean_dr7(); */
-
-/*    set_dr0(x); */
-/*    set_dr1(x); */
-/*    set_dr2(x); */
-/*    set_dr3(x); */
-/* } */
-
 static void __gdb_brk_hrd_restore_dr()
 {
    gdb_dr6_set_dirty(0);
@@ -413,12 +392,25 @@ static void __gdb_brk_hrd_restore_dr()
 
    __dr6.low = info->vm.dr_shadow[4].low;
    __dr7.low = info->vm.dr_shadow[5].low;
+
+   __post_access(__dr6);
+   __post_access(__dr7);
 }
 
 void gdb_brk_hrd_cleanup()
 {
    gdb_brk_hrd_reset_status();
    __gdb_brk_hrd_restore_dr();
+}
+
+void gdb_brk_hrd_disable()
+{
+   if(!info->vmm.ctrl.dbg.brk.hrd.status.on)
+      return;
+
+   info->vmm.ctrl.dbg.brk.hrd.status.on = 0;
+   gdb_release_db_excp();
+   debug(GDB_CMD, "disabled hrd breakpoints\n");
 }
 
 int gdb_brk_hrd_continue()
@@ -432,6 +424,7 @@ int gdb_brk_hrd_continue()
       {
 	 debug(GDB_CMD, "will resume hrd insn breakpoint\n");
 	 __rflags.rf = 1;
+	 __post_access(__rflags);
       }
    }
 
@@ -442,6 +435,8 @@ int gdb_brk_hrd_condition()
 {
    uint8_t n, conf;
    dr7_reg_t *dr7 = &info->vmm.ctrl.dbg.brk.hrd.dr7;
+
+   __pre_access(__dr6);
 
    for(n=0 ; n<4 ; n++)
       if((__dr6.blow & (1<<n)) && (dr7->blow & (1<<(n*2+1))))
@@ -459,6 +454,8 @@ int gdb_brk_hrd_condition()
 
 int gdb_brk_hrd()
 {
+   __pre_access(__dr6);
+
    if(__dr6.bs)
       return gdb_singlestep();
 

@@ -19,17 +19,13 @@
 #define __VMX_EXIT_FAIL_H__
 
 #include <types.h>
+#include <vmx_insn.h>
 
 /*
 ** Functions
 */
-void  vmx_vmexit_failure();
-int   vmx_vmexit_collect();
-void  vmx_vmexit_dump_code();
-void  vmx_vmexit_dump_stack();
 void  vmx_vmexit_show();
-char* vmx_vmexit_string_from_vector_type(uint8_t,  uint8_t);
-
-void  __vmx_vmexit_failure();
+void  vmx_vmexit_failure();
+void  vmx_vmresume_failure(vmx_insn_err_t) __regparm__(1);
 
 #endif

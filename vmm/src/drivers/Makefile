@@ -1,4 +1,4 @@
-obj :=
+obj := dummy.o
 
 ifdef USE_EHCI
 obj += ehci.o

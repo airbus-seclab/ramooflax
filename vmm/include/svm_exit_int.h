@@ -32,19 +32,28 @@
 ** to get a standard stack layout
 **
 */
-#define preempt()                                      \
-   ({                                                  \
-      irq_msg.rmode = __rmode()?1:0;                   \
-      asm volatile( "sti ; stgi ; clgi ; cli" );       \
+#define preempt()				\
+   ({						\
+      irq_msg.rmode   = __rmode()?1:0;		\
+      irq_msg.preempt = 1;			\
+      asm volatile ("sti ; stgi ; clgi ; cli");	\
+      irq_msg.preempt = 0;			\
    })
 
 /*
 ** Functions
 */
-void  __svm_vmexit_setup_interrupt_window_exiting(uint8_t, uint8_t);
-void  __svm_vmexit_inject_interrupt(uint8_t);
-void  __svm_vmexit_inject_intn(uint8_t);
-void  __svm_vmexit_inject_virtual_interrupt(uint8_t);
+/* void  __svm_vmexit_setup_interrupt_window_exiting(uint8_t, uint8_t); */
+/* void  __svm_vmexit_inject_virtual_interrupt(uint8_t); */
 
+#define __svm_vmexit_inject_intn(_vector)			\
+   __svm_prepare_event_injection(vm_ctrls.event_injection,	\
+				 VMCB_IDT_DELIVERY_TYPE_SOFT,	\
+				 _vector)
+
+#define __svm_vmexit_inject_interrupt(_vector)				\
+   __svm_prepare_event_injection(vm_ctrls.event_injection,		\
+				 VMCB_IDT_DELIVERY_TYPE_EXT,		\
+				 _vector)
 
 #endif

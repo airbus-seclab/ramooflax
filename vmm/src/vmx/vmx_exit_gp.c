@@ -19,7 +19,7 @@
 #include <vmx_exit_int.h>
 #include <vmx_vm.h>
 #include <vmx_vmcs_acc.h>
-#include <gp.h>
+#include <emulate.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -27,10 +27,18 @@ extern info_data_t *info;
 
 int vmx_vmexit_resolve_gp()
 {
-   if( __rmode() )
-      return __resolve_rmode_gp();
+   vmcs_read(vm_exit_info.idt_info);
 
-   debug( VMX_EXCP, "#GP not filtered in pmode\n" );
+   /* #GP are related to IDT events */
+   if(!vm_exit_info.idt_info.v)
+      return 0;
+      
+   if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT)
+      return emulate();
+
+   if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_HW_INT)
+      return __emulate_hard_interrupt(vm_exit_info.idt_info.vector);
+
    return 0;
 }
 

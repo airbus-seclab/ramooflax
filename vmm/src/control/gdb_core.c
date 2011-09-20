@@ -102,6 +102,7 @@ static int gdb_excp_gp()
 
    rc = __emulate_insn(&disasm);
    __sysenter_cs.raw = 0;
+   __post_access(__sysenter_cs);
 
    switch(rc)
    {
@@ -125,6 +126,7 @@ static int gdb_excp_gp()
 	 {
 	    debug(GDB_CMD, "removed TF\n");
 	    __rflags.tf = 0;
+	    __post_access(__rflags);
 	 }
       }
    }
@@ -170,6 +172,7 @@ void gdb_traps_enable()
       debug(GDB_CMD, "enabled sysenter_cs #GP trick\n");
       info->vmm.ctrl.dbg.excp |= 1<<GP_EXCP;
       __sysenter_cs.raw = 0;
+      __post_access(__sysenter_cs);
    }
    else if(info->vmm.ctrl.dbg.excp & (1<<GP_EXCP))
       info->vmm.ctrl.dbg.excp &= ~(1<<GP_EXCP);
@@ -177,7 +180,9 @@ void gdb_traps_enable()
    __gdb_brk_mem_rearm();
    __update_exception_mask();
    __dr7.low = info->vmm.ctrl.dbg.brk.hrd.dr7.low;
+   __post_access(__dr7);
    gdb_set_traps(1);
+   gdb_set_traps_updated();
 }
 
 void gdb_traps_disable()
@@ -189,12 +194,19 @@ void gdb_traps_disable()
       debug(GDB_CMD, "restored original sysenter_cs\n");
       info->vmm.ctrl.dbg.excp &= ~(1<<GP_EXCP);
       __sysenter_cs.raw = info->vmm.ctrl.dbg.stp.ctx.sysenter_cs.raw;
+      __post_access(__sysenter_cs);
    }
 
    __dr7.low &= 0x100;
+   __post_access(__dr7);
    __exception_bitmap.raw = info->vm.cpu.dflt_excp;
-   __gdb_brk_mem_disarm();
+   __post_access(__exception_bitmap);
+
+   if(!gdb_brk_mem_disarmed())
+      __gdb_brk_mem_disarm();
+
    gdb_set_traps(0);
+   gdb_set_traps_updated();
 }
 
 void gdb_stub_post()
@@ -204,10 +216,10 @@ void gdb_stub_post()
 
    if(__gdb_active_cr3_check(0))
    {
-      if(!gdb_traps_configured())
+      if(!gdb_traps_configured() || gdb_traps_need_update())
 	 gdb_traps_enable();
    }
-   else if(gdb_traps_configured())
+   else if(gdb_traps_configured() || gdb_traps_need_update())
       gdb_traps_disable();
 }
 

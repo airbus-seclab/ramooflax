@@ -18,7 +18,9 @@
 .text
 
 idt_checkmode:
-	btr	$8, irq_msg(%rip)
+	bt	$8, irq_msg(%rip)
+	jnc	idt_common
+	btr	$9, irq_msg(%rip)
 	jnc	idt_common
 	sub	$16, %rsp
 	mov	%rax, (%rsp)

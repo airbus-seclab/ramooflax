@@ -24,21 +24,16 @@ extern info_data_t *info;
 
 int svm_vmexit_resolve_io()
 {
-   vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-   vmcb_state_area_t *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-
    if(!dev_access())
       return 0;
 
-   state->rip.raw = ctrls->exit_info_2.raw;
+   vm_state.rip.raw = vm_ctrls.exit_info_2.raw;
    return 1;
 }
 
 int __svm_io_init(io_insn_t *io)
 {
-   vmcb_ctrls_area_t   *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;
-   vmcb_state_area_t   *state = &info->vm.cpu.vmc->vm_vmcb.state_area;
-   svm_io_t            *svm = (svm_io_t*)&ctrls->exit_info_1;
+   svm_io_t *svm = (svm_io_t*)&vm_ctrls.exit_info_1;
 
    io->in   = svm->io.d;
    io->s    = svm->io.s;
@@ -49,7 +44,7 @@ int __svm_io_init(io_insn_t *io)
       return 1;
 
    io->addr = (svm->low>>7) & 7;
-   io->back = state->rflags.df;
+   io->back = vm_state.rflags.df;
    io->rep  = svm->io.rep;
    io->msk  = (1ULL<<(16*io->addr)) - 1;
 
@@ -59,6 +54,5 @@ int __svm_io_init(io_insn_t *io)
       return 0;
    }
 
-   io->seg.raw = (&state->es + svm->io.seg)->base_addr.raw;
    return 1;
 }

@@ -19,10 +19,11 @@
 #define __INIT_H__
 
 #include <mbi.h>
+#include <types.h>
 
 /*
 ** Functions
 */
-void init(mbi_t*) __attribute__((regparm(1)));
+void init(mbi_t*) __regparm__(1);
 
 #endif

@@ -37,12 +37,14 @@ void ehci_init()
    usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
    usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
+#ifndef __EHCI_FULL__
    if((usbcmd.run && !usbsts.hlt) && cfgflg.cf)
       ehci_fast_init(dbgp_i);
    else
+#endif
       ehci_full_init(dbgp_i);
 
-   debug(EHCI, "ehci ready -- status:\n");
+   debug(EHCI, "ehci ready\n");
 }
 
 void ehci_fast_init(dbgp_info_t *dbgp_i)
@@ -186,7 +188,6 @@ void ehci_reset(dbgp_info_t *dbgp_i)
 /*       debug(EHCI,"\n"); */
 /*    } */
 /* } */
-
 #endif
 
 void ehci_dbgp_full_init(dbgp_info_t *dbgp_i)
@@ -536,6 +537,7 @@ void ehci_detect(dbgp_info_t *dbgp_i, int transition)
 {
    dbgp_own(dbgp_i);
 
+   io_wait(1000);
    debug(EHCI,"waiting device ...\n");
    do
    {
@@ -856,17 +858,17 @@ int _dbgp_read(dbgp_info_t *dbgp_i, buffer_t *buf)
 int __dbgp_write(dbgp_info_t *dbgp_i, buffer_t *buf)
 {
    static uint32_t wr_toggle = EHCI_DATA_PID_1;
-   static int      state = DBGP_EMIT_OK;
+   static int      status = DBGP_EMIT_OK;
    ehci_dbgp_reg_t shadow;
 
    shadow.pid.tkn = EHCI_TOKEN_PID_OUT;
    shadow.dev.ep  = dbgp_i->desc.ep_out;
 
-   if(state == DBGP_EMIT_OK)
+   if(status == DBGP_EMIT_OK)
       shadow.pid.snd = ehci_pid_swap(wr_toggle);
 
-   state = __dbgp_emit(dbgp_i, &shadow, buf);
-   return state;
+   status = __dbgp_emit(dbgp_i, &shadow, buf);
+   return status;
 }
 
 int __dbgp_emit(dbgp_info_t *dbgp_i, ehci_dbgp_reg_t *pconfig, buffer_t *buf)

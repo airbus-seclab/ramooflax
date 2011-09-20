@@ -18,6 +18,10 @@
 #ifndef __STACK_TRACE_H__
 #define __STACK_TRACE_H__
 
-void stack_trace();
+#ifndef __X86_64__
+#define stack_trace() ({})
+#else
+void    stack_trace();
+#endif
 
 #endif

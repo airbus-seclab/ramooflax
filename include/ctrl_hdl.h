@@ -23,9 +23,14 @@
 #define ctrl_read(data,size)     dbgp_read(data,size)
 #define ctrl_write(data,size)    dbgp_write(data,size)
 #else
+#ifdef __UART_CTRL__
 #include <uart.h>
 #define ctrl_read(data,size)     uart_read(data,size)
 #define ctrl_write(data,size)    uart_write(data,size)
+#else
+#define ctrl_read(data,size)     ({0;})
+#define ctrl_write(data,size)    ({})
+#endif
 #endif
 
 #endif

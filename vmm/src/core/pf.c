@@ -31,7 +31,7 @@ void __pf_setup_a20()
    debug(PF
 	 , "A20 %s @ 0x%x\n"
 	 , info->vm.dev.mem.a20?"on":"off"
-	 , __cs.base_addr.low + __rip.wlow );
+	 , __cs.base.low + __rip.wlow );
 
    if(info->vm.dev.mem.a20)
       offset = 0;

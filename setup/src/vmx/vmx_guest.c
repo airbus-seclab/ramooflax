@@ -16,85 +16,70 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_guest.h>
-#include <vmx_vmcs.h>
 #include <vmx_msr.h>
-#include <asmutils.h>
+#include <intr.h>
+#include <debug.h>
 #include <info_data.h>
 
-void vmx_vmcs_guest_state_init(info_data_t *info)
-{
-   vmx_vmcs_guest_register_state_init( info );
-   vmx_vmcs_guest_register_state_segments_init( info );
-   vmx_vmcs_guest_nonregister_state_init( info );
-}
+extern info_data_t *info;
 
-void vmx_vmcs_guest_register_state_init(info_data_t *info)
-{
-   cr0_reg_t     cr0_f0, cr0_f1;
-   cr4_reg_t     cr4_f0, cr4_f1;
-   vmcs_guest_t  *state;
-
-   state = guest_state(info);
-
-   //state->idtr.limit.wlow = 0x15*sizeof(ivt_e_t) - 1;
-
-   read_msr_vmx_cr0_fixed0( cr0_f0 );
-   read_msr_vmx_cr0_fixed1( cr0_f1 );
-
-   read_msr_vmx_cr4_fixed0( cr4_f0 );
-   read_msr_vmx_cr4_fixed1( cr4_f1 );
-
-   state->cr0.low = ((CR0_ET|CR0_PE|CR0_PG) & cr0_f1.low) | cr0_f0.low;
-   state->cr3.low = (uint32_t)info->vm.cpu.pg->rm_pgd;
-   state->cr4.low = (CR4_PSE & cr4_f1.low) | cr4_f0.low;
-
-   read_msr_ia32_debugctl( state->ia32_debugctl_msr );
-
-   state->rflags.r1 = 1;
-   state->rflags.IF = 1;
-
-   state->rip.low = VM_ENTRY_POINT;
-   state->rsp.low = RM_BASE_SP;
-}
-
-void vmx_vmcs_guest_register_state_segments_init(info_data_t *info)
-{
-   vmcs_guest_t *state = guest_state(info);
-
-   state->ss.selector.raw  = RM_BASE_SS;
-   state->ss.base_addr.low = (state->ss.selector.raw)<<4;
-
-   state->cs.limit.raw = 0xffff;
-   state->ss.limit.raw = 0xffff;
-   state->ds.limit.raw = 0xffff;
-   state->es.limit.raw = 0xffff;
-   state->fs.limit.raw = 0xffff;
-   state->gs.limit.raw = 0xffff;
-
-   state->cs.attributes.raw = VMX_CODE_16_R0_CO_ATTR;
-   state->ss.attributes.raw = VMX_DATA_16_R0_ATTR;
-
-   state->ds.attributes.raw = VMX_DATA_16_R3_ATTR;
-   state->es.attributes.raw = VMX_DATA_16_R3_ATTR;
-   state->fs.attributes.raw = VMX_DATA_16_R3_ATTR;
-   state->gs.attributes.raw = VMX_DATA_16_R3_ATTR;
-
-   state->tr.attributes.raw = VMX_TSS_32_ATTR;
-   state->ldtr.attributes.unuse = 1;
-}
-
-void vmx_vmcs_guest_nonregister_state_init(info_data_t *info)
+static void vmx_vmcs_guest_nonregister_state_init()
 {
    vmx_misc_data_msr_t misc_data;
-   vmcs_guest_t        *state;
 
-   state = guest_state(info);
-
-   read_msr_vmx_misc_data( misc_data );
+   rd_msr_vmx_misc_data(misc_data);
    misc_data.eax = (misc_data.eax>>6) & 0x3;
+   vm_state.activity_state.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE & misc_data.eax;
 
-   state->activity_state.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE & misc_data.eax;
-
-   state->vmcs_link_ptr.raw = -1ULL;
+   vm_state.vmcs_link_ptr.raw = -1ULL;
+   //vm_state.preempt_timer.raw = 0x200000;
 }
 
+static void vmx_vmcs_guest_register_state_segments_init()
+{
+   vm_state.idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;
+
+   vm_state.ss.selector.raw = RM_BASE_SS;
+   vm_state.ss.base.low = (vm_state.ss.selector.raw)<<4;
+
+   vm_state.cs.limit.raw = 0xffff;
+   vm_state.ss.limit.raw = 0xffff;
+   vm_state.ds.limit.raw = 0xffff;
+   vm_state.es.limit.raw = 0xffff;
+   vm_state.fs.limit.raw = 0xffff;
+   vm_state.gs.limit.raw = 0xffff;
+
+   vm_state.cs.attributes.raw = VMX_CODE_16_R0_CO_ATTR;
+   vm_state.ss.attributes.raw = VMX_DATA_16_R0_ATTR;
+
+   vm_state.ds.attributes.raw = VMX_DATA_16_R3_ATTR;
+   vm_state.es.attributes.raw = VMX_DATA_16_R3_ATTR;
+   vm_state.fs.attributes.raw = VMX_DATA_16_R3_ATTR;
+   vm_state.gs.attributes.raw = VMX_DATA_16_R3_ATTR;
+
+   vm_state.tr.attributes.raw = VMX_TSS_32_ATTR;
+   vm_state.ldtr.attributes.u = 1;
+}
+
+static void vmx_vmcs_guest_register_state_init()
+{
+   /* ensure to catch #MC */
+   info->vm.vmx_fx_cr4.allow_0 |= (CR4_MCE);
+   info->vm.vmx_fx_cr4.allow_1 |= (CR4_MCE);
+
+   rd_msr_ia32_dbg_ctl(vm_state.ia32_dbgctl);
+   rd_msr_pat(vm_state.ia32_pat);
+
+   vm_state.rflags.r1 = 1;
+   vm_state.rflags.IF = 1;
+
+   vm_state.rsp.low = RM_BASE_SP;
+   vm_state.rip.low = VM_ENTRY_POINT;
+}
+
+void vmx_vmcs_guest_state_init()
+{
+   vmx_vmcs_guest_register_state_init();
+   vmx_vmcs_guest_register_state_segments_init();
+   vmx_vmcs_guest_nonregister_state_init();
+}

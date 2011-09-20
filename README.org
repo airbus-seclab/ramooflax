@@ -8,8 +8,7 @@
 
 Ramooflax is a free and open source (GPLv2) virtualization tool.
 
-Ramooflax aims at analyzing/debugging/controlling modern operating systems and complex software pieces
-as well as real life BIOS running on a *physical* machine.
+Ramooflax aims at analyzing/debugging/controlling modern operating systems and complex software pieces as well as real life BIOS running on a *physical* machine.
 
 Ramooflax provides a small hypervisor and a remote client allowing high-level access to the features implemented into the hypervisor.
 
@@ -17,8 +16,13 @@ Ramooflax provides a small hypervisor and a remote client allowing high-level ac
 
 Ramooflax has been implemented for the PC world. That is Intel and AMD x86 32 and 64 bits.
 
-Ramooflax relies on *modern* hardware virtualization extensions (Intel EPT and AMD RVI) that can be found in recent CPUs
-such as Intel Corei7 or AMD Phenom II.
+Ramooflax relies on hardware virtualization extensions (AMD-V and Intel VT-x) that can be found in *recent* CPUs.
+
+For Intel ones, Ramooflax needs /EPT/ and /Unrestricted guest/ features present since the *Westmere* microarchitecture. More details can be found on this [[http://en.wikipedia.org/wiki/Nehalem_(microarchitecture)][wikipedia]] page.
+
+For AMD ones, the only required feature is /RVI/ and can be found into *Phenom II* CPUs. Some details are given on this [[http://en.wikipedia.org/wiki/AMD-V#AMD_virtualization_.28AMD-V.29][wikipedia]] page.
+
+Notice that you can also run Ramooflax under Bochs 2.4.6.
 
 * How does it work ?
 
@@ -28,8 +32,7 @@ Once started, Ramooflax will automatically virtualize the running BIOS and all t
 
 For instance, if you already have installed an operating system, it will be started as a virtual machine.
 
-Ramooflax is an hypervisor dedicated to only one virtual machine, running in a virtualized environment which is as close as
-its native environment.
+Ramooflax is an hypervisor dedicated to only one virtual machine, running in a virtualized environment which is as close as its native environment.
 
 Ramooflax needs to be installed on a bootable storage (ie USB key with GRUB).
 
@@ -38,43 +41,36 @@ Ramooflax needs to be installed on a bootable storage (ie USB key with GRUB).
 Documentation can be found under =docs/=. Here is a brief description of the files:
  - ramooflax_fr.pdf is a french article describing ramooflax
  - ramooflax_slides_fr.pdf is a french presentation held at SSTIC 2011
- - ramooflax_en.pdf and ramooflax_slides_en.pdf are the correspondinng english versions
+ - ramooflax_en.pdf and ramooflax_slides_en.pdf are the corresponding english versions
  - info_data_t.mm is a freemind map which describes data structures of the hypervisor
-
-* Obtain Ramooflax
-
-$ git clone git@github.com:sduverger/ramooflax.git
 
 * Software requirements
 
-Ramooflax has only be compiled/tested using gcc-4.4.
+Ramooflax has only been compiled/tested using gcc-4.4. The loader is a 32 bits ELF while the setup and vmm kernels are 64 bits ELF.
 
-The setup and vmm kernels are 64 bits ELF. They need *x86_64-linux-gnu-ld* to be properly linked.
+Under Debian-like systems, the following packages are needed whether you run a 32 or 64 bits OS:
 
-$ sudo apt-get install gcc-4.4 gcc-4.4-multilib binutils-x86-64-linux-gnu
-
-* Configuration
-
-First cleanup everything (to be sure)
-
-$ make distclean
-
-Then you can call the specific configuration menu to choose your components
-
-$ make config
-
-Under the /build/ menu you will be able to choose from Intel or AMD CPU manufacturer, which control device you want to use,
-debug device and so on.
-
-For the time being it is recommended to use EHCI as controlling device and UART as debugging one (this is the default).
+$ sudo apt-get install gcc-4.4 gcc-4.4-multilib make dialog
 
 * Limitations
 
-Only AMD is supported. Intel is under development. Notice that multi-cores are not supported too.
+Intel and AMD are *both* supported. Notice that multi-cores are not supported, so you will only have one core while running virtualized.
 
-You will only have one core while running virtualized.
+It is recommended to read the documentation under =docs/=.
 
-It is recommended to read the detailed articles under =docs/=.
+* Obtaining
+
+$ git clone git@github.com:sduverger/ramooflax.git
+
+* Configuring
+
+First cleanup everything and call the specific configuration menu to choose your components
+
+$ make distclean config
+
+Under the /build/ menu you will be able to choose from Intel or AMD manufacturer, which control device you want to use, debug device and so on.
+
+For the time being, it is recommended to use EHCI as controlling device and UART as debugging one (this is the default).
 
 * Building
 
@@ -90,11 +86,9 @@ We provide an install script
 
 $ make install
 
-It is only here for convenience. It only mounts the device associated to the directory specified
-at configuration time (install submenu), copies built binaries then unmount device.
+It is only here for convenience. It only mounts the device associated to the directory specified at configuration time (/install/ menu), copies the built binaries and then unmount the device.
 
-You need to setup your system (ie /etc/fstab) before installing and most important prepare by yourself
-the bootable storage on which ramooflax is to be installed.
+You need to setup your system (ie /etc/fstab) before installing and most important prepare by yourself the bootable storage on which ramooflax is to be installed.
 
 It is recommended to use GRUB 1 (legacy) with the following entry:
 #+BEGIN_EXAMPLE
@@ -107,18 +101,12 @@ module /vmm.bin
 
 * Using
 
-If you use the EHCI Debug device configuration to control the hypervisor from the remote client, you will need
-a USB debug device on the client side.
+You will need python (tested with 2.6.x) to run the client.
 
-You can either buy one or use the USB Gadget DBGP provided into the linux kernel since 2.6.36 release.
+If you use the EHCI Debug device configuration to control the hypervisor from the remote client, you will need a USB debug device on the client side.
 
-To be able to use such a Gadget, you need a /device/ USB controller as found in embedded ARM development boards or smartphones.
+You can either buy one or use the DBGP USB Gadget provided into the Linux kernel since the 2.6.36 version.
 
-Once again, please read documentation in =docs/= to have usage examples of the client API.
+To be able to use such a Gadget, you need a *device* USB controller as found in embedded ARM development boards or smartphones.
 
-An example remote client configuration can be to have a development board attached using USB to the hypervisor.
-The development board runs the debug device using the Gadget API and forwards USB traffic from the exposed /dev/ttyGSx
-through a TCP socket using socat:
-#+BEGIN_EXAMPLE
-$ socat GOPEN:/dev/ttyGS0,echo=0,raw TCP-LISTEN:1234,reuseaddr
-#+END_EXAMPLE
+Please read documentation in =docs/= to have usage examples of the client API.

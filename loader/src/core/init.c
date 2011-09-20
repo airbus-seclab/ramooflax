@@ -51,7 +51,7 @@ static void init_pagemem_1G()
    uint32_t p;
 
    for(p=0 ; p<4 ; p++)
-      __pg_set_large_entry(&pdp[p], PG_KRN|PG_RW, p);
+      pg_set_large_entry(&pdp[p], PG_KRN|PG_RW, p);
 }
 
 static void init_pagemem_2M()
@@ -61,10 +61,10 @@ static void init_pagemem_2M()
    for(p=0 ; p<4 ; p++)
    {
       base = (p<<PG_1G_SHIFT)>>PG_2M_SHIFT;
-      __pg_set_entry(&pdp[p], PG_KRN|PG_RW, page_nr(pd[p]));
+      pg_set_entry(&pdp[p], PG_KRN|PG_RW, page_nr(pd[p]));
 
       for(n=0 ; n<PDE64_PER_PD ; n++)
-	 __pg_set_large_entry(&pd[p][n], PG_KRN|PG_RW, base+n);
+	 pg_set_large_entry(&pd[p][n], PG_KRN|PG_RW, base+n);
    }
 }
 
@@ -72,7 +72,7 @@ static void init_pagemem()
 {
    cr3_reg_t cr3;
 
-   __pg_set_entry(&pml4[0], PG_KRN|PG_RW, page_nr(pdp));
+   pg_set_entry(&pml4[0], PG_KRN|PG_RW, page_nr(pdp));
 
    if(page_1G_supported())
       init_pagemem_1G();
@@ -98,7 +98,7 @@ static void enter_lmode(mbi_t *mbi)
    entry.segment = gdt_krn_seg_sel(2);
    entry.offset  = (uint32_t)elf_module_entry(mod);
 
-   set_cr0(get_cr0()|CR0_PG);
+   set_cr0(CR0_PG|CR0_ET|CR0_PE);
    set_edi(mbi);
    farjump(entry);
 }
@@ -111,7 +111,7 @@ static void validate(mbi_t *mbi)
    check_cpu_skillz();
 }
 
-void __attribute__((regparm(1))) init(mbi_t *mbi)
+void __regparm__(1) init(mbi_t *mbi)
 {
    validate(mbi);
 

@@ -145,6 +145,7 @@ static inline void __buf_add(buffer_t *buf, size_t len, char c)
 /*
 ** Prototypes
 */
+int    dec_to_uint64(uint8_t*, size_t, uint64_t*);
 int    hex_to_uint64(uint8_t*, size_t, uint64_t*);
 int    __hex_to_uint8(uint8_t*, uint8_t*);
 

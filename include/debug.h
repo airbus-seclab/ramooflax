@@ -20,6 +20,11 @@
 
 #include <print.h>
 
+#define debug_warning()  ({offset_t WARNING_PATCH_CODE_HERE;})
+
+#if !defined __INIT__ && !defined __DEBUG_ACTIVE__
+#define debug(who, format, ...)  ({})
+#else
 /*
 ** Prevent self debugging
 */
@@ -68,6 +73,12 @@
 #define __DEBUG_PMEM_DBG(fmt,fct,...) ({})
 #endif
 
+#if defined VMEM_DBG
+#define __DEBUG_VMEM_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_VMEM_DBG(fmt,fct,...) ({})
+#endif
+
 #if defined CPU_DBG
 #define __DEBUG_CPU_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
 #else
@@ -90,6 +101,12 @@
 #define __DEBUG_PG_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
 #else
 #define __DEBUG_PG_DBG(fmt,fct,...) ({})
+#endif
+
+#if defined PG_W_DBG
+#define __DEBUG_PG_W_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_PG_W_DBG(fmt,fct,...) ({})
 #endif
 
 #if defined EMU_DBG
@@ -284,6 +301,12 @@
 #define __DEBUG_SVM_DBG(fmt,fct,...) ({})
 #endif
 
+#if defined SVM_CPU_DBG
+#define __DEBUG_SVM_CPU_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_SVM_CPU_DBG(fmt,fct,...) ({})
+#endif
+
 #if defined SVM_IDT_DBG
 #define __DEBUG_SVM_IDT_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
 #else
@@ -356,10 +379,22 @@
 #define __DEBUG_VMX_DBG(fmt,fct,...) ({})
 #endif
 
+#if defined VMX_CPU_DBG
+#define __DEBUG_VMX_CPU_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_VMX_CPU_DBG(fmt,fct,...) ({})
+#endif
+
 #if defined VMX_IDT_DBG
 #define __DEBUG_VMX_IDT_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
 #else
 #define __DEBUG_VMX_IDT_DBG(fmt,fct,...) ({})
+#endif
+
+#if defined VMX_EPT_DBG
+#define __DEBUG_VMX_EPT_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_VMX_EPT_DBG(fmt,fct,...) ({})
 #endif
 
 #if defined VMX_EXCP_DBG
@@ -422,20 +457,20 @@
 #ifndef __INIT__
 #ifdef __DEBUG_VMEXIT_TRACE__
 #ifdef __SVM__
-#define __exit_code__  info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_code.low
+#define __exit_code__  vm_ctrls.exit_code.low
 #else
-#define __exit_code__  info->vm.vmcs.exit_info.reason.raw
+#define __exit_code__  vm_exit_info.reason.basic
 #endif
 
 #define debug_defined
-#define debug(who, format, ...)  __DEBUG_##who##_DBG(			\
-      format,								\
-      printf("<0x%X:0x%X:%d>"						\
-	     , info->vmm.ctrl.vmexit_cnt.raw				\
-	     , __cs.base_addr.raw + __rip.raw				\
-	     , __exit_code__						\
-	 );								\
-     printf, ## __VA_ARGS__)
+#define debug(who, format, ...)  __DEBUG_##who##_DBG(		\
+      format,							\
+      printf("0x%X:%d:0x%X:"					\
+	     ,info->vmm.ctrl.vmexit_cnt.raw			\
+	     ,__exit_code__					\
+	     ,__cs.base.raw + __rip.raw				\
+	 );							\
+      printf, ## __VA_ARGS__)
 
 #endif
 #endif
@@ -445,6 +480,5 @@
 #define debug(who, format, ...)  __DEBUG_##who##_DBG(format,printf, ## __VA_ARGS__)
 #endif
 
-#define debug_warning()  ({offset_t WARNING_PATCH_CODE_HERE;})
-
+#endif
 #endif

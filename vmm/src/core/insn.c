@@ -26,20 +26,14 @@ extern info_data_t *info;
 int resolve_invd()
 {
    asm volatile("invd");
-
-   __rip.low += INVD_INSN_SZ;
-   __post_access(__rip);
-
+   vm_update_rip(INVD_INSN_SZ);
    return 1;
 }
 
 int resolve_wbinvd()
 {
-   asm volatile("wbinvd");
-
-   __rip.low += WBINVD_INSN_SZ;
-   __post_access(__rip);
-
+   asm volatile ("wbinvd");
+   vm_update_rip(WBINVD_INSN_SZ);
    return 1;
 }
 

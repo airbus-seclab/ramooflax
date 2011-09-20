@@ -39,19 +39,19 @@ typedef union raw_msr_entry
 
    raw64_t;
 
-} __attribute__((packed)) raw_msr_entry_t;
+} __attribute__((packed)) msr_t;
 
 /*
 ** Read/Write standard MSR (ecx=index, edx,eax=value)
 */
-#define rd_msr32(index,val)             asm volatile("rdmsr":"=a"((val)):"c"((index)))
-#define wr_msr32(index,val)             asm volatile("wrmsr"::"c"((index)),"a"((val)))
+#define rd_msr32(index,val)       asm volatile("rdmsr":"=a"((val)):"c"((index)):"edx")
+#define wr_msr32(index,val)       asm volatile("wrmsr"::"c"((index)),"a"((val)))
 
-#define rd_msr64(index,h_val,l_val)					\
-   asm volatile("rdmsr" :"=d"((h_val)),"=a"((l_val)):"c"((index)))
+#define rd_msr64(index,high,low)				\
+   asm volatile("rdmsr" :"=d"((high)),"=a"((low)):"c"((index)))
 
-#define wr_msr64(index,h_val,l_val)					\
-     asm volatile("wrmsr" ::"d"((h_val)),"a"((l_val)),"c"((index)))
+#define wr_msr64(index,high,low)				\
+     asm volatile("wrmsr" ::"d"((high)),"a"((low)),"c"((index)))
 
 #define __rd_msr(eax,ecx,edx)            rd_msr64(ecx,edx,eax)
 #define __wr_msr(eax,ecx,edx)            wr_msr64(ecx,edx,eax)
@@ -60,21 +60,20 @@ typedef union raw_msr_entry
 ** IA32_APIC_BASE_MSR
 */
 #define IA32_APIC_BASE_MSR                 0x1bUL
-typedef struct ia32_apic_base_msr_fields
-{
-   uint64_t    rsrvd0:8;
-   uint64_t    bsp:1;
-   uint64_t    rsrvd1:2;
-   uint64_t    enable:1;
-   uint64_t    paddr:24;
-   uint64_t    rsrvd2:28;
-
-} __attribute__((packed)) ia32_apic_base_msr_fields_t;
-
 typedef union ia32_apic_base_msr
 {
-   raw_msr_entry_t;
-   ia32_apic_base_msr_fields_t;
+   struct
+   {
+      uint64_t    rsrvd0:8;
+      uint64_t    bsp:1;
+      uint64_t    rsrvd1:2;
+      uint64_t    enable:1;
+      uint64_t    paddr:24;
+      uint64_t    rsrvd2:28;
+
+   } __attribute__((packed));
+
+   msr_t;
 
 } __attribute__((packed)) ia32_apic_base_msr_t;
 
@@ -120,16 +119,16 @@ typedef union ia32_apic_base_msr
 
 typedef union ia32_feature_control_msr
 {
-   raw_msr_entry_t;
-
    struct
    {
-      uint64_t    msr_lock:1;
+      uint64_t    lock:1;
       uint64_t    unk1:1;
-      uint64_t    msr_vmx:1;
+      uint64_t    vmx:1;
       uint64_t    unk2:29;
 
    } __attribute__((packed));
+
+   msr_t;
 
 } __attribute__((packed)) feat_ctl_msr_t;
 
@@ -143,8 +142,6 @@ typedef union ia32_feature_control_msr
 
 typedef union pat_register
 {
-   raw_msr_entry_t;
-
    struct
    {
       uint64_t    pa0:3;
@@ -166,15 +163,12 @@ typedef union pat_register
 
    } __attribute__((packed));
 
+   msr_t;
+
 } __attribute__((packed)) pat_t;
 
 #define rd_msr_pat(pat)       rd_msr64(IA32_PAT_MSR,(pat).edx,(pat).eax)
 #define wr_msr_pat(pat)       wr_msr64(IA32_PAT_MSR,(pat).edx,(pat).eax)
-
-/*
-** Performance Monitoring Counters
-*/
-
 
 /*
 ** Functions

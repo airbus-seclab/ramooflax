@@ -139,6 +139,8 @@ class GDB:
         while l < expected:
             data, dl = self.__recv(expected - l)
             l += dl
+            if utils.debug:
+                print "\r%d/%d" % (l, expected),
             self.__cache += data
 
         data = self.__cache[:expected]

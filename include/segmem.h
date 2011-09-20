@@ -25,7 +25,7 @@
 typedef struct descriptor_table_register_64
 {
    uint16_t   limit;
-   uint64_t   base_addr;
+   uint64_t   base;
 
 } __attribute__((packed)) dt64_reg_t;
 
@@ -360,14 +360,12 @@ typedef struct task_state_segment_64
 #define tss_deny_io(_tss_,_idx_)        tss_deny(_tss_,io_bitmap,_idx_)
 #define tss_is_denied_io(_tss_,_idx_)   tss_is_denied_io(_tss_,io_bitmap,_idx_)
 
-#define __tss_desc(dsc,_tSs_,_sz_)				\
+#define __tss_desc(dsc,_aDdr_,_sz_)				\
    ({								\
-      raw32_t addr;						\
-      addr.raw    = _tSs_;					\
       dsc->raw    = _sz_;					\
-      dsc->base_1 = addr.wlow;					\
-      dsc->base_2 = addr.whigh&0xff;				\
-      dsc->base_3 = (addr.whigh>>8)&0xff;			\
+      dsc->base_1 = _aDdr_.wlow;				\
+      dsc->base_2 = _aDdr_._whigh.blow;				\
+      dsc->base_3 = _aDdr_._whigh.bhigh;			\
       dsc->type   = SEG_DESC_SYS_TSS_AVL_32;			\
       dsc->p      = 1;						\
    })
@@ -378,7 +376,7 @@ typedef struct task_state_segment_64
    ({								\
       raw64_t addr64;						\
       addr64.raw = _tss_;					\
-      __tss_desc(dsc64, addr64.low, sizeof(tss64_t));		\
+      __tss_desc(dsc64, addr64._low, sizeof(tss64_t));		\
       dsc64->base_4 = addr64.high;				\
       dsc64->zero = 0ULL;					\
    })

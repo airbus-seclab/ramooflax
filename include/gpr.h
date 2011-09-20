@@ -233,7 +233,9 @@ typedef union general_purpose_registers_context_64
       v;								\
    })
 
-#define set_reg(_r_,_v_)  asm volatile( "mov %0, %%"#_r_::"m"(_v_):"memory")
+#define get_rip()         ({offset_t x; asm volatile ("lea 0(%%rip), %%rax":"=a"(x)); x;})
+
+#define set_reg(_r_,_v_)  asm volatile ("mov %0, %%"#_r_::"m"(_v_):"memory")
 #define get_reg32(_R_)    get_reg(_R_, uint32_t)
 #define get_reg64(_R_)    get_reg(_R_, uint64_t)
 

@@ -23,6 +23,9 @@
 /*
 ** CPUID
 */
+#define __cpuid_1(idx,eax)						\
+   asm volatile ("cpuid":"=a"(eax):"a"(idx):"ebx","ecx","edx")
+
 #define __cpuid_2(idx,ecx,edx)						\
    asm volatile ("cpuid":"=c"(ecx),"=d"(edx):"a"(idx),"c"(ecx):"ebx")
 
@@ -101,7 +104,10 @@ typedef union cpuid_feature_info_ebx
 } __attribute__((packed)) cpuid_feat_info_ebx_t;
 
 #define CPUID_ECX_FEAT_MWAIT_BIT        3
+#define CPUID_ECX_FEAT_PERF_CAP_BIT    15
+
 #define CPUID_ECX_FEAT_MWAIT            (1<<CPUID_ECX_FEAT_MWAIT_BIT)
+#define CPUID_ECX_FEAT_PERF_CAP         (1<<CPUID_ECX_FEAT_PERF_CAP_BIT)
 
 #define CPUID_EDX_FEAT_FPU_BIT          0
 #define CPUID_EDX_FEAT_VME_BIT          1
@@ -179,10 +185,17 @@ typedef union cpuid_feature_info_ebx
       (d & CPUID_EDX_FEAT_APIC)?1:0;		\
    })
 
+#define perf_cap_supported()			\
+   ({						\
+      uint32_t c,d=0;				\
+      cpuid_features(c,d);			\
+      (c & CPUID_ECX_FEAT_PERF_CAP)?1:0;	\
+   })
+
 /*
 ** CPUID Extended Processor Features
 */
-#define CPUID_EXT_PROC_FEAT                0x80000001
+#define CPUID_EXT_PROC_FEAT                 0x80000001
 
 #define CPUID_EDX_EXT_PROC_FEAT_PSE_BIT     3
 #define CPUID_EDX_EXT_PROC_FEAT_PAE_BIT     6

@@ -122,12 +122,14 @@ typedef struct vmm_ctrl_dbg_breakpoints
    ({						\
       gdb_dr6_set_dirty(0);			\
       __dr6.wlow = 0x0ff0;			\
+      __post_access(__dr6);			\
    })
 
 #define gdb_clean_dr7()					\
    ({							\
       info->vmm.ctrl.dbg.brk.hrd.dr7.low &= 0x100;	\
       __dr7.low &= 0x100;				\
+      __post_access(__dr7);				\
    })
 
 #define gdb_brk_mem_need_restore()   (info->vmm.ctrl.dbg.brk.mem.status.rs)

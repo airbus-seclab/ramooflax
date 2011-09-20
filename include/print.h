@@ -25,7 +25,7 @@
 #define  va_arg(v,l)             __builtin_va_arg(v,l)
 typedef  __builtin_va_list       va_list;
 
-#define  panic(format,...)  __panic(__FUNCTION__, format, ## __VA_ARGS__)
+#define  panic(format,...)       __panic(__FUNCTION__, format, ## __VA_ARGS__)
 void     __panic(const char*, const char*, ...);
 
 size_t   printf(const char*, ... );
@@ -35,16 +35,28 @@ size_t   __vprintf(const char*, va_list);
 size_t   __vsnprintf(char*, size_t, const char*, va_list);
 
 #ifdef __INIT__
+
 #include <video.h>
 #define debug_write(data,size)    video_write(data,size)
-#else
 
+/* #ifndef __X86_64__ */
+/* #include <video.h> */
+/* #define debug_write(data,size)    video_write(data,size) */
+/* #else */
+/* #define debug_write(data,size)    uart_write(data,size) */
+/* #endif */
+
+#else
 #ifdef __EHCI_PRINT__
 #include <ehci.h>
 #define debug_write(data,size)    dbgp_write(data,size)
 #else
+#ifdef __UART_PRINT__
 #include <uart.h>
 #define debug_write(data,size)    uart_write(data,size)
+#else
+#define debug_write(data,size)    ({})
+#endif
 #endif
 
 #endif

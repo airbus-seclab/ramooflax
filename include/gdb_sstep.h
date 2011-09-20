@@ -41,8 +41,8 @@ typedef union vmm_ctrl_dbg_single_step_status
 
 typedef struct vmm_ctrl_dbg_single_step_context
 {
-   cr3_reg_t        cr3; /* XXX: maybe useless */
-   raw_msr_entry_t  sysenter_cs;
+   cr3_reg_t cr3; /* XXX: maybe useless */
+   msr_t     sysenter_cs;
 
 } __attribute__((packed)) vmm_ctrl_dbg_stp_ctx_t;
 

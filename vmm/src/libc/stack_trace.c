@@ -28,8 +28,8 @@ void stack_trace()
 {
    offset_t *rbp, *rip;
 
-   printf("\n------ Stack Trace [ esp: 0x%X ]"
-	  " vmm stack boundaries [ 0x%X - 0x%X ] ------\n",
+   printf("\n------ Stack Trace [rsp: 0x%X]"
+	  " vmm stack boundaries [0x%X - 0x%X] ------\n",
 	  get_rsp(),
 	  page_align(info->vmm.stack_bottom - VMM_MIN_STACK_SIZE),
 	  info->vmm.stack_bottom);

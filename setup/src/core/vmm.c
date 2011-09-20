@@ -30,6 +30,8 @@ extern info_data_t *info;
 
 static void vmm_dev_init()
 {
+   info->vm.dev.mem.a20 = 1;
+
    dev_kbd_init(&info->vm.dev.kbd);
    dev_uart_init(&info->vm.dev.uart, SERIAL_COM1);
 
@@ -40,25 +42,20 @@ static void vmm_dev_init()
    /* lazzy emulation */
    __deny_io_range(COM1_START_PORT, COM1_END_PORT);
 
-   /* monitor reboot and gateA20 */
-   __deny_io_range(KBD_START_PORT,  KBD_END_PORT);
+   /* monitor reboot and A20 */
+   __deny_io_range(KBD_START_PORT, KBD_END_PORT);
    __deny_io(PS2_SYS_CTRL_PORT_A);
 }
 
-static void vmm_cpu_init()
-{
-   info->vm.cpu.dflt_excp = VM_RMODE_EXCP_BITMAP;
-   vmm_cpu_init_arch();
-}
-
-void __attribute__((regparm(1))) vmm_start()
+void __regparm__(1) vmm_start()
 {
    vm_set_entry();
-   vmm_cpu_start_arch();
+   vmm_vmc_start();
 }
 
 void vmm_init()
 {
-   vmm_cpu_init();
+   info->vm.cpu.dflt_excp = VM_RMODE_EXCP_BITMAP;
+   vmm_vmc_init();
    vmm_dev_init();
 }

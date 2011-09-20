@@ -20,231 +20,239 @@
 
 #include <types.h>
 
-#define __cr0                   (info->vm.cpu.vmc->vm_vmcb.state_area.cr0)
-#define __cr2                   (info->vm.cpu.vmc->vm_vmcb.state_area.cr2)
-#define __cr3                   (info->vm.cpu.vmc->vm_vmcb.state_area.cr3)
-#define __cr4                   (info->vm.cpu.vmc->vm_vmcb.state_area.cr4)
-#define __rip                   (info->vm.cpu.vmc->vm_vmcb.state_area.rip)
-#define __rflags                (info->vm.cpu.vmc->vm_vmcb.state_area.rflags)
+#define __state                 info->vm.cpu.vmc->vm_vmcb.state_area
+#define __ctrls                 info->vm.cpu.vmc->vm_vmcb.ctrls_area
 
-#define __dr6                   (info->vm.cpu.vmc->vm_vmcb.state_area.dr6)
-#define __dr7                   (info->vm.cpu.vmc->vm_vmcb.state_area.dr7)
+/*
+** System registers
+*/
+#define __cr0                   (__state.cr0)
+#define __cr2                   (__state.cr2)
+#define __cr3                   (__state.cr3)
+#define __cr4                   (__state.cr4)
+#define __rip                   (__state.rip)
+#define __rflags                (__state.rflags)
 
-#define __cs                    (info->vm.cpu.vmc->vm_vmcb.state_area.cs)
-#define __ds                    (info->vm.cpu.vmc->vm_vmcb.state_area.ds)
-#define __es                    (info->vm.cpu.vmc->vm_vmcb.state_area.es)
-#define __fs                    (info->vm.cpu.vmc->vm_vmcb.state_area.fs)
-#define __gs                    (info->vm.cpu.vmc->vm_vmcb.state_area.gs)
-#define __ss                    (info->vm.cpu.vmc->vm_vmcb.state_area.ss)
+#define __dr6                   (__state.dr6)
+#define __dr7                   (__state.dr7)
+
+#define __cs                    (__state.cs)
+#define __ds                    (__state.ds)
+#define __es                    (__state.es)
+#define __fs                    (__state.fs)
+#define __gs                    (__state.gs)
+#define __ss                    (__state.ss)
 
 #define __vmexit_on_insn()      __svm_vmexit_on_insn()
 
-#define __cpl                   (info->vm.cpu.vmc->vm_vmcb.state_area.cpl)
-#define __gdtr                  (info->vm.cpu.vmc->vm_vmcb.state_area.gdtr)
-#define __idtr                  (info->vm.cpu.vmc->vm_vmcb.state_area.idtr)
-#define __ldtr                  (info->vm.cpu.vmc->vm_vmcb.state_area.ldtr)
-#define __tr                    (info->vm.cpu.vmc->vm_vmcb.state_area.tr)
-#define __exception_bitmap      (info->vm.cpu.vmc->vm_vmcb.ctrls_area.exception_bitmap)
-#define __cr_rd_bitmap          (info->vm.cpu.vmc->vm_vmcb.ctrls_area.cr_read_bitmap)
-#define __cr_wr_bitmap          (info->vm.cpu.vmc->vm_vmcb.ctrls_area.cr_write_bitmap)
-#define __efer                  (info->vm.cpu.vmc->vm_vmcb.state_area.efer)
-#define __dbgctl                (info->vm.cpu.vmc->vm_vmcb.state_area.dbgctl)
+#define __cpl                   (__state.cpl)
+#define __gdtr                  (__state.gdtr)
+#define __idtr                  (__state.idtr)
+#define __ldtr                  (__state.ldtr)
+#define __tr                    (__state.tr)
 
-#define __sysenter_cs           (info->vm.cpu.vmc->vm_vmcb.state_area.sysenter_cs)
-#define __sysenter_eip          (info->vm.cpu.vmc->vm_vmcb.state_area.sysenter_eip)
-#define __sysenter_esp          (info->vm.cpu.vmc->vm_vmcb.state_area.sysenter_esp)
+#define __efer                  (__state.efer)
+#define __dbgctl                (__state.dbgctl)
+#define __sysenter_cs           (__state.sysenter_cs)
+#define __sysenter_eip          (__state.sysenter_eip)
+#define __sysenter_esp          (__state.sysenter_esp)
 
-#define _xx_lmode()             (__efer.lma)
-#define _xx_pmode()             (__cr0.pe)
+#include <cpu_modes.h>
 
 /*
-** long mode: 64 bits mode and compatibility mode 32:16
+** Segmentation
 */
-#define __lmode64()             (_xx_lmode() &&  __cs.attributes.l)
-#define __lmode32()             (_xx_lmode() && !__cs.attributes.l &&  __cs.attributes.d)
-#define __lmode16()             (_xx_lmode() && !__cs.attributes.l && !__cs.attributes.d)
+#define SVM_CODE_32_R0_ATTR            0xbc9b
+#define SVM_CODE_16_R0_ATTR            0xb09b
+#define SVM_CODE_16_R0_CO_ATTR         0xb09f
+#define SVM_CODE_16_R3_ATTR            0xb0fb
+
+#define SVM_DATA_32_R0_ATTR            0xbc93
+#define SVM_DATA_16_R0_ATTR            0xb093
+#define SVM_DATA_16_R3_ATTR            0xb0f3
+
+#define __set_code16r0_desc(_attr_)    (_attr_.raw = SVM_CODE_16_R0_ATTR)
+#define __set_data16r0_desc(_attr_)    (_attr_.raw = SVM_DATA_16_R0_ATTR)
+#define __set_data16r3_desc(_attr_)    (_attr_.raw = SVM_DATA_16_R3_ATTR)
 
 /*
-** legacy mode: real mode, protected mode 32:16, virtual8086 mode
+** Fields synchro un-needed under SVM
 */
-#define __pmode32()             (_xx_pmode() && !__rflags.vm &&  __cs.attributes.d)
-#define __pmode16()             (_xx_pmode() && !__rflags.vm && !__cs.attributes.d)
-
-#define __rmode()               (!_xx_lmode() && !_xx_pmode())
-#define __v86mode()             (!_xx_lmode() &&  _xx_pmode() && __rflags.vm)
-#define __legacy32()            (!_xx_lmode() &&  __pmode32())
-#define __legacy16()            (!_xx_lmode() &&  __pmode16())
-
-#define __paging()              (__cr0.pg)
+#define __pre_access(_fld_)                     ({})
+#define __post_access(_fld_)                    ({})
+#define __cond_access(_wr_,_fld_)               ({})
 
 /*
-** segment settings
+** Paging & TLBs
 */
-#define SVM_CODE_32_R0_ATTR     0xbc9b
-#define SVM_CODE_16_R0_ATTR     0xb09b
-#define SVM_CODE_16_R0_CO_ATTR  0xb09f
-#define SVM_CODE_16_R3_ATTR     0xb0fb
+#define npg_init()                     svm_npt_map()
+#define npg_cr3                        __ctrls.ncr3
+#define npg_dft_attr                  (PG_USR|PG_RW)
+#define npg_get_attr(_e)               pg_get_attr(_e)
+#define npg_present(_e)                pg_present(_e)
+#define npg_large(_e)                  pg_large(_e)
+#define npg_zero(_e)                   pg_zero(_e)
 
-#define SVM_DATA_32_R0_ATTR     0xbc93
-#define SVM_DATA_16_R0_ATTR     0xb093
-#define SVM_DATA_16_R3_ATTR     0xb0f3
+#define npg_set_entry(_e,_a,_p)            pg_set_entry(_e,_a,_p)
+#define npg_set_page_entry(_e,_a,_p)       pg_set_entry(_e,_a,_p)
+#define npg_set_large_page_entry(_e,_a,_p) pg_set_large_entry(_e,_a,_p)
 
-#define __set_code16r0_desc(_attr_)       (_attr_.raw = SVM_CODE_16_R0_ATTR)
-#define __set_data16r0_desc(_attr_)       (_attr_.raw = SVM_DATA_16_R0_ATTR)
-#define __set_data16r3_desc(_attr_)       (_attr_.raw = SVM_DATA_16_R3_ATTR)
+#define npg_pml4e_t                    pml4e_t
+#define npg_pdpe_t                     pdpe_t
+#define npg_pde64_t                    pde64_t
+#define npg_pte64_t                    pte64_t
 
-#define __pre_access(_field_)                     ({})
-#define __post_access(_field_)                    ({})
-#define __post_access_restrictive(_field_,_idx_)  ({})
+#define npg_pml4_t                     pml4_t
+#define npg_pdp_t                      pdp_t
+#define npg_pd64_t                     pd64_t
+#define npg_pt64_t                     pt64_t
+
+#define svm_reset_tlb_control()					\
+   ({								\
+      if(__ctrls.tlb_ctrl.tlb_control != VMCB_TLB_CTL_NONE)	\
+	 __ctrls.tlb_ctrl.tlb_control = VMCB_TLB_CTL_NONE;	\
+   })
+
+#define __flush_asid_tlbs(_t)    (__ctrls.tlb_ctrl.tlb_control = _t)
+#define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
+#define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
+
+#define __update_npg_cache(gcr3)	\
+   ({					\
+      npg_cr3.pml4.pwt = (gcr3)->pwt;	\
+      npg_cr3.pml4.pcd = (gcr3)->pcd;	\
+   })
+
+/*
+** CR0 cache
+*/
+#define __cr0_cache_update(_gst)	\
+   ({					\
+      cr0_reg_t cr0;			\
+      cr0.raw = get_cr0();		\
+      cr0.cd = (_gst)->cd;		\
+      cr0.nw = (_gst)->nw;		\
+      set_cr0(cr0.raw);			\
+   })
+
+#define __cr0_update(_gst)	\
+   ({				\
+      __cr0.low = (_gst)->low;	\
+   })
+
+#define __cr4_update(_gst)	\
+   ({				\
+      __cr4.low = (_gst)->low;	\
+   })
+
+/*
+** Masks
+*/
+#define __exception_bitmap      (__ctrls.exception_bitmap)
+#define __cr_rd_bitmap          (__ctrls.cr_read_bitmap)
+#define __cr_wr_bitmap          (__ctrls.cr_write_bitmap)
+
+#define __update_exception_mask()	\
+   ({					\
+      __exception_bitmap.raw =		\
+	 info->vm.cpu.dflt_excp  |	\
+	 info->vmm.ctrl.usr.excp |	\
+	 info->vmm.ctrl.dbg.excp;	\
+   })
+
+#define __update_cr_read_mask()				\
+   ({ __cr_rd_bitmap = VMCB_CR_R_BITMAP | info->vmm.ctrl.usr.cr_rd; })
+
+#define __update_cr_write_mask()			\
+   ({ __cr_wr_bitmap = VMCB_CR_W_BITMAP | info->vmm.ctrl.usr.cr_wr; })
+
+#define __allow_dr_access()		\
+   ({					\
+      __ctrls.dr_read_bitmap = 0;	\
+      __ctrls.dr_write_bitmap = 0;	\
+   })
+
+#define __deny_dr_access()		\
+   ({					\
+      __ctrls.dr_read_bitmap = -1;	\
+      __ctrls.dr_write_bitmap = -1;	\
+   })
+
+#define __allow_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 0; })
+#define __deny_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 1; })
+#define __allow_popf()	         ({ __ctrls.sys_insn_bitmap.popf  = 0; })
+#define __deny_popf()            ({ __ctrls.sys_insn_bitmap.popf  = 1; })
+#define __allow_iret()           ({ __ctrls.sys_insn_bitmap.iret  = 0; })
+#define __deny_iret()            ({ __ctrls.sys_insn_bitmap.iret  = 1; })
+#define __allow_soft_int()       ({ __ctrls.sys_insn_bitmap.intn  = 0; })
+#define __deny_soft_int()        ({ __ctrls.sys_insn_bitmap.intn  = 1; })
+#define __allow_hrdw_int()       ({ __ctrls.sys_insn_bitmap.intr  = 0; })
+#define __deny_hrdw_int()        ({ __ctrls.sys_insn_bitmap.intr  = 1; })
+#define __allow_icebp()          ({ __ctrls.vmm_insn_bitmap.icebp = 0; })
+#define __deny_icebp()           ({ __ctrls.vmm_insn_bitmap.icebp = 1; })
 
 /*
 ** Events
 */
-#define __update_exception_mask()					\
-   ({__exception_bitmap.raw =						\
-	 info->vm.cpu.dflt_excp | info->vmm.ctrl.usr.excp | info->vmm.ctrl.dbg.excp;})
-
-#define __update_cr_read_mask()						\
-   ({__cr_rd_bitmap =							\
-	 VMCB_CR_R_BITMAP | info->vmm.ctrl.usr.cr_rd;})
-
-#define __update_cr_write_mask()					\
-   ({__cr_wr_bitmap =							\
-	 VMCB_CR_W_BITMAP | info->vmm.ctrl.usr.cr_wr;})
-
-#define __allow_dr_access()						\
-   ({									\
-      info->vm.cpu.vmc->vm_vmcb.ctrls_area.dr_read_bitmap = 0;		\
-      info->vm.cpu.vmc->vm_vmcb.ctrls_area.dr_write_bitmap = 0;		\
-   })
-
-#define __deny_dr_access()						\
-   ({									\
-      info->vm.cpu.vmc->vm_vmcb.ctrls_area.dr_read_bitmap = -1;		\
-      info->vm.cpu.vmc->vm_vmcb.ctrls_area.dr_write_bitmap = -1;	\
-   })
-
-#define __exit_reason					\
-   (info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_code.low)
-
-#define __vmexit_on_excp()                __svm_vmexit_on_excp()
-
-#define __exception_vector				\
-   (info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_code.low - SVM_VMEXIT_EXCP_START)
-
-#define __exception_error				\
-   info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_info_1.low
-
-#define __exception_fault				\
-   info->vm.cpu.vmc->vm_vmcb.ctrls_area.exit_info_2.low
-
-#define __injecting_exception()				\
-   (info->vm.cpu.vmc->vm_vmcb.ctrls_area.event_injection.v?1:0)
+#define __exit_reason            __ctrls.exit_code.low
+#define __vmexit_on_excp()       __svm_vmexit_on_excp()
+#define __exception_vector      (__ctrls.exit_code.low - SVM_VMEXIT_EXCP_START)
+#define __exception_error        __ctrls.exit_info_1.low
+#define __exception_fault       (__ctrls.exit_info_2.raw & 0xffffffffULL)
+#define __injecting_exception() (__ctrls.event_injection.v?1:0)
 
 #define __svm_prepare_event_injection(_ev, _type, _vector)		\
    ({									\
-      _ev->raw    = 0ULL;						\
-      _ev->vector = _vector;						\
-      _ev->type   = _type;						\
-      _ev->v      = 1;							\
+      _ev.raw    = 0ULL;						\
+      _ev.vector = _vector;						\
+      _ev.type   = _type;						\
+      _ev.v      = 1;							\
    })
-
-#define __inject_intn(n)            __svm_vmexit_inject_intn(n)
-#define __inject_exception(a,b,c)   __svm_vmexit_inject_exception(a,b,c)
-
-#define __ncr3                   (info->vm.cpu.vmc->vm_vmcb.ctrls_area.ncr3)
-#define __asid_tlb_supported()   svm_flush_asid_supported()
-
-#define __flush_tlb_glb()						\
-   ({									\
-      vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;	\
-      if(info->vmm.cpu.skillz.asid_tlb)					\
-	 ctrls->tlb_ctrl.tlb_control = VMCB_TLB_CTL_FLUSH_GUEST_ALL;	\
-      else								\
-	 ctrls->tlb_ctrl.tlb_control = VMCB_TLB_CTL_FLUSH_ALL;		\
-   })
-
-#define __flush_tlb()							\
-   ({									\
-      vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;	\
-      if(info->vmm.cpu.skillz.asid_tlb)					\
-	 ctrls->tlb_ctrl.tlb_control = VMCB_TLB_CTL_FLUSH_GUEST;	\
-      else								\
-	 ctrls->tlb_ctrl.tlb_control = VMCB_TLB_CTL_FLUSH_ALL;		\
-   })
-
-#define __allow_pushf()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.pushf=0;})
-
-#define __deny_pushf()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.pushf=1;})
-
-#define __allow_popf()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.popf=0;})
-
-#define __deny_popf()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.popf=1;})
-
-#define __allow_iret()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.iret=0;})
-
-#define __deny_iret()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.iret=1;})
-
-#define __allow_soft_int()						\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.intn=0;})
-
-#define __deny_soft_int()						\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.intn=1;})
-
-#define __allow_hrdw_int()						\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.intr=0;})
-
-#define __deny_hrdw_int()						\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.sys_insn_bitmap.intr=1;})
-
-#define __allow_icebp()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.vmm_insn_bitmap.icebp=0;})
-
-#define __deny_icebp()							\
-   ({info->vm.cpu.vmc->vm_vmcb.ctrls_area.vmm_insn_bitmap.icebp=1;})
-
-#define __inject_intr(a)	          __svm_vmexit_inject_interrupt(a)
-
-#define __interrupt_shadow				\
-   (info->vm.cpu.vmc->vm_vmcb.ctrls_area.int_shadow)
 
 #define __setup_iwe(_on_,_nr_)					\
    __svm_vmexit_setup_interrupt_window_exiting(_on_,_nr_)
 
-#define __interrupts_on()      (__rflags.IF)
-#define __safe_interrupts_on() (__interrupts_on() && !__interrupt_shadow.low)
-#define __iwe_on()             (info->vm.cpu.vmc->vm_vmcb.ctrls_area.int_ctrl.v_irq)
+#define __inject_intn(n)            __svm_vmexit_inject_intn(n)
+#define __inject_exception(a,b,c)   __svm_vmexit_inject_exception(a,b,c)
+#define __inject_intr(a)            __svm_vmexit_inject_interrupt(a)
 
+#define __interrupt_shadow         (__ctrls.int_shadow)
+#define __interrupts_on()          (__rflags.IF)
+#define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow.low)
+#define __iwe_on()                 (__ctrls.int_ctrl.v_irq)
+
+/*
+** MSRs and IOs
+*/
 #define __resolve_msr_arch(_wr_)          __svm_vmexit_resolve_msr(_wr_)
 #define __resolve_cpuid_arch(_idx_)       __svm_vmexit_resolve_cpuid(_idx_)
+
 #define __allow_io(_p_)                   svm_allow_io(info->vm.cpu.vmc,_p_)
-#define __allow_io_range(_p1,_p2)         svm_allow_io_range(info->vm.cpu.vmc,_p1,_p2)
 #define __deny_io(_p_)                    svm_deny_io(info->vm.cpu.vmc,_p_)
+#define __allow_io_range(_p1,_p2)         svm_allow_io_range(info->vm.cpu.vmc,_p1,_p2)
 #define __deny_io_range(_p1,_p2)          svm_deny_io_range(info->vm.cpu.vmc,_p1,_p2)
 
-#define __enable_lbr()						\
-   ({info->vm.cpu.vmc->vm_vmcb.state_area.dbgctl.lbr=1;})
+#define __string_io_linear(_tgt,_iO)					\
+   ({									\
+      _tgt = (&__state.es + vm_ctrls.exit_info_1.io.seg)->base.raw;	\
+      if(_iO->in)							\
+	 _tgt += (info->vm.cpu.gpr->rdi.raw & _iO->msk);		\
+      else								\
+	 _tgt += (info->vm.cpu.gpr->rsi.raw & _iO->msk);		\
+   })
+/*
+** Last Branch Record
+*/
+#define __enable_lbr()            ({ __state.dbgctl.lbr = 1; })
+#define __disable_lbr()           ({ __state.dbgctl.lbr = 0; })
+#define __setup_lbr()             ({})
 
-#define __disable_lbr()						\
-   ({info->vm.cpu.vmc->vm_vmcb.state_area.dbgctl.lbr=0;})
+#define __lbr_from()              (__cs.base.raw+__state.lbr_from.raw)
+#define __lbr_to()                (__cs.base.raw+__state.lbr_to.raw)
 
-#define __lbr_from()						\
-   ({info->vm.cpu.vmc->vm_vmcb.state_area.lbr_from.raw;})
-
-#define __lbr_to()					\
-   ({info->vm.cpu.vmc->vm_vmcb.state_area.lbr_to.raw;})
-
-#define __lbr_from_excp()					\
-   ({info->vm.cpu.vmc->vm_vmcb.state_area.lbr_from_excp.raw;})
-
-#define __lbr_to_excp()						\
-   ({info->vm.cpu.vmc->vm_vmcb.state_area.lbr_to_excp.raw;})
+/* XXX: what if IDT handler is not related to CS segment */
+#define __lbr_from_excp()         (__cs.base.raw+__state.lbr_from_excp.raw)
+#define __lbr_to_excp()	          (__cs.base.raw+__state.lbr_to_excp.raw)
 
 /*
 ** Functions

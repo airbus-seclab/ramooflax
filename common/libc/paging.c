@@ -150,10 +150,56 @@ static inline pte64_t* __pg_resolve_pte(pde64_t *pde, offset_t addr, uint32_t pv
 
 static void __pg_unmap_2M(pde64_t *pde)
 {
+   pte64_t  *pt;
+   uint32_t i;
+
    if(!pde->page.ps)
-      pool_push_page(page_addr(pde->addr));
+   {
+      pt = (pte64_t*)page_addr(pde->addr);
+
+      for(i=0 ; i<PTE64_PER_PT ; i++)
+	 if(pt[i].p)
+	    pt[i].p = 0;
+
+      pool_push_page((offset_t)pt);
+   }
 
    pde->p = 0;
+}
+
+static void __pg_map_2M_nolarge(pde64_t *pde, offset_t addr, uint32_t pvl)
+{
+   pte64_t  *pt;
+   offset_t pfn;
+   uint32_t i;
+
+   pt  = __pg_new_pt();
+   pfn = pg_4K_nr(addr);
+   for(i=0 ; i<PTE64_PER_PT ; i++, pfn++)
+      __pg_set_entry(&pt[i], pvl, pfn);
+
+   __pg_set_entry(pde, pvl, page_nr(pt));
+}
+
+static void __pg_map_2M(pde64_t *pde, offset_t addr, uint32_t pvl)
+{
+   if(pde->p)
+      __pg_unmap_2M(pde);
+
+   if(info->vm.cpu.skillz.pg_2M)
+   {
+      __pg_set_large_entry(pde, pvl, pg_2M_nr(addr));
+      return;
+   }
+
+   __pg_map_2M_nolarge(pde, addr, pvl);
+}
+
+static void __pg_remap_2M(pde64_t *pde, offset_t addr)
+{
+   uint32_t pvl = __pg_get_pvl(pde);
+   __pg_unmap_2M(pde);
+   __pg_map_2M_nolarge(pde, addr, pvl);
 }
 
 static void __pg_unmap_1G(pdpe_t *pdpe)
@@ -178,13 +224,14 @@ static void __pg_unmap_1G(pdpe_t *pdpe)
 static void __pg_map_1G_nolarge(pdpe_t *pdpe, offset_t addr, uint32_t pvl)
 {
    pde64_t  *pd;
-   offset_t pfn;
    uint32_t i;
 
-   pd  = __pg_new_pd();
-   pfn = pg_2M_nr(addr);
-   for(i=0 ; i<PDE64_PER_PD ; i++, pfn++)
-      __pg_set_large_entry(&pd[i], pvl, pfn);
+   pd = __pg_new_pd();
+   for(i=0 ; i<PDE64_PER_PD ; i++)
+   {
+      __pg_map_2M(&pd[i], addr, pvl);
+      addr += PG_2M_SIZE;
+   }
 
    __pg_set_entry(pdpe, pvl, page_nr(pd));
 }
@@ -194,7 +241,7 @@ static void __pg_map_1G(pdpe_t *pdpe, offset_t addr, uint32_t pvl)
    if(pdpe->p)
       __pg_unmap_1G(pdpe);
 
-   if(info->vmm.cpu.skillz.pg_1G)
+   if(info->vm.cpu.skillz.pg_1G)
    {
       __pg_set_large_entry(pdpe, pvl, pg_1G_nr(addr));
       return;
@@ -208,35 +255,6 @@ static void __pg_remap_1G(pdpe_t *pdpe, offset_t addr)
    uint32_t pvl = __pg_get_pvl(pdpe);
    __pg_unmap_1G(pdpe);
    __pg_map_1G_nolarge(pdpe, addr, pvl);
-}
-
-static void __pg_map_2M_nolarge(pde64_t *pde, offset_t addr, uint32_t pvl)
-{
-   pte64_t  *pt;
-   offset_t pfn;
-   uint32_t i;
-
-   pt  = __pg_new_pt();
-   pfn = pg_4K_nr(addr);
-   for(i=0 ; i<PTE64_PER_PT ; i++, pfn++)
-      __pg_set_entry(&pt[i], pvl, pfn);
-
-   __pg_set_entry(pde, pvl, page_nr(pt));
-}
-
-static void __pg_map_2M(pde64_t *pde, offset_t addr, uint32_t pvl)
-{
-   if(pde->p)
-      __pg_unmap_2M(pde);
-
-   __pg_set_large_entry(pde, pvl, pg_2M_nr(addr));
-}
-
-static void __pg_remap_2M(pde64_t *pde, offset_t addr)
-{
-   uint32_t pvl = __pg_get_pvl(pde);
-   __pg_unmap_2M(pde);
-   __pg_map_2M_nolarge(pde, addr, pvl);
 }
 
 /*
@@ -513,7 +531,7 @@ void pg_unmap_4K(offset_t addr)
 
 #ifndef __INIT__
 /*
-** VM page walking services
+** VM page walking services using VMM cpu skillz (real cr3)
 */
 
 /*
@@ -755,7 +773,7 @@ int pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
 }
 
 /*
-** walk VM nested page tables
+** walk VM nested page tables using VM cpu skillz (nested features)
 */
 int pg_nested_walk(offset_t vaddr, offset_t *paddr)
 {
@@ -787,7 +805,7 @@ int pg_nested_walk(offset_t vaddr, offset_t *paddr)
       return 0;
    }
 
-   if(info->vmm.cpu.skillz.pg_1G && pdpe->page.ps)
+   if(info->vm.cpu.skillz.pg_1G && pdpe->page.ps)
    {
       *paddr = pg_1G_addr((offset_t)pdpe->page.addr) + pg_1G_offset(vaddr);
       goto __success;
@@ -802,7 +820,7 @@ int pg_nested_walk(offset_t vaddr, offset_t *paddr)
       return 0;
    }
 
-   if(pde->page.ps)
+   if(info->vm.cpu.skillz.pg_2M && pde->page.ps)
    {
       *paddr = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
       goto __success;

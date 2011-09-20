@@ -61,35 +61,28 @@ static inline offset_t pmem_vmm_pg_alloc(vmm_t *vmm, offset_t area, pg_cnt_t *pg
 */
 static inline size_t pmem_vm_pg_size(pg_cnt_t *pg)
 {
-   return (sizeof(vm_rm_pgmem_t) + pg->pdp*PDP_SZ);
+   return (sizeof(npg_pml4_t) + pg->pdp*sizeof(npg_pdp_t));
 }
 
 static inline size_t pmem_vm_pg_pool_size(pg_cnt_t *pg)
 {
-   return (pg->pd*PD64_SZ + pg->pt*PT64_SZ);
+   return (pg->pd*sizeof(npg_pd64_t) + pg->pt*sizeof(npg_pt64_t));
 }
 
 static inline offset_t pmem_vm_pg_alloc(vm_t *vm, offset_t area, pg_cnt_t *pg)
 {
-   vm->cpu.pg.rm = (vm_rm_pgmem_t*)area;
-   area += sizeof(vm_rm_pgmem_t);
+   vm->cpu.pg.pml4 = (npg_pml4e_t*)area;
+   area += sizeof(npg_pml4_t);
 
-   vm->cpu.pg.pm.pml4 = vm->cpu.pg.rm->pml4;
-
-   vm->cpu.pg.pm.pdp = (pdp_t*)area;
-   area += pg->pdp*PDP_SZ;
+   vm->cpu.pg.pdp = (npg_pdp_t*)area;
+   area += pg->pdp*sizeof(npg_pdp_t);
 
    return area;
 }
 
 /*
-** vmm uses 1GB or 2MB pages
+** vmm uses 1GB/2MB pages if possible
 ** vm uses fine-grain paging
-**
-** we start with worst case where vmm
-** area is located on a GB boundary
-** which means that we need 2 pds and
-** 2 pts to protect the vmm area
 */
 static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
 {
@@ -97,18 +90,32 @@ static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
    vm->pdp  = vmm->pdp;
 
    if(info->vmm.cpu.skillz.pg_1G)
-   {
       vmm->pd = 0;
-      vm->pd  = 2;
-   }
    else
-   {
       vmm->pd = pd64_nr(info->hrd.mem.top - 1) + 1;
-      vm->pd  = vmm->pd;
-   }
+
+   if(info->vm.cpu.skillz.pg_1G)
+      vm->pd = 2;
+   else
+      vm->pd = vmm->pd;
 
    vmm->pt = 0;
-   vm->pt  = 2;
+
+   if(info->vm.cpu.skillz.pg_2M)
+      vm->pt = 2;
+   else
+      vm->pt = pt64_nr(info->hrd.mem.top - 1) + 1;
+
+   debug(PMEM,
+	 "- vmm needs %d pd and %d pt\n"
+	 "- vm  needs %d pd and %d pt\n"
+	 , vmm->pd, vmm->pt
+	 , vm->pd, vm->pt );
+}
+
+int pmem_pool_opt_hdl(char *str, void *data)
+{
+   return dec_to_uint64((uint8_t*)str, strlen(str), (uint64_t*)data);
 }
 
 /*
@@ -118,7 +125,7 @@ void pmem_init(mbi_t *mbi)
 {
    info_data_t  *info_r;
    size_t       vmm_elf_sz, smap_sz;
-   size_t       pool_sz, pool_desc_sz;
+   size_t       pool_sz, pool_opt, pool_desc_sz;
    pg_cnt_t     vmm_pg, vm_pg;
    offset_t     fixed, area;
    module_t     *mod;
@@ -145,9 +152,14 @@ void pmem_init(mbi_t *mbi)
 
    smap_sz = smap->nr*sizeof(smap_e_t);
    vmm_elf_sz = elf_module_load_size(mod);
+   pool_sz = pmem_vm_pg_pool_size(&vm_pg);
 
-   /* XXX: vmm pool sz param (page aligned) */
-   pool_sz = 0 + pmem_vm_pg_pool_size(&vm_pg);
+   if(mbi_get_opt(mod, "pool", pmem_pool_opt_hdl, (void*)&pool_opt))
+   {
+      debug(PMEM, "increasing pool sz by %D*PAGE_SIZE\n", pool_opt);
+      pool_sz += pool_opt*PAGE_SIZE;
+   }
+
    pool_desc_sz = sizeof(pool_pg_desc_t)*(pool_sz/PAGE_SIZE);
 
    if(!page_aligned(info->area.end))
@@ -232,6 +244,7 @@ void pmem_init(mbi_t *mbi)
 	 " - gdt           = 0x%X\n"
 	 " - idt           = 0x%X\n"
 	 " - pml4          = 0x%X\n"
+	 " - vm  vmc       = 0x%X\n"
 	 ,info->area.start
 	 ,info->area.end
 	 ,info->area.size, (info->area.size)>>10
@@ -241,5 +254,6 @@ void pmem_init(mbi_t *mbi)
 	 ,info->vmm.cpu.sg->gdt
 	 ,info->vmm.cpu.sg->idt
 	 ,info->vmm.cpu.pg.pml4
+	 ,info->vm.cpu.vmc
       );
 }

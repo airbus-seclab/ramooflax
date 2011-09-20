@@ -20,7 +20,7 @@
 
 #include <types.h>
 #include <realmem.h>
-#include <pagemem.h>
+#include <paging.h>
 #include <smap.h>
 #include <excp.h>
 #include <insn.h>
@@ -35,8 +35,9 @@
 */
 #define VM_ENTRY_POINT         RM_BASE_IP
 
-//#define vm_set_entry()         *(uint32_t*)VM_ENTRY_POINT = 0x19cd16cd;
 #define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0x19cd;
+//#define vm_set_entry()         *(uint32_t*)VM_ENTRY_POINT = 0x19cd16cd;
+//#define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0xfeeb;
 
 /*
 ** VM architecture dependant stuff
@@ -56,37 +57,35 @@ typedef vmx_bazaar_t  vm_bazaar_t;
 /*
 ** VM data structures
 */
-typedef struct vm_real_mode_paging
-{
-   pml4_t     pml4;
-   pdp_t      pdp;
-   pd64_t     pd;
-   pt64_t     pt;
-
-} __attribute__((packed)) vm_rm_pgmem_t;
-
-typedef struct vm_protected_mode_paging
-{
-   pml4e_t    *pml4; /* shared with static real mode one */
-   pdp_t      *pdp;  /* strictly aligned */
-   pd64_t     *pd;   /* strictly aligned */
-   pt64_t     *pt;   /* strictly aligned */
-
-} __attribute__((packed)) vm_pm_pgmem_t;
-
 typedef struct vm_paging
 {
-   vm_rm_pgmem_t *rm;  /* strictly aligned */
-   vm_pm_pgmem_t pm;
+   npg_pml4e_t  *pml4; /* strictly aligned */
+   npg_pdp_t    *pdp;  /* strictly aligned */
 
 } __attribute__((packed)) vm_pgmem_t;
 
+typedef union vm_cpu_skill
+{
+   struct
+   {
+      uint32_t  pg_2M:1;         /* nested mappings only     */
+      uint32_t  pg_1G:1;         /* nested mappings only     */
+      uint32_t  flush_tlb:3;     /* flush vm tlbs non-global */
+      uint32_t  flush_tlb_glb:3; /* flush vm all tlbs        */
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) vm_cpu_skill_t;
+
 typedef struct vm_cpu
 {
-   vm_pgmem_t  pg;         /* virtual paging tables */
-   uint32_t    dflt_excp;  /* default exception mask */
-   vmc_t       *vmc;       /* hardware virtualization data, strictly aligned */
-   gpr64_ctx_t *gpr;       /* vm GPRs (in vmm stack) */
+   vm_pgmem_t     pg;        /* virtual paging tables */
+   uint32_t       dflt_excp; /* default exception mask */
+   vm_cpu_skill_t skillz;    /* vm cpu skillz */
+   vmc_t          *vmc;      /* hardware virtualization data, strictly aligned */
+   gpr64_ctx_t    *gpr;      /* vm GPRs (in vmm stack) */
 
 } __attribute__((packed)) vm_cpu_t;
 

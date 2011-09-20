@@ -21,8 +21,7 @@
 /*
 ** Functions
 */
-int       vmx_vmexit_resolve_cr_access();
-uint32_t  __vmx_vmexit_mov_from_cr(uint8_t);
-void      __vmx_dirty_bios();
+void __vmx_vmexit_cr_update_mask();
+int  vmx_vmexit_resolve_cr_access();
 
 #endif

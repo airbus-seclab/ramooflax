@@ -42,26 +42,37 @@ static void __emulate_rmode_push(uint16_t value)
 {
    loc_t stack;
 
-   __pre_access(__ss.base_addr);
+   __pre_access(__ss.base);
 
    info->vm.cpu.gpr->rsp.wlow -= sizeof(uint16_t);
-   stack.linear = __ss.base_addr.low + info->vm.cpu.gpr->rsp.wlow;
+   stack.linear = __ss.base.low + info->vm.cpu.gpr->rsp.wlow;
    *stack.u16   = value;
+}
+
+static uint16_t __emulate_rmode_pop()
+{
+   loc_t stack;
+
+   __pre_access(__ss.base);
+
+   stack.linear = __ss.base.low + info->vm.cpu.gpr->rsp.wlow;
+   info->vm.cpu.gpr->rsp.wlow += sizeof(uint16_t);
+   return *stack.u16;
 }
 
 static void __emulate_rmode_far_jump(fptr_t *fptr)
 {
-   __cs.selector.raw  = fptr->segment;
-   __cs.base_addr.low = (__cs.selector.raw)<<4;
+   __cs.selector.raw = fptr->segment;
+   __cs.base.low = (__cs.selector.raw)<<4;
 
    /* on op16, eip high is cleared */
-   __rip.low  = fptr->offset.raw;
+   __rip.low = fptr->offset.raw;
 
-   /* debug(EMU_INSN, "far jump to 0x%x:0x%x\n", */
-   /* 	 __cs.selector.raw, __rip.wlow); */
+   debug(EMU_INSN, "far jump to 0x%x:0x%x\n",
+   	 __cs.selector.raw, __rip.wlow);
 
    __post_access(__cs.selector);
-   __post_access(__cs.base_addr);
+   __post_access(__cs.base);
    __post_access(__rip);
 }
 
@@ -70,10 +81,36 @@ static void __emulate_rmode_far_call(fptr_t *fptr, uint16_t insn_sz)
    __emulate_rmode_push(__cs.selector.raw);
    __emulate_rmode_push(__rip.wlow+insn_sz);
 
-   /* debug(EMU_INSN, "far call saved frame 0x%x:0x%x\n", */
-   /* 	 __cs.selector.raw, __rip.wlow+insn_sz); */
+   debug(EMU_INSN,
+	 "far call saved frame 0x%x:0x%x\n",
+   	 __cs.selector.raw, __rip.wlow+insn_sz);
 
    __emulate_rmode_far_jump(fptr);
+}
+
+static void __emulate_rmode_far_ret(uint16_t add_sp)
+{
+   __rip.wlow        = __emulate_rmode_pop();
+   __cs.selector.raw = __emulate_rmode_pop();
+   __cs.base.low     = (__cs.selector.raw)<<4;
+
+   debug(EMU_INSN, "far ret to 0x%x:0x%x\n", __cs.selector.raw, __rip.wlow);
+
+   if(add_sp)
+      info->vm.cpu.gpr->rsp.wlow += add_sp;
+
+   __post_access(__rip);
+   __post_access(__cs.base);
+   __post_access(__cs.selector);
+}
+
+static void __emulate_rmode_iret()
+{
+   __emulate_rmode_far_ret(0);
+   __rflags.wlow = __emulate_rmode_pop();
+   __post_access(__rflags);
+
+   debug(EMU_INSN, "iret\n");
 }
 
 static void __emulate_rmode_interrupt(uint8_t vector, uint16_t insn_sz)
@@ -83,7 +120,7 @@ static void __emulate_rmode_interrupt(uint8_t vector, uint16_t insn_sz)
 
    ivt = (ivt_e_t*)0;
 
-   /* debug(EMU_INSN, "int 0x%x\n", vector); */
+   debug(EMU_INSN, "int 0x%x\n", vector);
 
    fptr.segment      = ivt[vector].cs;
    fptr.offset.wlow  = ivt[vector].ip;
@@ -97,7 +134,6 @@ static void __emulate_rmode_interrupt(uint8_t vector, uint16_t insn_sz)
    __rflags.ac = 0;
 
    __emulate_rmode_far_call(&fptr, insn_sz);
-
    __post_access(__rflags);
 }
 
@@ -158,6 +194,17 @@ static int emulate_intn(ud_t *disasm)
    return __emulate_interrupt(1, op->lval.ubyte, ud_insn_len(disasm));
 }
 
+static int emulate_iret(size_t sz)
+{
+   offset_t __unused__ addend = 2*sz;
+
+   if(!__rmode())
+      return EMU_FAIL;
+
+   __emulate_rmode_iret();
+   return EMU_SUCCESS_LET_RIP;
+}
+
 static int emulate_mov(ud_t *disasm)
 {
    struct ud_operand  *op1, *op2;
@@ -209,75 +256,73 @@ static int emulate_mov(ud_t *disasm)
    return EMU_FAIL;
 }
 
-static int emulate_clts()
+int emulate_clts()
 {
-   if(__cpl && !__rmode())
+   cr0_reg_t guest;
+
+   if(__cpl)
    {
       __inject_exception(GP_EXCP, 0, 0);
       return EMU_FAULT;
    }
 
-   __cr0.ts = 0;
-   __post_access(__cr0);
+   guest.low = __cr0.low & ~(CR0_TS);
 
+   __cr0_update(&guest);
    return EMU_SUCCESS;
 }
 
-static int emulate_pushf()
-{
-   return EMU_FAIL;
-}
+/* static int emulate_pushf() */
+/* { */
+/*    return EMU_FAIL; */
+/* } */
 
 /*
 ** RFLAGS inspection
 */
-static int emulate_pre_inspect_rflags(offset_t addend)
-{
-   int          mode;
-   offset_t     vaddr;
-   rflags_reg_t rflags;
+/* static int emulate_pre_inspect_rflags(offset_t addend) */
+/* { */
+/*    int          mode; */
+/*    offset_t     vaddr; */
+/*    rflags_reg_t rflags; */
 
-   if(!gdb_singlestep_enabled())
-   {
-      debug(EMU, "should not be trapped when not single-stepping\n");
-      return EMU_FAIL;
-   }
+/*    if(!gdb_singlestep_enabled()) */
+/*    { */
+/*       debug(EMU, "should not be trapped when not single-stepping\n"); */
+/*       return EMU_FAIL; */
+/*    } */
 
-   vm_get_stack_addr(&vaddr, addend, &mode);
+/*    vm_get_stack_addr(&vaddr, addend, &mode); */
 
-   /*
-   ** we "try" to retrieve minimum size of rflags
-   ** if we fail, we let vm run the insn and fail on its own
-   */
-   if(vm_read_mem(vaddr, (uint8_t*)&rflags, 2))
-   {
-      if(!gdb_singlestep_correct_rflags(&rflags))
-      {
-	 gdb_singlestep_set_rflags(&rflags);
-	 vm_write_mem(vaddr, (uint8_t*)&rflags, 2);
-      }
-   }
+/*    /\* */
+/*    ** we "try" to retrieve minimum size of rflags */
+/*    ** if we fail, we let vm run the insn and fail on its own */
+/*    *\/ */
+/*    if(vm_read_mem(vaddr, (uint8_t*)&rflags, 2)) */
+/*    { */
+/*       if(!gdb_singlestep_correct_rflags(&rflags)) */
+/*       { */
+/* 	 gdb_singlestep_set_rflags(&rflags); */
+/* 	 vm_write_mem(vaddr, (uint8_t*)&rflags, 2); */
+/*       } */
+/*    } */
 
-   return EMU_SUCCESS_LET_RIP;
-}
+/*    return EMU_SUCCESS_LET_RIP; */
+/* } */
 
-static int emulate_popf()
-{
-   __allow_popf();
-   return emulate_pre_inspect_rflags(0);
-}
-
-static int emulate_iret(size_t sz)
-{
-   offset_t addend = 2*sz;
-
-   __allow_iret();
-   return emulate_pre_inspect_rflags(addend);
-}
+/* static int emulate_popf() */
+/* { */
+/*    __allow_popf(); */
+/*    return emulate_pre_inspect_rflags(0); */
+/* } */
 
 static int emulate_sysenter()
 {
    seg_sel_t cs;
+
+   __pre_access(__sysenter_cs);
+   __pre_access(__sysenter_esp);
+   __pre_access(__sysenter_eip);
 
    cs.raw = __sysenter_cs.wlow;
 
@@ -293,36 +338,52 @@ static int emulate_sysenter()
    __rflags.rf = 0;
 
    __cs.selector.raw = __sysenter_cs.wlow;
-   __cs.base_addr.raw = 0ULL;
+   __cs.selector.rpl = 0;
+   __cs.base.raw = 0ULL;
    __cs.limit.raw = 0xffffffff;
    __cs.attributes.g = 1;
    __cs.attributes.s = 1;
    __cs.attributes.type = SEG_DESC_CODE_XRA;
    __cs.attributes.d = 1;
    __cs.attributes.dpl = 0;
-   __cs.selector.rpl = 0;
    __cs.attributes.p = 1;
    __cpl = 0;
 
    __ss.selector.raw = __sysenter_cs.wlow + 8;
-   __ss.base_addr.raw = 0ULL;
+   __ss.selector.rpl = 0;
+   __ss.base.raw = 0ULL;
    __ss.limit.raw = 0xffffffff;
    __ss.attributes.g = 1;
    __ss.attributes.s = 1;
    __ss.attributes.type = SEG_DESC_DATA_RWA;
    __ss.attributes.d = 1;
    __ss.attributes.dpl = 0;
-   __ss.selector.rpl = 0;
    __ss.attributes.p = 1;
 
    __rip.low = __sysenter_eip.low;
    info->vm.cpu.gpr->rsp.low = __sysenter_esp.low;
+
+   __post_access(__rflags);
+   __post_access(__rip);
+
+   __post_access(__cs.selector);
+   __post_access(__cs.base);
+   __post_access(__cs.limit);
+   __post_access(__cs.attributes);
+
+   __post_access(__ss.selector);
+   __post_access(__ss.base);
+   __post_access(__ss.limit);
+   __post_access(__ss.attributes);
+
    return EMU_SUCCESS_LET_RIP;
 }
 
 static int emulate_sysexit()
 {
    seg_sel_t cs;
+
+   __pre_access(__sysenter_cs);
 
    cs.raw = __sysenter_cs.wlow;
 
@@ -335,33 +396,45 @@ static int emulate_sysexit()
    }
 
    __cs.selector.raw = __sysenter_cs.wlow + 16;
-   __cs.base_addr.raw = 0ULL;
+   __cs.selector.rpl = 3;
+   __cs.base.raw = 0ULL;
    __cs.limit.raw = 0xffffffff;
    __cs.attributes.g = 1;
    __cs.attributes.s = 1;
    __cs.attributes.type = SEG_DESC_CODE_XRA;
    __cs.attributes.d = 1;
    __cs.attributes.dpl = 3;
-   __cs.selector.rpl = 3;
    __cs.attributes.p = 1;
    __cpl = 3;
 
    __ss.selector.raw = __sysenter_cs.wlow + 24;
-   __ss.base_addr.raw = 0ULL;
+   __ss.selector.rpl = 3;
+   __ss.base.raw = 0ULL;
    __ss.limit.raw = 0xffffffff;
    __ss.attributes.g = 1;
    __ss.attributes.s = 1;
    __ss.attributes.type = SEG_DESC_DATA_RWA;
    __ss.attributes.d = 1;
    __ss.attributes.dpl = 3;
-   __ss.selector.rpl = 3;
    __ss.attributes.p = 1;
 
    info->vm.cpu.gpr->rsp.low = info->vm.cpu.gpr->rcx.low;
    __rip.low = info->vm.cpu.gpr->rdx.low;
+
+   __post_access(__rip);
+
+   __post_access(__cs.selector);
+   __post_access(__cs.base);
+   __post_access(__cs.limit);
+   __post_access(__cs.attributes);
+
+   __post_access(__ss.selector);
+   __post_access(__ss.base);
+   __post_access(__ss.limit);
+   __post_access(__ss.attributes);
+
    return EMU_SUCCESS_LET_RIP;
 }
-
 
 /*
 ** Data hardware and single-step traps
@@ -429,22 +502,20 @@ int __emulate_insn(ud_t *disasm)
    case UD_Iiretq:
       rc = emulate_iret(8);
       break;
-
    case UD_Iclts:
       rc = emulate_clts();
       break;
+   /* case UD_Ipushfw: */
+   /* case UD_Ipushfd: */
+   /* case UD_Ipushfq: */
+   /*    rc = emulate_pushf(); */
+   /*    break; */
 
-   case UD_Ipushfw:
-   case UD_Ipushfd:
-   case UD_Ipushfq:
-      rc = emulate_pushf();
-      break;
-
-   case UD_Ipopfw:
-   case UD_Ipopfd:
-   case UD_Ipopfq:
-      rc = emulate_popf();
-      break;
+   /* case UD_Ipopfw: */
+   /* case UD_Ipopfd: */
+   /* case UD_Ipopfq: */
+   /*    rc = emulate_popf(); */
+   /*    break; */
 
    case UD_Iint1:
       rc = emulate_int1();

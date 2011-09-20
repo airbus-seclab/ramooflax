@@ -19,13 +19,19 @@
 #define __VMX_VMCS_H__
 
 #include <types.h>
-#include <vmx_vmcs_enc.h>
-#include <vmx_vmcs_acc.h>
 #include <segmem.h>
+#include <pagemem.h>
 #include <excp.h>
-#include <vmx_msr.h>
 #include <asm.h>
 #include <print.h>
+
+#include <vmx_vmcs_acc.h>
+#include <vmx_msr.h>
+#include <vmx_ept.h>
+
+#ifndef __INIT__
+#include <vmx_exit.h>
+#endif
 
 /*
 ** VMCS guest state area
@@ -34,17 +40,17 @@ typedef union vmcs_guest_state_area_segment_attributes
 {
    struct
    {
-      uint32_t    type:4;               /* segment type */
-      uint32_t    s:1;                  /* descriptor type */
-      uint32_t    dpl:2;                /* descriptor privilege level */
-      uint32_t    p:1;                  /* segment present flag */
-      uint32_t    r1:4;                 /* reserved */
-      uint32_t    avl:1;                /* available for fun and profit */
-      uint32_t    l:1;                  /* long mode */
-      uint32_t    d:1;                  /* default length, depend on seg type */
-      uint32_t    g:1;                  /* granularity */
-      uint32_t    unuse:1;              /* unusable segment (1) */
-      uint32_t    r3:15;                /* reserved */
+      uint32_t    type:4;     /* segment type */
+      uint32_t    s:1;        /* descriptor type */
+      uint32_t    dpl:2;      /* descriptor privilege level */
+      uint32_t    p:1;        /* segment present flag */
+      uint32_t    r1:4;       /* reserved */
+      uint32_t    avl:1;      /* available for fun and profit */
+      uint32_t    l:1;        /* long mode */
+      uint32_t    d:1;        /* default length, depend on seg type */
+      uint32_t    g:1;        /* granularity */
+      uint32_t    u:1;        /* unusable segment (1) */
+      uint32_t    r2:15;      /* reserved */
 
    } __attribute__((packed));
 
@@ -54,17 +60,17 @@ typedef union vmcs_guest_state_area_segment_attributes
 
 typedef struct vmcs_guest_state_area_segment_descriptor
 {
-   vmcs_t(seg_sel_t)             selector;
-   vmcs_t(raw64_t)               base_addr;
-   vmcs_t(raw32_t)               limit;
-   vmcs_t(vmcs_guest_seg_attr_t) attributes;
+   vmcs_t(seg_sel_t,             selector);
+   vmcs_t(raw64_t,               base);
+   vmcs_t(raw32_t,               limit);
+   vmcs_t(vmcs_guest_seg_attr_t, attributes);
 
 } __attribute__((packed)) vmcs_guest_seg_desc_t;
 
 typedef struct vmcs_guest_state_area_descriptor_table_register
 {
-   vmcs_t(raw64_t)    base_addr;
-   vmcs_t(raw32_t)    limit;
+   vmcs_t(raw64_t,    base);
+   vmcs_t(raw32_t,    limit);
 
 } __attribute__((packed)) vmcs_guest_dt_reg_t;
 
@@ -93,7 +99,7 @@ typedef union vmcs_guest_pending_debug_exceptions
 {
    struct
    {
-      uint64_t    b0:1;  /* DR7 correspondance */
+      uint64_t    b0:1;   /* DR7 correspondance */
       uint64_t    b1:1;
       uint64_t    b2:1;
       uint64_t    b3:1;
@@ -111,31 +117,44 @@ typedef union vmcs_guest_pending_debug_exceptions
 
 typedef struct vmcs_guest_register_state_area
 {
-   vmcs_t(cr0_reg_t)              cr0;
-   vmcs_t(cr3_reg_t)              cr3;
-   vmcs_t(cr4_reg_t)              cr4;
-   vmcs_t(dr7_reg_t)              dr7;
+   vmcs_t(cr0_reg_t,              cr0);
+   vmcs_t(raw64_t,                cr2); /* fake */
+   vmcs_t(cr3_reg_t,              cr3);
+   vmcs_t(cr4_reg_t,              cr4);
+   vmcs_t(dr6_reg_t,              dr6); /* fake */
+   vmcs_t(dr7_reg_t,              dr7);
 
-   vmcs_t(raw64_t)                rsp, rip;
-   vmcs_t(rflags_reg_t)           rflags;
+   vmcs_t(raw64_t,                rsp);
+   vmcs_t(raw64_t,                rip);
+   vmcs_t(rflags_reg_t,           rflags);
 
    vmcs_guest_seg_desc_t          es, cs, ss, ds, fs, gs, ldtr, tr;
    vmcs_guest_dt_reg_t            gdtr, idtr;
 
-   vmcs_t(ia32_debugctl_msr_t)    ia32_debugctl_msr;
-   vmcs_t(raw32_t)                ia32_sysenter_cs_msr;
-   vmcs_t(raw64_t)                ia32_sysenter_esp_msr, ia32_sysenter_eip_msr;
+   vmcs_t(ia32_dbg_ctl_msr_t,     ia32_dbgctl);
+   vmcs_t(raw32_t,                ia32_sysenter_cs);
+   vmcs_t(raw64_t,                ia32_sysenter_esp);
+   vmcs_t(raw64_t,                ia32_sysenter_eip);
 
-   vmcs_t(raw32_t)                smbase;
+   vmcs_t(ia32_perf_glb_ctl_msr_t, ia32_perf);
+   vmcs_t(pat_t,                   ia32_pat);
+   vmcs_t(ia32_efer_msr_t,         ia32_efer);
+
+   vmcs_t(raw32_t,                smbase);
 
 } __attribute__((packed)) vmcs_guest_reg_state_t;
 
 typedef struct vmcs_guest_non_register_state_area
 {
-   vmcs_t(raw32_t)                         activity_state;
-   vmcs_t(vmcs_guest_int_state_t)          int_state;
-   vmcs_t(vmcs_guest_pending_dbg_excp_t)   dbg_excp;
-   vmcs_t(raw64_t)                         vmcs_link_ptr;  /* must be set to -1 on VM entry */
+   vmcs_t(raw32_t,                         activity_state);
+   vmcs_t(vmcs_guest_int_state_t,          int_state);
+   vmcs_t(vmcs_guest_pending_dbg_excp_t,   dbg_excp);
+   vmcs_t(raw64_t,                         vmcs_link_ptr);
+   vmcs_t(raw32_t,                         preempt_timer);
+   vmcs_t(pdpe_t,                          pdpte_0);
+   vmcs_t(pdpe_t,                          pdpte_1);
+   vmcs_t(pdpe_t,                          pdpte_2);
+   vmcs_t(pdpe_t,                          pdpte_3);
 
 } __attribute__((packed)) vmcs_guest_non_reg_state_t;
 
@@ -152,18 +171,34 @@ typedef struct vmcs_guest_state_area
 */
 typedef struct vmcs_host_state_area
 {
-   vmcs_t(cr0_reg_t)              cr0;
-   vmcs_t(cr3_reg_t)              cr3;
-   vmcs_t(cr4_reg_t)              cr4;
+   vmcs_t(cr0_reg_t,     cr0);
+   vmcs_t(cr3_reg_t,     cr3);
+   vmcs_t(cr4_reg_t,     cr4);
 
-   vmcs_t(raw64_t)                rsp, rip;
+   vmcs_t(raw64_t,       rsp);
+   vmcs_t(raw64_t,       rip);
 
-   vmcs_t(seg_sel_t)              cs, ss, ds, es, fs, gs, tr;
-   vmcs_t(raw64_t)                fs_base_addr, gs_base_addr;
-   vmcs_t(raw64_t)                tr_base_addr, gdtr_base_addr, idtr_base_addr;
+   vmcs_t(seg_sel_t,     cs);
+   vmcs_t(seg_sel_t,     ss);
+   vmcs_t(seg_sel_t,     ds);
+   vmcs_t(seg_sel_t,     es);
+   vmcs_t(seg_sel_t,     fs);
+   vmcs_t(seg_sel_t,     gs);
+   vmcs_t(seg_sel_t,     tr);
 
-   vmcs_t(raw32_t)                ia32_sysenter_cs_msr;
-   vmcs_t(raw64_t)                ia32_sysenter_esp_msr, ia32_sysenter_eip_msr;
+   vmcs_t(raw64_t,       fs_base);
+   vmcs_t(raw64_t,       gs_base);
+   vmcs_t(raw64_t,       tr_base);
+   vmcs_t(raw64_t,       gdtr_base);
+   vmcs_t(raw64_t,       idtr_base);
+
+   vmcs_t(raw32_t,       ia32_sysenter_cs);
+   vmcs_t(raw64_t,       ia32_sysenter_esp);
+   vmcs_t(raw64_t,       ia32_sysenter_eip);
+
+   vmcs_t(ia32_perf_glb_ctl_msr_t, ia32_perf);
+   vmcs_t(pat_t,                   ia32_pat);
+   vmcs_t(ia32_efer_msr_t,         ia32_efer);
 
 } __attribute__((packed)) vmcs_host_t;
 
@@ -175,12 +210,13 @@ typedef union vmcs_execution_pin_based_control
 {
    struct
    {
-      uint32_t   eint:1;  /* 0 ext interrupt cause vm exit (1) */
-      uint32_t   r1:2;    /* 1-2 reserved */
-      uint32_t   nmi:1;   /* 3 nmi cause vm exit (1) */
-      uint32_t   r2:1;    /* 4 reserved */
-      uint32_t   vnmi:1;  /* 5 virtual nmi control */
-      uint32_t   r3:26;   /* reserved */
+      uint32_t   eint:1;      /* 0 ext intr cause vm exit (1) */
+      uint32_t   r1:2;        /* 1-2 reserved */
+      uint32_t   nmi:1;       /* 3 nmi cause vm exit (1) */
+      uint32_t   r2:1;        /* 4 reserved */
+      uint32_t   vnmi:1;      /* 5 virtual nmi control */
+      uint32_t   preempt:1;   /* 6 enable vmx preemption timer */
+      uint32_t   r3:25;       /* reserved */
 
    } __attribute__((packed));
 
@@ -206,19 +242,23 @@ typedef union vmcs_execution_proc_based_control
       uint32_t   mwait:1;   /* 10    mwait exit */
       uint32_t   rdpmc:1;   /* 11    rdpmc exit */
       uint32_t   rdtsc:1;   /* 12    rdtsc exit */
-      uint32_t   r4:6;      /* 13-18 reserved */
-      uint32_t   cr8l:1;    /* 19    cr8 load exit */
-      uint32_t   cr8s:1;    /* 20    cr8 store exit */
+      uint32_t   r4:2;      /* 13-14 reserved */
+      uint32_t   cr3l:1;    /* 15    wr cr3 exit */
+      uint32_t   cr3s:1;    /* 16    rd cr3 exit */
+      uint32_t   r5:2;      /* 17-18 reserved */
+      uint32_t   cr8l:1;    /* 19    wr cr8 exit */
+      uint32_t   cr8s:1;    /* 20    rd cr8 exit */
       uint32_t   tprs:1;    /* 21    TRP shadow */
       uint32_t   nwe:1;     /* 22    nmi window exiting */
       uint32_t   mdr:1;     /* 23    mov dr exit */
-      uint32_t   ucio:1;    /* 24    uncoditional IO exit */
+      uint32_t   ucio:1;    /* 24    unconditional IO exit */
       uint32_t   usio:1;    /* 25    use IO bitmaps */
-      uint32_t   r5:2;      /* 26-27 reserved */
-      uint32_t   umsr:1;    /* 28    use MSR bitmaps (check vmx MSR before set it) */
+      uint32_t   r6:1;      /* 26    reserved */
+      uint32_t   mtf:1;     /* 27    monitor trap flag */
+      uint32_t   umsr:1;    /* 28    use MSR bitmaps */
       uint32_t   mon:1;     /* 29    monitor exit */
       uint32_t   pause:1;   /* 30    pause exit */
-      uint32_t   r6:1;      /* 31    reserved */
+      uint32_t   proc2:1;   /* 31    activate secondary controls */
 
    } __attribute__((packed));
 
@@ -226,18 +266,40 @@ typedef union vmcs_execution_proc_based_control
 
 } __attribute__((packed)) vmcs_exec_ctl_proc_based_t;
 
+typedef union vmcs_execution_secondary_proc_based_control
+{
+   struct
+   {
+      uint32_t   vapic:1;      /* 0     virtualize apic accesses */
+      uint32_t   ept:1;        /* 1     enable EPT */
+      uint32_t   dt:1;         /* 2     descriptor table exiting */
+      uint32_t   rdtscp:1;     /* 3     rdtscp raises #UD */
+      uint32_t   x2apic:1;     /* 4     virtualize x2apic mode */
+      uint32_t   vpid:1;       /* 5     enable vpid */
+      uint32_t   wbinvd:1;     /* 6     exit on wbinvd */
+      uint32_t   uguest:1;     /* 7     unrestricted guest */
+      uint32_t   r1:2;         /* 8-9   reserved */
+      uint32_t   pause_loop:1; /* 10    pause loop exiting */
+      uint32_t   r2:21;        /* 11-31 reserved */
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) vmcs_exec_ctl_proc2_based_t;
+
 /*
 ** VMCS VM execution controls
 */
 typedef struct vmcs_execution_controls
 {
-   vmcs_t(vmcs_exec_ctl_pin_based_t)    pin;
-   vmcs_t(vmcs_exec_ctl_proc_based_t)   proc;
+   vmcs_t(vmcs_exec_ctl_pin_based_t,    pin);
+   vmcs_t(vmcs_exec_ctl_proc_based_t,   proc);
+   vmcs_t(vmcs_exec_ctl_proc2_based_t,  proc2);
 
-   vmcs_t(raw32_t)          excp_bitmap;   /* one bit per exception, (1) cause VM exit */
-
-   vmcs_t(excp32_err_code_t)  pagefault_err_code_mask;
-   vmcs_t(excp32_err_code_t)  pagefault_err_code_match;
+   vmcs_t(raw32_t,            excp_bitmap);
+   vmcs_t(excp32_err_code_t,  pagefault_err_code_mask);
+   vmcs_t(excp32_err_code_t,  pagefault_err_code_match);
 
    /*
    ** IO bitmaps physical addrs
@@ -246,26 +308,26 @@ typedef struct vmcs_execution_controls
    ** a: io in range 0x0000 - 0x7fff
    ** b: io in range 0x8000 - 0xffff
    */
-   vmcs_t(raw64_t)     io_bitmap_a;
-   vmcs_t(raw64_t)     io_bitmap_b;
+   vmcs_t(raw64_t,     io_bitmap_a);
+   vmcs_t(raw64_t,     io_bitmap_b);
 
-   vmcs_t(raw64_t)     tsc_offset;    /* rdtsc signed offset */
+   vmcs_t(raw64_t,     tsc_offset);    /* rdtsc signed offset */
 
-   vmcs_t(cr0_reg_t)   cr0_mask;
-   vmcs_t(cr4_reg_t)   cr4_mask;
+   vmcs_t(cr0_reg_t,   cr0_mask);
+   vmcs_t(cr4_reg_t,   cr4_mask);
 
-   vmcs_t(cr0_reg_t)   cr0_read_shadow;
-   vmcs_t(cr4_reg_t)   cr4_read_shadow;
+   vmcs_t(cr0_reg_t,   cr0_read_shadow);
+   vmcs_t(cr4_reg_t,   cr4_read_shadow);
 
-   vmcs_t(cr3_reg_t)   cr3_target_0;      /* read VMX_MISC to see how much is supported */
-   vmcs_t(cr3_reg_t)   cr3_target_1;
-   vmcs_t(cr3_reg_t)   cr3_target_2;
-   vmcs_t(cr3_reg_t)   cr3_target_3;
+   vmcs_t(cr3_reg_t,   cr3_target_0);
+   vmcs_t(cr3_reg_t,   cr3_target_1);
+   vmcs_t(cr3_reg_t,   cr3_target_2);
+   vmcs_t(cr3_reg_t,   cr3_target_3);
+   vmcs_t(raw32_t,     cr3_target_count);
 
-   vmcs_t(raw32_t)     cr3_target_count;
-
-   vmcs_t(raw64_t)     v_apic_page;
-   vmcs_t(raw64_t)     tpr_threshold;
+   vmcs_t(raw64_t,     apic_addr);
+   vmcs_t(raw64_t,     vapic_addr);
+   vmcs_t(raw64_t,     tpr_threshold);
 
    /*
    ** MSR bitmaps physical addrs, each 1KB
@@ -274,9 +336,15 @@ typedef struct vmcs_execution_controls
    ** high: 0xc0000000 - 0xc0001fff
    **
    */
-   vmcs_t(raw64_t)     msr_bitmap;
+   vmcs_t(raw64_t,       msr_bitmap);
 
-   vmcs_t(raw64_t)     executive_vmcs_ptr;   /* used for SMM and SMI */
+   vmcs_t(raw64_t,       executive_vmcs_ptr);
+
+   vmcs_t(vmcs_eptp_t,   eptp);
+   vmcs_t(raw16_t,       vpid);
+
+   vmcs_t(raw32_t,       ple_gap);
+   vmcs_t(raw32_t,       ple_win);
 
 } __attribute__((packed)) vmcs_exec_ctl_t;
 
@@ -289,11 +357,21 @@ typedef union  vmcs_exit_control_vector
 {
    struct
    {
-      uint32_t      r1:9;             /* 0-8   reserved */
-      uint32_t      addr_space_sz:1;  /* 9     for CS.L if 64 bit mode on vm exit */
-      uint32_t      r2:5;             /* 10-14 reserved */
-      uint32_t      ack_int:1;        /* 15    ack interrupt on exit */
-      uint32_t      r3:16;            /* 16-31 reserved */
+      uint32_t      r1:2;
+      uint32_t      save_dbgctl:1;
+      uint32_t      r2:6;
+      uint32_t      host_lmode:1;
+      uint32_t      r3:2;
+      uint32_t      load_ia32_perf:1;
+      uint32_t      r4:2;
+      uint32_t      ack_int:1;
+      uint32_t      r5:2;
+      uint32_t      save_ia32_pat:1;
+      uint32_t      load_ia32_pat:1;
+      uint32_t      save_ia32_efer:1;
+      uint32_t      load_ia32_efer:1;
+      uint32_t      save_preempt_timer:1;
+      uint32_t      r6:9;
 
    } __attribute__((packed));
 
@@ -317,13 +395,11 @@ typedef struct vmcs_control_msr_area_entry
 */
 typedef struct vmcs_exit_controls
 {
-   vmcs_t(vmcs_exit_ctl_vect_t)  exit;
-
-   vmcs_t(raw32_t)               msr_store_count; /* nr entries into vm control msr area (consult MSR for max) */
-   vmcs_t(raw64_t)               msr_store_addr;  /* physical addr of vm control msr area, 16B aligned */
-
-   vmcs_t(raw32_t)               msr_load_count;
-   vmcs_t(raw64_t)               msr_load_addr;
+   vmcs_t(vmcs_exit_ctl_vect_t,  exit);
+   vmcs_t(raw32_t,               msr_store_count);
+   vmcs_t(raw64_t,               msr_store_addr);
+   vmcs_t(raw32_t,               msr_load_count);
+   vmcs_t(raw64_t,               msr_load_addr);
 
 } __attribute__((packed)) vmcs_exit_ctl_t;
 
@@ -336,11 +412,17 @@ typedef union vmcs_entry_control_vector
 {
    struct
    {
-      uint32_t     r1:9;     /* 0-8   reserved */
-      uint32_t     ia32e:1;  /* 9     if ia32e mode after vm entry */
-      uint32_t     smm:1;    /* 10    if smm mode after vm entry */
-      uint32_t     dual:1;   /* 11    default treatment of smm and smi (1) */
-      uint32_t     r2:20;    /* 12-31 reserved */
+      uint32_t      r1:2;
+      uint32_t      load_dbgctl:1;  /* load debugctl */
+      uint32_t      r2:6;
+      uint32_t      ia32e:1;        /* ia32e mode on vm entry */
+      uint32_t      smm:1;          /* smm mode on vm entry */
+      uint32_t      dual:1;         /* treatment of smm and smi */
+      uint32_t      r3:1;
+      uint32_t      load_ia32_perf:1;
+      uint32_t      load_ia32_pat:1;
+      uint32_t      load_ia32_efer:1;
+      uint32_t      r4:16;
 
    } __attribute__((packed));
 
@@ -356,7 +438,7 @@ typedef union vmcs_entry_control_interruption_information
    struct
    {
       uint32_t    vector:8;   /* int/excp vector */
-      uint32_t    type:3;     /* interrupt type  (cf. idt vectoring) */
+      uint32_t    type:3;     /* intr type  (cf. idt vectoring) */
       uint32_t    dec:1;      /* deliver error code (1) */
       uint32_t    r:19;       /* reserved */
       uint32_t    v:1;        /* valid */
@@ -373,14 +455,13 @@ typedef union vmcs_entry_control_interruption_information
 */
 typedef struct vmcs_entry_controls
 {
-   vmcs_t(vmcs_entry_ctl_vect_t)        entry;
-   
-   vmcs_t(raw32_t)                      msr_load_count; /* see vm exit controls */
-   vmcs_t(raw64_t)                      msr_load_addr;
+   vmcs_t(vmcs_entry_ctl_vect_t,     entry);
+   vmcs_t(raw32_t,                   msr_load_count);
+   vmcs_t(raw64_t,                   msr_load_addr);
 
-   vmcs_t(vmcs_entry_ctl_int_info_t)    int_info;       /* event to be injected */
-   vmcs_t(raw32_t)                      err_code;       /* error code if needed on injection */
-   vmcs_t(raw32_t)                      insn_len;       /* instruction length */
+   vmcs_t(vmcs_entry_ctl_int_info_t, int_info); /* event injected */
+   vmcs_t(raw32_t,                   err_code); /* err code injected */
+   vmcs_t(raw32_t,                   insn_len);
 
 } __attribute__((packed)) vmcs_entry_ctl_t;
 
@@ -396,73 +477,16 @@ typedef struct vmcs_controls
 
 } __attribute__((packed)) vmcs_ctl_t;
 
-
-/*
-** VMCS VM exit information exit reason
-*/
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_MAX              43
-
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_EXCP_NMI          0
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_EXT_INT           1
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_TRI_FAULT         2
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INIT_SIG          3
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_SIPI              4
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_IO_SMI            5
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_OTHER_SMI         6
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INT_WIN           7
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_NMI_WIN           8
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_TASK_SW           9
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_CPUID            10
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_GETSEC           11
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_HLT              12
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INVD             13
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INVLPG           14
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_RDPMC            15
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_RDTSC            16
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_RSM              17
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMCALL           18
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMCLEAR          19
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMLAUNCH         20
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMPTRLD          21
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMPTRST          22
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMREAD           23
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMRESUME         24
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMWRITE          25
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMXOFF           26
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_VMXON            27
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_CR_ACCESS        28
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_MOV_DR           29
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_IO_INSN          30
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_RDMSR            31
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_WRMSR            32
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INVL_G_STATE     33
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_MSR_LOAD         34
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_MWAIT            36
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_MONITOR          39
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_PAUSE            40
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_MACH_CHECK       41
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_TPR              43
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_APIC             44
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_DTR              46
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_LDTR             47
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_EPT              48
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_EPT_CONF         49
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INVEPT           50
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_RDTSCP           51
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_PREEMPT          52
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_INVVPID          53
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_WBINVD           54
-#define VMCS_VM_EXIT_INFORMATION_BASIC_REASON_XSETBV           55
-
 typedef union vmcs_exit_information_exit_reason
 {
    struct
    {
-      uint32_t    basic:16;     /* 0-15  basic exit reason */
-      uint32_t    r1:13;        /* 16-28 reserved (cleared to 0) */
-      uint32_t    root:1;       /* 29    (1) if vm-exit in vmx root ops */
-      uint32_t    r2:1;         /* 30    reserved (cleared to 0) */
-      uint32_t    entry:1;      /* 31    (1) vm-entry failure, (0) true vm-exit */
+      uint32_t    basic:16;  /* exit reason */
+      uint32_t    r1:12;
+      uint32_t    mtf:1;     /* pending MTF */
+      uint32_t    root:1;    /* vmx-root */
+      uint32_t    r2:1;
+      uint32_t    entry:1;   /* (1) vm-entry fail */
 
    } __attribute__((packed));
 
@@ -474,14 +498,14 @@ typedef union vmcs_exit_information_exit_reason
 /*
 ** VMCS VM exit information interrupt information
 */
-#define VMCS_INT_INFORMATION_TYPE_HW_INT    0
-#define VMCS_INT_INFORMATION_TYPE_RES1      1
-#define VMCS_INT_INFORMATION_TYPE_NMI       2
-#define VMCS_INT_INFORMATION_TYPE_HW_EXCP   3
-#define VMCS_INT_INFORMATION_TYPE_RES2      4
-#define VMCS_INT_INFORMATION_TYPE_RES3      5
-#define VMCS_INT_INFORMATION_TYPE_SW_EXCP   6
-#define VMCS_INT_INFORMATION_TYPE_RES4      7
+#define VMCS_INT_INFO_TYPE_HW_INT    0
+#define VMCS_INT_INFO_TYPE_RES1      1
+#define VMCS_INT_INFO_TYPE_NMI       2
+#define VMCS_INT_INFO_TYPE_HW_EXCP   3
+#define VMCS_INT_INFO_TYPE_RES2      4
+#define VMCS_INT_INFO_TYPE_RES3      5
+#define VMCS_INT_INFO_TYPE_SW_EXCP   6
+#define VMCS_INT_INFO_TYPE_RES4      7
 
 typedef union vmcs_exit_information_interrupt_information
 {
@@ -505,14 +529,14 @@ typedef union vmcs_exit_information_interrupt_information
 /*
 ** VMCS VM exit information IDT vectoring information
 */
-#define VMCS_IDT_INFORMATION_TYPE_HW_INT    0
-#define VMCS_IDT_INFORMATION_TYPE_RES1      1
-#define VMCS_IDT_INFORMATION_TYPE_NMI       2
-#define VMCS_IDT_INFORMATION_TYPE_HW_EXCP   3
-#define VMCS_IDT_INFORMATION_TYPE_SW_INT    4
-#define VMCS_IDT_INFORMATION_TYPE_PS_EXCP   5
-#define VMCS_IDT_INFORMATION_TYPE_SW_EXCP   6
-#define VMCS_IDT_INFORMATION_TYPE_RES2      7
+#define VMCS_IDT_INFO_TYPE_HW_INT    0
+#define VMCS_IDT_INFO_TYPE_RES1      1
+#define VMCS_IDT_INFO_TYPE_NMI       2
+#define VMCS_IDT_INFO_TYPE_HW_EXCP   3
+#define VMCS_IDT_INFO_TYPE_SW_INT    4
+#define VMCS_IDT_INFO_TYPE_PS_EXCP   5
+#define VMCS_IDT_INFO_TYPE_SW_EXCP   6
+#define VMCS_IDT_INFO_TYPE_RES2      7
 
 typedef union vmcs_exit_information_idt_vectoring_information
 {
@@ -567,28 +591,28 @@ typedef union vmcs_exit_information_idt_vectoring_information
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_FS    4
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_GS    5
 
-typedef union vmcs_exit_information_vmx_instruction_information
+typedef union vmcs_exit_information_vmexit_insn_io
 {
    struct
    {
-      uint32_t    scaling:2; 	/* 0-1   scaling type */
-      uint32_t    r1:1;      	/* 2     reserved (cleared to 0) */
-      uint32_t    reg1:4;    	/* 3-6   register used (if reg_used == 1) */
-      uint32_t    addr_sz:3; 	/* 7-9   addr size (if reg_used == 0) */
-      uint32_t    reg_used:1;   /* 10    (0) mem (1) reg */
-      uint32_t    r2:4;         /* 11-14 reserved (cleared to 0) */
-      uint32_t    seg_reg:3;    /* 15-17 segment register (if reg_used == 0) */
-      uint32_t    idx_reg:4;    /* 18-21 index register (if idx_reg_inval == 0) */
-      uint32_t    idx_reg_inval:1; /* 22    index register invalid (if reg_used == 0) */
-      uint32_t    base_reg:4;      /* 23-26 base register (if base_reg_inval == 0) */
-      uint32_t    base_reg_inval:1;  /* 27    base register invalid (if reg_used == 0) */
-      uint32_t    reg2:4;          /* 28-31 register used (if insn != vmclear,vmptrld,vmptrst,vmxon) */
+      uint32_t    r1:7;    /* undefined */
+      uint32_t    addr:3;  /* addr size 16/32/64 (0,1,2) */
+      uint32_t    r2:5;    /* undefined */
+      uint32_t    seg:3;   /* segment register (cf. VMX_INSN_INFORMATION_SEG) */
+      uint32_t    r3:14;   /*undefined */
 
    } __attribute__((packed));
 
    raw32_t;
 
-} __attribute__((packed)) vmcs_exit_info_vmx_insn_info_t;
+} __attribute__((packed)) vmcs_exit_info_insn_io_t;
+
+typedef union vmcs_exit_information_vmexit_instruction_information
+{
+   raw32_t;
+   vmcs_exit_info_insn_io_t io;  /* ins/outs specific info */
+
+} __attribute__((packed)) vmcs_exit_info_insn_t;
 
 
 /*
@@ -601,32 +625,39 @@ typedef union vmcs_exit_information_vmx_instruction_information
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_CLTS      2
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_LMSW      3
 
-typedef struct vmcs_exit_information_qualification_cr
+typedef union vmcs_exit_information_qualification_cr
 {
    struct
    {
-      uint32_t    nr:4;          /* number of control register */
-      uint32_t    type:2;        /* access type */
-      uint32_t    lmsw_op:1;     /* (0) register, (1) memory */
-      uint32_t    r1:1;          /* reserved */
-      uint32_t    gpr:4;         /* mov cr GPR, encoding is same as VMX_INSN_INFORMATION_REG above */
-      uint32_t    r2:4;          /* reserved */
-      uint32_t    lmsw_data:16;  /* source data of lmsw */
+      uint64_t    nr:4;          /* number of control register */
+      uint64_t    type:2;        /* access type */
+      uint64_t    lmsw_op:1;     /* (0) register, (1) memory */
+      uint64_t    r1:1;          /* reserved */
+      uint64_t    gpr:4;         /* mov cr GPR, cf. VMX_INSN_INFORMATION_REG */
+      uint64_t    r2:4;          /* reserved */
+      uint64_t    lmsw_data:16;  /* source data of lmsw */
+      uint64_t    r3:32;         /* reserved */
 
    } __attribute__((packed));
 
-   uint32_t       r3;            /* reserved */
+   raw64_t;
 
 } __attribute__((packed)) vmcs_exit_info_cr_t;
 
-typedef struct vmcs_exit_information_qualification_mov_dr
+typedef union vmcs_exit_information_qualification_dr
 {
-   uint64_t    nr:3;          /* number of debug register */
-   uint64_t    r1:1;          /* reserved */
-   uint64_t    dir:1;         /* direction (0) mov to, (1) mov from */
-   uint64_t    r2:3;          /* reserved */
-   uint64_t    gpr:4;         /* used GRP */
-   uint64_t    r3:52;         /* reserved */
+   struct
+   {
+      uint64_t    nr:3;          /* number of debug register */
+      uint64_t    r1:1;          /* reserved */
+      uint64_t    dir:1;         /* direction (0) mov to, (1) mov from */
+      uint64_t    r2:3;          /* reserved */
+      uint64_t    gpr:4;         /* used GRP */
+      uint64_t    r3:52;         /* reserved */
+
+   } __attribute__((packed));
+
+   raw64_t;
 
 } __attribute__((packed)) vmcs_exit_info_dr_t;
 
@@ -634,36 +665,36 @@ typedef struct vmcs_exit_information_qualification_mov_dr
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_IO_OP_SZ_2B   1
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_IO_OP_SZ_4B   3
 
-typedef struct vmcs_exit_information_qualification_io_insn
+typedef union vmcs_exit_information_qualification_io_insn
 {
    struct
    {
-      uint32_t    sz:3;          /* size of access (1B, 2B or 4B) */
-      uint32_t    d:1;           /* direction (0) out, (1) in */
-      uint32_t    s:1;           /* string insn */
-      uint32_t    rep:1;         /* REP prefixed */
-      uint32_t    op:1;          /* operand (0) DX, (1) imm */
-      uint32_t    r1:9;          /* reserved */
-      uint32_t    port:16;       /* port number */
+      uint64_t    sz:3;          /* operand size 1/2/4 (0,1,3) */
+      uint64_t    d:1;           /* in (1) or out (0) */
+      uint64_t    s:1;           /* string operation */
+      uint64_t    rep:1;         /* REP prefix */
+      uint64_t    op:1;          /* operand encoding (0) DX, (1) imm */
+      uint64_t    r1:9;          /* reserved */
+      uint64_t    port:16;       /* port number */
+      uint64_t    r2:32;         /* reserved */
 
    } __attribute__((packed));
 
-   uint32_t       r2;            /* reserved */
+   raw64_t;
 
 } __attribute__((packed)) vmcs_exit_info_io_t;
 
-typedef vmcs_exit_info_io_t  vmx_io_t;
+typedef vmcs_exit_info_io_t vmx_io_t;
 
 /* qualification for IO insns */
 typedef union vmcs_exit_information_qualification
 {
    raw64_t;
-   vmcs_exit_info_cr_t cr_access;
-   vmcs_exit_info_io_t io_insn;
-   vmcs_exit_info_dr_t mov_dr;
+   vmcs_exit_info_cr_t cr;
+   vmcs_exit_info_io_t io;
+   vmcs_exit_info_dr_t dr;
 
 } __attribute__((packed)) vmcs_exit_info_qualif_t;
-
 
 /*
 ** VMCS VM exit information fields
@@ -672,30 +703,34 @@ typedef union vmcs_exit_information_qualification
 */
 typedef struct vmcs_vm_exit_information
 {
-   vmcs_t(vmcs_exit_info_exit_reason_t)   reason;
-   vmcs_t(vmcs_exit_info_qualif_t)        qualification;
-   
+   vmcs_t(vmcs_exit_info_exit_reason_t,   reason);
+   vmcs_t(vmcs_exit_info_qualif_t,        qualification);
+
+   vmcs_t(raw64_t,                        guest_linear);
+   vmcs_t(raw64_t,                        guest_physical);
+
    /* due to vectored events */
-   vmcs_t(vmcs_exit_info_int_info_t)      int_info;
-   vmcs_t(raw32_t)                        int_err_code;
+   vmcs_t(vmcs_exit_info_int_info_t,      int_info);
+   vmcs_t(raw32_t,                        int_err_code);
    
    /* during event delivery */ 
-   vmcs_t(vmcs_exit_info_idt_vect_t)      idt_info;
-   vmcs_t(raw32_t)                        idt_err_code;
+   vmcs_t(vmcs_exit_info_idt_vect_t,      idt_info);
+   vmcs_t(raw32_t,                        idt_err_code);
 
-   /* due to vmx insn execution */
-   vmcs_t(raw32_t)                        vmexit_insn_len;
-   vmcs_t(raw64_t)                        guest_addr;      /* linear addr */
-   vmcs_t(vmcs_exit_info_vmx_insn_info_t) vmx_insn_info;
+   /* vmexit on insn execution */
+   vmcs_t(raw32_t,                        insn_len);
+   vmcs_t(vmcs_exit_info_insn_t,          insn_info);
 
    /* due to smis after retirement of IO insn */
-   vmcs_t(raw64_t)                        io_rcx, io_rsi, io_rdi, io_rip;
+   vmcs_t(raw64_t,                        io_rcx);
+   vmcs_t(raw64_t,                        io_rsi);
+   vmcs_t(raw64_t,                        io_rdi);
+   vmcs_t(raw64_t,                        io_rip);
 
-   /* vm-instruction error field */
-   vmcs_t(raw32_t)                        vm_insn_err;
+   /* vmx instruction error */
+   vmcs_t(vmx_insn_err_t,                 vmx_insn_err);
 
 } __attribute__((packed)) vmcs_exit_info_t;
-
 
 /*
 **  VMCS region
@@ -717,7 +752,7 @@ typedef struct vmcs_region
 typedef union vmcs_cpu_region
 {
    vmcs_region_t;
-   uint8_t raw[VMCS_CPU_REGION_SZ];
+   uint8_t raw[VMCS_CPU_REGION_SZ]; /* XXX: alloc sz is given */
 
 } __attribute__((packed)) vmcs_cpu_region_t;
 
@@ -800,22 +835,12 @@ typedef union vmcs_cpu_region
 #define vmx_allow_msr_rw_range(_vmc_,_sx_,_ex_)  __vmx_access_msr_range(allow, rw, _vmc_,_sx_,_ex_)
 #define vmx_deny_msr_rw_range(_vmc_,_sx_,_ex_)   __vmx_access_msr_range(deny,  rw, _vmc_,_sx_,_ex_)
 
-
-
 /*
 ** Functions
 */
-struct information_data;
-
-void     vmx_vmcs_init(struct information_data*);
-void     vmx_vmcs_host_state_init(struct information_data*);
-
-void     vmx_vmcs_controls_init(struct information_data*);
-void     vmx_vmcs_exec_controls_init(struct information_data*);
-void     vmx_vmcs_exec_controls_msr_init(struct information_data*);
-void     vmx_vmcs_exec_controls_io_init(struct information_data*);
-void     vmx_vmcs_exit_controls_init(struct information_data*);
-void     vmx_vmcs_entry_controls_init(struct information_data*);
+#ifdef __INIT__
+void  vmx_vmcs_init();
+#endif
 
 #endif
 

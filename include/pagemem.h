@@ -196,7 +196,7 @@ typedef union page_map_level_4_entry
       uint64_t  acc:1;
       uint64_t  mbz:3;
       uint64_t  avl:3;
-      uint64_t  addr:40;
+      uint64_t  addr:40; /* bit 12 */
       uint64_t  avl2:11;
       uint64_t  nx:1;
 
@@ -218,7 +218,7 @@ typedef union page_directory_pointer_entry
       uint64_t  acc:1;
       uint64_t  mbz:3;
       uint64_t  avl:3;
-      uint64_t  addr:40;
+      uint64_t  addr:40; /* bit 12 */
       uint64_t  avl2:11;
       uint64_t  nx:1;
 
@@ -233,12 +233,12 @@ typedef union page_directory_pointer_entry
       uint64_t  pcd:1;
       uint64_t  acc:1;
       uint64_t  d:1;
-      uint64_t  ps:1;
+      uint64_t  ps:1;     /* bit 7 */
       uint64_t  g:1;
       uint64_t  avl:3;
       uint64_t  pat:1;
       uint64_t  mbz:17;
-      uint64_t  addr:22;
+      uint64_t  addr:22;  /* bit 30 */
       uint64_t  avl2:11;
       uint64_t  nx:1;
 
@@ -260,7 +260,7 @@ typedef union page_directory_entry_64
       uint64_t  acc:1;
       uint64_t  mbz:3;
       uint64_t  avl:3;
-      uint64_t  addr:40;
+      uint64_t  addr:40;   /* bit 12 */
       uint64_t  avl2:11;
       uint64_t  nx:1;
 
@@ -275,12 +275,12 @@ typedef union page_directory_entry_64
       uint64_t  pcd:1;
       uint64_t  acc:1;
       uint64_t  d:1;
-      uint64_t  ps:1;
+      uint64_t  ps:1;      /* bit 7 */
       uint64_t  g:1;
       uint64_t  avl:3;
       uint64_t  pat:1;
       uint64_t  mbz:8;
-      uint64_t  addr:31;
+      uint64_t  addr:31;   /* bit 21 */
       uint64_t  avl2:11;
       uint64_t  nx:1;
 
@@ -304,7 +304,7 @@ typedef union page_table_entry_64
       uint64_t  pat:1;
       uint64_t  g:1;
       uint64_t  avl:3;
-      uint64_t  addr:40;
+      uint64_t  addr:40;  /* bit 12 */
       uint64_t  avl2:11;
       uint64_t  nx:1;
 
@@ -394,6 +394,7 @@ static inline int addr_canon(uint64_t addr, uint32_t nr_bits)
 **  - pdp_abs_idx  == pd  table number
 **  - pd_abs_idx   == pt  table number
 */
+#define pg_abs_idx(addr,shift)       ((addr)>>(shift))
 #define pdp_nr(addr)                 ((addr)>>PG_512G_SHIFT)
 #define pd64_nr(addr)                ((addr)>>PG_1G_SHIFT)
 #define pt64_nr(addr)                ((addr)>>PG_2M_SHIFT)
@@ -403,6 +404,9 @@ static inline int addr_canon(uint64_t addr, uint32_t nr_bits)
 #define PD64_SZ                      (PDE64_PER_PD*sizeof(pde64_t))
 #define PT64_SZ                      (PTE64_PER_PT*sizeof(pte64_t))
 
+/*
+** Table access
+*/
 typedef pml4e_t (pml4_t)[PML4E_PER_PML4];
 typedef pdpe_t  (pdp_t)[PDPE_PER_PDP];
 typedef pde64_t (pd64_t)[PDE64_PER_PD];
@@ -411,22 +415,23 @@ typedef pte64_t (pt64_t)[PTE64_PER_PT];
 /*
 ** Universal macros
 */
+#define pg_present(_e_)                       ((_e_)->p)
+#define pg_large(_e_)                         ((_e_)->page.ps)
+#define pg_zero(_e_)                          ((_e_)->raw = 0)
 
-/* XXX: do we care anothers pvl bits ? */
-#define __pg_get_pvl(_e_)                       ((_e_)->raw & (PG_RW|PG_USR))
+/* XXX: what about NX bit ? */
+#define pg_get_attr(_e_)                      ((_e_)->raw & (PG_USR|PG_RW))
 
-#define __pg_set_entry(_e_,_attr_,_pfn_)	\
+#define pg_set_entry(_e_,_attr_,_pfn_)		\
    ({						\
       (_e_)->raw  = (_attr_)|PG_P;		\
       (_e_)->addr = _pfn_;			\
    })
 
-#define __pg_set_large_entry(_e_,_attr_,_pfn_)	\
+#define pg_set_large_entry(_e_,_attr_,_pfn_)	\
    ({						\
-      (_e_)->raw  = (_attr_)|PG_PS|PG_P;	\
+      (_e_)->raw       = (_attr_)|PG_PS|PG_P;	\
       (_e_)->page.addr = _pfn_;			\
    })
-
-
 
 #endif

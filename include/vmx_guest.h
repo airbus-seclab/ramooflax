@@ -19,16 +19,10 @@
 #define __VMX_GUEST_H__
 
 #include <types.h>
-#include <vmm.h>
 
 /*
 ** Functions
 */
-struct information_data;
-
-void   vmx_vmcs_guest_state_init(struct information_data*);
-void   vmx_vmcs_guest_register_state_init(struct information_data*);
-void   vmx_vmcs_guest_register_state_segments_init(struct information_data*);
-void   vmx_vmcs_guest_nonregister_state_init(struct information_data*);
+void   vmx_vmcs_guest_state_init();
 
 #endif

@@ -19,6 +19,7 @@
 #define __EXCP_H__
 
 #include <types.h>
+#include <mce.h>
 
 /*
 ** Total number of exceptions
@@ -152,8 +153,9 @@ typedef union exception64_error_code
 */
 struct interrupt64_ring0_context;
 
-int   resolve_exception();
-void  vmm_excp_hdlr(struct interrupt64_ring0_context*)  __attribute__((regparm(1)));
+int  resolve_exception();
+void vmm_excp_hdlr(struct interrupt64_ring0_context*) __regparm__(1);
+void vmm_excp_mce();
 
 #endif
 

@@ -18,6 +18,7 @@
 #include <pci.h>
 #include <ehci.h>
 #include <print.h>
+#include <debug.h>
 
 /*
 ** Retrieve EHCI Debug Port stuff :
@@ -167,6 +168,9 @@ int pci_check_cap(pci_cfg_val_t *pci)
 	 if(cap.id == pci->data.blow)
 	 {
 	    pci->data.raw = cap.raw;
+	    debug(EHCI, "pci b%d d%d f%d r%d = 0x%x\n"
+		  ,pci->addr.bus, pci->addr.dev, pci->addr.fnc, pci->addr.reg
+		  ,pci->data.raw);
 	    return 1;
 	 }
 
@@ -186,6 +190,10 @@ int pci_search(pci_search_t match, pci_cfg_val_t *pci)
 {
    pci_cfg_dev_vdr_t dvd;
    uint32_t          bus, dev, fnc;
+#ifdef __EHCI_2ND__
+   int               found=0;
+   pci_cfg_val_t     pci_bk;
+#endif
 
    pci->addr.raw  = 0;
    pci->addr.enbl = 1;
@@ -209,11 +217,28 @@ int pci_search(pci_search_t match, pci_cfg_val_t *pci)
 	       continue;
 
 	    if(match(pci))
+#ifdef __EHCI_2ND__
+	    {
+	       if(++found == 2)
+		  return 1;
+
+	       pci_bk.addr.raw = pci->addr.raw;
+	       pci_bk.data.raw = pci->data.raw;
+	    }
+#else
 	       return 1;
+#endif
 	 }
       }
    }
-
+#ifdef __EHCI_2ND__
+   if(found)
+   {
+      pci->addr.raw = pci_bk.addr.raw;
+      pci->data.raw = pci_bk.data.raw;
+      return 1;
+   }
+#endif
    return 0;
 }
 

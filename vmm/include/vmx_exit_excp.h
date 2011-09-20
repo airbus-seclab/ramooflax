@@ -19,14 +19,13 @@
 #define __VMX_EXIT_EXCP_H__
 
 #include <types.h>
-
 #include <vmx_exit_pf.h>
 #include <vmx_exit_gp.h>
 
 /*
 ** Functions
 */
-int   vmx_vmexit_resolve_exception();
-int   __vmx_vmexit_inject_exception(uint32_t, uint32_t, uint32_t);
+int __vmx_vmexit_inject_exception(uint32_t, uint32_t, uint64_t);
+int vmx_vmexit_resolve_excp();
 
 #endif

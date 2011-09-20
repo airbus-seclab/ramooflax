@@ -109,20 +109,12 @@
    (svm_vmexit_resolver_string[(x) - SVM_VMEXIT_FIRST_RESOLVER])
 
 #define __svm_vmexit_on_excp()						\
-   ({									\
-      vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;	\
-      uint32_t           err   = ctrls->exit_code.low;			\
-      (err >= SVM_VMEXIT_EXCP_START && err <= SVM_VMEXIT_EXCP_END)?1:0;	\
-   })
+   range(vm_ctrls.exit_code.low, SVM_VMEXIT_EXCP_START, SVM_VMEXIT_EXCP_END)
 
 #define __svm_vmexit_on_event()						\
-   ({									\
-      vmcb_ctrls_area_t *ctrls = &info->vm.cpu.vmc->vm_vmcb.ctrls_area;	\
-      uint32_t           err   = ctrls->exit_code.low;			\
-      ((err >= SVM_VMEXIT_EXCP_START && err <= SVM_VMEXIT_VINTR) ||	\
-       (err >= SVM_VMEXIT_TASK && err <= SVM_VMEXIT_SHUTDOWN) ||	\
-       (err == SVM_VMEXIT_NPF))?1:0;					\
-   })
+   (range(vm_ctrls.exit_code.low, SVM_VMEXIT_EXCP_START, SVM_VMEXIT_VINTR) || \
+    range(vm_ctrls.exit_code.low, SVM_VMEXIT_TASK, SVM_VMEXIT_SHUTDOWN)    || \
+    vm_ctrls.exit_code.low == SVM_VMEXIT_NPF)
 
 #define __svm_vmexit_on_insn()    (!__svm_vmexit_on_event())
 
@@ -131,13 +123,10 @@
 */
 typedef int (*vmexit_hdlr_t)();
 
+void  svm_vmexit_handler(raw64_t) __regparm__(1);
 int   svm_vmexit_resolve_dispatcher();
-int   svm_vmexit_resolve_vmmcall();
-
 int   svm_vmexit_idt_deliver();
 int   __svm_vmexit_idt_deliver_rmode();
 int   __svm_vmexit_idt_deliver_pmode();
-
-void  svm_vmexit_handler(raw64_t) __attribute__ ((regparm(1)));
 
 #endif
