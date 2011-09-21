@@ -165,7 +165,7 @@ __prepare_addr:
    if(vmm_area(*paddr))
       return 0;
 
-   debug(PG, "pae vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr);
+   debug(PG, "pae vaddr 0x%x -> paddr 0x%x\n", vaddr, *paddr);
    return 1;
 }
 
