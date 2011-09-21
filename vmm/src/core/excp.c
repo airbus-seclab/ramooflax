@@ -117,7 +117,10 @@ int resolve_exception()
    int rc;
 
    if(__exception_vector == PF_EXCP)
+   {
       __cr2.raw = __exception_fault;
+      __post_access(__cr2);
+   }
 
    rc = gdb_excp_event(__exception_vector);
 
