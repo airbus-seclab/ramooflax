@@ -38,7 +38,7 @@ Ramooflax needs to be installed on a bootable storage (ie USB key with GRUB).
 
 * Documentation
 
-Documentation can be found under =docs/=. Here is a brief description of the files:
+Check the Ramooflax wiki pages. Here is a brief description of the files:
  - ramooflax_fr.pdf is a french article describing ramooflax
  - ramooflax_slides_fr.pdf is a french presentation held at SSTIC 2011
  - ramooflax_en.pdf and ramooflax_slides_en.pdf are the corresponding english versions
@@ -56,7 +56,7 @@ $ sudo apt-get install gcc-4.4 gcc-4.4-multilib make dialog
 
 Intel and AMD are *both* supported. Notice that multi-cores are not supported, so you will only have one core while running virtualized.
 
-It is recommended to read the documentation under =docs/=.
+It is recommended to read the documentation.
 
 * Obtaining
 
@@ -109,4 +109,4 @@ You can either buy one or use the DBGP USB Gadget provided into the Linux kernel
 
 To be able to use such a Gadget, you need a *device* USB controller as found in embedded ARM development boards or smartphones.
 
-Please read documentation in =docs/= to have usage examples of the client API.
+Please read documentation to have usage examples of the client API.
