@@ -89,22 +89,22 @@ static char* svm_vmexit_interrupt_info_string[] = {
 static void svm_vmexit_show_gpr()
 {
    printf("-\n"
-	  "eip = 0x%x eax = 0x%x (vmcb)\n"
-	  "esp = 0x%x ebp = 0x%x\n"
-	  "eax = 0x%x ebx = 0x%x\n"
-	  "ecx = 0x%x edx = 0x%x\n"
-	  "esi = 0x%x edi = 0x%x\n"
+	  "eip = 0x%X eax = 0x%X (vmcb)\n"
+	  "esp = 0x%X ebp = 0x%X\n"
+	  "eax = 0x%X ebx = 0x%X\n"
+	  "ecx = 0x%X edx = 0x%X\n"
+	  "esi = 0x%X edi = 0x%X\n"
 	  "dr6 = 0x%X dr7 = 0x%X\n"
-	  ,vm_state.rip.low
-	  ,vm_state.rax.low
-	  ,vm_state.rsp.low
-	  ,info->vm.cpu.gpr->rbp.low
-	  ,info->vm.cpu.gpr->rax.low
-	  ,info->vm.cpu.gpr->rbx.low
-	  ,info->vm.cpu.gpr->rcx.low
-	  ,info->vm.cpu.gpr->rdx.low
-	  ,info->vm.cpu.gpr->rsi.low
-	  ,info->vm.cpu.gpr->rdi.low
+	  ,vm_state.rip.raw
+	  ,vm_state.rax.raw
+	  ,vm_state.rsp.raw
+	  ,info->vm.cpu.gpr->rbp.raw
+	  ,info->vm.cpu.gpr->rax.raw
+	  ,info->vm.cpu.gpr->rbx.raw
+	  ,info->vm.cpu.gpr->rcx.raw
+	  ,info->vm.cpu.gpr->rdx.raw
+	  ,info->vm.cpu.gpr->rsi.raw
+	  ,info->vm.cpu.gpr->rdi.raw
 	  ,vm_state.dr6.raw
 	  ,vm_state.dr7.raw);
 }
@@ -296,7 +296,31 @@ static int svm_vmexit_show_basic()
 
    int rc = svm_vmexit_str(exit_str, sizeof(exit_str), vm_ctrls.exit_code.low);
 
-   printf("\n         <------------------- VM-EXIT ------------------->\n\n"
+   printf("\n         <------------------- VM-EXIT ------------------->\n");
+
+   printf("-\n"
+	  "area start = 0x%X\n"
+	  "area end   = 0x%X\n"
+	  "area size  = %D B (%D KB)\n"
+	  "vmm stack  = 0x%X\n"
+	  "vmm pool   = 0x%X (%D KB)\n"
+	  "vmm elf    = 0x%X - 0x%X (%D B)\n"
+	  "gdt        = 0x%X\n"
+	  "idt        = 0x%X\n"
+	  "pml4       = 0x%X\n"
+	  "vm  vmc    = 0x%X\n"
+	  ,info->area.start
+	  ,info->area.end
+	  ,info->area.size, (info->area.size)>>10
+	  ,info->vmm.stack_bottom
+	  ,info->vmm.pool.addr, (info->vmm.pool.sz)>>10
+	  ,info->vmm.base, info->vmm.base+info->vmm.size, info->vmm.size
+	  ,info->vmm.cpu.sg->gdt
+	  ,info->vmm.cpu.sg->idt
+	  ,info->vmm.cpu.pg.pml4
+	  ,info->vm.cpu.vmc);
+
+   printf("-\n"
 	  "reason          : %s (%d)\n"
 	  "info 1          : 0x%X\n"
 	  "info 2          : 0x%X\n"
@@ -327,6 +351,9 @@ void svm_vmexit_failure()
 {
    svm_vmexit_show();
    while(1)
-      ctrl_logic();
+#ifdef __CTRL_ACTIVE__
+      ctrl_logic()
+#endif
+	 ;
 }
 

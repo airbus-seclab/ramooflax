@@ -41,7 +41,7 @@ int __vmx_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
    case GP_EXCP:
    case AC_EXCP:
       vm_entry_ctrls.int_info.dec = 1;
-      vm_entry_ctrls.err_code.raw = error & 0xff;
+      vm_entry_ctrls.err_code.raw = error;
       vmcs_dirty(vm_entry_ctrls.err_code);
       break;
 
@@ -49,7 +49,7 @@ int __vmx_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
       break;
    }
 
-   debug(VMX_EXCP, "inject exception #%d err 0x%x\n", vector, error & 0xff);
+   debug(VMX_EXCP, "inject exception #%d err 0x%x\n", vector, error);
    return 1;
 }
 

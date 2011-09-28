@@ -32,6 +32,7 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    npg_pde64_t *pd, *pde;
    npg_pte64_t *pt, *pte;
 
+   debug(PG_W, "npg_walk on 0x%X\n", vaddr);
    debug(PG_W, "nested CR3: 0x%X\n", npg_cr3.raw);
 
    pml4e = &info->vm.cpu.pg.pml4[pml4_idx(vaddr)];

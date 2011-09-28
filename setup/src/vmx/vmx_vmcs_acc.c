@@ -121,10 +121,10 @@ void vmx_vmcs_commit()
    if(vm_entry_ctrls.entry.load_ia32_perf)
       vmcs_force_flush(vm_state.ia32_perf);
 
-   vmcs_force_flush(vm_state.pdpte_0);
-   vmcs_force_flush(vm_state.pdpte_1);
-   vmcs_force_flush(vm_state.pdpte_2);
-   vmcs_force_flush(vm_state.pdpte_3);
+   vmcs_force_flush(vm_state.pdpe_0);
+   vmcs_force_flush(vm_state.pdpe_1);
+   vmcs_force_flush(vm_state.pdpe_2);
+   vmcs_force_flush(vm_state.pdpe_3);
 
    vmx_set_fixed(vm_exit_ctrls.exit.raw, info->vm.vmx_fx_exit);
    vmcs_force_flush(vm_exit_ctrls.exit);

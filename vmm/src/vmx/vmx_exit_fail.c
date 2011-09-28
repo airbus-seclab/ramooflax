@@ -95,21 +95,21 @@ static char* vmx_vmexit_resolved_string[] = {
 static void vmx_vmexit_show_gpr()
 {
    printf("-\n"
-	  "eip = 0x%x\n"
-	  "esp = 0x%x ebp = 0x%x\n"
-	  "eax = 0x%x ebx = 0x%x\n"
-	  "ecx = 0x%x edx = 0x%x\n"
-	  "esi = 0x%x edi = 0x%x\n"
+	  "rip = 0x%X\n"
+	  "rsp = 0x%X rbp = 0x%X\n"
+	  "rax = 0x%X rbx = 0x%X\n"
+	  "rcx = 0x%X rdx = 0x%X\n"
+	  "rsi = 0x%X rdi = 0x%X\n"
 	  "dr6 = 0x%X dr7 = 0x%X\n"
-	  ,vm_state.rip.low
-	  ,vm_state.rsp.low
-	  ,info->vm.cpu.gpr->rbp.low
-	  ,info->vm.cpu.gpr->rax.low
-	  ,info->vm.cpu.gpr->rbx.low
-	  ,info->vm.cpu.gpr->rcx.low
-	  ,info->vm.cpu.gpr->rdx.low
-	  ,info->vm.cpu.gpr->rsi.low
-	  ,info->vm.cpu.gpr->rdi.low
+	  ,vm_state.rip.raw
+	  ,vm_state.rsp.raw
+	  ,info->vm.cpu.gpr->rbp.raw
+	  ,info->vm.cpu.gpr->rax.raw
+	  ,info->vm.cpu.gpr->rbx.raw
+	  ,info->vm.cpu.gpr->rcx.raw
+	  ,info->vm.cpu.gpr->rdx.raw
+	  ,info->vm.cpu.gpr->rsi.raw
+	  ,info->vm.cpu.gpr->rdi.raw
 	  ,vm_state.dr6.raw
 	  ,vm_state.dr7.raw);
 }
@@ -118,23 +118,28 @@ static void vmx_vmexit_show_cr()
 {
    printf("-\n"
 	  "cpl             : %d\n"
-	  "cr0             : 0x%x\n"
+	  "cr0             : 0x%x (pe:%d pg:%d)\n"
 	  "cr2             : 0x%X\n"
 	  "cr3             : 0x%X\n"
-	  "cr4             : 0x%x\n"
+	  "cr4             : 0x%x (pae:%d pse:%d pge:%d)\n"
 	  "eflags          : 0x%x (vm:%d rf:%d iopl:%d if:%d tf:%d)\n"
-	  "efer            : 0x%x (lma:%d lme:%d)\n"
+	  "efer (shadow)   : 0x%x (lma:%d lme:%d nxe:%d)\n"
+	  "efer            : 0x%x (lma:%d lme:%d nxe:%d) ia32e:%d\n"
 	  "gdtr (limit)    : 0x%x (0x%x)\n"
 	  "idtr (limit)    : 0x%x (0x%x)\n"
 	  ,__cpl
-	  ,vm_state.cr0.low
+	  ,vm_state.cr0.low, vm_state.cr0.pe, vm_state.cr0.pg
 	  ,vm_state.cr2.raw
 	  ,vm_state.cr3.raw
-	  ,vm_state.cr4.low
+	  ,vm_state.cr4.low, vm_state.cr4.pae, vm_state.cr4.pse, vm_state.cr4.pge
 	  ,vm_state.rflags.low,vm_state.rflags.vm
 	  ,vm_state.rflags.rf,vm_state.rflags.iopl
 	  ,vm_state.rflags.IF,vm_state.rflags.tf
-	  ,vm_state.ia32_efer.eax, vm_state.ia32_efer.lma, vm_state.ia32_efer.lme
+	  ,info->vm.efer.eax, info->vm.efer.lma
+	  ,info->vm.efer.lme, info->vm.efer.nxe
+	  ,vm_state.ia32_efer.eax, vm_state.ia32_efer.lma
+	  ,vm_state.ia32_efer.lme, vm_state.ia32_efer.nxe
+	  ,vm_entry_ctrls.entry.ia32e
 	  ,vm_state.gdtr.base.low, vm_state.gdtr.limit.raw
 	  ,vm_state.idtr.base.low, vm_state.idtr.limit.raw);
 }
@@ -196,6 +201,44 @@ static void vmx_vmexit_show_event()
 	     ,name,vm_exit_info.int_info.type
 	     ,vm_exit_info.int_info.vector
 	     ,vm_exit_info.int_info.v_err?vm_exit_info.int_err_code.raw:0);
+
+      if(vm_exit_info.int_info.type == VMCS_INT_INFO_TYPE_HW_EXCP)
+      {
+	 switch(vm_exit_info.int_info.vector)
+	 {
+	 case PF_EXCP:
+	    pg_show(__cr2.raw);
+	    break;
+	 case GP_EXCP:
+	 {
+	    gp_err_t gp;
+	    gp.raw = vm_exit_info.int_err_code.raw;
+	    if(gp.idt && !_xx_lmode())
+	    {
+	       int_desc_t *idt = (int_desc_t*)(vm_state.idtr.base.raw & 0xffffffff);
+
+	       if(__paging())
+	       {
+		  size_t   psz;
+		  offset_t paddr;
+		  offset_t naddr;
+
+		  if(!pg_walk((offset_t)idt, &paddr, &psz) || !npg_walk(paddr, &naddr))
+		  {
+		     printf("#GP related to IDT and IDT is no mapped\n");
+		     return;
+		  }
+
+		  idt = (int_desc_t*)naddr;
+	       }
+
+	       printf("#GP related to IDT entry 0x%x [0x%X]\n"
+		      ,gp.idx, idt[gp.idx].raw);
+	    }
+	    break;
+	 }
+	 }
+      }
    }
 }
 
@@ -225,7 +268,31 @@ static int vmx_vmexit_show_basic()
       rc = 0;
    }
 
-   printf("\n         <------------------- VM-EXIT ------------------->\n\n"
+   printf("\n         <------------------- VM-EXIT ------------------->\n");
+
+   printf("-\n"
+	  "area start = 0x%X\n"
+	  "area end   = 0x%X\n"
+	  "area size  = %D B (%D KB)\n"
+	  "vmm stack  = 0x%X\n"
+	  "vmm pool   = 0x%X (%D KB)\n"
+	  "vmm elf    = 0x%X - 0x%X (%D B)\n"
+	  "gdt        = 0x%X\n"
+	  "idt        = 0x%X\n"
+	  "pml4       = 0x%X\n"
+	  "vm  vmc    = 0x%X\n"
+	  ,info->area.start
+	  ,info->area.end
+	  ,info->area.size, (info->area.size)>>10
+	  ,info->vmm.stack_bottom
+	  ,info->vmm.pool.addr, (info->vmm.pool.sz)>>10
+	  ,info->vmm.base, info->vmm.base+info->vmm.size, info->vmm.size
+	  ,info->vmm.cpu.sg->gdt
+	  ,info->vmm.cpu.sg->idt
+	  ,info->vmm.cpu.pg.pml4
+	  ,info->vm.cpu.vmc);
+
+   printf("-\n"
 	  "reason          : %s (%d)\n"
 	  "vm-entry fail   : %s\n"
 	  "vmx-root        : %s\n"
@@ -325,8 +392,11 @@ void vmx_vmexit_show()
 void vmx_vmexit_failure()
 {
    vmx_vmexit_show();
-   while(1)
-      ctrl_logic();
+   while(1) 
+#ifdef __CTRL_ACTIVE__
+      ctrl_logic()
+#endif
+	 ;
 }
 
 void __regparm__(1) vmx_vmresume_failure(vmx_insn_err_t vmx_err)

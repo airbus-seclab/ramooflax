@@ -85,6 +85,7 @@ static void vmx_vmcs_exec_controls_msr_init()
 {
 #ifndef __MSR_PROXY__
    vmx_deny_msr_rw(info->vm.cpu.vmc, IA32_MTRR_DEF_TYPE);
+   vmx_deny_msr_rw(info->vm.cpu.vmc, IA32_EFER_MSR);
 
    /* XXX: modifying MTRRs while enabled must be intercepted */
    /* for(i=0 ; i<info->vm.mtrr_cap.vcnt ; i++) */

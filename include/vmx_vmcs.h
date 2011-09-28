@@ -151,10 +151,10 @@ typedef struct vmcs_guest_non_register_state_area
    vmcs_t(vmcs_guest_pending_dbg_excp_t,   dbg_excp);
    vmcs_t(raw64_t,                         vmcs_link_ptr);
    vmcs_t(raw32_t,                         preempt_timer);
-   vmcs_t(pdpe_t,                          pdpte_0);
-   vmcs_t(pdpe_t,                          pdpte_1);
-   vmcs_t(pdpe_t,                          pdpte_2);
-   vmcs_t(pdpe_t,                          pdpte_3);
+   vmcs_t(pdpe_t,                          pdpe_0);
+   vmcs_t(pdpe_t,                          pdpe_1);
+   vmcs_t(pdpe_t,                          pdpe_2);
+   vmcs_t(pdpe_t,                          pdpe_3);
 
 } __attribute__((packed)) vmcs_guest_non_reg_state_t;
 

@@ -21,11 +21,6 @@
 #include <info_data.h>
 
 extern info_data_t *info;
-
-#if !defined __EHCI_CTRL__ && !defined __UART_CTRL__
-void vmm_ctrl()   {}
-void ctrl_logic() {}
-#else
 static uint8_t __ctrl_input[1024];
 
 void ctrl_logic()
@@ -70,4 +65,3 @@ void vmm_ctrl()
 
    ctrl_post();
 }
-#endif

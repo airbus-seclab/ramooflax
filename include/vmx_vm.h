@@ -57,7 +57,7 @@
 #define __ldtr                  __state.ldtr
 #define __tr                    __state.tr
 
-#define __efer                  __state.ia32_efer
+#define __efer                  info->vm.efer
 #define __dbgctl                __state.ia32_dbgctl
 #define __sysenter_cs           __state.ia32_sysenter_cs
 #define __sysenter_eip          __state.ia32_sysenter_eip
@@ -122,7 +122,8 @@
 #define __flush_asid_tlbs(_t)    invvpid(_t)
 #define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
-#define __update_npg_cache(_x)  ({})
+#define __update_npg_cache(_x)	 ({})
+#define __update_npg_pdpe()	 vmx_ept_update_pdpe()
 
 /*
 ** CR registers
@@ -187,14 +188,22 @@
 #define __allow_iret()           (XXX)
 #define __deny_iret()            (XXX)
 
-#define __allow_soft_int()		\
-   ({					\
-      __idtr.limit.wlow = 0x3ff;	\
-      vmcs_dirty(__idtr.limit);		\
+#define __allow_soft_int()						\
+   ({									\
+      vmcs_read(__idtr.limit);						\
+      if(__idtr.limit.wlow == (BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1)) \
+      {									\
+	 __idtr.limit.wlow = info->vm.idt_limit;			\
+	 vmcs_dirty(__idtr.limit);					\
+      }									\
+      /* XXX: should release idtr access */				\
    })
 
 #define __deny_soft_int()						\
    ({									\
+      /* XXX: should protect idtr access */				\
+      vmcs_read(__idtr.limit);						\
+      info->vm.idt_limit = __idtr.limit.wlow;				\
       __idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;	\
       vmcs_dirty(__idtr.limit);						\
    })
@@ -248,6 +257,36 @@
 
 #define __string_io_linear(_tgt,_iO)			\
    (_tgt = (__exit_info.guest_linear.raw & (_iO->msk)))
+
+#define __vmx_update_efer_lma()				\
+   ({							\
+      vmcs_read(vm_state.ia32_efer);			\
+      vmcs_read(vm_entry_ctrls.entry);			\
+      vm_entry_ctrls.entry.ia32e =			\
+	 vm_state.ia32_efer.lme  =			\
+	 vm_state.ia32_efer.lma  = info->vm.efer.lma;	\
+      vmcs_dirty(vm_entry_ctrls.entry);			\
+      vmcs_dirty(vm_state.ia32_efer);			\
+   })
+
+#define __efer_update(pg)			\
+   ({						\
+      int __up = 0;				\
+						\
+      if(pg && __cr4.pae && info->vm.efer.lme)	\
+      {						\
+	 info->vm.efer.lma = 1;			\
+	 __up = 1;				\
+      }						\
+      else if(!pg && info->vm.efer.lma)		\
+      {						\
+	 info->vm.efer.lma = 0;			\
+	 __up = 1;				\
+      }						\
+      						\
+      if(__up)					\
+	 __vmx_update_efer_lma();		\
+   })
 
 /*
 ** Last Branch Record

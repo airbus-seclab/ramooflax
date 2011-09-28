@@ -31,7 +31,9 @@ static void db_check_native_sstep()
    **   behavior for these instructions
    */
    if(__rflags.tf &&
+#ifdef __CTRL_ACTIVE__
       !gdb_singlestep_check() &&
+#endif
       __vmexit_on_insn())
    {
       debug(DB, "native singlestep\n");
@@ -41,8 +43,10 @@ static void db_check_native_sstep()
 
 void db_post_hdl()
 {
+#ifdef __CTRL_ACTIVE__
    if(gdb_dr6_is_dirty())
       gdb_clean_dr6();
+#endif
 
    if(!__injecting_exception())
       db_check_native_sstep();

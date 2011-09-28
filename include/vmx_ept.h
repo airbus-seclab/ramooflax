@@ -287,4 +287,8 @@ void vmx_ept_map();
 void vmx_ept_unmap();
 void vmx_ept_remap();
 
+#ifndef __INIT__
+int  vmx_ept_update_pdpe();
+#endif
+
 #endif

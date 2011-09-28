@@ -122,7 +122,11 @@ int resolve_exception()
       __post_access(__cr2);
    }
 
+#ifdef __CTRL_ACTIVE
    rc = gdb_excp_event(__exception_vector);
+#else
+   rc = GDB_IGNORE;
+#endif
 
    if(rc == GDB_IGNORE)
       __inject_exception(__exception_vector, __exception_error, __exception_fault);

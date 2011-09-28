@@ -47,6 +47,43 @@ static int __vmx_vmexit_resolve_msr_mtrr_def(uint8_t wr)
    return MSR_SUCCESS;
 }
 
+static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
+{
+   if(wr)
+   {
+      ia32_efer_msr_t update;
+
+      update.low = info->vm.efer.low ^ info->vm.cpu.gpr->rax.low;
+
+      info->vm.efer.low  = info->vm.cpu.gpr->rax.low;
+      info->vm.efer.high = info->vm.cpu.gpr->rdx.low;
+
+      vm_state.ia32_efer.low  = info->vm.efer.low;
+      vm_state.ia32_efer.high = info->vm.efer.high;
+
+      vmcs_read(vm_entry_ctrls.entry);
+      vm_state.ia32_efer.lme = vm_state.ia32_efer.lma = vm_entry_ctrls.entry.ia32e;
+      vmcs_dirty(vm_state.ia32_efer);
+
+      if(info->vm.efer.lma && !info->vm.efer.lme)
+	 info->vm.efer.lma = 0;
+
+      if(update.lme && __cr0.pg)
+      {
+	 debug(CR, "modifying LME while paging-on #GP\n");
+	 __inject_exception(GP_EXCP, 0, 0);
+	 return MSR_FAULT;
+      }
+   }
+   else
+   {
+      info->vm.cpu.gpr->rax.low = info->vm.efer.low;
+      info->vm.cpu.gpr->rdx.low = info->vm.efer.high;
+   }
+
+   return MSR_SUCCESS;
+}
+
 #ifdef __MSR_PROXY__
 static int __vmx_vmexit_resolve_msr_sysenter_cs(uint8_t wr)
 {
@@ -118,24 +155,6 @@ static int __vmx_vmexit_resolve_msr_pat(uint8_t wr)
    return MSR_SUCCESS;
 }
 
-static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
-{
-   if(wr)
-   {
-      vm_state.ia32_efer.low  = info->vm.cpu.gpr->rax.low;
-      vm_state.ia32_efer.high = info->vm.cpu.gpr->rdx.low;
-      vmcs_dirty(vm_state.ia32_efer);
-   }
-   else
-   {
-      vmcs_read(vm_state.ia32_efer);
-      info->vm.cpu.gpr->rax.low = vm_state.ia32_efer.low;
-      info->vm.cpu.gpr->rdx.low = vm_state.ia32_efer.high;
-   }
-
-   return MSR_SUCCESS;
-}
-
 static int __vmx_vmexit_resolve_msr_dbgctl(uint8_t wr)
 {
    if(wr)
@@ -179,6 +198,8 @@ int __vmx_vmexit_resolve_msr(uint8_t wr)
    {
    case IA32_MTRR_DEF_TYPE:
       return __vmx_vmexit_resolve_msr_mtrr_def(wr);
+   case IA32_EFER_MSR:
+      return __vmx_vmexit_resolve_msr_efer(wr);
 
 #ifdef __MSR_PROXY__
    case IA32_SYSENTER_CS_MSR:
@@ -189,8 +210,6 @@ int __vmx_vmexit_resolve_msr(uint8_t wr)
       return __vmx_vmexit_resolve_msr_sysenter_eip(wr);
    case IA32_PAT_MSR:
       return __vmx_vmexit_resolve_msr_pat(wr);
-   case IA32_EFER_MSR:
-      return __vmx_vmexit_resolve_msr_efer(wr);
    case IA32_DBG_CTL_MSR:
       return __vmx_vmexit_resolve_msr_dbgctl(wr);
    case IA32_PERF_GLB_CTL_MSR:

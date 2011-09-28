@@ -227,6 +227,18 @@ typedef union page_directory_pointer_entry
    struct
    {
       uint64_t  p:1;
+      uint64_t  r0:2;
+      uint64_t  pwt:1;
+      uint64_t  pcd:1;
+      uint64_t  r1:4;
+      uint64_t  ign:3;
+      uint64_t  addr:52;
+
+   } __attribute__((packed)) pae; /* specific pae pdpte register */
+
+   struct
+   {
+      uint64_t  p:1;
       uint64_t  rw:1;
       uint64_t  lvl:1;
       uint64_t  pwt:1;

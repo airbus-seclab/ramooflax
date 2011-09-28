@@ -184,6 +184,7 @@ typedef union pat_register
 #define MSR_FAIL        0
 #define MSR_SUCCESS     1
 #define MSR_NATIVE      2  /* commit to physical msr */
+#define MSR_FAULT       3
 
 #ifdef __SVM__
 #include <svm_exit_msr.h>

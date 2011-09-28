@@ -45,11 +45,13 @@ int resolve_intr()
 {
    preempt();
 
+#ifdef __CTRL_ACTIVE__
    if(gdb_singlestep_check())
    {
       __emulate_hard_interrupt(irq_msg.vector);
       return gdb_singlestep_fake();
    }
+#endif
 
    __inject_intr(irq_msg.vector);
    return 1;

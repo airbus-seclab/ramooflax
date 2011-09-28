@@ -22,16 +22,57 @@
 
 extern info_data_t *info;
 
+#ifndef __INIT__
+
+static int vmx_ept_pdpe_to_pae_pdpe(pdpe_t *pdpe, pdpe_t *pae_pdpe)
+{
+   pae_pdpe->raw = pdpe->raw;
+
+   if(pae_pdpe->pae.r0 || pae_pdpe->pae.r1)
+      return 0;
+
+   if(pae_pdpe->pae.addr & ~info->vm.max_paddr)
+      return 0;
+
+   return 1;
+}
+
+int vmx_ept_update_pdpe()
+{
+   pdpe_t *pdp = (pdpe_t*)pg_32B_addr((offset_t)__cr3.pae.addr);
+
+   if(  !vmm_area(pdp)
+      && vmx_ept_pdpe_to_pae_pdpe(&pdp[0], &vm_state.pdpe_0)
+      && vmx_ept_pdpe_to_pae_pdpe(&pdp[1], &vm_state.pdpe_1)
+      && vmx_ept_pdpe_to_pae_pdpe(&pdp[2], &vm_state.pdpe_2)
+      && vmx_ept_pdpe_to_pae_pdpe(&pdp[3], &vm_state.pdpe_3))
+   {
+      vmcs_dirty(vm_state.pdpe_0);
+      vmcs_dirty(vm_state.pdpe_1);
+      vmcs_dirty(vm_state.pdpe_2);
+      vmcs_dirty(vm_state.pdpe_3);
+      return 1;
+   }
+
+   return 0;
+}
+#endif
+
 uint64_t __ept_mtrr_resolve(uint64_t old, uint64_t new)
 {
-   uint64_t attr, type;
+   uint64_t attr, n_type, o_type, c_type;
 
-   type = ((old>>3)&7) & ((new>>3)&7);
+   o_type = (old>>3)&7;
+   n_type = (new>>3)&7;
+   c_type =  o_type & n_type;
 
-   if(type != VMX_EPT_MEM_TYPE_UC && type != VMX_EPT_MEM_TYPE_WT)
+   if(o_type == n_type)
+      return new;
+
+   if(c_type != VMX_EPT_MEM_TYPE_UC && c_type != VMX_EPT_MEM_TYPE_WT)
       panic("EPT MTRR overlap not managed: 0x%X 0x%X", old, new);
 
-   attr = (new & ~(7UL<<3)) | (type<<3);
+   attr = (new & ~(7UL<<3)) | (c_type<<3);
    return attr;
 }
 

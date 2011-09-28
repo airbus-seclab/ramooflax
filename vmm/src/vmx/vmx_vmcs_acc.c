@@ -124,10 +124,10 @@ void vmx_vmcs_commit()
    if(vm_entry_ctrls.entry.load_ia32_perf)
       vmcs_flush(vm_state.ia32_perf);
 
-   vmcs_flush(vm_state.pdpte_0);
-   vmcs_flush(vm_state.pdpte_1);
-   vmcs_flush(vm_state.pdpte_2);
-   vmcs_flush(vm_state.pdpte_3);
+   vmcs_flush(vm_state.pdpe_0);
+   vmcs_flush(vm_state.pdpe_1);
+   vmcs_flush(vm_state.pdpe_2);
+   vmcs_flush(vm_state.pdpe_3);
 
    /* vmcs_flush(vm_host_state.ia32_pat); */
    /* vmcs_flush(vm_host_state.ia32_efer); */
@@ -294,10 +294,10 @@ void vmx_vmcs_collect()
    if(vm_exit_ctrls.exit.save_dbgctl)
       vmcs_read(vm_state.ia32_dbgctl);
 
-   vmcs_read(vm_state.pdpte_0);
-   vmcs_read(vm_state.pdpte_1);
-   vmcs_read(vm_state.pdpte_2);
-   vmcs_read(vm_state.pdpte_3);
+   vmcs_read(vm_state.pdpe_0);
+   vmcs_read(vm_state.pdpe_1);
+   vmcs_read(vm_state.pdpe_2);
+   vmcs_read(vm_state.pdpe_3);
 
    /* vmcs_read(vm_host_state.ia32_pat); */
    /* vmcs_read(vm_host_state.ia32_efer); */

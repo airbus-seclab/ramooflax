@@ -104,7 +104,9 @@ static void svm_vmexit_pre_hdl()
 
 static void svm_vmexit_post_hdl(raw64_t tsc)
 {
+#ifdef __CTRL_ACTIVE__
    vmm_ctrl();
+#endif
    db_post_hdl();
 
    vm_state.rax.raw = info->vm.cpu.gpr->rax.raw;

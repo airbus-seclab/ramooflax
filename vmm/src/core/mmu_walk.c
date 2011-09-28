@@ -34,31 +34,33 @@ int pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, offset_t *paddr, size_t *psz)
    pde64_t *pd, *pde;
    pte64_t *pt, *pte;
 
+   debug(PG_W, "guest CR3: 0x%X\n", cr3->raw);
+
    pml4 = (pml4e_t*)page_addr(cr3->pml4.addr);
    if(vmm_area(pml4))
    {
-      debug(PG, "pml4 in vmm area\n");
+      debug(PG_W, "pml4 in vmm area\n");
       return 0;
    }
 
    pml4e = &pml4[pml4_idx(vaddr)];
    if(!pg_present(pml4e))
    {
-      debug(PG, "pml4e not present\n");
+      debug(PG_W, "pml4e not present\n");
       return 0;
    }
 
    pdp = (pdpe_t*)page_addr(pml4e->addr);
    if(vmm_area(pdp))
    {
-      debug(PG, "pdp in vmm area\n");
+      debug(PG_W, "pdp in vmm area\n");
       return 0;
    }
 
    pdpe = &pdp[pdp_idx(vaddr)];
    if(!pg_present(pdpe))
    {
-      debug(PG, "pdpe not present\n");
+      debug(PG_W, "pdpe not present\n");
       return 0;
    }
 
@@ -72,14 +74,14 @@ int pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, offset_t *paddr, size_t *psz)
    pd = (pde64_t*)page_addr(pdpe->addr);
    if(vmm_area(pd))
    {
-      debug(PG, "pd in vmm area\n");
+      debug(PG_W, "pd in vmm area\n");
       return 0;
    }
 
    pde = &pd[pd64_idx(vaddr)];
    if(!pg_present(pde))
    {
-      debug(PG, "pde not present\n");
+      debug(PG_W, "pde not present\n");
       return 0;
    }
 
@@ -93,14 +95,14 @@ int pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, offset_t *paddr, size_t *psz)
    pt = (pte64_t*)page_addr(pde->addr);
    if(vmm_area(pt))
    {
-      debug(PG, "pt in vmm area\n");
+      debug(PG_W, "pt in vmm area\n");
       return 0;
    }
 
    pte = &pt[pt64_idx(vaddr)];
    if(!pg_present(pte))
    {
-      debug(PG, "pte not present\n");
+      debug(PG_W, "pte not present\n");
       return 0;
    }
 
@@ -111,7 +113,7 @@ __prepare_addr:
    if(vmm_area(*paddr))
       return 0;
 
-   debug(PG, "lmode vaddr 0x%X -> paddr 0x%X\n", vaddr, *paddr);
+   debug(PG_W, "lmode vaddr 0x%X -> paddr 0x%X\n", vaddr, *paddr);
    return 1;
 }
 
@@ -127,21 +129,33 @@ int pg_walk_pmode_pae(cr3_reg_t *cr3, offset_t _vaddr, offset_t *paddr, size_t *
    pte64_t  *pt, *pte;
    uint32_t vaddr = _vaddr & 0xffffffff;
 
+   debug(PG_W, "guest CR3: 0x%X\n", cr3->raw);
+
    pdp = (pdpe_t*)pg_32B_addr((offset_t)cr3->pae.addr);
    if(vmm_area(pdp))
       return 0;
 
    pdpe = &pdp[pdp_pae_idx(vaddr)];
+
+   debug(PG_W, "pdpe @ 0x%X = %x %x\n", (offset_t)pdpe, pdpe->high, pdpe->low);
    if(!pdpe->p)
+   {
+      debug(PG_W, "pdpe not present\n");
       return 0;
+   }
 
    pd = (pde64_t*)page_addr(pdpe->addr);
    if(vmm_area(pd))
       return 0;
 
    pde = &pd[pd64_idx(vaddr)];
+
+   debug(PG_W, "pde @ 0x%X = %x %x\n", (offset_t)pde, pde->high, pde->low);
    if(!pg_present(pde))
+   {
+      debug(PG_W, "pde not present\n");
       return 0;
+   }
 
    if(__cr4.pse && pg_large(pde))
    {
@@ -155,8 +169,13 @@ int pg_walk_pmode_pae(cr3_reg_t *cr3, offset_t _vaddr, offset_t *paddr, size_t *
       return 0;
 
    pte = &pt[pt64_idx(vaddr)];
+
+   debug(PG_W, "pte @ 0x%X = %x %x\n", (offset_t)pte, pte->high, pte->low);
    if(!pg_present(pte))
+   {
+      debug(PG_W, "pte not present\n");
       return 0;
+   }
 
    *paddr = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
    *psz = PG_4K_SIZE;
@@ -165,7 +184,7 @@ __prepare_addr:
    if(vmm_area(*paddr))
       return 0;
 
-   debug(PG, "pae vaddr 0x%x -> paddr 0x%x\n", vaddr, *paddr);
+   debug(PG_W, "pae vaddr 0x%x -> paddr 0x%x\n", vaddr, *paddr);
    return 1;
 }
 
@@ -181,24 +200,26 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
    uint32_t paddr;
    uint32_t vaddr = _vaddr & 0xffffffff;
 
+   debug(PG_W, "guest CR3: 0x%x\n", cr3->low);
+
    pd = (pde32_t*)page_addr(cr3->addr);
    if(vmm_area(pd))
    {
-      debug(PG, "pd in vmm area\n");
+      debug(PG_W, "pd in vmm area\n");
       return 0;
    }
 
    pde = &pd[pd32_idx(vaddr)];
-   debug(PG, "pde @ 0x%X = 0x%x\n", (offset_t)pde, pde->raw);
+   debug(PG_W, "pde @ 0x%X = 0x%x\n", (offset_t)pde, pde->raw);
    if(!pg_present(pde))
    {
-      debug(PG, "pde not present\n");
+      debug(PG_W, "pde not present\n");
       return 0;
    }
 
    if(__cr4.pse && pg_large(pde))
    {
-      debug(PG, "large page\n");
+      debug(PG_W, "large page\n");
       paddr = pg_4M_addr((uint32_t)pde->page.addr) + pg_4M_offset(vaddr);
       *psz = PG_4M_SIZE;
       goto __prepare_addr;
@@ -207,15 +228,15 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
    pt = (pte32_t*)page_addr(pde->addr);
    if(vmm_area(pt))
    {
-      debug(PG, "pt in vmm area\n");
+      debug(PG_W, "pt in vmm area\n");
       return 0;
    }
 
    pte = &pt[pt32_idx(vaddr)];
-   debug(PG, "pte @ 0x%X = 0x%x\n", (offset_t)pte, pte->raw);
+   debug(PG_W, "pte @ 0x%X = 0x%x\n", (offset_t)pte, pte->raw);
    if(!pg_present(pte))
    {
-      debug(PG, "pte not present\n");
+      debug(PG_W, "pte not present\n");
       return 0;
    }
 
@@ -226,7 +247,7 @@ __prepare_addr:
    if(vmm_area(paddr))
       return 0;
 
-   debug(PG, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr);
+   debug(PG_W, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr);
    *_paddr = (offset_t)paddr;
    return 1;
 }
@@ -242,6 +263,7 @@ __prepare_addr:
 */
 int __pg_walk(cr3_reg_t *cr3, offset_t vaddr, offset_t *paddr, size_t *psz)
 {
+   debug(PG_W, "mmu_walk on 0x%X\n", vaddr);
    if(_xx_lmode())
       return pg_walk_lmode(cr3, vaddr, paddr, psz);
 
@@ -259,7 +281,7 @@ int pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
 {
    if(!__paging())
    {
-      debug(PG, "paging disabled !\n");
+      debug(PG_W, "paging disabled !\n");
       return 0;
    }
 

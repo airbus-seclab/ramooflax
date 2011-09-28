@@ -41,13 +41,13 @@ int __svm_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
    case GP_EXCP:
    case AC_EXCP:
       vm_ctrls.event_injection.ev = 1;
-      vm_ctrls.event_injection.err_code = error & 0xff;
+      vm_ctrls.event_injection.err_code = error;
       break;
 
    default:
       break;
    }
 
-   debug(SVM_EXCP, "inject exception #%d err 0x%x\n", vector, error & 0xff);
+   debug(SVM_EXCP, "inject exception #%d err 0x%x\n", vector, error);
    return 1;
 }

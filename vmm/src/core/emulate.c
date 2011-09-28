@@ -436,6 +436,7 @@ static int emulate_sysexit()
    return EMU_SUCCESS_LET_RIP;
 }
 
+#ifdef __CTRL_ACTIVE__
 /*
 ** Data hardware and single-step traps
 ** are checked after insn execution. If we
@@ -458,6 +459,7 @@ static void __emulate_vmm_db_condition()
 
    /* XXX: we must check data-breakpoints too */
 }
+#endif
 
 void __emulate_hazard(ud_t *disasm)
 {
@@ -563,8 +565,10 @@ int emulate()
       return 0;
    }
 
+#ifdef __CTRL_ACTIVE__
    /* even if fault, we must check if we get control */
    __emulate_vmm_db_condition();
+#endif
    return 1;
 }
 

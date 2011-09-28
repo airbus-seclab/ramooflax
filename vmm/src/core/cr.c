@@ -27,7 +27,7 @@ extern info_data_t *info;
 
 int __resolve_cr0_wr(cr0_reg_t *guest)
 {
-   uint32_t cr0_update;
+   uint32_t cr0_update, updated=0;
 
    __pre_access(__cr4);
 
@@ -43,10 +43,21 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
    }
 
    if(cr0_update & (CR0_NW|CR0_CD))
+   {
       __cr0_cache_update(guest);
+      updated = 1;
+   }
 
    if(cr0_update & (CR0_PE|CR0_PG))
+   {
       __flush_tlb_glb();
+
+      if(cr0_update & CR0_PG)
+      {
+	 updated = 1;
+	 __efer_update(guest->pg);
+      }
+   }
 
    if(cr0_update & CR0_PE)
    {
@@ -57,11 +68,21 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
    }
 
    __cr0_update(guest);
+
+   if(!__efer.lma && updated && __cr0.pg && __cr4.pae && !__update_npg_pdpe())
+   {
+      debug(CR, "pae pdpe update fault\n");
+      __inject_exception(GP_EXCP, 0, 0);
+      return CR_FAULT;
+   }
+
    return CR_SUCCESS;
 }
 
 int __resolve_cr3_wr(cr3_reg_t *guest)
 {
+   __pre_access(__cr4);
+
    if(__lmode64())
       __cr3.raw = guest->raw;
    else
@@ -70,15 +91,22 @@ int __resolve_cr3_wr(cr3_reg_t *guest)
    debug(CR, "wr cr3 0x%X\n", guest->raw);
 
    __update_npg_cache(guest);
-
    __flush_tlb();
+
+   if(!__efer.lma && __cr0.pg && __cr4.pae && !__update_npg_pdpe())
+   {
+      debug(CR, "pae pdpe update fault\n");
+      __inject_exception(GP_EXCP, 0, 0);
+      return CR_FAULT;
+   }
+
    __post_access(__cr3);
    return CR_SUCCESS;
 }
 
 int __resolve_cr4_wr(cr4_reg_t *guest)
 {
-   uint32_t cr4_update;
+   uint32_t cr4_update, updated=0;
 
    __pre_access(__cr4);
 
@@ -87,9 +115,29 @@ int __resolve_cr4_wr(cr4_reg_t *guest)
    debug(CR, "wr cr4 0x%x\n", guest->low);
 
    if(cr4_update & (CR4_PAE|CR4_PSE|CR4_PGE))
+   {
       __flush_tlb_glb();
+      updated = 1;
+   }
+
+#ifndef __SVM__
+   if(__efer.lma && (cr4_update & CR4_PAE) && !guest->pae)
+   {
+      debug(CR, "disable pae while in lmode #GP\n");
+      __inject_exception(GP_EXCP, 0, 0);
+      return CR_FAULT;
+   }
+#endif
 
    __cr4_update(guest);
+
+   if(!__efer.lma && updated && __cr0.pg && __cr4.pae && !__update_npg_pdpe())
+   {
+      debug(CR, "pae pdpe update fault\n");
+      __inject_exception(GP_EXCP, 0, 0);
+      return CR_FAULT;
+   }
+
    return CR_SUCCESS;
 }
 
@@ -97,7 +145,9 @@ int __resolve_cr_wr_with(uint8_t cr, raw64_t *val)
 {
    int rc;
 
+#ifdef __CTRL_ACTIVE__
    gdb_cr_wr_event(cr);
+#endif
 
    if(cr == 0)
       rc = __resolve_cr0_wr((cr0_reg_t*)val);
@@ -144,7 +194,9 @@ static int __resolve_cr_rd(uint8_t cr, uint8_t gpr)
    else
       info->vm.cpu.gpr->raw[gpr].low = creg->low;
 
+#ifdef __CTRL_ACTIVE__
    gdb_cr_rd_event(cr);
+#endif
    return CR_SUCCESS;
 }
 

@@ -123,6 +123,9 @@
       npg_cr3.pml4.pcd = (gcr3)->pcd;	\
    })
 
+/* XXX: check bits violation (cf. 15.25.10) */
+#define __update_npg_pdpe()		({1;})
+
 /*
 ** CR0 cache
 */
@@ -240,6 +243,9 @@
       else								\
 	 _tgt += (info->vm.cpu.gpr->rsi.raw & _iO->msk);		\
    })
+
+#define __efer_update(pg)		  ({})
+
 /*
 ** Last Branch Record
 */

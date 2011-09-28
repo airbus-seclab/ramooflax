@@ -62,10 +62,10 @@ void vmx_vmcs_encode()
    vmcs_encode(vm_state.ia32_pat, VMCS_FIELD_ENC_GUEST_STATE_IA32_PAT);
    vmcs_encode(vm_state.ia32_efer, VMCS_FIELD_ENC_GUEST_STATE_IA32_EFER);
    vmcs_encode(vm_state.ia32_perf, VMCS_FIELD_ENC_GUEST_STATE_IA32_PERF_GLOBAL);
-   vmcs_encode(vm_state.pdpte_0, VMCS_FIELD_ENC_GUEST_STATE_PDPTE0);
-   vmcs_encode(vm_state.pdpte_1, VMCS_FIELD_ENC_GUEST_STATE_PDPTE1);
-   vmcs_encode(vm_state.pdpte_2, VMCS_FIELD_ENC_GUEST_STATE_PDPTE2);
-   vmcs_encode(vm_state.pdpte_3, VMCS_FIELD_ENC_GUEST_STATE_PDPTE3);
+   vmcs_encode(vm_state.pdpe_0, VMCS_FIELD_ENC_GUEST_STATE_PDPTE0);
+   vmcs_encode(vm_state.pdpe_1, VMCS_FIELD_ENC_GUEST_STATE_PDPTE1);
+   vmcs_encode(vm_state.pdpe_2, VMCS_FIELD_ENC_GUEST_STATE_PDPTE2);
+   vmcs_encode(vm_state.pdpe_3, VMCS_FIELD_ENC_GUEST_STATE_PDPTE3);
 
    vmcs_encode(vm_host_state.ia32_pat, VMCS_FIELD_ENC_HOST_STATE_IA32_PAT);
    vmcs_encode(vm_host_state.ia32_efer, VMCS_FIELD_ENC_HOST_STATE_IA32_EFER);

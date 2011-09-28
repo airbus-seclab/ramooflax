@@ -8,6 +8,11 @@ USE_AMD := 1
 CFLG_CONFIG += -D__SVM__
 endif
 
+ifneq ($(CONFIG_CTRL),none)
+USE_CTRL := 1
+CFLG_CONFIG += -D__CTRL_ACTIVE__
+endif
+
 ifeq ($(CONFIG_CTRL),ehci)
 USE_EHCI := 1
 CFLG_CONFIG += -D__EHCI_CTRL__
