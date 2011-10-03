@@ -494,7 +494,7 @@ __sys:
    case  8: loc.u64 = &__dr6.raw;       __cond_access(wr,__dr6);       goto __win;
    case  9: loc.u64 = &__dr7.raw;       __cond_access(wr,__dr7);       goto __win;
    case 10: loc.u64 = &__dbgctl.raw;    __cond_access(wr,__dbgctl);    goto __win;
-   case 11: loc.u64 = &__efer.raw;      __cond_access(wr,__efer);      goto __win;
+   case 11: loc.u64 = &__efer.raw;      /*__cond_access(wr,__efer);*/  goto __win;
    case 12: loc.u64 = &__cs.base.raw;   __cond_access(wr,__cs.base);   goto __win;
    case 13: loc.u64 = &__ss.base.raw;   __cond_access(wr,__ss.base);   goto __win;
    case 14: loc.u64 = &__ds.base.raw;   __cond_access(wr,__ds.base);   goto __win;
