@@ -53,6 +53,11 @@ void ctrl_logic()
    } while(ctrl_active());
 }
 
+void ctrl_pre()
+{
+   gdb_stub_pre();
+}
+
 void ctrl_post()
 {
    gdb_stub_post();
@@ -60,6 +65,8 @@ void ctrl_post()
 
 void vmm_ctrl()
 {
+   ctrl_pre();
+
    if(gdb_enabled() || !(info->vmm.ctrl.vmexit_cnt.raw % CTRL_RATIO))
       ctrl_logic();
 

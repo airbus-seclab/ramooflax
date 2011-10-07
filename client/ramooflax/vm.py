@@ -18,9 +18,9 @@
 import code, readline, rlcompleter
 import sys, signal
 
-from cpu import *
-from memory import *
-from gdb import *
+import cpu
+import memory
+import gdb
 
 class VMState:
     waiting     = 0
@@ -36,7 +36,7 @@ Virtual Machine Controller
  - you can type ^C while interactive to quit
  - you can access 'cpu' and 'mem' attributes (help(vm.cpu) ...)
     """
-    def __init__(self, manufacturer, mode, loc):
+    def __init__(self, manufacturer, loc):
         try:
             self.ip, self.port = loc.split(':')
             self.port = int(self.port)
@@ -48,10 +48,10 @@ Virtual Machine Controller
         self.__session = False
         self.__state = VMState.working
         self.__stop_request = False
-        self.__gdb = GDB(self.ip, self.port)
+        self.__gdb = gdb.GDB(self.ip, self.port)
 
-        self.cpu = CPU(manufacturer, mode, self.__gdb)
-        self.mem = Memory(mode, self.__gdb)
+        self.cpu = cpu.CPU(manufacturer, self.__gdb)
+        self.mem = memory.Memory(self.cpu, self.__gdb)
 
         self.__setup_sig(signal.SIGINT, self.int_event)
 

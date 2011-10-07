@@ -15,20 +15,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from register import *
-from gdb import *
-from event import *
-from breakpoints import *
+import register
+import gdb
+import event
+import breakpoints
 
 class CPUFamily:
     AMD   = 0
     Intel = 1
-
-class OSAffinity:
-    Unknown = 0
-    Linux26 = 1
-    Win7    = 2
-    WinXP   = 3
 
 class CPUException:
     divide_error       =  0
@@ -53,27 +47,20 @@ class CPUException:
     simd               = 19
 
 class CPU:
-    def __init__(self, manufacturer, mode, gdb):
+    def __init__(self, manufacturer, gdb):
         self.__gdb = gdb
-        self.__filter = EventFilter()
-        self.__last_reason = StopReason.gdb_int
+        self.__filter = event.EventFilter()
+        self.__last_reason = event.StopReason.gdb_int
 
         self.manufacturer = manufacturer
-        self.mode = mode
-        self.sr = SR_x86(gdb)
-        self.lbr = LBR(gdb)
+        self.sr = register.SR_x86(self.__gdb)
+        self.lbr = register.LBR(self.__gdb)
 
-        if mode == 32:
-            self.gpr = GPR_x86_32(gdb)
-            self.__reason_size = 24
-        elif mode == 64:
-            self.gpr = GPR_x86_64(gdb)
-            self.__reason_size = 48
-        else:
-            print "unsupported cpu mode"
-            raise ValueError
-
-        self.breakpoints = BreakPoints(mode, gdb, self.__filter)
+        #not defined mode
+        self.sz = None
+        self.mode = None
+        self.gpr = None
+        self.breakpoints = breakpoints.BreakPoints(self, gdb, self.__filter)
 
     def __get_last_reason(self):
         return self.__last_reason
@@ -96,15 +83,44 @@ class CPU:
     def __get_cr_wr_mask(self):
         return int(self.__gdb.read_cr_write_mask(), 16)
 
-    def __parse_stop(self, stop):
-        if stop is not None:
-            self.__last_reason = int(stop[1:3], 16)
-            for g in stop[3:].split(';')[:-1]:
-                n,v = g.split(':')
-                self.gpr[int(n)]._update(v)
+    def __segmem_location(self, seg, reg):
+        if self.mode == 16:
+            return (seg + (reg & 0xffff))
+        elif self.mode == 32:
+            return (seg + (reg & 0xffffffff))
+        return reg
+
+    def __update_mode(self, new_mode):
+        self.mode = new_mode
+        #XXX: gdb seems to need 4 bytes
+        if self.mode == 32 or self.mode == 16:
+            self.gpr = register.GPR_x86_32(self.__gdb)
+            self.sz = 8
+        elif self.mode == 64:
+            self.gpr = register.GPR_x86_64(self.__gdb)
+            self.sz = 16
+        else:
+            print "Unknown CPU mode: %d" % (self.mode)
+            raise ValueError
+
+    # $TXXmd:YY;04:a..a;05:b..b;[16|08]:c..c;#ZZ
+    def __recv_stop(self):
+        p1 = self.__gdb.recv_raw(10)
+
+        self.__last_reason = int(p1[2:4], 16)
+        mode = int(p1[7:9],16)
+        if mode != self.mode:
+            self.__update_mode(mode)
+
+        ln = 12 + 3*self.sz + 3
+        p2 = self.__gdb.recv_raw(ln)
+
+        for g in p2.split(';')[:-1]:
+            n,v = g.split(':')
+            self.gpr[int(n)]._update(v)
 
     def _recv_stop(self):
-        self.__parse_stop(self.__gdb.read_stop_reason(self.__reason_size))
+        self.__recv_stop()
 
     def _process_stop(self, vm):
         return self.__filter(self.__last_reason, vm)
@@ -149,41 +165,47 @@ class CPU:
             raise ValueError
         mask = self.__get_exception_mask() | (1<<n)
         self.__set_exception_mask(mask)
-        self.__filter.register(StopReason.excp_de+n, hdl)
+        self.__filter.register(event.StopReason.excp_de+n, hdl)
 
     def release_exception(self, n):
         if n > CPUException.simd:
             raise ValueError
         mask = self.__get_exception_mask() & ~(1<<n)
         self.__set_exception_mask(mask)
-        self.__filter.unregister(StopReason.excp_de+n)
+        self.__filter.unregister(event.StopReason.excp_de+n)
 
     def filter_read_cr(self, n, hdl):
         if n > 8:
             raise ValueError
         mask = self.__get_cr_rd_mask() | (1<<n)
         self.__set_cr_rd_mask(mask)
-        self.__filter.register(StopReason.rd_cr0+n, hdl)
+        self.__filter.register(event.StopReason.rd_cr0+n, hdl)
 
     def release_read_cr(self, n):
         if n > 8:
             raise ValueError
         mask = self.__get_cr_rd_mask() & ~(1<<n)
         self.__set_cr_rd_mask(mask)
-        self.__filter.unregister(StopReason.rd_cr0+n)
+        self.__filter.unregister(event.StopReason.rd_cr0+n)
 
     def filter_write_cr(self, n, hdl):
         if n > 8:
             raise ValueError
         mask = self.__get_cr_wr_mask() | (1<<n)
         self.__set_cr_wr_mask(mask)
-        self.__filter.register(StopReason.wr_cr0+n, hdl)
+        self.__filter.register(event.StopReason.wr_cr0+n, hdl)
 
     def release_write_cr(self, n):
         if n > 8:
             raise ValueError
         mask = self.__get_cr_wr_mask() & ~(1<<n)
         self.__set_cr_wr_mask(mask)
-        self.__filter.unregister(StopReason.wr_cr0+n)
+        self.__filter.unregister(event.StopReason.wr_cr0+n)
+
+    def code_location(self):
+        return self.__segmem_location(self.sr.cs, self.gpr.pc)
+
+    def stack_location(self):
+        return self.__segmem_location(self.sr.ss, self.gpr.stack)
 
     last_reason = property(__get_last_reason)

@@ -79,6 +79,7 @@
 ** Fields synchro un-needed under SVM
 */
 #define __pre_access(_fld_)                     ({})
+#define __set_accessed(_fld_)                   ({})
 #define __post_access(_fld_)                    ({})
 #define __cond_access(_wr_,_fld_)               ({})
 

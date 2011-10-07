@@ -91,6 +91,7 @@
 ** Fields synchro
 */
 #define __pre_access(_fld_)                 vmcs_read(_fld_)
+#define __set_accessed(_fld_)               vmcs_set_read(_fld_)
 #define __post_access(_fld_)		    vmcs_dirty(_fld_)
 #define __cond_access(_wr_,_fld_)           vmcs_cond(_wr_,_fld_)
 
@@ -190,18 +191,20 @@
 
 #define __allow_soft_int()						\
    ({									\
-      vmcs_read(__idtr.limit);						\
-      if(__idtr.limit.wlow == (BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1)) \
-      {									\
-	 __idtr.limit.wlow = info->vm.idt_limit;			\
-	 vmcs_dirty(__idtr.limit);					\
-      }									\
-      /* XXX: should release idtr access */				\
+      vmcs_read(vm_exec_ctrls.proc2);					\
+      vm_exec_ctrls.proc2.dt = 0;					\
+      vmcs_dirty(vm_exec_ctrls.proc2);					\
+									\
+      __idtr.limit.wlow = info->vm.idt_limit;				\
+      vmcs_dirty(__idtr.limit);						\
    })
 
 #define __deny_soft_int()						\
    ({									\
-      /* XXX: should protect idtr access */				\
+      vmcs_read(vm_exec_ctrls.proc2);					\
+      vm_exec_ctrls.proc2.dt = 1;					\
+      vmcs_dirty(vm_exec_ctrls.proc2);					\
+									\
       vmcs_read(__idtr.limit);						\
       info->vm.idt_limit = __idtr.limit.wlow;				\
       __idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;	\
@@ -286,6 +289,16 @@
       						\
       if(__up)					\
 	 __vmx_update_efer_lma();		\
+   })
+
+#define vmx_disable_preempt_timer()			\
+   ({							\
+      vmcs_read(vm_exit_ctrls.exit);			\
+      vmcs_read(vm_exec_ctrls.pin);			\
+      vm_exit_ctrls.exit.save_preempt_timer = 0;	\
+      vm_exec_ctrls.pin.preempt = 0;			\
+      vmcs_dirty(vm_exec_ctrls.pin);			\
+      vmcs_dirty(vm_exit_ctrls.exit);			\
    })
 
 /*

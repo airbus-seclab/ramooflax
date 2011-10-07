@@ -4,6 +4,7 @@ obj :=  vmx_exit.o			\
 	vmx_exit_pf.o			\
 	vmx_exit_cr.o			\
 	vmx_exit_dr.o			\
+	vmx_exit_dt.o			\
 	vmx_exit_msr.o			\
 	vmx_exit_cpuid.o		\
 	vmx_exit_int.o			\

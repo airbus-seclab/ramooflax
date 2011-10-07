@@ -15,13 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from gdb import *
-from utils import *
+from utils import Utils
 
 class Memory:
-    def __init__(self, mode, gdb):
+    def __init__(self, cpu, gdb):
         self.__gdb = gdb
-        self.__sz = mode/4
+        self.__cpu = cpu
 
     def __encode(self, val, n):
         fmt = "%."+str(n)+"x"
@@ -29,13 +28,13 @@ class Memory:
         return out[-n:]
 
     def __encode_addr(self, addr):
-        return self.__encode(addr, self.__sz)
+        return self.__encode(addr, self.__cpu.sz)
 
     def __encode_val(self, val, n):
-        return utils.revert_string_bytes(self.__encode(val, n*2))
+        return Utils.revert_string_bytes(self.__encode(val, n*2))
 
     def __decode_val(self, val):
-        return int(utils.revert_string_bytes(val), 16)
+        return int(Utils.revert_string_bytes(val), 16)
 
     def __read(self, addr, n):
         return self.__decode_val(self.__gdb.read_mem(self.__encode_addr(addr), n))
@@ -85,6 +84,6 @@ class Memory:
         self.__gdb.write_vmem(encoded, data, sz)
 
     def translate(self, addr):
-        return int(self.__gdb.translate(self.__encode_addr(addr), self.__sz), 16)
+        return int(self.__gdb.translate(self.__encode_addr(addr), self.__cpu.sz), 16)
 
 

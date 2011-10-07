@@ -224,14 +224,21 @@ void gdb_send_stop_reason(uint8_t reason)
 {
    size_t   rlen;
    uint32_t s_rip;
+   uint64_t mode;
 
    if(__lmode64())
    {
+      mode = 64;
       s_rip = 0x3a36313b;
       rlen = sizeof(uint64_t)*2;
    }
    else
    {
+      if(__pmode32())
+	 mode = 32;
+      else
+	 mode = 16;
+
       /* XXX: gdb seems to wait for 32 bits regs at least */
       s_rip = 0x3a38303b;
       rlen = sizeof(uint32_t)*2;
@@ -240,7 +247,10 @@ void gdb_send_stop_reason(uint8_t reason)
    gdb_add_str("T", 1);
    gdb_add_byte(reason);
 
-   gdb_add_str("04:", 3);
+   gdb_add_str("md:", 3);
+   gdb_add_number(mode, 2, 0);
+
+   gdb_add_str(";04:", 4);
    gdb_add_number(info->vm.cpu.gpr->rsp.raw, rlen, 1);
 
    gdb_add_str(";05:", 4);

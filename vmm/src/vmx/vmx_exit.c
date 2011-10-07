@@ -18,6 +18,7 @@
 #include <vmx_exit.h>
 #include <vmx_exit_cr.h>
 #include <vmx_exit_dr.h>
+#include <vmx_exit_dt.h>
 #include <vmx_exit_msr.h>
 #include <vmx_exit_pf.h>
 #include <vmx_exit_fail.h>
@@ -88,7 +89,7 @@ static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    resolve_default,                     //TPR
    resolve_default,                     //APIC
    resolve_default,                     //UNDEFINED
-   resolve_default,                     //DTR
+   vmx_vmexit_resolve_dt,               //DTR
    resolve_default,                     //LDTR
    resolve_default,                     //EPT
    resolve_default,                     //EPT_CONF
@@ -168,10 +169,7 @@ int vmx_vmexit_resolve_dispatcher()
 
 int vmx_vmexit_resolve_preempt()
 {
-   debug(VMX, "preempt\n");
-   vm_state.preempt_timer.raw = 0x200000;
-   vmcs_dirty(vm_state.preempt_timer);
-   return 1;
+   return 0;
 }
 
 int vmx_vmexit_idt_deliver()

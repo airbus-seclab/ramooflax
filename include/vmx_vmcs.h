@@ -584,6 +584,9 @@ typedef union vmcs_exit_information_idt_vectoring_information
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_ADDR_SZ_32    1
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_ADDR_SZ_64    2
 
+#define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_OP_SZ_16      0
+#define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_OP_SZ_32      1
+
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_ES    0
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_CS    1
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_SS    2
@@ -591,15 +594,20 @@ typedef union vmcs_exit_information_idt_vectoring_information
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_FS    4
 #define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_SEG_REG_GS    5
 
+#define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_SGDT     0
+#define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_SIDT     1
+#define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_LGDT     2
+#define VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_LIDT     3
+
 typedef union vmcs_exit_information_vmexit_insn_io
 {
    struct
    {
       uint32_t    r1:7;    /* undefined */
-      uint32_t    addr:3;  /* addr size 16/32/64 (0,1,2) */
+      uint32_t    addr:3;  /* addr size */
       uint32_t    r2:5;    /* undefined */
-      uint32_t    seg:3;   /* segment register (cf. VMX_INSN_INFORMATION_SEG) */
-      uint32_t    r3:14;   /*undefined */
+      uint32_t    seg:3;   /* seg reg   */
+      uint32_t    r3:14;   /* undefined */
 
    } __attribute__((packed));
 
@@ -607,10 +615,35 @@ typedef union vmcs_exit_information_vmexit_insn_io
 
 } __attribute__((packed)) vmcs_exit_info_insn_io_t;
 
+typedef union vmcs_exit_information_vmexit_insn_descriptor_table
+{
+   struct
+   {
+      uint32_t    scale:2;   /* scaling      */
+      uint32_t    r1:5;      /* undefined    */
+      uint32_t    addr:3;    /* addr size    */
+      uint32_t    r2:1;      /* 0            */
+      uint32_t    op:1;      /* op size      */
+      uint32_t    r3:3;      /* undefined    */
+      uint32_t    seg:3;     /* seg reg      */
+      uint32_t    idx:4;     /* idx reg      */
+      uint32_t    no_idx:1;  /* idx invalid  */
+      uint32_t    base:4;    /* base reg     */
+      uint32_t    no_base:1; /* base invalid */
+      uint32_t    type:2;    /* dt type      */
+      uint32_t    r4:2;      /* undefined    */
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) vmcs_exit_info_insn_dt_t;
+
 typedef union vmcs_exit_information_vmexit_instruction_information
 {
    raw32_t;
    vmcs_exit_info_insn_io_t io;  /* ins/outs specific info */
+   vmcs_exit_info_insn_dt_t dt;  /* lgdt/lidt/sgdt/sidt */
 
 } __attribute__((packed)) vmcs_exit_info_insn_t;
 

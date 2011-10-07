@@ -70,6 +70,9 @@ static void vmx_cpu_features()
    if(!vmx_allow_ept(info->vm.vmx_fx_proc2))
       panic("vmx ept not supported");
 
+   if(!vmx_allow_dt(info->vm.vmx_fx_proc2))
+      panic("vmx desc table exiting not supported");
+
    if(!vmx_allow_vpid(info->vm.vmx_fx_proc2))
       panic("vmx vpid not supported");
 

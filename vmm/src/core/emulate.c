@@ -436,31 +436,6 @@ static int emulate_sysexit()
    return EMU_SUCCESS_LET_RIP;
 }
 
-#ifdef __CTRL_ACTIVE__
-/*
-** Data hardware and single-step traps
-** are checked after insn execution. If we
-** emulated one, we may loose a #db condition
-**
-** Such a situation is raised when we single-step
-** or put data breakpoint on an instruction which
-** is emulated by the vmm (cr access, ...)
-**
-** Insn hardware breakpoints are not subject to this
-** because they are checked before execution
-*/
-static void __emulate_vmm_db_condition()
-{
-   if(!gdb_active_cr3_check())
-      return;
-
-   if(gdb_singlestep_fake())
-      return;
-
-   /* XXX: we must check data-breakpoints too */
-}
-#endif
-
 void __emulate_hazard(ud_t *disasm)
 {
    uint32_t x;
@@ -565,10 +540,6 @@ int emulate()
       return 0;
    }
 
-#ifdef __CTRL_ACTIVE__
-   /* even if fault, we must check if we get control */
-   __emulate_vmm_db_condition();
-#endif
    return 1;
 }
 

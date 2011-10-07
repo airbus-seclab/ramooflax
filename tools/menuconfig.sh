@@ -240,6 +240,7 @@ function debuging()
 	"CONFIG_SVM_CR_DBG" "" $CONFIG_SVM_CR_DBG \
 	"CONFIG_VMX_DBG" "" $CONFIG_VMX_DBG \
 	"CONFIG_VMX_CPU_DBG" "" $CONFIG_VMX_CPU_DBG \
+	"CONFIG_VMX_DT_DBG" "" $CONFIG_VMX_DT_DBG \
 	"CONFIG_VMX_IDT_DBG" "" $CONFIG_VMX_IDT_DBG \
 	"CONFIG_VMX_EPT_DBG" "" $CONFIG_VMX_EPT_DBG \
 	"CONFIG_VMX_EXCP_DBG" "" $CONFIG_VMX_EXCP_DBG \
@@ -315,6 +316,7 @@ function debuging()
 	CONFIG_SVM_CR_DBG="off"
 	CONFIG_VMX_DBG="off"
 	CONFIG_VMX_CPU_DBG="off"
+	CONFIG_VMX_DT_DBG="off"
 	CONFIG_VMX_IDT_DBG="off"
 	CONFIG_VMX_EPT_DBG="off"
 	CONFIG_VMX_EXCP_DBG="off"
@@ -410,6 +412,7 @@ function commit()
     echo "CONFIG_SVM_CR_DBG=$CONFIG_SVM_CR_DBG" >> $confout
     echo "CONFIG_VMX_DBG=$CONFIG_VMX_DBG" >> $confout
     echo "CONFIG_VMX_CPU_DBG=$CONFIG_VMX_CPU_DBG" >> $confout
+    echo "CONFIG_VMX_DT_DBG=$CONFIG_VMX_DT_DBG" >> $confout
     echo "CONFIG_VMX_IDT_DBG=$CONFIG_VMX_IDT_DBG" >> $confout
     echo "CONFIG_VMX_EPT_DBG=$CONFIG_VMX_EPT_DBG" >> $confout
     echo "CONFIG_VMX_EXCP_DBG=$CONFIG_VMX_EXCP_DBG" >> $confout

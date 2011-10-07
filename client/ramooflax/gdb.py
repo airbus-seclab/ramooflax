@@ -17,7 +17,7 @@
 #
 import socket, errno
 
-from utils import *
+from utils import Utils
 
 class GDB:
     def __init__(self, ip, port):
@@ -58,14 +58,14 @@ class GDB:
 
     def __send(self, data, sz):
         done = 0
-        if utils.debug:
+        if Utils.debug:
             print "about to send",repr(data[0])
         while done < sz:
             try:
                 sent  = self.__sk.send(data)
                 done += sent
                 data  = data[sent:]
-                if utils.debug:
+                if Utils.debug:
                     print "sent",sent,str(done)+"/"+str(sz)
             except socket.error as (err, msg):
                 print "send:",msg
@@ -92,22 +92,22 @@ class GDB:
             raise
 
     def ack(self):
-        if utils.debug:
+        if Utils.debug:
             print "send ACK"
         self._send("+")
 
     def nak(self):
-        if utils.debug:
+        if Utils.debug:
             print "send NAK"
         self._send("-")
 
     def intr(self):
-        if utils.debug:
+        if Utils.debug:
             print "send INTR"
         self._send("\x03")
 
     def quit(self):
-        if utils.debug:
+        if Utils.debug:
             print "send QUIT"
         self._send("$k#6b")
         self.recv_pkt(2, s_ack=False)
@@ -122,7 +122,7 @@ class GDB:
     def send_pkt(self, data):
         pkt = '$' + data + '#' + "%.2x" % (self.checksum(data))
         self._send(pkt)
-        if utils.debug:
+        if Utils.debug:
             print "sent",repr(pkt)
 
     def recv_pkt(self, sz=0, r_ack=True, s_ack=True):
@@ -132,16 +132,19 @@ class GDB:
             sz += 1 # ack/nak
         return self._recv_pkt(sz, ack=s_ack)
 
-    def _recv_raw(self, expected):
-        if utils.debug:
+    def recv_raw(self, expected):
+        if Utils.debug:
             print "receiving raw data"
         l = len(self.__cache)
         while l < expected:
             data, dl = self.__recv(expected - l)
             l += dl
-            if utils.debug:
+            if Utils.debug:
                 print "\r%d/%d" % (l, expected),
             self.__cache += data
+
+        if Utils.debug:
+            print ""
 
         data = self.__cache[:expected]
         self.__cache = self.__cache[expected:]
@@ -149,7 +152,7 @@ class GDB:
 
     def _recv_pkt(self, expected, chunck=4096, ack=True):
         l = len(self.__cache)
-        if utils.debug:
+        if Utils.debug:
             print l,"in cache,",expected,"expected"
 
         while l < expected:
@@ -157,13 +160,13 @@ class GDB:
             l += dl
             self.__cache += data
 
-            if utils.debug:
+            if Utils.debug:
                 print l,"in cache,",expected,"expected"
 
             if "$E" in self.__cache:
                 break
 
-        if utils.debug:
+        if Utils.debug:
             print "cache", repr(self.__cache)
 
         done = 0
@@ -172,7 +175,7 @@ class GDB:
             header = self.__cache[0]
 
             if header == '+':
-                if utils.debug:
+                if Utils.debug:
                     print "ACK received"
                 done = 1
             elif header == '$':
@@ -187,7 +190,7 @@ class GDB:
             self.__cache = self.__cache[done:]
             expected -= done
 
-            if utils.debug:
+            if Utils.debug:
                 print "still",len(self.__cache),"in cache"
                 print "done",done,"still",expected,"to process"
 
@@ -223,13 +226,13 @@ class GDB:
             # short answer
             return (el,self.__parse_msg(content, cl))
 
-        if utils.debug:
+        if Utils.debug:
             print "data packet"
         return (el,content)
 
     def __parse_msg(self, msg, sz):
         if sz == 2 and msg == "OK":
-            if utils.debug:
+            if Utils.debug:
                 print "received \"OK\""
         elif sz == 0:
             print "received \"Unsupported\""
@@ -286,24 +289,20 @@ class GDB:
         self.send_pkt("z"+knd+","+addr+","+sz)
         self.recv_pkt(2)
 
-    def read_stop_reason(self, sz):
-        ln = 15 + sz
-        return self.recv_pkt(ln, r_ack=False)
-
     def resume(self, addr=None):
-        if utils.debug:
+        if Utils.debug:
             print "send c"
         self._send("$c#63")
         self.recv_pkt()
 
     def singlestep(self, addr=None):
-        if utils.debug:
+        if Utils.debug:
             print "send s"
         self._send("$s#73")
         self.recv_pkt()
 
     def stop_reason(self):
-        if utils.debug:
+        if Utils.debug:
             print "send ?"
         self._send("$?#3f")
         self.recv_pkt()
@@ -360,7 +359,7 @@ class GDB:
     def read_pmem(self, data, sz):
         self._send_vmm_pkt("\x8b"+data)
         self.recv_pkt(2)
-        return self._recv_raw(sz) #raw data
+        return self.recv_raw(sz) #raw data
 
     def write_pmem(self, cmd, data, sz):
         self._send_vmm_pkt("\x8c"+cmd)
@@ -370,7 +369,7 @@ class GDB:
     def read_vmem(self, data, sz):
         self._send_vmm_pkt("\x8d"+data)
         self.recv_pkt(2)
-        return self._recv_raw(sz) #raw data
+        return self.recv_raw(sz) #raw data
 
     def write_vmem(self, cmd, data, sz):
         self._send_vmm_pkt("\x8e"+cmd)

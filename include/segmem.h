@@ -21,13 +21,12 @@
 #include <types.h>
 #include <gpr.h>
 
-/* in 32 bits code, force access of 64 bits base addr */
-typedef struct descriptor_table_register_64
+typedef struct descriptor_table_register
 {
-   uint16_t   limit;
-   uint64_t   base;
+   uint16_t  limit;
+   raw64_t   base;
 
-} __attribute__((packed)) dt64_reg_t;
+} __attribute__((packed)) dt_reg_t;
 
 /*
 ** Segment Selector

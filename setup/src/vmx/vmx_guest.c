@@ -32,7 +32,7 @@ static void vmx_vmcs_guest_nonregister_state_init()
    vm_state.activity_state.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE & misc_data.eax;
 
    vm_state.vmcs_link_ptr.raw = -1ULL;
-   //vm_state.preempt_timer.raw = 0x200000;
+   //vm_state.preempt_timer.raw = 1;
 }
 
 static void vmx_vmcs_guest_register_state_segments_init()

@@ -351,6 +351,7 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
    if(__lmode64())
       sz = sizeof(uint64_t)*2;
    else
+      /* XXX: gdb seems to wait for 32 bits regs at least */
       sz = sizeof(uint32_t)*2;
 
    gdb_add_number(paddr, sz, 0);

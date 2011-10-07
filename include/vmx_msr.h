@@ -243,6 +243,7 @@ typedef union vmx_procbased_ctls_msr
 
 #define vmx_allow_proc2(_fx)           (_fx.allow_1 & (1<<31))
 #define vmx_allow_ept(_fx)             (_fx.allow_1 & (1<<1))
+#define vmx_allow_dt(_fx)              (_fx.allow_1 & (1<<2))
 #define vmx_allow_vpid(_fx)            (_fx.allow_1 & (1<<5))
 #define vmx_allow_uguest(_fx)          (_fx.allow_1 & (1<<7))
 

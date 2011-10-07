@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 #
 # Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
 #
@@ -15,20 +16,19 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-import inspect
+from distutils.core import setup
 
-class Utils:
-    def __init__(self):
-        self.debug = False
+setup(
+    name = 'Ramooflax',
+    version = '0.1',
+    packages=['ramooflax'],
+    scripts = ["bin"],
+    # Metadata
+    author = 'Stephane Duverger',
+    author_email = 'stephane.duverger@gmail.com',
+    description = 'Ramooflax pre-boot hypervisor python API',
+    license = 'GPLv2',
+    # keywords = '',
+    # url = '',
+)
 
-    def revert_string_bytes(self, s):
-        rs = []
-        for i in range(len(s)/2):
-            rs.append(s[-2:])
-            s = s[:-2]
-        return "".join(rs)
-
-    def in_completer(self):
-        return (inspect.stack()[3][3] == "attr_matches")
-
-utils = Utils()

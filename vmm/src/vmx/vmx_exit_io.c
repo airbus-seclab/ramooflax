@@ -52,7 +52,7 @@ int __vmx_io_init(io_insn_t *io)
    vmcs_read(vm_exit_info.guest_linear);
    vmx_io_s = &vm_exit_info.insn_info.io;
 
-   io->addr = (vmx_io_s->addr!=2)?vmx_io_s->addr+1:4;
+   io->addr = 1<<vmx_io_s->addr;
    io->back = vm_state.rflags.df;
    io->rep  = vmx_io->rep;
    io->msk  = (1ULL<<(16*io->addr)) - 1;

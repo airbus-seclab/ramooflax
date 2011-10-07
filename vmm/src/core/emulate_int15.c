@@ -228,7 +228,7 @@ static int emulate_int15_smap()
 
    if(vmm_area_range(dst.linear, gpr->rcx.low))
    {
-      debug(EMU_INSN, "vm stores smap entry into vmm area\n");
+      debug(SMAP, "vm stores smap entry into vmm area\n");
       return EMU_FAIL;
    }
 
@@ -243,7 +243,7 @@ int emulate_int15()
    switch(rax->wlow)
    {
    case BIOS_GET_SMAP:
-      debug(EMU_INSN, "get smap\n");
+      debug(SMAP, "get smap\n");
       switch(emulate_int15_smap())
       {
       case EMU_SUCCESS:

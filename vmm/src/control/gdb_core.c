@@ -209,6 +209,32 @@ void gdb_traps_disable()
    gdb_set_traps_updated();
 }
 
+/*
+** Hardware data, i/o, single-step traps
+** are checked after insn execution. If we
+** emulated one, we may loose a #db condition
+**
+** Such a situation is raised when we single-step
+** or put data breakpoint on an instruction which
+** is emulated by the vmm (cr access, ...)
+**
+** Insn hardware breakpoints are not subject to this
+** because they are checked before execution
+*/
+void gdb_stub_pre()
+{
+   if(!__vmexit_on_insn())
+      return;
+
+   if(!gdb_active_cr3_check())
+      return;
+
+   if(gdb_singlestep_fake())
+      return;
+
+   /* XXX: we must check data and i/o breakpoints too */
+}
+
 void gdb_stub_post()
 {
    if(!gdb_enabled())
@@ -240,7 +266,7 @@ static int gdb_excp_dbg(uint32_t vector)
    case GP_EXCP:
       rc = gdb_excp_gp(); break;
    default: /* inconsistent state */
-      debug(GDB_CMD, "vmm can't handle exception, we let it to remote client");
+      debug(GDB_CMD, "vmm can't handle exception, we let it to remote client\n");
       preempt_event = GDB_EXIT_EXCP_DE+vector;
       rc = GDB_PREEMPT;
    }

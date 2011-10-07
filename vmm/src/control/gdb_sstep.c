@@ -108,7 +108,10 @@ int __gdb_singlestep_fake()
    int rc = gdb_singlestep();
 
    if(rc == GDB_PREEMPT)
+   {
       __dr6.bs = 1;
+      __set_accessed(__dr6);
+   }
 
    return rc;
 }

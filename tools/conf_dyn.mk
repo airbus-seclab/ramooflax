@@ -223,6 +223,9 @@ endif
 ifeq ($(CONFIG_VMX_CPU_DBG),on)
 CFLG_CONFIG += -DVMX_CPU_DBG
 endif
+ifeq ($(CONFIG_VMX_DT_DBG),on)
+CFLG_CONFIG += -DVMX_DT_DBG
+endif
 ifeq ($(CONFIG_VMX_IDT_DBG),on)
 CFLG_CONFIG += -DVMX_IDT_DBG
 endif

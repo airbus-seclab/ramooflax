@@ -86,6 +86,8 @@ typedef struct vmx_bazaar
 #define vm_entry_ctrls  info->vm.vmcs.controls.entry_ctrls
 #define vm_exit_info    info->vm.vmcs.exit_info
 
+#define vmx_cpl         vm_state.cs.selector.rpl
+
 /*
 ** Functions
 */

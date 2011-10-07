@@ -385,6 +385,12 @@
 #define __DEBUG_VMX_CPU_DBG(fmt,fct,...) ({})
 #endif
 
+#if defined VMX_DT_DBG
+#define __DEBUG_VMX_DT_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
+#else
+#define __DEBUG_VMX_DT_DBG(fmt,fct,...) ({})
+#endif
+
 #if defined VMX_IDT_DBG
 #define __DEBUG_VMX_IDT_DBG(fmt,fct,...) ({fct(fmt, ## __VA_ARGS__);})
 #else

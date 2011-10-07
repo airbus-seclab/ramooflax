@@ -15,8 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from gdb import *
-from event import *
+import event
 
 class BreakPointType:
     x  = 1 # execution
@@ -44,26 +43,26 @@ class BreakPoint:
         return "%s 0x%x %s (%d)" % (self.name, self.addr, s, self.size)
 
 class BreakPoints:
-    def __init__(self, mode, gdb, filtr):
+    def __init__(self, cpu, gdb, filtr):
         self.__filter = filtr
         self.__gdb = gdb
-        self.__sz = mode/4
-        self.__fmt = "%."+str(self.__sz)+"x"
+        self.__cpu = cpu
         self.__list = {}
         self.__auto_name = 0
-        self.__filter.register(StopReason.gdb_trap, self.__trap_filter)
+        self.__filter.register(event.StopReason.gdb_trap, self.__trap_filter)
         self.__filter_sstep = self.__trap_sstep
 
     def __encode(self, val):
-        out = self.__fmt % (val)
-        return out[-self.__sz:]
+        fmt = "%."+str(self.__cpu.sz)+"x"
+        out = fmt % (val)
+        return out[-self.__cpu.sz:]
 
     def __trap_sstep(self, vm):
-        print "Single Step Trap @", hex(vm.cpu.gpr.pc)
+        print "Single Step Trap @", hex(vm.cpu.code_location())
         return True
 
     def __trap_break(self, vm):
-        print "Breakpoint @", hex(vm.cpu.gpr.pc)
+        print "Breakpoint @", hex(vm.cpu.code_location())
         return True
 
     def __trap_filter(self, vm):

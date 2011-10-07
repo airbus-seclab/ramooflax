@@ -15,32 +15,16 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __GDB_CORE_H__
-#define __GDB_CORE_H__
+#ifndef __VMX_EXIT_DT_H__
+#define __VMX_EXIT_DT_H__
 
-#include <types.h>
+#define VMX_DT_FAIL      0
+#define VMX_DT_SUCCESS   1
+#define VMX_DT_FAULT     2
 
 /*
 ** Functions
 */
-int    gdb_excp_event(uint32_t);
-void   gdb_stub_pre();
-void   gdb_stub_post();
-
-int    __gdb_active_cr3_check(int);
-#define gdb_active_cr3_check() __gdb_active_cr3_check(3)
-
-void   gdb_traps_disable();
-void   gdb_traps_enable();
-
-void   gdb_post_inspect_rflags();
-
-void   gdb_protect_bp_excp();
-void   gdb_release_bp_excp();
-void   gdb_protect_db_excp();
-void   gdb_release_db_excp();
-
-int    gdb_cr_rd_event(uint8_t);
-int    gdb_cr_wr_event(uint8_t);
+int  vmx_vmexit_resolve_dt();
 
 #endif
