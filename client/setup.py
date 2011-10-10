@@ -22,7 +22,7 @@ setup(
     name = 'Ramooflax',
     version = '0.1',
     packages=['ramooflax'],
-    scripts = ["bin"],
+    #scripts = ["bin"],
     # Metadata
     author = 'Stephane Duverger',
     author_email = 'stephane.duverger@gmail.com',
