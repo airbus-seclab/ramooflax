@@ -26,6 +26,7 @@ extern info_data_t *info;
 int resolve_invd()
 {
    asm volatile("invd");
+   info->vm.cpu.emu_done = 1;
    vm_update_rip(INVD_INSN_SZ);
    return 1;
 }
@@ -33,17 +34,20 @@ int resolve_invd()
 int resolve_wbinvd()
 {
    asm volatile ("wbinvd");
+   info->vm.cpu.emu_done = 1;
    vm_update_rip(WBINVD_INSN_SZ);
    return 1;
 }
 
 int resolve_hlt()
 {
+   info->vm.cpu.emu_done = 1;
    return 0;
 }
 
 int resolve_icebp()
 {
+   info->vm.cpu.emu_done = 1;
    return 0;
 }
 

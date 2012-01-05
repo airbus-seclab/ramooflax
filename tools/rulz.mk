@@ -3,16 +3,16 @@
 #############################################################################
 
 define pre-inst
-mount $(INST_DIR)
+mount $(CONFIG_INST_DIR)
 endef
 
 define inst
-$(CP) $@ $(INST_DIR)/$(notdir $@)
+$(CP) $@ $(CONFIG_INST_DIR)/$(notdir $@)
 echo "    CP    $@"
 endef
 
 define post-inst
-umount -l $(INST_DIR)
+umount -l $(CONFIG_INST_DIR)
 endef
 
 define compile

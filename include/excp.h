@@ -142,7 +142,7 @@ typedef union exception64_error_code
 */
 #ifndef __INIT__
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_exit_excp.h>
 #else
 #include <vmx_exit_excp.h>

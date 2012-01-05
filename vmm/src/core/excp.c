@@ -17,7 +17,7 @@
 */
 #include <excp.h>
 #include <intr.h>
-#include <gdb.h>
+#include <ctrl.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -122,13 +122,7 @@ int resolve_exception()
       __post_access(__cr2);
    }
 
-#ifdef __CTRL_ACTIVE__
-   rc = gdb_excp_event(__exception_vector);
-#else
-   rc = GDB_IGNORE;
-#endif
-
-   if(rc == GDB_IGNORE)
+   if((rc=ctrl_evt_excp(__exception_vector)) == CTRL_EVT_IGNORE)
       __inject_exception(__exception_vector, __exception_error, __exception_fault);
 
    return rc;

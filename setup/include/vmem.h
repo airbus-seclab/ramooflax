@@ -18,7 +18,9 @@
 #ifndef __VMEM_H__
 #define __VMEM_H__
 
-#ifdef __SVM__
+#include <config.h>
+
+#ifdef CONFIG_ARCH_AMD
 #include <svm_npt.h>
 #else
 #include <vmx_ept.h>

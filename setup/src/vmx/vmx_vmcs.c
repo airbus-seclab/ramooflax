@@ -83,7 +83,7 @@ static void vmx_vmcs_exit_controls_init()
 
 static void vmx_vmcs_exec_controls_msr_init()
 {
-#ifndef __MSR_PROXY__
+#ifndef CONFIG_MSR_PROXY
    vmx_deny_msr_rw(info->vm.cpu.vmc, IA32_MTRR_DEF_TYPE);
    vmx_deny_msr_rw(info->vm.cpu.vmc, IA32_EFER_MSR);
 

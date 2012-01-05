@@ -18,7 +18,6 @@
 #include <emulate.h>
 #include <vmm.h>
 #include <vm.h>
-#include <gdb.h>
 #include <disasm.h>
 #include <intr.h>
 #include <debug.h>
@@ -540,6 +539,6 @@ int emulate()
       return 0;
    }
 
+   info->vm.cpu.emu_done = 1;
    return 1;
 }
-

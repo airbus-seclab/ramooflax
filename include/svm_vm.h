@@ -43,7 +43,7 @@
 #define __gs                    (__state.gs)
 #define __ss                    (__state.ss)
 
-#define __vmexit_on_insn()      __svm_vmexit_on_insn()
+#define __vmexit_on_insn()      (__svm_vmexit_on_insn() || info->vm.cpu.emu_done)
 
 #define __cpl                   (__state.cpl)
 #define __gdtr                  (__state.gdtr)

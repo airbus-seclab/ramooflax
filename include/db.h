@@ -19,7 +19,8 @@
 #define __DB_H__
 
 #ifndef __INIT__
-#ifdef __SVM__
+#include <config.h>
+#ifdef CONFIG_ARCH_AMD
 #include <svm_exit.h>
 #else
 #include <vmx_exit.h>
@@ -29,6 +30,6 @@
 /*
 ** Functions
 */
-void db_post_hdl();
+void  db_check_stp();
 
 #endif

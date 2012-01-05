@@ -59,6 +59,7 @@ int resolve_msr(uint8_t wr)
    if(rc == MSR_FAIL)
       return 0;
 
+   info->vm.cpu.emu_done = 1;
    vm_update_rip(MSR_INSN_SZ);
    return 1;
 }

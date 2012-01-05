@@ -1,9 +1,9 @@
 obj := video.o
 
-ifdef USE_EHCI
+ifeq ($(CONFIG_HAS_EHCI),yes)
 obj += pci.o ehci.o
 endif
 
-ifdef USE_UART
+ifeq ($(CONFIG_HAS_UART),yes)
 obj += uart.o
 endif

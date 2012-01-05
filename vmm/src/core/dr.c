@@ -18,7 +18,6 @@
 #include <dr.h>
 #include <vmm.h>
 #include <vm.h>
-#include <gdb.h>
 #include <info_data.h>
 #include <excp.h>
 #include <debug.h>

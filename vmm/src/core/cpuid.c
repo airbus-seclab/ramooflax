@@ -73,6 +73,7 @@ int resolve_cpuid()
    if(rc == CPUID_SUCCESS)
       vm_update_rip(CPUID_INSN_SZ);
 
+   info->vm.cpu.emu_done = 1;
    return 1;
 }
 

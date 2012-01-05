@@ -1,12 +1,8 @@
 #!/usr/bin/make -f
 
-SUBDIRS := core drivers libc devices disasm
+SUBDIRS := core drivers libc devices disasm control
 
-ifneq ($(USE_CTRL),)
-SUBDIRS += control
-endif
-
-ifneq ($(USE_AMD),)
+ifeq ($(CONFIG_ARCH),amd)
 SUBDIRS += svm
 else
 SUBDIRS += vmx

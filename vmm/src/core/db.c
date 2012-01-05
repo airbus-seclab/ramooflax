@@ -16,38 +16,42 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <db.h>
-#include <gdb.h>
+#include <ctrl.h>
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-static void db_check_native_sstep()
+/*
+** Hardware exec traps are checked before
+** insn execution. Hardware data, i/o and
+** single-step traps are checked after.
+**
+** If we emulated an insn, we may loose
+** a #db condition, so take care here.
+**
+** XXX: iret, popf, mov ss ...
+*/
+void db_check_stp()
 {
-   /*
-   ** XXX:
-   ** . iret, popf, mov ss ... we should not inject, the cpu
-   **   will do it one insn later due to TF. It's the normal
-   **   behavior for these instructions
-   */
-   if(__rflags.tf &&
-#ifdef __CTRL_ACTIVE__
-      !gdb_singlestep_check() &&
-#endif
-      __vmexit_on_insn())
+   if(!__rflags.tf || !__vmexit_on_insn())
+      return;
+
+   __pre_access(__dr6);
+   __dr6.bs = 1;
+
+   if(__ctrl_evt_excp_dbg(DB_EXCP) == CTRL_EVT_IGNORE)
    {
-      debug(DB, "native singlestep\n");
+      __rflags.tf = 0;
+      __post_access(__rflags);
+
+      if(__injecting_exception())
+      {
+	 dbg_hard_set_dr6_dirty(1); /* XXX: ??? */
+	 return;
+      }
+
       __inject_exception(DB_EXCP, 0, 0);
+      __post_access(__dr6);
    }
-}
-
-void db_post_hdl()
-{
-#ifdef __CTRL_ACTIVE__
-   if(gdb_dr6_is_dirty())
-      gdb_clean_dr6();
-#endif
-
-   if(!__injecting_exception())
-      db_check_native_sstep();
 }

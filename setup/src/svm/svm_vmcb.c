@@ -23,7 +23,7 @@ extern info_data_t *info;
 
 void svm_vmcb_msr_controls_init()
 {
-#ifdef __MSR_PROXY__
+#ifdef CONFIG_MSR_PROXY
    svm_deny_msr_rw_range(info->vm.cpu.vmc, 0, 0x2000-1);
    svm_deny_msr_rw_range(info->vm.cpu.vmc, 0xc0000000, 0xc0001fff-1);
    svm_deny_msr_rw_range(info->vm.cpu.vmc, 0xc0010000, 0xc0011fff-1);

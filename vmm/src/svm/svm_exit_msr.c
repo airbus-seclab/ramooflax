@@ -47,7 +47,7 @@ static int __svm_vmexit_resolve_msr_efer(uint8_t wr)
    return MSR_SUCCESS;
 }
 
-#ifdef __MSR_PROXY__
+#ifdef CONFIG_MSR_PROXY
 static int __svm_vmexit_resolve_msr_gen(msr_t *msr, uint8_t wr)
 {
    gpr64_ctx_t *ctx = info->vm.cpu.gpr;
@@ -74,7 +74,7 @@ int __svm_vmexit_resolve_msr(uint8_t wr)
    case AMD_EFER_MSR:
       return __svm_vmexit_resolve_msr_efer(wr);
 
-#ifdef __MSR_PROXY__
+#ifdef CONFIG_MSR_PROXY
    case IA32_SYSENTER_CS_MSR:
       return __svm_vmexit_resolve_msr_gen(&vm_state.sysenter_cs, wr);
    case IA32_SYSENTER_ESP_MSR:

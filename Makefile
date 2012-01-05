@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-include tools/conf_static.mk
+include tools/config.mk
 
 .PHONY: clean $(PROJECTS)
 
@@ -38,7 +38,6 @@ $(tbin):
 	@$(FIND) $(tgt) -name *.[od] | xargs $(RM) -f
 else
 include $(CONFIG)
-include tools/conf_dyn.mk
 include tools/rulz.mk
 
 ifeq ($(act),install)
@@ -47,7 +46,7 @@ $(tbin):
 	@$(inst)
 	@$(post-inst)
 else
-INCLUDE  := -I$(tgt)/include -Iinclude
+INCLUDE := -I$(tgt)/include -Iinclude
 
 ifeq ($(blob),)
 include $(tgt)/Makefile

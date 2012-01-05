@@ -19,6 +19,7 @@
 #define __CPUID_H__
 
 #include <types.h>
+#include <config.h>
 
 /*
 ** CPUID
@@ -225,7 +226,7 @@ typedef union cpuid_feature_info_ebx
 /*
 ** Functions
 */
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_cpuid.h>
 #else
 #include <vmx_cpuid.h>
@@ -236,7 +237,7 @@ typedef union cpuid_feature_info_ebx
 #define CPUID_FAIL     0
 #define CPUID_SUCCESS  1
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_exit_cpuid.h>
 #else
 #include <vmx_exit_cpuid.h>

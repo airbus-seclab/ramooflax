@@ -32,7 +32,7 @@ int vmx_vmexit_resolve_gp()
    /* #GP are related to IDT events */
    if(!vm_exit_info.idt_info.v)
       return 0;
-      
+
    if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT)
       return emulate();
 
@@ -41,4 +41,3 @@ int vmx_vmexit_resolve_gp()
 
    return 0;
 }
-

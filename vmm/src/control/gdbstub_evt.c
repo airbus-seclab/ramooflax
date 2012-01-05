@@ -15,22 +15,42 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __CTRL_HDL_H__
-#define __CTRL_HDL_H__
+#include <ctrl_evt.h>
+#include <gdbstub.h>
+#include <debug.h>
+#include <info_data.h>
 
-#ifdef __EHCI_CTRL__
-#include <ehci.h>
-#define ctrl_read(data,size)     dbgp_read(data,size)
-#define ctrl_write(data,size)    dbgp_write(data,size)
-#else
-#ifdef __UART_CTRL__
-#include <uart.h>
-#define ctrl_read(data,size)     uart_read(data,size)
-#define ctrl_write(data,size)    uart_write(data,size)
-#else
-#define ctrl_read(data,size)     ({0;})
-#define ctrl_write(data,size)    ({})
-#endif
-#endif
+extern info_data_t *info;
 
-#endif
+static int gdbstub_evt_cr_rd(arg_t arg)
+{
+   gdb_preempt(GDB_EXIT_R_CR0+(uint8_t)arg.blow);
+   return 1;
+}
+
+static int gdbstub_evt_cr_wr(arg_t arg)
+{
+   gdb_preempt(GDB_EXIT_W_CR0+(uint8_t)arg.blow);
+   return 1;
+}
+
+static int gdbstub_evt_excp(arg_t arg)
+{
+   gdb_preempt(GDB_EXIT_EXCP_DE+(uint8_t)arg.low);
+   return 1;
+}
+
+static int gdbstub_evt_trap(arg_t __unused__ arg)
+{
+   debug(GDBSTUB_EVT, "preempt(trap)\n");
+   gdb_preempt(GDB_EXIT_TRAP);
+   return 1;
+}
+
+ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
+   gdbstub_evt_cr_rd,
+   gdbstub_evt_cr_wr,
+   gdbstub_evt_excp,
+   gdbstub_evt_trap,
+   gdbstub_evt_trap,
+};

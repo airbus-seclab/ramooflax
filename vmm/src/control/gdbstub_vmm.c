@@ -16,10 +16,8 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <ctrl.h>
-#include <gdb.h>
-#include <insn.h>
-#include <cr.h>
-#include <paging.h>
+#include <gdbstub_pkt.h>
+#include <gdbstub_vmm.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -57,7 +55,7 @@ static void gdb_vmm_rd_all_sysregs(uint8_t __unused__ *data, size_t __unused__ l
 
 static void gdb_vmm_wr_all_sysregs(uint8_t *data, size_t len)
 {
-   debug(GDB_CMD, "need to implement write all system registers\n");
+   debug(GDBSTUB_CMD, "need to implement write all system registers\n");
    data = data;
    len  = len;
    gdb_unsupported();
@@ -70,7 +68,7 @@ static void gdb_vmm_rd_sysreg(uint8_t *data, size_t len)
 
    if(!__gdb_setup_reg_op(data, len, &reg, &size, 0, 0, 1))
    {
-      debug(GDB_CMD, "read sysreg failed\n");
+      debug(GDBSTUB_CMD, "read sysreg failed\n");
       return;
    }
 
@@ -86,7 +84,7 @@ static void gdb_vmm_wr_sysreg(uint8_t *data, size_t len)
 
    if(!__gdb_setup_reg_op(data, len, &reg, &size, &value, 1, 1))
    {
-      debug(GDB_CMD, "write sysreg failed\n");
+      debug(GDBSTUB_CMD, "write sysreg failed\n");
       return;
    }
 
@@ -103,7 +101,7 @@ static void gdb_vmm_wr_sysreg(uint8_t *data, size_t len)
    return;
 
 __err:
-   debug(GDB_CMD, "invalid wr to control register\n");
+   debug(GDBSTUB_CMD, "invalid wr to control register\n");
    gdb_err_inv();
 }
 
@@ -166,20 +164,6 @@ static void gdb_vmm_wr_excp_mask(uint8_t *data, size_t len)
    gdb_ok();
 }
 
-static void gdb_enable_active_cr3(raw64_t cr3)
-{
-   info->vmm.ctrl.dbg.stored_cr3.raw = cr3.raw;
-   info->vmm.ctrl.dbg.active_cr3 = &info->vmm.ctrl.dbg.stored_cr3;
-   info->vmm.ctrl.dbg.status.cr3 = 1;
-}
-
-static void gdb_disable_active_cr3()
-{
-   info->vmm.ctrl.dbg.active_cr3 = &__cr3;
-   info->vmm.ctrl.dbg.status.keep_cr3 = 0;
-   info->vmm.ctrl.dbg.status.cr3 = 0;
-}
-
 static void gdb_vmm_set_active_cr3(uint8_t *data, size_t len)
 {
    raw64_t val;
@@ -190,22 +174,21 @@ static void gdb_vmm_set_active_cr3(uint8_t *data, size_t len)
       return;
    }
 
-   gdb_enable_active_cr3(val);
+   ctrl_active_cr3_enable(val);
    gdb_ok();
-   debug(GDB, "cr3 tracking enabled for 0x%X\n", info->vmm.ctrl.dbg.stored_cr3.raw);
 }
 
 static void gdb_vmm_del_active_cr3(uint8_t __unused__ *data, size_t __unused__ len)
 {
-   gdb_disable_active_cr3();
+   ctrl_active_cr3_disable();
    gdb_ok();
 }
 
 static void gdb_vmm_keep_active_cr3(uint8_t __unused__ *data, size_t __unused__ len)
 {
-   if(info->vmm.ctrl.dbg.status.cr3)
+   if(ctrl_cr3_enabled())
    {
-      info->vmm.ctrl.dbg.status.keep_cr3 = 1;
+      ctrl_set_cr3_keep(1);
       gdb_ok();
       return;
    }
@@ -223,9 +206,9 @@ static void gdb_vmm_set_affinity(uint8_t *data, size_t len)
       return;
    }
 
-   gdb_set_affinity(val.blow);
+   ctrl_set_affinity(val.blow);
    gdb_ok();
-   debug(GDB, "set affinity to %d\n", val.blow);
+   debug(GDBSTUB, "set affinity to %d\n", val.blow);
 }
 
 static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len, loc_t *addr, size_t *sz)
@@ -262,7 +245,7 @@ static void __gdb_vmm_rw_pmem(offset_t addr, size_t sz, uint8_t wr)
 
    if(!__vm_remote_access_pmem(&access))
    {
-      debug(GDB, "memory access failure\n");
+      debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
    }
 }
@@ -275,7 +258,7 @@ static void gdb_vmm_rd_pmem(uint8_t *data, size_t len)
    if(!__gdb_vmm_mem_rw_parse(data, len, &addr, &sz))
       return;
 
-   debug(GDB_CMD, "reading physical memory @ 0x%X sz %d\n", addr.linear, sz);
+   debug(GDBSTUB_CMD, "reading physical memory @ 0x%X sz %d\n", addr.linear, sz);
    __gdb_vmm_rw_pmem(addr.linear, sz, 1);
 }
 
@@ -287,7 +270,7 @@ static void gdb_vmm_wr_pmem(uint8_t *data, size_t len)
    if(!__gdb_vmm_mem_rw_parse(data, len, &addr, &sz))
       return;
 
-   debug(GDB_CMD, "writing physical memory @ 0x%X sz %d\n", addr.linear, sz);
+   debug(GDBSTUB_CMD, "writing physical memory @ 0x%X sz %d\n", addr.linear, sz);
    __gdb_vmm_rw_pmem(addr.linear, sz, 0);
 }
 
@@ -299,10 +282,10 @@ static void gdb_vmm_rd_vmem(uint8_t *data, size_t len)
    if(!__gdb_vmm_mem_rw_parse(data, len, &addr, &sz))
       return;
 
-   debug(GDB_CMD, "reading virtual memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(!__vm_send_mem(info->vmm.ctrl.dbg.active_cr3, addr.linear, sz))
+   debug(GDBSTUB_CMD, "reading virtual memory @ 0x%X sz %d\n", addr.linear, sz);
+   if(!gdb_mem_send(addr.linear, sz))
    {
-      debug(GDB, "memory access failure\n");
+      debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
       return;
    }
@@ -316,10 +299,10 @@ static void gdb_vmm_wr_vmem(uint8_t *data, size_t len)
    if(!__gdb_vmm_mem_rw_parse(data, len, &addr, &sz))
       return;
 
-   debug(GDB_CMD, "writing virtual memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(!__vm_recv_mem(info->vmm.ctrl.dbg.active_cr3, addr.linear, sz))
+   debug(GDBSTUB_CMD, "writing virtual memory @ 0x%X sz %d\n", addr.linear, sz);
+   if(!gdb_mem_recv(addr.linear, sz))
    {
-      debug(GDB, "memory access failure\n");
+      debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
       return;
    }
@@ -336,17 +319,17 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
       return;
    }
 
-   debug(GDB_CMD, "translating 0x%X\n", vaddr);
+   debug(GDBSTUB_CMD, "translating 0x%X\n", vaddr);
 
    if(__paging())
    {
-      if(!__pg_walk(info->vmm.ctrl.dbg.active_cr3, vaddr, &paddr, &psz))
+      if(!__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz))
 	 paddr = 0;
    }
    else
       paddr = vaddr;
 
-   debug(GDB_CMD, "sending 0x%X\n", paddr);
+   debug(GDBSTUB_CMD, "sending 0x%X\n", paddr);
 
    if(__lmode64())
       sz = sizeof(uint64_t)*2;
@@ -379,8 +362,7 @@ static void gdb_vmm_wr_cr_rd_mask(uint8_t *data, size_t len)
       return;
    }
 
-   info->vmm.ctrl.usr.cr_rd = val.wlow & 0x1ff; /* only allow until cr8 */
-   __update_cr_read_mask();
+   ctrl_usr_set_cr_rd(val.wlow);
    gdb_ok();
 }
 
@@ -405,10 +387,9 @@ static void gdb_vmm_wr_cr_wr_mask(uint8_t *data, size_t len)
       return;
    }
 
-   debug(GDB_CMD, "write cr mask 0x%x\n", val.wlow);
+   debug(GDBSTUB_CMD, "write cr mask 0x%x\n", val.wlow);
 
-   info->vmm.ctrl.usr.cr_wr = val.wlow & 0x1ff; /* only allow until cr8 */
-   __update_cr_write_mask();
+   ctrl_usr_set_cr_wr(val.wlow);
    gdb_ok();
 }
 
@@ -445,38 +426,21 @@ void gdb_cmd_vmm(uint8_t *data, size_t len)
 
    if(idx <= sizeof(gdb_vmm_handlers)/sizeof(gdb_vmm_hdl_t))
    {
-      debug(GDB_CMD, "gdb_vmm handler call %d\n", idx);
+      debug(GDBSTUB_CMD, "gdb_vmm handler call %d\n", idx);
       gdb_vmm_handlers[idx](data, len);
       return;
    }
 
-   debug(GDB_CMD, "vmm cmd unsupported\n");
+   debug(GDBSTUB_CMD, "vmm cmd unsupported\n");
    gdb_unsupported();
 }
 
 void gdb_vmm_enable()
 {
-   if(!info->vmm.ctrl.dbg.status.keep_cr3)
-      gdb_disable_active_cr3();
-   else
-   {
-      debug(GDB_CMD, "gdb kept active cr3: 0x%X (0x%X <=> 0x%X)\n"
-	    , info->vmm.ctrl.dbg.stored_cr3.raw
-	    , info->vmm.ctrl.dbg.active_cr3
-	    ,&info->vmm.ctrl.dbg.stored_cr3);
-   }
 }
 
 void gdb_vmm_disable()
 {
-   info->vmm.ctrl.usr.excp  = 0;
-   info->vmm.ctrl.usr.cr_rd = 0;
-   info->vmm.ctrl.usr.cr_wr = 0;
-
-   __update_exception_mask();
-   __update_cr_read_mask();
-   __update_cr_write_mask();
-   __disable_lbr();
-
-   debug(GDB_CMD, "gdb specific vmm extensions disabled\n");
+   ctrl_active_cr3_reset();
+   ctrl_usr_reset();
 }

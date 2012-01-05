@@ -18,6 +18,7 @@
 #ifndef __MSR_H__
 #define __MSR_H__
 
+#include <config.h>
 #include <types.h>
 
 /*
@@ -55,6 +56,11 @@ typedef union raw_msr_entry
 
 #define __rd_msr(eax,ecx,edx)            rd_msr64(ecx,edx,eax)
 #define __wr_msr(eax,ecx,edx)            wr_msr64(ecx,edx,eax)
+
+/*
+** IA32_DEBUG_CTL_MSR (cf. vmx/svm msr)
+*/
+#define IA32_DEBUG_CTL_MSR                 0x1d9UL
 
 /*
 ** IA32_APIC_BASE_MSR
@@ -173,7 +179,7 @@ typedef union pat_register
 /*
 ** Functions
 */
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_msr.h>
 #else
 #include <vmx_msr.h>
@@ -186,7 +192,7 @@ typedef union pat_register
 #define MSR_NATIVE      2  /* commit to physical msr */
 #define MSR_FAULT       3
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_exit_msr.h>
 #else
 #include <vmx_exit_msr.h>

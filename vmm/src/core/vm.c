@@ -17,9 +17,10 @@
 */
 #include <vm.h>
 #include <paging.h>
-#include <dev_io_ports.h>
 #include <intr.h>
 #include <debug.h>
+#include <ctrl_io.h>
+#include <dev_io_ports.h>
 #include <info_data.h>
 
 extern info_data_t *info;
@@ -118,7 +119,7 @@ int __vm_remote_access_pmem(vm_access_t *access)
 {
    loc_t  loc;
    size_t done, len;
-   
+
    if(vmm_area_range(access->addr, access->len))
       return 0;
 
@@ -126,14 +127,14 @@ int __vm_remote_access_pmem(vm_access_t *access)
 
    if(access->wr)
    {
-      ctrl_write(loc.u8, access->len);
+      ctrl_io_write(loc.u8, access->len);
       return 1;
    }
 
    len = access->len;
    while(len)
    {
-      done = ctrl_read(loc.u8, len);
+      done = ctrl_io_read(loc.u8, len);
       loc.linear += done;
       len -= done;
    }

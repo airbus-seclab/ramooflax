@@ -2,7 +2,7 @@
 
 SUBDIRS := core drivers libc devices
 
-ifneq ($(USE_AMD),)
+ifeq ($(CONFIG_ARCH),amd)
 SUBDIRS += svm
 else
 SUBDIRS += vmx

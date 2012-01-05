@@ -195,6 +195,7 @@ int vmx_vmexit_resolve_dt()
 
    if(rc == VMX_DT_SUCCESS)
    {
+      info->vm.cpu.emu_done = 1;
       vmcs_read(vm_exit_info.insn_len);
       vm_update_rip(vm_exit_info.insn_len.raw);
       return 1;

@@ -120,7 +120,7 @@ typedef void (*isr64_t)(int64_r0_ctx_t*);
 void  intr_init();
 #else
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_exit_int.h>
 #else
 #include <vmx_exit_int.h>

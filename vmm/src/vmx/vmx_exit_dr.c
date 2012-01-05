@@ -32,6 +32,7 @@ int vmx_vmexit_resolve_dr_access()
 
    if(__resolve_dr(!access->dir, access->nr, gpr) == DR_SUCCESS)
    {
+      info->vm.cpu.emu_done = 1;
       vmcs_read(vm_exit_info.insn_len);
       vm_update_rip(vm_exit_info.insn_len.raw);
       return 1;

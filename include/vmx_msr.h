@@ -68,7 +68,7 @@ typedef union ia32_efer_msr
 #define lm_active()           ({ia32_efer_msr_t m; rd_msr_ia32_efer(m); m.lma;})
 
 /*
-** IA32_DEBUG_CTL_MSR
+** IA32_DBG_CTL_MSR
 */
 #define IA32_DBG_CTL_MSR                     0x1d9UL
 

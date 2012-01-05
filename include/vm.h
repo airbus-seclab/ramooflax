@@ -18,6 +18,7 @@
 #ifndef __VM_H__
 #define __VM_H__
 
+#include <config.h>
 #include <types.h>
 #include <realmem.h>
 #include <paging.h>
@@ -42,7 +43,7 @@
 /*
 ** VM architecture dependant stuff
 */
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_vmm.h>
 #include <svm_vm.h>
 typedef svm_vmc_t     vmc_t;
@@ -83,9 +84,11 @@ typedef struct vm_cpu
 {
    vm_pgmem_t     pg;        /* virtual paging tables */
    uint32_t       dflt_excp; /* default exception mask */
+   uint8_t        emu_done;  /* emulation engine called */
    vm_cpu_skill_t skillz;    /* vm cpu skillz */
    vmc_t          *vmc;      /* hardware virtualization data, strictly aligned */
    gpr64_ctx_t    *gpr;      /* vm GPRs (in vmm stack) */
+   uint8_t        insn_cache[X86_MAX_INSN_LEN];
 
 } __attribute__((packed)) vm_cpu_t;
 
@@ -110,7 +113,6 @@ typedef struct vm
 {
    vm_cpu_t    cpu;       /* vm cpu info */
    vm_dev_t    dev;       /* vm devices info */
-   uint8_t     insn_cache[X86_MAX_INSN_LEN];
 
    vm_bazaar_t;           /* vm additional control data */
 

@@ -19,6 +19,7 @@
 #define __PRINT_H__
 
 #include <types.h>
+#include <config.h>
 
 #define  va_start(v,l)           __builtin_va_start(v,l)
 #define  va_end(v)               __builtin_va_end(v)
@@ -35,30 +36,20 @@ size_t   __vprintf(const char*, va_list);
 size_t   __vsnprintf(char*, size_t, const char*, va_list);
 
 #ifdef __INIT__
-
 #include <video.h>
 #define debug_write(data,size)    video_write(data,size)
-
-/* #ifndef __X86_64__ */
-/* #include <video.h> */
-/* #define debug_write(data,size)    video_write(data,size) */
-/* #else */
-/* #define debug_write(data,size)    uart_write(data,size) */
-/* #endif */
-
 #else
-#ifdef __EHCI_PRINT__
+#ifdef CONFIG_PRINT_EHCI
 #include <ehci.h>
 #define debug_write(data,size)    dbgp_write(data,size)
 #else
-#ifdef __UART_PRINT__
+#ifdef CONFIG_PRINT_UART
 #include <uart.h>
 #define debug_write(data,size)    uart_write(data,size)
 #else
 #define debug_write(data,size)    ({})
 #endif
 #endif
-
 #endif
 
 #endif

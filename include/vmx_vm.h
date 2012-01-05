@@ -49,7 +49,7 @@
 #define __gs                    __state.gs
 #define __ss                    __state.ss
 
-#define __vmexit_on_insn()      __vmx_vmexit_on_insn()
+#define __vmexit_on_insn()      (__vmx_vmexit_on_insn() || info->vm.cpu.emu_done)
 
 #define __cpl                   __state.cs.selector.rpl
 #define __gdtr                  __state.gdtr

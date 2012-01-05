@@ -11,20 +11,20 @@
 # usage of Distorm3 (unstable)
 #
 from ramooflax import VM, Utils, CPUFamily
-#from distorm3 import Decode, Decode16Bits, Decode32Bits, Decode64Bits
+from distorm3 import Decode, Decode16Bits, Decode32Bits, Decode64Bits
 
 def sstep_disasm(vm):
     code_loc = vm.cpu.code_location()
     code_bytes = vm.mem.vread(code_loc, 15)
     print "pc = %#x | %s" % (code_loc, code_bytes.encode('hex'))
 
-    # if vm.cpu.mode == 16:
-    #     mode = Decode16Bits
-    # elif vm.cpu.mode == 32:
-    #     mode = Decode32Bits
-    # else:
-    #     mode = Decode64Bits
-    #print Decode(code_loc, code_bytes, mode)[0][2]
+    if vm.cpu.mode == 16:
+        mode = Decode16Bits
+    elif vm.cpu.mode == 32:
+        mode = Decode32Bits
+    else:
+        mode = Decode64Bits
+    print Decode(code_loc, code_bytes, mode)[0][2]
 
     return True
 

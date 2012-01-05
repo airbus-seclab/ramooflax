@@ -190,7 +190,7 @@ int pci_search(pci_search_t match, pci_cfg_val_t *pci)
 {
    pci_cfg_dev_vdr_t dvd;
    uint32_t          bus, dev, fnc;
-#ifdef __EHCI_2ND__
+#ifdef CONFIG_EHCI_2ND
    int               found=0;
    pci_cfg_val_t     pci_bk;
 #endif
@@ -217,7 +217,7 @@ int pci_search(pci_search_t match, pci_cfg_val_t *pci)
 	       continue;
 
 	    if(match(pci))
-#ifdef __EHCI_2ND__
+#ifdef CONFIG_EHCI_2ND
 	    {
 	       if(++found == 2)
 		  return 1;
@@ -231,7 +231,7 @@ int pci_search(pci_search_t match, pci_cfg_val_t *pci)
 	 }
       }
    }
-#ifdef __EHCI_2ND__
+#ifdef CONFIG_EHCI_2ND
    if(found)
    {
       pci->addr.raw = pci_bk.addr.raw;

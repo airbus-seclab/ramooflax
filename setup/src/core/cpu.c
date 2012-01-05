@@ -30,7 +30,6 @@ static void vmm_cpu_init_skillz()
 	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no");
 }
 
-
 static void vmm_cpu_init()
 {
    vmm_cpu_init_skillz();

@@ -70,7 +70,7 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
 
       if(update.lme && __cr0.pg)
       {
-	 debug(CR, "modifying LME while paging-on #GP\n");
+	 debug(VMX_MSR, "modifying LME while paging-on #GP\n");
 	 __inject_exception(GP_EXCP, 0, 0);
 	 return MSR_FAULT;
       }
@@ -84,7 +84,7 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
    return MSR_SUCCESS;
 }
 
-#ifdef __MSR_PROXY__
+#ifdef CONFIG_MSR_PROXY
 static int __vmx_vmexit_resolve_msr_sysenter_cs(uint8_t wr)
 {
    if(wr)
@@ -201,7 +201,7 @@ int __vmx_vmexit_resolve_msr(uint8_t wr)
    case IA32_EFER_MSR:
       return __vmx_vmexit_resolve_msr_efer(wr);
 
-#ifdef __MSR_PROXY__
+#ifdef CONFIG_MSR_PROXY
    case IA32_SYSENTER_CS_MSR:
       return __vmx_vmexit_resolve_msr_sysenter_cs(wr);
    case IA32_SYSENTER_ESP_MSR:

@@ -187,7 +187,7 @@ typedef union vmcb_idt_delivery
 			      **
 			      */
       uint64_t  err_code:32;  /* exception error code */
-      
+
    } __attribute__((packed));
 
    raw64_t;

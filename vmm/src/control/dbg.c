@@ -15,32 +15,35 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __GDB_CORE_H__
-#define __GDB_CORE_H__
+#include <dbg.h>
+#include <info_data.h>
 
-#include <types.h>
+extern info_data_t *info;
 
-/*
-** Functions
-*/
-int    gdb_excp_event(uint32_t);
-void   gdb_stub_pre();
-void   gdb_stub_post();
+void dbg_resume(uint8_t stp)
+{
+   uint8_t rs, who;
 
-int    __gdb_active_cr3_check(int);
-#define gdb_active_cr3_check() __gdb_active_cr3_check(3)
+   dbg_hard_brk_resume();
+   rs = dbg_soft_resume();
 
-void   gdb_traps_disable();
-void   gdb_traps_enable();
+   if(stp)
+      who = DBG_REQ_USR;
+   else if(rs)
+      who = DBG_REQ_VMM;
+   else
+      return;
 
-void   gdb_post_inspect_rflags();
+   dbg_hard_stp_enable(who);
+}
 
-void   gdb_protect_bp_excp();
-void   gdb_release_bp_excp();
-void   gdb_protect_db_excp();
-void   gdb_release_db_excp();
+void dbg_enable()
+{
+   dbg_hard_setup();
+}
 
-int    gdb_cr_rd_event(uint8_t);
-int    gdb_cr_wr_event(uint8_t);
-
-#endif
+void dbg_disable()
+{
+   dbg_soft_reset();
+   dbg_hard_reset();
+}

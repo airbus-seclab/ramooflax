@@ -18,14 +18,14 @@
 #ifndef __CPU_H__
 #define __CPU_H__
 
-#include <types.h>
+#include <config.h>
 
 /*
 ** Functions
 */
 void  cpu_init();
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 void svm_vm_cpu_init();
 #define vm_cpu_init()   svm_vm_cpu_init()
 #else

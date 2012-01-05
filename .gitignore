@@ -1,9 +1,13 @@
 .*
 *.o
 *.d
+*.g
 *.bin
 *.map
 *.pyc
 *.config
 *.patch
+client/build
+include/config.h
+include/config_debug.h
 !.gitignore

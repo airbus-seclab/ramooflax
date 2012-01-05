@@ -18,6 +18,7 @@
 #ifndef __DEV_H__
 #define __DEV_H__
 
+#include <config.h>
 #include <types.h>
 #include <smap.h>
 #include <ehci.h>
@@ -25,7 +26,7 @@
 
 typedef struct hardware_device_data
 {
-#if defined(__EHCI_PRINT__) || defined(__EHCI_CTRL__)
+#ifdef CONFIG_HAS_EHCI
    dbgp_info_t dbgp;
 #endif
 

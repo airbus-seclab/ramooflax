@@ -150,7 +150,7 @@ typedef union serial_iir_register
 ** Fifo Control Register
 */
 
-/* Some FIFO size values 
+/* Some FIFO size values
 
 ** sc16c650a values:
 

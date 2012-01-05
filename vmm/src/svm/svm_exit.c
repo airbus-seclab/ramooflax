@@ -104,14 +104,15 @@ static void svm_vmexit_pre_hdl()
 
 static void svm_vmexit_post_hdl(raw64_t tsc)
 {
-#ifdef __CTRL_ACTIVE__
-   vmm_ctrl();
-#endif
-   db_post_hdl();
+   db_check_stp();
+   controller();
 
    vm_state.rax.raw = info->vm.cpu.gpr->rax.raw;
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    info->vm.cpu.gpr->rax.raw = (offset_t)&info->vm.cpu.vmc->vm_vmcb;
+
+   if(info->vm.cpu.emu_done)
+      info->vm.cpu.emu_done = 0;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    svm_vmexit_tsc_rebase(tsc);

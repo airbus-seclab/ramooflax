@@ -27,6 +27,7 @@ int svm_vmexit_resolve_io()
    if(!dev_access())
       return 0;
 
+   info->vm.cpu.emu_done = 1;
    vm_state.rip.raw = vm_ctrls.exit_info_2.raw;
    return 1;
 }

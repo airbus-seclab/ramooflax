@@ -7,7 +7,7 @@ MAKEFLAGS  := --no-print-directory
 PROJECTS   := loader setup vmm
 SRC_DIR    := src
 BIN_DIR    := build
-CONFTOOL   := tools/menuconfig.sh
+CONFTOOL   := tools/config.py
 CONFIG     := .config
 
 CC_MODEL   := small

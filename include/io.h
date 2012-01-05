@@ -21,7 +21,7 @@
 #include <types.h>
 
 #ifndef __INIT__
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_exit_io.h>
 #define __io_init(_io_)           __svm_io_init(_io_)
 #else

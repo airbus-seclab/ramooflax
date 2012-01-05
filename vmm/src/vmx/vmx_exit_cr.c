@@ -90,6 +90,7 @@ int vmx_vmexit_resolve_cr_access()
 
    if(rc == CR_SUCCESS)
    {
+      info->vm.cpu.emu_done = 1;
       vmcs_read(vm_exit_info.insn_len);
       vm_update_rip(vm_exit_info.insn_len.raw);
       return 1;

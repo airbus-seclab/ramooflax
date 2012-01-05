@@ -52,7 +52,6 @@ typedef union debug_register_6
 #define DR7_COND_W     1
 #define DR7_COND_IO    2 /* unused */
 #define DR7_COND_RW    3
-#define DR7_COND_SS    4 /* internal */
 
 #define DR7_LEN_1      0
 #define DR7_LEN_2      1

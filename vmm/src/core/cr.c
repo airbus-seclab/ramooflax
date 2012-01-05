@@ -18,7 +18,7 @@
 #include <cr.h>
 #include <vmm.h>
 #include <vm.h>
-#include <gdb.h>
+#include <ctrl.h>
 #include <info_data.h>
 #include <excp.h>
 #include <debug.h>
@@ -33,11 +33,11 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
 
    cr0_update = __cr0.low ^ guest->low;
 
-   debug(CR, "wr cr0 0x%x\n", guest->low);
+   debug(CR0, "wr cr0 0x%x\n", guest->low);
 
    if(__invalid_cr0_setup(guest) || __invalid_cr0_lmode_check(guest, cr0_update))
    {
-      debug(CR, "invalid cr0 setup\n");
+      debug(CR0, "invalid cr0 setup\n");
       __inject_exception(GP_EXCP, 0, 0);
       return CR_FAULT;
    }
@@ -71,7 +71,7 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
 
    if(!__efer.lma && updated && __cr0.pg && __cr4.pae && !__update_npg_pdpe())
    {
-      debug(CR, "pae pdpe update fault\n");
+      debug(CR0, "pae pdpe update fault\n");
       __inject_exception(GP_EXCP, 0, 0);
       return CR_FAULT;
    }
@@ -88,14 +88,14 @@ int __resolve_cr3_wr(cr3_reg_t *guest)
    else
       __cr3.low = guest->low;
 
-   debug(CR, "wr cr3 0x%X\n", guest->raw);
+   debug(CR3, "wr cr3 0x%X\n", guest->raw);
 
    __update_npg_cache(guest);
    __flush_tlb();
 
    if(!__efer.lma && __cr0.pg && __cr4.pae && !__update_npg_pdpe())
    {
-      debug(CR, "pae pdpe update fault\n");
+      debug(CR3, "pae pdpe update fault\n");
       __inject_exception(GP_EXCP, 0, 0);
       return CR_FAULT;
    }
@@ -112,7 +112,7 @@ int __resolve_cr4_wr(cr4_reg_t *guest)
 
    cr4_update = __cr4.low ^ guest->low;
 
-   debug(CR, "wr cr4 0x%x\n", guest->low);
+   debug(CR4, "wr cr4 0x%x\n", guest->low);
 
    if(cr4_update & (CR4_PAE|CR4_PSE|CR4_PGE))
    {
@@ -120,10 +120,10 @@ int __resolve_cr4_wr(cr4_reg_t *guest)
       updated = 1;
    }
 
-#ifndef __SVM__
+#ifndef CONFIG_ARCH_AMD
    if(__efer.lma && (cr4_update & CR4_PAE) && !guest->pae)
    {
-      debug(CR, "disable pae while in lmode #GP\n");
+      debug(CR4, "disable pae while in lmode #GP\n");
       __inject_exception(GP_EXCP, 0, 0);
       return CR_FAULT;
    }
@@ -133,7 +133,7 @@ int __resolve_cr4_wr(cr4_reg_t *guest)
 
    if(!__efer.lma && updated && __cr0.pg && __cr4.pae && !__update_npg_pdpe())
    {
-      debug(CR, "pae pdpe update fault\n");
+      debug(CR4, "pae pdpe update fault\n");
       __inject_exception(GP_EXCP, 0, 0);
       return CR_FAULT;
    }
@@ -145,10 +145,6 @@ int __resolve_cr_wr_with(uint8_t cr, raw64_t *val)
 {
    int rc;
 
-#ifdef __CTRL_ACTIVE__
-   gdb_cr_wr_event(cr);
-#endif
-
    if(cr == 0)
       rc = __resolve_cr0_wr((cr0_reg_t*)val);
    else if(cr == 3)
@@ -158,6 +154,7 @@ int __resolve_cr_wr_with(uint8_t cr, raw64_t *val)
    else
       return CR_FAIL;
 
+   ctrl_evt_cr_wr(cr);
    return rc;
 }
 
@@ -171,8 +168,6 @@ static int __resolve_cr_wr(uint8_t cr, uint8_t gpr)
 static int __resolve_cr_rd(uint8_t cr, uint8_t gpr)
 {
    raw64_t *creg;
-
-   debug(CR, "rd cr%d\n", cr);
 
    if(cr == 0)
       creg = (raw64_t*)&__cr0.raw;
@@ -194,9 +189,7 @@ static int __resolve_cr_rd(uint8_t cr, uint8_t gpr)
    else
       info->vm.cpu.gpr->raw[gpr].low = creg->low;
 
-#ifdef __CTRL_ACTIVE__
-   gdb_cr_rd_event(cr);
-#endif
+   ctrl_evt_cr_rd(cr);
    return CR_SUCCESS;
 }
 

@@ -16,59 +16,127 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <ctrl.h>
-#include <gdb.h>
+#include <insn.h>
+#include <excp.h>
 #include <debug.h>
+#include <emulate.h>
 #include <info_data.h>
 
 extern info_data_t *info;
-static uint8_t __ctrl_input[1024];
 
-void ctrl_logic()
+static void ctrl_traps_enable()
 {
-   uint8_t *ptr;
-   size_t  len, remain = 0;
+   debug(CTRL, "ctrl traps enable\n");
 
-   do
+   if(dbg_hard_stp_enabled())
+      dbg_hard_stp_setup_context();
+
+   dbg_soft_rearm();
+   dbg_hard_brk_rearm();
+
+   __update_exception_mask();
+
+   ctrl_set_traps(1);
+   ctrl_traps_set_update(0);
+}
+
+static void ctrl_traps_disable()
+{
+   debug(CTRL, "ctrl traps disable\n");
+
+   if(dbg_hard_stp_enabled())
+      dbg_hard_stp_restore_context();
+
+   if(!dbg_soft_disarmed())
+      dbg_soft_disarm();
+
+   dbg_hard_brk_disarm();
+
+   __exception_bitmap.raw = info->vm.cpu.dflt_excp;
+   __post_access(__exception_bitmap);
+
+   ctrl_set_traps(0);
+   ctrl_traps_set_update(0);
+}
+
+static void ctrl_traps()
+{
+   if(__ctrl_active_cr3_check(0))
    {
-      do
-      {
-	 len = remain;
-	 remain = 0;
-	 ptr = &__ctrl_input[len];
-
-	 len += ctrl_read(ptr, sizeof(__ctrl_input) - len);
-
-	 if(len)
-	 {
-	    remain = gdb_stub(__ctrl_input, len);
-	    if(remain && remain != len)
-	    {
-	       ptr = __ctrl_input + (len - remain);
-	       memcpy(__ctrl_input, ptr, remain);
-	    }
-	 }
-
-      } while(remain);
-
-   } while(ctrl_active());
+      if(!ctrl_traps_enabled() || ctrl_traps_updated())
+	 ctrl_traps_enable();
+   }
+   else if(ctrl_traps_enabled() || ctrl_traps_updated())
+      ctrl_traps_disable();
 }
 
-void ctrl_pre()
+int __ctrl_active_cr3_check(int rpl)
 {
-   gdb_stub_pre();
+   if(!ctrl_cr3_enabled())
+      return 1;
+
+   if(__cpl < rpl)
+      return 0;
+
+   if(_xx_lmode())
+      return (__cr3.pml4.addr == info->vmm.ctrl.stored_cr3.pml4.addr);
+   else if(__cr4.pae)
+      return (__cr3.pae.addr == info->vmm.ctrl.stored_cr3.pae.addr);
+   else
+      return (__cr3.addr == info->vmm.ctrl.stored_cr3.addr);
+
+   return 0;
 }
 
-void ctrl_post()
+void ctrl_active_cr3_enable(raw64_t cr3)
 {
-   gdb_stub_post();
+   info->vmm.ctrl.stored_cr3.raw = cr3.raw;
+   info->vmm.ctrl.active_cr3 = &info->vmm.ctrl.stored_cr3;
+   ctrl_set_cr3(1);
+
+   debug(CTRL, "active cr3: 0x%X (0x%X <=> 0x%X)\n"
+	 , info->vmm.ctrl.stored_cr3.raw
+	 , info->vmm.ctrl.active_cr3
+	 ,&info->vmm.ctrl.stored_cr3);
 }
 
-void vmm_ctrl()
+void ctrl_active_cr3_disable()
 {
-   ctrl_pre();
+   info->vmm.ctrl.active_cr3 = &__cr3;
+   ctrl_set_cr3_keep(0);
+   ctrl_set_cr3(0);
+}
 
-   if(gdb_enabled() || !(info->vmm.ctrl.vmexit_cnt.raw % CTRL_RATIO))
-      ctrl_logic();
+void ctrl_active_cr3_reset()
+{
+   if(!ctrl_cr3_keep())
+      ctrl_active_cr3_disable();
+}
 
-   ctrl_post();
+void ctrl_usr_reset()
+{
+   info->vmm.ctrl.usr.excp = 0;
+   __update_exception_mask();
+
+   ctrl_usr_set_cr_rd(0);
+   ctrl_usr_set_cr_wr(0);
+
+   __disable_lbr();
+
+   debug(CTRL, "ctrl user filters disabled\n");
+}
+
+void controller()
+{
+   if(ctrl_active_cr3_check())
+      ctrl_event();
+
+#ifdef CONFIG_GDBSTUB
+   gdbstub();
+#endif
+
+   if(dbg_hard_dr6_dirty())
+      dbg_hard_dr6_clean();
+
+   ctrl_traps();
 }

@@ -246,4 +246,15 @@ typedef struct buffer
 
 } __attribute__((packed)) buffer_t;
 
+/*
+** Generic argument
+*/
+typedef union argument
+{
+   loc_t;
+   raw64_t;
+
+} __attribute__((packed)) arg_t;
+
+
 #endif

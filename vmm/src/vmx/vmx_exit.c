@@ -135,13 +135,14 @@ static void vmx_vmexit_pre_hdl()
 
 static void vmx_vmexit_post_hdl(raw64_t tsc)
 {
-#ifdef __CTRL_ACTIVE__
-   vmm_ctrl();
-#endif
-   db_post_hdl();
+   db_check_stp();
+   controller();
 
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    vmcs_dirty(vm_state.rsp);
+
+   if(info->vm.cpu.emu_done)
+      info->vm.cpu.emu_done = 0;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    vmx_vmexit_tsc_rebase(tsc);

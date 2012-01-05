@@ -15,19 +15,40 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __GDB_VMM_H__
-#define __GDB_VMM_H__
+#ifndef __GDB_STUB_CMD_H__
+#define __GDB_STUB_CMD_H__
 
 #include <types.h>
+#include <gdbstub.h>
 
-#define GDB_CMD_VMM    5
-typedef void (*gdb_vmm_hdl_t)(uint8_t*, size_t);
+#define GDB_CMD_THREAD         'H'
+#define GDB_CMD_STOP_REASON    '?'
+#define GDB_CMD_R_GPR          'g'
+#define GDB_CMD_W_GPR          'G'
+#define GDB_CMD_R_REG          'p'
+#define GDB_CMD_W_REG          'P'
+#define GDB_CMD_R_MEM          'm'
+#define GDB_CMD_W_MEM          'M'
+#define GDB_CMD_CONT           'c'
+#define GDB_CMD_STEP           's'
+#define GDB_CMD_KILL           'k'
+#define GDB_CMD_DETACH         'D'
+
+#define GDB_CMD_S_BRK          'Z'
+#define GDB_CMD_R_BRK          'z'
+
+#define GDB_BRK_TYPE_MEM        0
+#define GDB_BRK_TYPE_HRD_X      1
+#define GDB_BRK_TYPE_HRD_W      2
+#define GDB_BRK_TYPE_HRD_RW     4
+
+#define GDB_CMD_QUERY          'q'
+#define GDB_QUERY_THREAD       'C'
+
 
 /*
 ** Functions
 */
-void  gdb_cmd_vmm(uint8_t*, size_t);
-void  gdb_vmm_enable();
-void  gdb_vmm_disable();
+void gdb_process_packet(uint8_t*, size_t);
 
 #endif

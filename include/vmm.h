@@ -18,12 +18,14 @@
 #ifndef __VMM_H__
 #define __VMM_H__
 
+#include <config.h>
 #include <types.h>
 #include <segmem.h>
 #include <pagemem.h>
 #include <pool.h>
 #include <dev.h>
 #include <ctrl.h>
+#include <gdbstub.h>
 
 /*
 ** General VMM settings
@@ -102,6 +104,9 @@ typedef struct vmm
    size_t     size;             /* vmm loaded elf size */
    offset_t   stack_bottom;     /* vmm stack bottom location */
 
+#ifdef CONFIG_GDBSTUB
+   gdbstub_t  gstub;            /* vmm GDB stub */
+#endif
 } __attribute__((packed)) vmm_t;
 
 /*
@@ -112,7 +117,7 @@ typedef struct vmm
 void vmm_init();
 void vmm_start() __regparm__(1);
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <svm_vmm.h>
 #define vmm_vmc_init()   svm_vmm_init()
 #define vmm_vmc_start()  svm_vmm_start(info->vm.cpu.gpr,info->vmm.entry)

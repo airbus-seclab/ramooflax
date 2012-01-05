@@ -22,8 +22,8 @@
 #include <excp.h>
 #include <string.h>
 #include <disasm.h>
+#include <gdbstub.h>
 #include <debug.h>
-#include <gdb.h>
 #include <info_data.h>
 
 extern info_data_t *info;
@@ -351,9 +351,8 @@ void svm_vmexit_failure()
 {
    svm_vmexit_show();
    while(1)
-#ifdef __CTRL_ACTIVE__
-      ctrl_logic()
+#ifdef CONFIG_GDBSTUB
+      gdbstub()
 #endif
 	 ;
 }
-

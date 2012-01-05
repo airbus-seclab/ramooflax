@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <ehci.h>
+#include <config.h>
 #include <string.h>
 #include <debug.h>
 #include <info_data.h>
@@ -37,7 +38,7 @@ void ehci_init()
    usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
    usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
-#ifndef __EHCI_FULL__
+#ifndef CONFIG_EHCI_FULL
    if((usbcmd.run && !usbsts.hlt) && cfgflg.cf)
       ehci_fast_init(dbgp_i);
    else

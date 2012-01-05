@@ -26,7 +26,7 @@
 #include <insn.h>
 #include <cpuid.h>
 
-#ifdef __SVM__
+#ifdef CONFIG_ARCH_AMD
 #include <amd.h>
 #else
 #include <intel.h>
