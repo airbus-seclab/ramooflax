@@ -232,6 +232,7 @@ typedef union ept_page_table_entry_64
 	 type = VMX_EPT_MEM_TYPE_UC;		\
 						\
       attr = (type<<3) | ept_dft_pvl;		\
+      attr;					\
    })
 
 uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);

@@ -26,19 +26,19 @@ extern info_data_t *info;
 #ifdef __INIT__
 void ehci_init()
 {
+   dbgp_info_t *dbgp_i = &info->hrd.dev.dbgp;
+
+   pci_cfg_dbgp(dbgp_i);
+
+#ifndef CONFIG_EHCI_FULL
    ehci_usbcmd_reg_t usbcmd;
    ehci_usbsts_reg_t usbsts;
    ehci_cfgflg_reg_t cfgflg;
-   dbgp_info_t       *dbgp_i;
 
-   dbgp_i = &info->hrd.dev.dbgp;
-   pci_cfg_dbgp(dbgp_i);
-
-   cfgflg.raw = dbgp_i->ehci_opr->cfgflg.raw;
    usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
    usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
+   cfgflg.raw = dbgp_i->ehci_opr->cfgflg.raw;
 
-#ifndef CONFIG_EHCI_FULL
    if((usbcmd.run && !usbsts.hlt) && cfgflg.cf)
       ehci_fast_init(dbgp_i);
    else
@@ -552,6 +552,10 @@ void ehci_detect(dbgp_info_t *dbgp_i, int transition)
    debug(EHCI,"high-speed device connected\n");
 }
 
+#ifndef EHCI_DBG
+void __ehci_light_show(dbgp_info_t __unused__ *dbgp_i){}
+void __ehci_show(dbgp_info_t __unused__ *dbgp_i){}
+#else
 void __ehci_light_show(dbgp_info_t *dbgp_i)
 {
    ehci_usbcmd_reg_t usbcmd;
@@ -622,6 +626,7 @@ void __ehci_show(dbgp_info_t *dbgp_i)
 	 portsc.enbl, portsc.enbl_chg, portsc.conn, portsc.conn_chg, portsc.own,
 	 portsc.suspend, portsc.reset, portsc.line_sts);
 }
+#endif
 
 /*
 ** set_addr() behaves strangely !

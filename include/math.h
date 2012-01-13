@@ -22,7 +22,7 @@
 
 static inline uint32_t abs(int x)
 {
-   return (x >= 0) ? : -x;
+   return (x >= 0) ? x : -x;
 }
 
 /* precondition:  a > b */

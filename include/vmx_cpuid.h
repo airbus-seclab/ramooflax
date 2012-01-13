@@ -78,6 +78,7 @@
       uint32_t eax;			\
       __cpuid_1(CPUID_MAX_ADDR,eax);	\
       max = (1ULL<<(eax & 0xff)) - 1;	\
+      max;				\
    })
 
 

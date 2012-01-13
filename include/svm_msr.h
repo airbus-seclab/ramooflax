@@ -112,7 +112,6 @@ typedef union amd_syscfg_msr
    } __attribute__((packed));
 
    msr_t;
-   raw64_t;
 
 } __attribute__((packed)) amd_syscfg_msr_t;
 

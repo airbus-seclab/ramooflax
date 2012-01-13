@@ -23,9 +23,8 @@ extern info_data_t *info;
 #ifdef __INIT__
 static void __uart_flush_recv(uint16_t port)
 {
-   uint8_t c;
    while(__uart_can_recv(port))
-      c = __uart_recv_char(port);
+      __uart_recv_char(port);
 }
 
 static void __uart_fifo_init(uint16_t port)
@@ -54,7 +53,7 @@ static void __uart_common_init(uint16_t port)
 {
    serial_ier_reg_t  ier;
    serial_lcr_reg_t  lcr;
-   serial_mcr_reg_t  mcr;
+   /* serial_mcr_reg_t  mcr; */
 
    /* set baud rate to 115200 */
    uart_enable_dla_registers(port);
@@ -70,8 +69,8 @@ static void __uart_common_init(uint16_t port)
    ** IRQ activation bug (reap from Linux)
    ** for newer uarts
    */
-   mcr.raw = in(SERIAL_MCR(port));
-   mcr.aux2 = 1;
+   /* mcr.raw = in(SERIAL_MCR(port)); */
+   /* mcr.aux2 = 1; */
    /* out(mcr.raw, SERIAL_MCR(port)); */
 
    /* trigger interrupt on byte received */

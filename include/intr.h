@@ -80,14 +80,14 @@ typedef struct cpu64_ring0_context
 */
 typedef struct interrupt32_ring0_context
 {
-   gpr32_ctx_t;
+   gpr32_ctx_t gpr;
    cpu32_r0_ctx_t;
 
 } __attribute__((packed)) int32_r0_ctx_t;
 
 typedef struct interrupt64_ring0_context
 {
-   gpr64_ctx_t;
+   gpr64_ctx_t gpr;
    cpu64_r0_ctx_t;
 
 } __attribute__((packed)) int64_r0_ctx_t;
