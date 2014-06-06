@@ -26,7 +26,6 @@ typedef union controller_status
 {
    struct
    {
-      uint8_t    on:1;         /* controller enabled */
       uint8_t    cr3:1;        /* acting on specific cr3 */
       uint8_t    keep:1;       /* keep specific cr3 upon sessions */
       uint8_t    traps:1;      /* traps status */
@@ -43,7 +42,6 @@ typedef union controller_status
 #define ctrl_traps_enabled()       (info->vmm.ctrl.status.traps)
 #define ctrl_traps_updated()       (info->vmm.ctrl.status.utraps)
 
-#define ctrl_set_enable(_x)        (info->vmm.ctrl.status.on=(_x))
 #define ctrl_set_cr3(_x)           (info->vmm.ctrl.status.cr3=(_x))
 #define ctrl_set_cr3_keep(_x)      (info->vmm.ctrl.status.keep=(_x))
 #define ctrl_set_traps(_x)         (info->vmm.ctrl.status.traps=(_x))
@@ -99,7 +97,7 @@ typedef struct vmm_controller
 ** Functions
 */
 void controller();
-void ctrl_active_cr3_enable(raw64_t);
+void ctrl_active_cr3_enable(cr3_reg_t);
 void ctrl_active_cr3_disable();
 void ctrl_active_cr3_reset();
 void ctrl_usr_reset();

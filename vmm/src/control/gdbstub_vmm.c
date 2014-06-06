@@ -166,7 +166,7 @@ static void gdb_vmm_wr_excp_mask(uint8_t *data, size_t len)
 
 static void gdb_vmm_set_active_cr3(uint8_t *data, size_t len)
 {
-   raw64_t val;
+   cr3_reg_t val;
 
    if(!gdb_get_number(data, len, (uint64_t*)&val.raw, 0))
    {

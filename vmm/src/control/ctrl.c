@@ -88,7 +88,7 @@ int __ctrl_active_cr3_check(int rpl)
    return 0;
 }
 
-void ctrl_active_cr3_enable(raw64_t cr3)
+void ctrl_active_cr3_enable(cr3_reg_t cr3)
 {
    info->vmm.ctrl.stored_cr3.raw = cr3.raw;
    info->vmm.ctrl.active_cr3 = &info->vmm.ctrl.stored_cr3;
