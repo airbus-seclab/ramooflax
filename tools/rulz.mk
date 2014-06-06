@@ -3,15 +3,28 @@
 #############################################################################
 
 define pre-inst
-mount $(CONFIG_INST_DIR)
+vmware-mount "/home/stf/vmware/Debian 7 64-bit/Debian 7 64-bit.vmdk" 1 "/home/stf/vmware/Debian 7 64-bit/mnt/"
 endef
 
 define inst
-$(CP) $@ $(CONFIG_INST_DIR)/$(notdir $@)
+$(CP) $@ "/home/stf/vmware/Debian 7 64-bit/mnt/boot/"$(notdir $@)
 echo "    CP    $@"
 endef
 
 define post-inst
+vmware-mount -X
+endef
+
+define __pre-inst
+mount $(CONFIG_INST_DIR)
+endef
+
+define __inst
+$(CP) $@ $(CONFIG_INST_DIR)/$(notdir $@)
+echo "    CP    $@"
+endef
+
+define __post-inst
 umount -l $(CONFIG_INST_DIR)
 endef
 
