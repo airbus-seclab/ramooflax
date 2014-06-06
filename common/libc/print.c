@@ -41,7 +41,7 @@ void __panic(const char *fname, const char *format, ...)
    __vprintf(format, params);
    va_end(params);
 
-   while(1) { force_interrupts_off(); __halt(); }
+   lock_vmm();
 }
 
 size_t printf(const char *format, ...)
