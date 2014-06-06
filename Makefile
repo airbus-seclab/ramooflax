@@ -35,7 +35,7 @@ tbin  := $(tbase).bin
 ifeq ($(act),clean)
 $(tbin):
 	@$(RM) -f $@
-	@$(FIND) $(tgt) -name *.[od] | xargs $(RM) -f
+	@$(FIND) $(tgt) -name \*.[od] | xargs $(RM) -f
 else
 include $(CONFIG)
 include tools/rulz.mk
