@@ -200,26 +200,23 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
    uint32_t paddr;
    uint32_t vaddr = _vaddr & 0xffffffff;
 
-   debug(PG_W, "guest CR3: 0x%x\n", cr3->low);
 
    pd = (pde32_t*)page_addr(cr3->addr);
    if(vmm_area(pd))
    {
       debug(PG_W, "pd in vmm area\n");
-      return 0;
+      goto __failure;
    }
 
    pde = &pd[pd32_idx(vaddr)];
-   debug(PG_W, "pde @ 0x%X = 0x%x\n", (offset_t)pde, pde->raw);
    if(!pg_present(pde))
    {
       debug(PG_W, "pde not present\n");
-      return 0;
+      goto __failure;
    }
 
    if(__cr4.pse && pg_large(pde))
    {
-      debug(PG_W, "large page\n");
       paddr = pg_4M_addr((uint32_t)pde->page.addr) + pg_4M_offset(vaddr);
       *psz = PG_4M_SIZE;
       goto __prepare_addr;
@@ -229,15 +226,14 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
    if(vmm_area(pt))
    {
       debug(PG_W, "pt in vmm area\n");
-      return 0;
+      goto __failure;
    }
 
    pte = &pt[pt32_idx(vaddr)];
-   debug(PG_W, "pte @ 0x%X = 0x%x\n", (offset_t)pte, pte->raw);
    if(!pg_present(pte))
    {
       debug(PG_W, "pte not present\n");
-      return 0;
+      goto __failure;
    }
 
    paddr = pg_4K_addr((uint32_t)pte->addr) + pg_4K_offset(vaddr);
@@ -245,11 +241,30 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
 
 __prepare_addr:
    if(vmm_area(paddr))
-      return 0;
+   {
+      debug(PG_W, "paddr in vmm area\n");
+      goto __failure;
+   }
 
-   debug(PG_W, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr);
+   /* debug(PG_W, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr); */
    *_paddr = (offset_t)paddr;
    return 1;
+
+__failure:
+   debug(PG_W, "guest CR3: 0x%x\n", cr3->low);
+   debug(PG_W, "pde @ 0x%X = 0x%x\n", (offset_t)pde, pde->raw);
+
+   if(pg_present(pde))
+   {
+      if(pg_large(pde))
+	 debug(PG_W, "large page\n");
+      else
+      {
+	 debug(PG_W, "pt @ 0x%X\n", (offset_t)pt);
+	 debug(PG_W, "pte @ 0x%X = 0x%x\n", (offset_t)pte, pte->raw);
+      }
+   }
+   return 0;
 }
 
 /*
@@ -263,7 +278,6 @@ __prepare_addr:
 */
 int __pg_walk(cr3_reg_t *cr3, offset_t vaddr, offset_t *paddr, size_t *psz)
 {
-   debug(PG_W, "mmu_walk on 0x%X\n", vaddr);
    if(_xx_lmode())
       return pg_walk_lmode(cr3, vaddr, paddr, psz);
 
