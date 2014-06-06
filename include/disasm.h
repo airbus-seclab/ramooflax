@@ -18,7 +18,7 @@
 #ifndef __DISASM_H__
 #define __DISASM_H__
 
-#include "../src/disasm/udis86.h"
+#include "../vmm/src/disasm/udis86.h"
 
 /*
 ** Functions
