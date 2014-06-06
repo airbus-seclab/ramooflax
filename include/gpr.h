@@ -18,6 +18,8 @@
 #ifndef __GPR_H__
 #define __GPR_H__
 
+#include <types.h>
+
 /*
 ** RFLAGS
 */
@@ -59,6 +61,7 @@ typedef struct cpu_eflags_register_fields
    uint32_t   r3:1;     /* (0) */
    uint32_t   zf:1;     /* zero */
    uint32_t   sf:1;     /* sign */
+
    uint32_t   tf:1;     /* trap */
    uint32_t   IF:1;     /* int */
    uint32_t   df:1;     /* div */
@@ -66,10 +69,12 @@ typedef struct cpu_eflags_register_fields
    uint32_t   iopl:2;   /* io pvl */
    uint32_t   nt:1;     /* nested task */
    uint32_t   r4:1;     /* (0) */
+
    uint32_t   rf:1;     /* resume */
    uint32_t   vm:1;     /* virtual 8086 */
    uint32_t   ac:1;     /* align */
    uint32_t   vif:1;    /* virtual IF */
+
    uint32_t   vip:1;    /* virtual Interrupt Pending */
    uint32_t   id:1;     /* identification */
    uint32_t   r5:10;    /* (0) */
