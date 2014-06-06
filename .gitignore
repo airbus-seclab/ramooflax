@@ -1,5 +1,6 @@
 .*
 *.o
+*.i
 *.d
 *.g
 *.bin
@@ -10,4 +11,6 @@
 client/build
 include/config.h
 include/config_debug.h
+tools/clean_tty
+tools/toolchain
 !.gitignore
