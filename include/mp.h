@@ -20,6 +20,9 @@
 
 #include <types.h>
 
+/*
+** Intel Multi Processor Specification v1.4
+*/
 #define MP_PTR_SIG              0x5f504d5f  /* _MP_ */
 
 #define MP_PTR_FEAT_0_MP        0
@@ -42,6 +45,9 @@ typedef struct mp_floating_pointer_structure
 #define MP_TBL_ENTRY_IOAPIC     2
 #define MP_TBL_ENTRY_IOINT      3
 #define MP_TBL_ENTRY_LINT       4
+#define MP_TBL_ENTRY_SMAP       128
+#define MP_TBL_ENTRY_BUS_DESC   129
+#define MP_TBL_ENTRY_BUS_COMPAT 130
 
 #define MP_TBL_ENTRY_SZ_PROC   20
 #define MP_TBL_ENTRY_SZ_OTHER   8
@@ -63,12 +69,15 @@ typedef struct mp_table
 
 } __attribute__((packed)) mp_table_t;
 
+/*
+** Processor entry
+*/
 typedef union mp_table_processor_entry_flags
 {
    struct
    {
-      uint8_t en:1;
-      uint8_t bp:1;
+      uint8_t en:1;    /* enabled */
+      uint8_t bp:1;    /* bootstrap proc */
       uint8_t rsvd0:6;
 
    } __attribute__((packed));
@@ -88,6 +97,67 @@ typedef struct mp_table_processor_entry
    uint64_t            rsvd;
 
 } __attribute__((packed)) mp_tbl_proc_t;
+
+/*
+** IO Apic entry
+*/
+typedef union mp_table_ioapic_entry_flags
+{
+   struct
+   {
+      uint8_t en:1;    /* enabled */
+      uint8_t rsvd0:7;
+
+   } __attribute__((packed));
+
+   uint8_t raw;
+
+} __attribute__((packed)) mp_tbl_ioapic_flags_t;
+
+typedef struct mp_table_ioapic_entry
+{
+   uint8_t               type;
+   uint8_t               ioapic_id;
+   uint8_t               ioapic_ver;
+   mp_tbl_ioapic_flags_t flags;
+   uint32_t              addr;
+
+} __attribute__((packed)) mp_tbl_ioapic_t;
+
+/*
+** IO/Local Interrupt entries
+*/
+#define MP_TBL_INTR_TYPE_INT    0
+#define MP_TBL_INTR_TYPE_NMI    1
+#define MP_TBL_INTR_TYPE_SMI    2
+#define MP_TBL_INTR_TYPE_EXT    3
+
+typedef union mp_table_intr_entry_flags
+{
+   struct
+   {
+      uint8_t  po:1;      /* polarity */
+      uint8_t  el:1;      /* trigger mode */
+      uint16_t rsvd0:13;
+
+   } __attribute__((packed));
+
+   uint16_t raw;
+
+} __attribute__((packed)) mp_tbl_intr_flags_t;
+
+typedef struct mp_table_intr_entry
+{
+   uint8_t             type;           /* MP_TBL_ENTRY_IOINT or MP_TBL_ENTRY_LINT */
+   uint8_t             intr_type;
+   mp_tbl_intr_flags_t flags;
+   uint8_t             src_bus_id;
+   uint8_t             src_bus_irq;
+   uint8_t             dstc_apic_id;    /* local or IO apic */
+   uint8_t             dstc_apic_intr;
+
+} __attribute__((packed)) mp_tbl_intr_t;
+
 
 /*
 ** Functions
