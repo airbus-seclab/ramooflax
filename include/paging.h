@@ -21,6 +21,7 @@
 #include <types.h>
 #include <cr.h>
 #include <pagemem.h>
+#include <vm.h>
 
 typedef enum
 {
@@ -40,9 +41,23 @@ typedef struct npg_operator
 
 } __attribute__((packed)) npg_op_t;
 
+#define NPG_DEFAULT  0
+
+#define npg_set_active_paging(_x) (info->vm.cpu.active_pg = (_x))
+#define npg_get_active_paging()   (&info->vm.cpu.pg[info->vm.cpu.active_pg])
+
+#define npg_set_active_paging_cpu()				\
+   ({								\
+      npg_cr3_set(npg_get_active_paging()->pml4);		\
+      npg_set_asid(info->vm.cpu.active_pg+1);			\
+   })
+
 /*
 ** Nested mapping functions
 */
+npg_pte64_t* _npg_remap_finest_4K(offset_t);
+npg_pte64_t* _npg_get_pte(offset_t);
+
 void npg_map(offset_t, offset_t, uint64_t);
 void npg_unmap(offset_t, offset_t);
 void npg_setup_a20();

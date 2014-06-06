@@ -78,9 +78,9 @@
 #define triple_fault(_e_)	    ((_e_) == DF_EXCP)
 
 /*
-** General Protection Fault error code
+** Selector error code
 */
-typedef union general_protection_error_code
+typedef union selector_error_code
 {
    struct
    {
@@ -94,10 +94,10 @@ typedef union general_protection_error_code
 
    raw32_t;
 
-} __attribute__((packed)) gp_err_t;
+} __attribute__((packed)) sl_err_t;
 
 /*
-** Page Fault error code
+** Page-Fault error code
 */
 typedef union page_fault_error_code
 {
@@ -123,7 +123,7 @@ typedef union exception32_error_code
 {
    raw32_t;
 
-   gp_err_t gp;
+   sl_err_t sl;
    pf_err_t pf;
 
 } __attribute__((packed)) excp32_err_code_t;
@@ -132,7 +132,7 @@ typedef union exception64_error_code
 {
    raw64_t;
 
-   gp_err_t gp;
+   sl_err_t sl;
    pf_err_t pf;
 
 } __attribute__((packed)) excp64_err_code_t;

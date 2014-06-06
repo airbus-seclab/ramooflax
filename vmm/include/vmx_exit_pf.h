@@ -23,7 +23,6 @@
 ** Functions
 */
 int   __vmx_vmexit_resolve_pf();
-int   vmx_vmexit_resolve_invlpg();
-void  __vmx_update_asid();
+int   vmx_vmexit_resolve_ept_viol();
 
 #endif

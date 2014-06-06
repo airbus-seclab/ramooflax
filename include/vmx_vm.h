@@ -49,7 +49,7 @@
 #define __gs                    __state.gs
 #define __ss                    __state.ss
 
-#define __vmexit_on_insn()      (__vmx_vmexit_on_insn() || info->vm.cpu.emu_done)
+#define __vmexit_on_insn()      (__vmx_vmexit_on_insn() || info->vm.cpu.emu_sts.done)
 
 #define __cpl                   __state.cs.selector.rpl
 #define __gdtr                  __state.gdtr
@@ -98,9 +98,12 @@
 /*
 ** Paging & TLBs
 */
+#include <vmx_ept.h>
+
 #define npg_init()                     vmx_ept_map()
 #define npg_cr3                        __exec_ctrls.eptp
 #define npg_dft_attr                   ept_dft_attr
+#define npg_dft_attr_nx                ept_dft_attr_nx
 #define npg_get_attr(_e)               ept_pg_get_attr(_e)
 #define npg_present(_e)                ept_pg_present(_e)
 #define npg_large(_e)                  pg_large(_e)
@@ -120,11 +123,46 @@
 #define npg_pd64_t                     ept_pd64_t
 #define npg_pt64_t                     ept_pt64_t
 
+#define npg_invlpg(_va)          invept(VMCS_EPT_INV_ALL)
 #define __flush_asid_tlbs(_t)    invvpid(_t)
 #define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
 #define __update_npg_cache(_x)	 ({})
 #define __update_npg_pdpe()	 vmx_ept_update_pdpe()
+
+#define npg_cr3_set(_addr)				\
+   ({							\
+      __exec_ctrls.eptp.addr = page_nr((_addr));	\
+      vmcs_dirty(__exec_ctrls.eptp);			\
+   })
+
+#define npg_get_asid()				\
+   ({						\
+      vmcs_read(__exec_ctrls.vpid);		\
+      __exec_ctrls.vpid.raw;			\
+   })
+
+#define npg_set_asid(_x)			\
+   ({						\
+      __exec_ctrls.vpid.raw = (_x);		\
+      vmcs_dirty(__exec_ctrls.vpid);		\
+   })
+
+#define npg_err_t                               vmcs_exit_info_ept_t
+#define npg_error_not_present(_e)               (((((_e.raw)>>3)&7) == 0)?1:0)
+#define npg_error_execute(_e)                   (_e.x)
+
+#define npg_error()				\
+   ({						\
+      vmcs_read(__exit_info.qualification);	\
+      __exit_info.qualification.ept;		\
+   })
+
+#define npg_fault()				\
+   ({						\
+      vmcs_read(__exit_info.guest_physical);	\
+      __exit_info.guest_physical.raw;		\
+   })
 
 /*
 ** CR registers
@@ -189,22 +227,33 @@
 #define __allow_iret()           (XXX)
 #define __deny_iret()            (XXX)
 
+#define __allow_dt_access()		\
+   ({					\
+      vmcs_read(vm_exec_ctrls.proc2);	\
+      vm_exec_ctrls.proc2.dt = 0;	\
+      vmcs_dirty(vm_exec_ctrls.proc2);	\
+   })
+
+#define __deny_dt_access()		\
+   ({					\
+      vmcs_read(vm_exec_ctrls.proc2);	\
+      vm_exec_ctrls.proc2.dt = 1;	\
+      vmcs_dirty(vm_exec_ctrls.proc2);	\
+   })
+
+#define __allow_gdt_access()     ({ __allow_dt_access(); })
+#define __deny_gdt_access()      ({ __deny_dt_access(); })
+
 #define __allow_soft_int()						\
    ({									\
-      vmcs_read(vm_exec_ctrls.proc2);					\
-      vm_exec_ctrls.proc2.dt = 0;					\
-      vmcs_dirty(vm_exec_ctrls.proc2);					\
-									\
+      __allow_dt_access();						\
       __idtr.limit.wlow = info->vm.idt_limit;				\
       vmcs_dirty(__idtr.limit);						\
    })
 
 #define __deny_soft_int()						\
    ({									\
-      vmcs_read(vm_exec_ctrls.proc2);					\
-      vm_exec_ctrls.proc2.dt = 1;					\
-      vmcs_dirty(vm_exec_ctrls.proc2);					\
-									\
+      __deny_dt_access();						\
       vmcs_read(__idtr.limit);						\
       info->vm.idt_limit = __idtr.limit.wlow;				\
       __idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;	\
@@ -216,13 +265,14 @@
 #define __allow_icebp()          (XXX)
 #define __deny_icebp()           (XXX)
 
+
 /*
 ** Events
 */
 #define __exit_reason            __exit_info.reason.basic
 #define __vmexit_on_excp()       __vmx_vmexit_on_excp()
 #define __exception_vector	 __exit_info.int_info.vector
-#define __exception_error        __exit_info.int_err_code.raw
+#define __exception_error        __exit_info.int_err_code
 #define __exception_fault       (__exit_info.qualification.raw & 0xffffffffUL)
 #define __injecting_exception() (__entry_ctrls.int_info.v?1:0)
 
@@ -242,7 +292,11 @@
 #define __inject_exception(a,b,c)   __vmx_vmexit_inject_exception(a,b,c)
 #define __inject_intr(a)            __vmx_vmexit_inject_interrupt(a)
 
-#define __interrupt_shadow         (vm_state.int_state.sti || vm_state.int_state.mss)
+#define __interrupt_shadow					\
+   ({								\
+      vmcs_read(__state.int_state);				\
+      (__state.int_state.sti || __state.int_state.mss);		\
+   })
 #define __interrupts_on()           __rflags.IF
 #define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
 #define __iwe_on()                  __exec_ctrls.proc.iwe

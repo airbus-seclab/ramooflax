@@ -27,6 +27,7 @@ extern info_data_t *info;
 */
 int npg_walk(offset_t vaddr, offset_t *paddr)
 {
+   vm_pgmem_t  *pg = npg_get_active_paging();
    npg_pml4e_t *pml4e;
    npg_pdpe_t  *pdpe;
    npg_pde64_t *pd, *pde;
@@ -35,7 +36,7 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    debug(PG_W, "npg_walk on 0x%X\n", vaddr);
    debug(PG_W, "nested CR3: 0x%X\n", npg_cr3.raw);
 
-   pml4e = &info->vm.cpu.pg.pml4[pml4_idx(vaddr)];
+   pml4e = &pg->pml4[pml4_idx(vaddr)];
 
    debug(PG_W, "pml4e @ 0x%X = %x %x\n", (offset_t)pml4e, pml4e->high, pml4e->low);
    if(!npg_present(pml4e))
@@ -44,7 +45,7 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
       return 0;
    }
 
-   pdpe = &info->vm.cpu.pg.pdp[pml4_idx(vaddr)][pdp_idx(vaddr)];
+   pdpe = &pg->pdp[pml4_idx(vaddr)][pdp_idx(vaddr)];
 
    debug(PG_W, "pdpe @ 0x%X = %x %x\n", (offset_t)pdpe, pdpe->high, pdpe->low);
    if(!npg_present(pdpe))

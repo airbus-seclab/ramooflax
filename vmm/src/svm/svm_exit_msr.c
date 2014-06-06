@@ -44,7 +44,7 @@ static int __svm_vmexit_resolve_msr_efer(uint8_t wr)
       ctx->rdx.low = vm_state.efer.edx;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 #ifdef CONFIG_MSR_PROXY
@@ -63,7 +63,7 @@ static int __svm_vmexit_resolve_msr_gen(msr_t *msr, uint8_t wr)
       ctx->rdx.low = msr->edx;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 #endif
 
@@ -96,7 +96,7 @@ int __svm_vmexit_resolve_msr(uint8_t wr)
 #endif
 
    default:
-      return MSR_NATIVE;
+      return VM_NATIVE;
    }
 }
 

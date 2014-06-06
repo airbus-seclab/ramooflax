@@ -21,6 +21,8 @@
 #include <types.h>
 #include <pagemem.h>
 
+#define invlpga(_a) asm volatile ("invlpga"::"a"(_a),"c"(vm_ctrls.tlb_ctrl.guest_asid));
+
 /*
 ** Functions
 */

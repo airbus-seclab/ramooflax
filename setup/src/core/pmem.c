@@ -71,10 +71,10 @@ static inline size_t pmem_vm_pg_pool_size(pg_cnt_t *pg)
 
 static inline offset_t pmem_vm_pg_alloc(vm_t *vm, offset_t area, pg_cnt_t *pg)
 {
-   vm->cpu.pg.pml4 = (npg_pml4e_t*)area;
+   vm->cpu.pg[0].pml4 = (npg_pml4e_t*)area;
    area += sizeof(npg_pml4_t);
 
-   vm->cpu.pg.pdp = (npg_pdp_t*)area;
+   vm->cpu.pg[0].pdp = (npg_pdp_t*)area;
    area += pg->pdp*sizeof(npg_pdp_t);
 
    return area;

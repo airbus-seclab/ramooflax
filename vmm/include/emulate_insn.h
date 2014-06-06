@@ -15,45 +15,16 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <svm_exit_io.h>
-#include <emulate.h>
-#include <dev.h>
-#include <debug.h>
-#include <info_data.h>
+#ifndef __EMULATE_INSN_H__
+#define __EMULATE_INSN_H__
 
-extern info_data_t *info;
+#include <types.h>
+#include <disasm.h>
 
-int svm_vmexit_resolve_io()
-{
-   if(!dev_access())
-      return 0;
+/*
+** Functions
+*/
+int  emulate_clts();
+int  emulate_insn(ud_t*);
 
-   vm_state.rip.raw = vm_ctrls.exit_info_2.raw;
-   return emulate_done(VM_DONE, 0);
-}
-
-int __svm_io_init(io_insn_t *io)
-{
-   svm_io_t *svm = &vm_ctrls.exit_info_1.io;
-
-   io->in   = svm->d;
-   io->s    = svm->s;
-   io->sz   = (svm->low>>4) & 7;
-   io->port = svm->port;
-
-   if(!io->s)
-      return 1;
-
-   io->addr = (svm->low>>7) & 7;
-   io->back = vm_state.rflags.df;
-   io->rep  = svm->rep;
-   io->msk  = (1ULL<<(16*io->addr)) - 1;
-
-   if(svm->seg > 5)
-   {
-      debug(SVM_IO, "invalid io seg pfx %d\n", svm->seg);
-      return 0;
-   }
-
-   return 1;
-}
+#endif

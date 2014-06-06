@@ -17,6 +17,7 @@
 */
 #include <cpuid.h>
 #include <vmm.h>
+#include <emulate.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -60,20 +61,11 @@ static int __resolve_cpuid()
 	 ,info->vm.cpu.gpr->rdx.low
       );
 
-   return CPUID_SUCCESS;
+   return VM_DONE;
 }
 
 int resolve_cpuid()
 {
-   int rc = __resolve_cpuid();
-
-   if(rc == CPUID_FAIL)
-      return 0;
-
-   if(rc == CPUID_SUCCESS)
-      vm_update_rip(CPUID_INSN_SZ);
-
-   info->vm.cpu.emu_done = 1;
-   return 1;
+   return emulate_done(__resolve_cpuid(), CPUID_INSN_SZ);
 }
 

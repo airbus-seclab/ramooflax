@@ -17,6 +17,7 @@
 */
 #include <vmx_exit_dt.h>
 #include <vmx_vmcs_acc.h>
+#include <emulate.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -25,7 +26,7 @@ extern info_data_t *info;
 static int __vmx_vmexit_lgdt(dt_reg_t *dt_reg)
 {
    if(vmx_cpl)
-      return 0;
+      return VM_FAIL;
 
    debug(VMX_DT, "lgdt 0x%X:0x%x\n", dt_reg->base.raw, dt_reg->limit);
 
@@ -33,13 +34,13 @@ static int __vmx_vmexit_lgdt(dt_reg_t *dt_reg)
    vm_state.gdtr.limit.wlow = dt_reg->limit;
    vmcs_dirty(vm_state.gdtr.base);
    vmcs_dirty(vm_state.gdtr.limit);
-   return 1;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_lidt(dt_reg_t *dt_reg)
 {
    if(vmx_cpl)
-      return 0;
+      return VM_FAIL;
 
    debug(VMX_DT, "lidt 0x%X:0x%x\n", dt_reg->base.raw, dt_reg->limit);
 
@@ -48,7 +49,7 @@ static int __vmx_vmexit_lidt(dt_reg_t *dt_reg)
 
    vm_state.idtr.base.raw = dt_reg->base.raw;
    vmcs_dirty(vm_state.idtr.base);
-   return 1;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_sgdt(dt_reg_t *dt_reg)
@@ -60,7 +61,7 @@ static int __vmx_vmexit_sgdt(dt_reg_t *dt_reg)
    dt_reg->limit = vm_state.gdtr.limit.wlow;
 
    debug(VMX_DT, "sgdt\n");
-   return 1;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_sidt(dt_reg_t *dt_reg)
@@ -71,7 +72,7 @@ static int __vmx_vmexit_sidt(dt_reg_t *dt_reg)
    dt_reg->limit = info->vm.idt_limit;
 
    debug(VMX_DT, "sidt\n");
-   return 1;
+   return VM_DONE;
 }
 
 int vmx_vmexit_resolve_dt()
@@ -86,7 +87,7 @@ int vmx_vmexit_resolve_dt()
    if(!__rmode())
    {
       debug(VMX_DT, "DT intercept only while in real mode\n");
-      return 0;
+      return VM_FAIL;
    }
 
    vmcs_read(vm_exit_info.insn_info);
@@ -174,7 +175,7 @@ int vmx_vmexit_resolve_dt()
       if(!vm_write_mem(dt_addr, (uint8_t*)&dt_reg, sz))
       {
 	 debug(VMX_DT, "could not write vm mem @0x%X\n", dt_addr);
-	 return 0;
+	 return VM_FAIL;
       }
    }
    else
@@ -182,7 +183,7 @@ int vmx_vmexit_resolve_dt()
       if(!vm_read_mem(dt_addr, (uint8_t*)&dt_reg, sz))
       {
 	 debug(VMX_DT, "could not read vm mem @0x%X\n", dt_addr);
-	 return 0;
+	 return VM_FAIL;
       }
 
       dt_reg.base.raw &= op_msk;
@@ -193,13 +194,6 @@ int vmx_vmexit_resolve_dt()
 	 rc = __vmx_vmexit_lidt(&dt_reg);
    }
 
-   if(rc == VMX_DT_SUCCESS)
-   {
-      info->vm.cpu.emu_done = 1;
-      vmcs_read(vm_exit_info.insn_len);
-      vm_update_rip(vm_exit_info.insn_len.raw);
-      return 1;
-   }
-
-   return 0;
+   vmcs_read(vm_exit_info.insn_len);
+   return emulate_done(rc, vm_exit_info.insn_len.raw);
 }

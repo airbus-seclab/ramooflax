@@ -61,7 +61,7 @@ static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    resolve_default,                     //RDPMC
    resolve_default,                     //RDTSC
    resolve_default,                     //RSM
-   resolve_default,                     //VMCALL
+   resolve_hypercall,                   //VMCALL
    resolve_default,                     //VMCLEAR
    resolve_default,                     //VMLAUNCH
    resolve_default,                     //VMPTRLD
@@ -91,7 +91,7 @@ static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    resolve_default,                     //UNDEFINED
    vmx_vmexit_resolve_dt,               //DTR
    resolve_default,                     //LDTR
-   resolve_default,                     //EPT
+   vmx_vmexit_resolve_ept_viol,         //EPT
    resolve_default,                     //EPT_CONF
    resolve_default,                     //INVEPT
    resolve_default,                     //RDTSCP
@@ -141,8 +141,7 @@ static void vmx_vmexit_post_hdl(raw64_t tsc)
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    vmcs_dirty(vm_state.rsp);
 
-   if(info->vm.cpu.emu_done)
-      info->vm.cpu.emu_done = 0;
+   info->vm.cpu.emu_sts.raw = 0;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    vmx_vmexit_tsc_rebase(tsc);
@@ -219,58 +218,52 @@ int __vmx_vmexit_idt_deliver_rmode()
 
 int __vmx_vmexit_idt_deliver_pmode()
 {
-/*    /\* */
-/*    ** cpu was delivering */
-/*    ** we have nothing to inject */
-/*    ** so we resume delivering */
-/*    *\/ */
-/*    if(!vm_entry_ctrls.int_info.v) */
-/*    { */
-/*       if(vm_exit_info.idt_info.type == VMCS_IDT_INFORMATION_TYPE_HW_EXCP && */
-/* 	 vm_exit_info.idt_info.vector == PAGEFAULT_EXCEPTION) */
-/*       { */
-/* 	 vmcs_read(vm_exit_info.idt_err_code); */
+   vmcs_read(vm_entry_ctrls.int_info);
 
-/* 	 debug(VMX_IDT, "idt deliver check #PF (0x%x, 0x%x)\n", */
-/* 		get_cr2(), vm_exit_info.idt_err_code.raw); */
+   /*
+   ** cpu was delivering
+   ** we have nothing to inject
+   ** so we resume delivering
+   */
+   if(!vm_entry_ctrls.int_info.v)
+   {
+      debug(VMX_IDT, "idt[0x%x:%d] eax 0x%x\n"
+	    ,vm_exit_info.idt_info.vector
+	    ,vm_exit_info.idt_info.type
+	    ,info->vm.cpu.gpr->rax.low);
 
-/* 	 return resolve_pf(get_cr2(), vm_exit_info.idt_err_code.raw); */
-/*       } */
+      if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT)
+      {
+	 vm_entry_ctrls.insn_len.raw = 2;
+	 vmcs_dirty(vm_entry_ctrls.insn_len);
+      }
 
-/*       if(vm_exit_info.idt_info.type == VMCS_IDT_INFORMATION_TYPE_HW_INT) */
-/*       { */
-/* 	 debug(VMX_IDT, */
-/* 	       "idt deliver IRQ (pmode): 0x%x\n", */
-/* 	       vm_exit_info.idt_info.vector); */
-/* 	 irq_set_pending(vm_exit_info.idt_info.vector - IDT_IRQ_MIN); */
-/* 	 return resolve_hard_interrupt(); */
-/*       } */
+      if(vm_exit_info.idt_info.v_err)
+      {
+	 vmcs_read(vm_exit_info.idt_err_code);
+	 vm_entry_ctrls.err_code.raw = vm_exit_info.idt_err_code.raw;
+	 vmcs_dirty(vm_entry_ctrls.err_code);
+      }
 
-/*       if(vm_exit_info.idt_info.v_err) */
-/*       { */
-/* 	 vmcs_read(vm_exit_info.idt_err_code); */
-/* 	 vm_entry_ctrls.err_code.raw = vm_exit_info.idt_err_code.raw; */
-/* 	 vmcs_dirty(vm_entry_ctrls.err_code); */
-/*       } */
+      /* interrupt shadow ? */
+      debug_warning();
 
-/*       debug(VMX_IDT, "idt deliver pending (%d,0x%x) eax 0x%x !\n" */
-/* 	    , vm_exit_info.idt_info.type */
-/* 	    , vm_exit_info.idt_info.vector */
-/* 	    , info->vm.cpu.gpr->eax.raw); */
+      vm_entry_ctrls.int_info.raw = vm_exit_info.idt_info.raw;
+      vmcs_dirty(vm_entry_ctrls.int_info);
 
-/*       vm_entry_ctrls.int_info.raw = vm_exit_info.idt_info.raw; */
-/*       vmcs_dirty(vm_entry_ctrls.int_info); */
-/*       return 1; */
-/*    } */
+      return 1;
+   }
 
-/*    /\* */
-/*    ** cpu was delivering */
-/*    ** we have something to inject */
-/*    *\/ */
+   debug(VMX_IDT, "already injecting: %d (%d)\n"
+	 ,vm_entry_ctrls.int_info.vector, vm_entry_ctrls.int_info.type);
 
+   /*
+   ** cpu was delivering
+   ** we have something to inject
+   */
 /*    /\* exception (to be injected) while delivering exception *\/ */
-/*    if(vm_exit_info.idt_info.type  == VMCS_IDT_INFORMATION_TYPE_HW_EXCP && */
-/*       vm_entry_ctrls.int_info.type == VMCS_IDT_INFORMATION_TYPE_HW_EXCP) */
+/*    if(vm_exit_info.idt_info.type  == VMCS_IDT_INFO_TYPE_HW_EXCP && */
+/*       vm_entry_ctrls.int_info.type == VMCS_IDT_INFO_TYPE_HW_EXCP) */
 /*    { */
 /*       uint8_t e1 = vm_exit_info.idt_info.vector; */
 /*       uint8_t e2 = vm_entry_ctrls.int_info.vector; */

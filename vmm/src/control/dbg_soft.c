@@ -26,11 +26,11 @@ static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
    if(!ctrl_mem_write(bp->addr, &bp->byte, 1))
    {
       debug(DBG_SOFT, "restore insn @ 0x%X failed\n", bp->addr);
-      return DBG_BRK_FAIL;
+      return VM_FAIL;
    }
 
    debug(DBG_SOFT, "restored insn @ 0x%X\n", bp->addr);
-   return DBG_BRK_OK;
+   return VM_DONE;
 }
 
 static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp, cr3_reg_t *cr3)
@@ -40,17 +40,17 @@ static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp, cr3_reg_t *cr3)
    if(!ctrl_mem_write_with(cr3, bp->addr, &brk_insn, 1))
    {
       debug(DBG_SOFT, "restore soft bp @ 0x%X failed\n", bp->addr);
-      return DBG_BRK_FAIL;
+      return VM_FAIL;
    }
 
    debug(DBG_SOFT, "restored soft bp @ 0x%X\n", bp->addr);
-   return DBG_BRK_OK;
+   return VM_DONE;
 }
 
 static int dbg_soft_restore_insn(dbg_soft_bp_t *bp, void __unused__ *arg)
 {
    if(!bp->sts.on)
-      return DBG_BRK_IGNORE;
+      return VM_IGNORE;
 
    return __dbg_soft_restore_insn(bp);
 }
@@ -58,10 +58,10 @@ static int dbg_soft_restore_insn(dbg_soft_bp_t *bp, void __unused__ *arg)
 static int dbg_soft_restore_bp(dbg_soft_bp_t *bp, void __unused__ *arg)
 {
    if(!bp->sts.on)
-      return DBG_BRK_IGNORE;
+      return VM_IGNORE;
 
    if(dbg_soft_resuming() && bp->addr == info->vmm.ctrl.dbg.evt.addr)
-      return DBG_BRK_IGNORE;
+      return VM_IGNORE;
 
    return __dbg_soft_restore_bp(bp, info->vmm.ctrl.active_cr3);
 }
@@ -69,15 +69,15 @@ static int dbg_soft_restore_bp(dbg_soft_bp_t *bp, void __unused__ *arg)
 static int __dbg_soft_del_bp(dbg_soft_bp_t *bp, void __unused__ *arg)
 {
    if(!bp->sts.on)
-      return DBG_BRK_IGNORE;
+      return VM_IGNORE;
 
    bp->sts.on = 0;
 
    if(!__dbg_soft_restore_insn(bp))
-      return DBG_BRK_FAIL;
+      return VM_FAIL;
 
    debug(DBG_SOFT, "del soft bp @ 0x%X\n", bp->addr);
-   return DBG_BRK_OK;
+   return VM_DONE;
 }
 
 static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
@@ -85,7 +85,7 @@ static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
    offset_t addr = *(offset_t*)arg;
 
    if(bp->sts.on && bp->addr != addr)
-      return DBG_BRK_IGNORE;
+      return VM_IGNORE;
 
    if(!bp->sts.on)
    {
@@ -95,14 +95,14 @@ static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
       if(!ctrl_mem_read(addr, &bp->byte, 1))
       {
 	 debug(DBG_SOFT, "set soft bp @ 0x%X failed\n", addr);
-	 return DBG_BRK_FAIL;
+	 return VM_FAIL;
       }
 
       debug(DBG_SOFT, "set soft bp @ 0x%X\n", addr);
    }
 
    *(dbg_soft_bp_t**)arg = bp;
-   return DBG_BRK_OK;
+   return VM_DONE;
 }
 
 static int dbg_soft_del_bp(dbg_soft_bp_t *bp, void *arg)
@@ -110,7 +110,7 @@ static int dbg_soft_del_bp(dbg_soft_bp_t *bp, void *arg)
    offset_t addr = (offset_t)arg;
 
    if(bp->addr != addr)
-      return DBG_BRK_IGNORE;
+      return VM_IGNORE;
 
    return __dbg_soft_del_bp(bp, 0);
 }
@@ -123,10 +123,10 @@ static int dbg_soft_check_bp(dbg_soft_bp_t *bp, void *arg)
    {
       debug(DBG_SOFT, "found soft bp @ 0x%X\n", addr);
       *(dbg_soft_bp_t**)arg = bp;
-      return DBG_BRK_OK;
+      return VM_DONE;
    }
 
-   return DBG_BRK_IGNORE;
+   return VM_IGNORE;
 }
 
 static int dbg_soft_for_each(dbg_soft_hdl_t hdl, void *arg, int stop)
@@ -143,7 +143,7 @@ static int dbg_soft_for_each(dbg_soft_hdl_t hdl, void *arg, int stop)
 
 static int dbg_soft_del_all()
 {
-   if(dbg_soft_for_each(__dbg_soft_del_bp, 0, DBG_BRK_FAIL) == DBG_BRK_FAIL)
+   if(dbg_soft_for_each(__dbg_soft_del_bp, 0, VM_FAIL) == VM_FAIL)
    {
       debug(DBG_SOFT, "fail to delete all bp\n");
       return 0;
@@ -182,18 +182,18 @@ int dbg_soft_set(offset_t addr, ctrl_evt_hdl_t hdlr)
    if(info->vmm.ctrl.dbg.soft.cnt == DBG_SOFT_NR)
       return 0;
 
-   stop = DBG_BRK_OK|DBG_BRK_FAIL;
+   stop = VM_DONE|VM_FAIL;
 
-   if(dbg_soft_for_each(dbg_soft_set_bp, &addr, stop) == DBG_BRK_OK)
+   if(dbg_soft_for_each(dbg_soft_set_bp, &addr, stop) == VM_DONE)
    {
       bp = (dbg_soft_bp_t*)addr;
       bp->hdlr = hdlr;
       info->vmm.ctrl.dbg.soft.cnt++;
       dbg_soft_enable();
-      return DBG_BRK_OK;
+      return VM_DONE;
    }
 
-   return DBG_BRK_FAIL;
+   return VM_FAIL;
 }
 
 int dbg_soft_del(offset_t addr)
@@ -203,17 +203,17 @@ int dbg_soft_del(offset_t addr)
    if(info->vmm.ctrl.dbg.soft.cnt == 0)
       return 0;
 
-   stop = DBG_BRK_OK|DBG_BRK_FAIL;
+   stop = VM_DONE|VM_FAIL;
 
-   if(dbg_soft_for_each(dbg_soft_del_bp, (void*)addr, stop) == DBG_BRK_OK)
+   if(dbg_soft_for_each(dbg_soft_del_bp, (void*)addr, stop) == VM_DONE)
    {
       info->vmm.ctrl.dbg.soft.cnt--;
       if(info->vmm.ctrl.dbg.soft.cnt == 0)
 	 dbg_soft_disable();
-      return DBG_BRK_OK;
+      return VM_DONE;
    }
 
-   return DBG_BRK_FAIL;
+   return VM_FAIL;
 }
 
 /*
@@ -235,7 +235,7 @@ int dbg_soft_resume()
    if(!bp->sts.on || bp->addr != info->vmm.ctrl.dbg.evt.addr)
       return 0;
 
-   if(__dbg_soft_restore_insn(bp) == DBG_BRK_OK)
+   if(__dbg_soft_restore_insn(bp) == VM_DONE)
    {
       dbg_soft_set_resume(1);
       return 1;
@@ -246,7 +246,7 @@ int dbg_soft_resume()
 
 int dbg_soft_resume_post(cr3_reg_t *cr3)
 {
-   if(__dbg_soft_restore_bp(info->vmm.ctrl.dbg.evt.soft, cr3) == DBG_BRK_OK)
+   if(__dbg_soft_restore_bp(info->vmm.ctrl.dbg.evt.soft, cr3) == VM_DONE)
    {
       dbg_soft_set_resume(0);
       return 1;
@@ -257,7 +257,7 @@ int dbg_soft_resume_post(cr3_reg_t *cr3)
 
 int dbg_soft_disarm()
 {
-   if(dbg_soft_for_each(dbg_soft_restore_insn, 0, DBG_BRK_FAIL) == DBG_BRK_FAIL)
+   if(dbg_soft_for_each(dbg_soft_restore_insn, 0, VM_FAIL) == VM_FAIL)
    {
       debug(DBG_SOFT, "fail to disarm bp\n");
       return 0;
@@ -269,7 +269,7 @@ int dbg_soft_disarm()
 
 int dbg_soft_rearm()
 {
-   if(dbg_soft_for_each(dbg_soft_restore_bp, 0, DBG_BRK_FAIL) == DBG_BRK_FAIL)
+   if(dbg_soft_for_each(dbg_soft_restore_bp, 0, VM_FAIL) == VM_FAIL)
    {
       debug(DBG_SOFT, "fail to rearm bp\n");
       return 0;
@@ -285,14 +285,14 @@ int dbg_soft_event(ctrl_evt_hdl_t *hdlr)
    int      mode, stop;
 
    if(!dbg_soft_enabled())
-      return CTRL_EVT_IGNORE;
+      return VM_IGNORE;
 
    debug(DBG_SOFT, "soft brk event\n");
 
    vm_get_code_addr(&addr, 0, &mode);
-   stop = DBG_BRK_OK|DBG_BRK_FAIL;
+   stop = VM_DONE|VM_FAIL;
 
-   if(dbg_soft_for_each(dbg_soft_check_bp, &addr, stop) == DBG_BRK_OK)
+   if(dbg_soft_for_each(dbg_soft_check_bp, &addr, stop) == VM_DONE)
    {
       dbg_evt_t     *evt = &info->vmm.ctrl.dbg.evt;
       dbg_soft_bp_t *bp  = (dbg_soft_bp_t*)addr;
@@ -303,10 +303,10 @@ int dbg_soft_event(ctrl_evt_hdl_t *hdlr)
       *hdlr     = bp->hdlr;
 
       debug(DBG_SOFT, "prepared soft brk ctrl event for 0x%X\n", evt->addr);
-      return CTRL_EVT_DONE;
+      return VM_DONE;
    }
 
-   return CTRL_EVT_IGNORE;
+   return VM_IGNORE;
 }
 
 void dbg_soft_enable()

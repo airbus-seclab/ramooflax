@@ -44,7 +44,7 @@ static int __vmx_vmexit_resolve_msr_mtrr_def(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = info->vm.mtrr_def.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
@@ -72,7 +72,7 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
       {
 	 debug(VMX_MSR, "modifying LME while paging-on #GP\n");
 	 __inject_exception(GP_EXCP, 0, 0);
-	 return MSR_FAULT;
+	 return VM_FAULT;
       }
    }
    else
@@ -81,7 +81,7 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = info->vm.efer.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 #ifdef CONFIG_MSR_PROXY
@@ -98,7 +98,7 @@ static int __vmx_vmexit_resolve_msr_sysenter_cs(uint8_t wr)
       info->vm.cpu.gpr->rax.low = vm_state.ia32_sysenter_cs.raw;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_resolve_msr_sysenter_esp(uint8_t wr)
@@ -116,7 +116,7 @@ static int __vmx_vmexit_resolve_msr_sysenter_esp(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = vm_state.ia32_sysenter_esp.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_resolve_msr_sysenter_eip(uint8_t wr)
@@ -134,7 +134,7 @@ static int __vmx_vmexit_resolve_msr_sysenter_eip(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = vm_state.ia32_sysenter_eip.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_resolve_msr_pat(uint8_t wr)
@@ -152,7 +152,7 @@ static int __vmx_vmexit_resolve_msr_pat(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = vm_state.ia32_pat.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_resolve_msr_dbgctl(uint8_t wr)
@@ -170,7 +170,7 @@ static int __vmx_vmexit_resolve_msr_dbgctl(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = vm_state.ia32_dbgctl.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 
 static int __vmx_vmexit_resolve_msr_perf(uint8_t wr)
@@ -188,7 +188,7 @@ static int __vmx_vmexit_resolve_msr_perf(uint8_t wr)
       info->vm.cpu.gpr->rdx.low = vm_state.ia32_perf.high;
    }
 
-   return MSR_SUCCESS;
+   return VM_DONE;
 }
 #endif
 
@@ -217,7 +217,7 @@ int __vmx_vmexit_resolve_msr(uint8_t wr)
 #endif
 
    default:
-      return MSR_NATIVE;
+      return VM_NATIVE;
    }
 }
 

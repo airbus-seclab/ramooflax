@@ -82,7 +82,7 @@ static void svm_vmcb_controls_init()
    vm_ctrls.sys_insn_bitmap.invlpga = 1;
    vm_ctrls.tlb_ctrl.guest_asid     = 1;
    vm_ctrls.npt.raw                 = 1UL;
-   vm_ctrls.ncr3.pml4.addr          = page_nr(info->vm.cpu.pg.pml4);
+   vm_ctrls.ncr3.pml4.addr          = page_nr(info->vm.cpu.pg[0].pml4);
 
    vm_ctrls.sys_insn_bitmap.intn    = 1;
    vm_ctrls.vmm_insn_bitmap.stgi    = 1;

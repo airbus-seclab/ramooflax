@@ -87,6 +87,12 @@ static void vmx_cpu_features()
    if(!info->vm.vmx_ept_cap.pwl4)
       panic("unsupported page walk length");
 
+   if(!info->vm.vmx_ept_cap.invvpid)
+      panic("vmx missing invvpid\n");
+
+   if(!info->vm.vmx_ept_cap.invept)
+      panic("vmx missing invept\n");
+
    rd_msr_vmx_fixed_cr0(info->vm.vmx_fx_cr0);
    rd_msr_vmx_fixed_cr4(info->vm.vmx_fx_cr4);
 

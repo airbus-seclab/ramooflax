@@ -77,15 +77,15 @@ int dbg_hard_brk_set(offset_t addr, uint8_t type, uint8_t len, ctrl_evt_hdl_t hd
 
 	 dbg_hard_brk_enable();
 	 debug(DBG_HARD_BRK, "set hard bp @ 0x%X\n", get_dr(n));
-	 return DBG_BRK_OK;
+	 return VM_DONE;
       }
 
-   return DBG_BRK_IGNORE;
+   return VM_IGNORE;
 }
 
 int dbg_hard_brk_del(offset_t addr, uint8_t type, uint8_t len)
 {
-   uint8_t n, more, more_x, check, rc = DBG_BRK_IGNORE;
+   uint8_t n, more, more_x, check, rc = VM_IGNORE;
 
    more = more_x = 0;
    check = __hbrk_mke_conf(type,len);
@@ -97,7 +97,7 @@ int dbg_hard_brk_del(offset_t addr, uint8_t type, uint8_t len)
 	 if(conf == check && addr == get_dr(n))
 	 {
 	    __hbrk_delete_bp(n);
-	    rc = DBG_BRK_OK;
+	    rc = VM_DONE;
 	    debug(DBG_HARD_BRK, "del hard bp @ 0x%X\n", addr);
 	 }
 	 else if(!more_x || !more)
@@ -155,7 +155,7 @@ int dbg_hard_brk_event(ctrl_evt_hdl_t *hdlr)
    uint8_t n;
 
    if(!dbg_hard_brk_enabled())
-      return CTRL_EVT_IGNORE;
+      return VM_IGNORE;
 
    debug(DBG_HARD_BRK, "hard brk event\n");
 
@@ -171,10 +171,10 @@ int dbg_hard_brk_event(ctrl_evt_hdl_t *hdlr)
 
 	 dbg_hard_set_dr6_dirty(1);
 	 debug(DBG_HARD_BRK, "prepared hard brk ctrl event for 0x%X\n", evt->addr);
-	 return CTRL_EVT_DONE;
+	 return VM_DONE;
       }
 
-   return CTRL_EVT_IGNORE;
+   return VM_IGNORE;
 }
 
 void dbg_hard_brk_enable()

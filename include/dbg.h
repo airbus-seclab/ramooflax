@@ -30,13 +30,6 @@
 #define DBG_REQ_VMM      1
 
 /*
-** Breakpoint status
-*/
-#define DBG_BRK_FAIL     1
-#define DBG_BRK_OK       2
-#define DBG_BRK_IGNORE   4
-
-/*
 ** Some protections
 */
 #define ___access_rflags(_access_)		\

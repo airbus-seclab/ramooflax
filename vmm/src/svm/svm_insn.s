@@ -84,10 +84,11 @@ svm_vmexit:
 	push	%r14
 	push	%r15
 
+	lfence
 	rdtsc
 	mov	%edx, %edi
 	shl	$32, %rdi
-	mov	%eax, %edi
+	or	%rax, %rdi
 
 	xor	%rbp, %rbp
 	call	svm_vmexit_handler

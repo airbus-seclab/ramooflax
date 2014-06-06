@@ -39,7 +39,7 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
    {
       debug(CR0, "invalid cr0 setup\n");
       __inject_exception(GP_EXCP, 0, 0);
-      return CR_FAULT;
+      return VM_FAULT;
    }
 
    if(cr0_update & (CR0_NW|CR0_CD))
@@ -73,10 +73,10 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
    {
       debug(CR0, "pae pdpe update fault\n");
       __inject_exception(GP_EXCP, 0, 0);
-      return CR_FAULT;
+      return VM_FAULT;
    }
 
-   return CR_SUCCESS;
+   return VM_DONE;
 }
 
 int __resolve_cr3_wr(cr3_reg_t *guest)
@@ -97,11 +97,11 @@ int __resolve_cr3_wr(cr3_reg_t *guest)
    {
       debug(CR3, "pae pdpe update fault\n");
       __inject_exception(GP_EXCP, 0, 0);
-      return CR_FAULT;
+      return VM_FAULT;
    }
 
    __post_access(__cr3);
-   return CR_SUCCESS;
+   return VM_DONE;
 }
 
 int __resolve_cr4_wr(cr4_reg_t *guest)
@@ -125,7 +125,7 @@ int __resolve_cr4_wr(cr4_reg_t *guest)
    {
       debug(CR4, "disable pae while in lmode #GP\n");
       __inject_exception(GP_EXCP, 0, 0);
-      return CR_FAULT;
+      return VM_FAULT;
    }
 #endif
 
@@ -135,10 +135,10 @@ int __resolve_cr4_wr(cr4_reg_t *guest)
    {
       debug(CR4, "pae pdpe update fault\n");
       __inject_exception(GP_EXCP, 0, 0);
-      return CR_FAULT;
+      return VM_FAULT;
    }
 
-   return CR_SUCCESS;
+   return VM_DONE;
 }
 
 int __resolve_cr_wr_with(uint8_t cr, raw64_t *val)
@@ -152,7 +152,7 @@ int __resolve_cr_wr_with(uint8_t cr, raw64_t *val)
    else if(cr == 4)
       rc = __resolve_cr4_wr((cr4_reg_t*)val);
    else
-      return CR_FAIL;
+      return VM_FAIL;
 
    ctrl_evt_cr_wr(cr);
    return rc;
@@ -181,7 +181,7 @@ static int __resolve_cr_rd(uint8_t cr, uint8_t gpr)
       creg = (raw64_t*)&__cr4.raw;
    }
    else
-      return CR_FAIL;
+      return VM_FAIL;
 
    /* XXX: check rex.r for r8/r15 access */
    if(__lmode64())
@@ -190,7 +190,7 @@ static int __resolve_cr_rd(uint8_t cr, uint8_t gpr)
       info->vm.cpu.gpr->raw[gpr].low = creg->low;
 
    ctrl_evt_cr_rd(cr);
-   return CR_SUCCESS;
+   return VM_DONE;
 }
 
 int __resolve_cr(uint8_t wr, uint8_t cr, uint8_t gpr)
@@ -198,11 +198,11 @@ int __resolve_cr(uint8_t wr, uint8_t cr, uint8_t gpr)
    if(!__valid_cr_access())
    {
       __inject_exception(GP_EXCP, 0, 0);
-      return CR_FAULT;
+      return VM_FAULT;
    }
 
    if(!__valid_cr_regs(gpr, cr))
-      return CR_FAIL;
+      return VM_FAIL;
 
    if(wr)
       return __resolve_cr_wr(cr, gpr);

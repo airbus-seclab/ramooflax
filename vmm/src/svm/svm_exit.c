@@ -73,7 +73,7 @@ static vmexit_hdlr_t svm_vmexit_resolvers[SVM_VMEXIT_RESOLVERS_NR] = {
    resolve_default,                       //FERR
    resolve_default,                       //SHUTDOWN
    resolve_default,                       //VMRUN
-   resolve_default,                       //VMMCALL
+   resolve_hypercall,                     //VMMCALL
    resolve_default,                       //VMLOAD
    resolve_default,                       //VMSAVE
    resolve_default,                       //STGI
@@ -111,8 +111,7 @@ static void svm_vmexit_post_hdl(raw64_t tsc)
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    info->vm.cpu.gpr->rax.raw = (offset_t)&info->vm.cpu.vmc->vm_vmcb;
 
-   if(info->vm.cpu.emu_done)
-      info->vm.cpu.emu_done = 0;
+   info->vm.cpu.emu_sts.raw = 0;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    svm_vmexit_tsc_rebase(tsc);
@@ -195,53 +194,57 @@ int __svm_vmexit_idt_deliver_rmode()
 
 int __svm_vmexit_idt_deliver_pmode()
 {
-   /* /\* */
-   /* ** cpu was delivering */
-   /* ** we have nothing to inject */
-   /* ** so we resume delivering */
-   /* *\/ */
-   /* if(!vm_ctrls.event_injection.v) */
-   /* { */
-   /*    vmcb_state_area_t *state = guest_state(); */
+   /*
+   ** cpu was delivering
+   ** we have nothing to inject
+   ** so we resume delivering
+   */
+   if(!vm_ctrls.event_injection.v)
+   {
+      debug(SVM_IDT, "idt[0x%x:%d] eax 0x%x\n"
+	    ,vm_ctrls.exit_int_info.vector
+	    ,vm_ctrls.exit_int_info.type
+	    ,info->vm.cpu.gpr->rax.low);
 
-   /*    if(vm_ctrls.exit_int_info.type   == VMCB_IDT_DELIVERY_TYPE_EXCP && */
-   /* 	  vm_ctrls.exit_int_info.vector == PG_EXCP) */
-   /*    { */
-   /* 	 pf_err_t err; */
-   /* 	 debug(SVM_IDT, "idt deliver check #PF (0x%x, 0x%x)\n", */
-   /* 		vm_state.cr2.low, vm_ctrls.exit_int_info.err_code); */
+      /*
+      ** XXX: next_rip not supported, emulate it
+      ** only intN are soft interrupts
+      ** int1, int3, into are exceptions
+      */
+      if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_SOFT)
+	 vm_update_rip(2);
 
-   /* 	 err.raw = vm_ctrls.exit_int_info.err_code; */
-   /* 	 return resolve_pf(vm_state.cr2.low, err); */
-   /*    } */
+      vm_ctrls.event_injection.raw = vm_ctrls.exit_int_info.raw;
 
-   /*    if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
-   /*    { */
-   /* 	 debug(SVM_IDT, */
-   /* 		"idt deliver IRQ (pmode): 0x%x\n", */
-   /* 		vm_ctrls.exit_int_info.vector */
-   /* 	   ); */
-   /* 	 irq_set_pending(vm_ctrls.exit_int_info.vector - VMM_IDT_IRQ_MIN); */
-   /* 	 return resolve_hard_interrupt(); */
-   /*    } */
+      if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT &&
+	 vm_ctrls.int_shadow.raw)
+      {
+	 debug(SVM_IDT, "interrupt shadow so inject virq\n");
+	 vm_ctrls.int_ctrl.raw = 0;
+	 vm_ctrls.int_ctrl.v_intr_vector = vm_ctrls.exit_int_info.vector;
 
-   /*    debug(SVM_IDT, "idt deliver pending (%d,0x%x) eax 0x%x !\n" */
-   /* 	     , vm_ctrls.exit_int_info.type */
-   /* 	     , vm_ctrls.exit_int_info.vector */
-   /* 	     , info->vm.cpu.gpr->eax.raw */
-   /* 	); */
+	 /* if(vm_ctrls.exit_int_info.vector < 16) */
+	 /*    vm_ctrls.int_ctrl.v_intr_prio = 15; */
+	 /* else */
+	 /*    vm_ctrls.int_ctrl.v_intr_prio = vm_ctrls.exit_int_info.vector/16; */
+	 debug_warning();
 
-   /*    vm_ctrls.event_injection.raw = vm_ctrls.exit_int_info.raw; */
-   /*    return 1; */
-   /* } */
+	 vm_ctrls.event_injection.v = 0;
+	 vm_ctrls.int_ctrl.v_irq = 1;
+      }
 
-   /* /\* */
-   /* ** cpu was delivering */
-   /* ** we have something to inject */
-   /* *\/ */
+      return 1;
+   }
 
+   debug(SVM_IDT, "already injecting: %d (%d)\n"
+	 ,vm_ctrls.event_injection.vector, vm_ctrls.event_injection.type);
+
+   /*
+   ** cpu was delivering
+   ** we have something to inject
+   */
    /* /\* exception (to be injected) while delivering exception *\/ */
-   /* if(vm_ctrls.exit_int_info.type   == VMCB_IDT_DELIVERY_TYPE_EXCP && */
+   /* if(vm_ctrls.exit_int_info.type  == VMCB_IDT_DELIVERY_TYPE_EXCP && */
    /*     vm_ctrls.event_injection.type == VMCB_IDT_DELIVERY_TYPE_EXCP) */
    /* { */
    /*    uint8_t e1 = vm_ctrls.exit_int_info.vector; */
@@ -277,3 +280,62 @@ int __svm_vmexit_idt_deliver_pmode()
    return 0;
 }
 
+/* { */
+/* 	 int_desc_t *idt; */
+/* 	 seg_desc_t *gdt; */
+/* 	 tss_t      *tss; */
+/* 	 offset_t   vaddr, paddr; */
+/* 	 size_t     psz; */
+/* 	 static int x=0; */
+
+/* 	 if(x==0) */
+/* 	 { */
+/* 	    vaddr = __idtr.base.raw; */
+/* 	    debug(SVM_IDT, "idt base -> 0x%X\n", vaddr); */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+/* 	    idt = (int_desc_t*)paddr; */
+
+/* 	    vaddr = */
+/* 	       ((idt[vm_ctrls.exit_int_info.vector].offset_2<<16) | */
+/* 		idt[vm_ctrls.exit_int_info.vector].offset_1) & 0xffffffff; */
+/* 	    debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
+/* 		  ,vm_ctrls.exit_int_info.vector, vaddr); */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+
+/* 	    vaddr = */
+/* 	       ((idt[NP_EXCP].offset_2<<16) | */
+/* 		idt[NP_EXCP].offset_1) & 0xffffffff; */
+/* 	    debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
+/* 		  ,NP_EXCP, vaddr); */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+
+/* 	    vaddr = */
+/* 	       ((idt[GP_EXCP].offset_2<<16) | */
+/* 		idt[GP_EXCP].offset_1) & 0xffffffff; */
+/* 	    debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
+/* 		  ,GP_EXCP, vaddr); */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+
+/* 	    vaddr = __gdtr.base.raw; */
+/* 	    debug(SVM_IDT, "gdt base -> 0x%X\n", vaddr); */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+
+/* 	    gdt = (seg_desc_t*)paddr; */
+/* 	    debug(SVM_IDT, "gdt[0x%x] = 0x%X (p %d)\n" */
+/* 		  , (idt[vm_ctrls.exit_int_info.vector].selector)>>3 */
+/* 		  , gdt[(idt[vm_ctrls.exit_int_info.vector].selector)>>3].raw */
+/* 		  , gdt[(idt[vm_ctrls.exit_int_info.vector].selector)>>3].p); */
+
+/* 	    vaddr = __tr.base.raw; */
+/* 	    debug(SVM_IDT, "tr base -> 0x%X\n", vaddr); */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+
+/* 	    tss = (tss_t*)paddr; */
+/* 	    debug(SVM_IDT, "tss.esp0 -> 0x%X\n", tss->s0.esp & 0xffffffff); */
+
+/* 	    vaddr = tss->s0.esp & 0xffffffff; */
+/* 	    pg_walk(vaddr, &paddr, &psz); */
+
+/* 	    x++; */
+/* 	 } */
+/* } */

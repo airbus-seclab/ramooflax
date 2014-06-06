@@ -88,11 +88,11 @@ static void gdb_vmm_wr_sysreg(uint8_t *data, size_t len)
       return;
    }
 
-   if(reg == (raw64_t*)&__cr0 && __resolve_cr0_wr((cr0_reg_t*)&value) == CR_FAIL)
+   if(reg == (raw64_t*)&__cr0 && __resolve_cr0_wr((cr0_reg_t*)&value) == VM_FAIL)
       goto __err;
-   else if(reg == (raw64_t*)&__cr3 && __resolve_cr3_wr((cr3_reg_t*)&value) == CR_FAIL)
+   else if(reg == (raw64_t*)&__cr3 && __resolve_cr3_wr((cr3_reg_t*)&value) == VM_FAIL)
       goto __err;
-   else if(reg == (raw64_t*)&__cr4 && __resolve_cr4_wr((cr4_reg_t*)&value) == CR_FAIL)
+   else if(reg == (raw64_t*)&__cr4 && __resolve_cr4_wr((cr4_reg_t*)&value) == VM_FAIL)
       goto __err;
    else
       reg->raw = value.raw;

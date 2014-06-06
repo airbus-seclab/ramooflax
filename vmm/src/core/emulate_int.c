@@ -15,45 +15,66 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <svm_exit_io.h>
-#include <emulate.h>
-#include <dev.h>
+#include <emulate_int.h>
+#include <emulate_rmode.h>
+#include <disasm.h>
+#include <vm.h>
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-int svm_vmexit_resolve_io()
+static int emulate_interrupt(uint8_t vector, uint16_t insn_sz)
 {
-   if(!dev_access())
-      return 0;
+   if(__rmode())
+      return emulate_rmode_interrupt(vector, insn_sz);
 
-   vm_state.rip.raw = vm_ctrls.exit_info_2.raw;
-   return emulate_done(VM_DONE, 0);
+   return VM_FAIL;
 }
 
-int __svm_io_init(io_insn_t *io)
+int emulate_hard_interrupt(uint8_t vector)
 {
-   svm_io_t *svm = &vm_ctrls.exit_info_1.io;
+   return emulate_interrupt(vector, 0);
+}
 
-   io->in   = svm->d;
-   io->s    = svm->s;
-   io->sz   = (svm->low>>4) & 7;
-   io->port = svm->port;
+int emulate_exception(uint8_t vector)
+{
+   return emulate_interrupt(vector, 0);
+}
 
-   if(!io->s)
-      return 1;
+int emulate_int1()
+{
+   /* icebp */
+   return VM_FAIL;
+}
 
-   io->addr = (svm->low>>7) & 7;
-   io->back = vm_state.rflags.df;
-   io->rep  = svm->rep;
-   io->msk  = (1ULL<<(16*io->addr)) - 1;
+int emulate_int3()
+{
+   return VM_FAIL;
+}
 
-   if(svm->seg > 5)
+int emulate_into()
+{
+   if(!__rflags.of)
+      return VM_DONE;
+
+   return VM_FAIL;
+}
+
+int emulate_bound()
+{
+   return VM_FAIL;
+}
+
+int emulate_intn(ud_t *disasm)
+{
+   struct ud_operand *op = &disasm->operand[0];
+
+   if(op->type != UD_OP_IMM)
    {
-      debug(SVM_IO, "invalid io seg pfx %d\n", svm->seg);
-      return 0;
+      debug(EMU_INSN, "intN bad operand\n");
+      return VM_FAIL;
    }
 
-   return 1;
+   return emulate_interrupt(op->lval.ubyte, ud_insn_len(disasm));
 }

@@ -17,6 +17,7 @@
 */
 #include <msr.h>
 #include <vmm.h>
+#include <emulate.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -26,7 +27,7 @@ static int __resolve_msr_rd()
 {
    int rc = __resolve_msr_arch(0);
 
-   if(rc == MSR_NATIVE)
+   if(rc == VM_NATIVE)
    {
       gpr64_ctx_t *ctx = info->vm.cpu.gpr;
       __rd_msr(ctx->rax.low, ctx->rcx.low, ctx->rdx.low);
@@ -39,7 +40,7 @@ static int __resolve_msr_wr()
 {
    int rc = __resolve_msr_arch(1);
 
-   if(rc == MSR_NATIVE)
+   if(rc == VM_NATIVE)
    {
       gpr64_ctx_t *ctx = info->vm.cpu.gpr;
       __wr_msr(ctx->rax.low, ctx->rcx.low, ctx->rdx.low);
@@ -56,10 +57,5 @@ int resolve_msr(uint8_t wr)
 	 , wr?"wr":"rd", info->vm.cpu.gpr->rcx.low
 	 , info->vm.cpu.gpr->rdx.low, info->vm.cpu.gpr->rax.low);
 
-   if(rc == MSR_FAIL)
-      return 0;
-
-   info->vm.cpu.emu_done = 1;
-   vm_update_rip(MSR_INSN_SZ);
-   return 1;
+   return emulate_done(rc, MSR_INSN_SZ);
 }

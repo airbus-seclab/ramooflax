@@ -63,4 +63,3 @@ void __svm_vmexit_resolve_cpuid(uint32_t idx)
       break;
    }
 }
-

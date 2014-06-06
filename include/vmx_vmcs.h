@@ -535,7 +535,7 @@ typedef union vmcs_exit_information_interrupt_information
 #define VMCS_IDT_INFO_TYPE_HW_EXCP   3
 #define VMCS_IDT_INFO_TYPE_SW_INT    4
 #define VMCS_IDT_INFO_TYPE_PS_EXCP   5
-#define VMCS_IDT_INFO_TYPE_SW_EXCP   6
+#define VMCS_IDT_INFO_TYPE_SW_EXCP   6 /* int1, int3, into */
 #define VMCS_IDT_INFO_TYPE_RES2      7
 
 typedef union vmcs_exit_information_idt_vectoring_information
@@ -651,8 +651,6 @@ typedef union vmcs_exit_information_vmexit_instruction_information
 /*
 ** Qualification exit reason
 */
-
-/* qualification for control register accesses */
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_MOV_T_CR  0
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_MOV_F_CR  1
 #define VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_CLTS      2
@@ -719,13 +717,35 @@ typedef union vmcs_exit_information_qualification_io_insn
 
 typedef vmcs_exit_info_io_t vmx_io_t;
 
-/* qualification for IO insns */
+typedef union vmcs_exit_information_qualification_ept_violation
+{
+   struct
+   {
+      uint64_t    r:1;           /* read access */
+      uint64_t    w:1;           /* write access */
+      uint64_t    x:1;           /* execute access */
+      uint64_t    gr:1;          /* guest physical was readable */
+      uint64_t    gw:1;          /* guest physical was writable */
+      uint64_t    gx:1;          /* guest physical was executable */
+      uint64_t    r0:1;
+      uint64_t    gl:1;          /* guest linear field valid */
+      uint64_t    final:1;       /* if gl(1), (1) if final translation, else ptb walk */
+      uint64_t    r1:3;
+      uint64_t    nmi:1;         /* nmi unblocking due to iret */
+
+   } __attribute__((packed));
+
+   raw64_t;
+
+} __attribute__((packed)) vmcs_exit_info_ept_t;
+
 typedef union vmcs_exit_information_qualification
 {
+   vmcs_exit_info_cr_t  cr;
+   vmcs_exit_info_io_t  io;
+   vmcs_exit_info_dr_t  dr;
+   vmcs_exit_info_ept_t ept;
    raw64_t;
-   vmcs_exit_info_cr_t cr;
-   vmcs_exit_info_io_t io;
-   vmcs_exit_info_dr_t dr;
 
 } __attribute__((packed)) vmcs_exit_info_qualif_t;
 
@@ -744,11 +764,11 @@ typedef struct vmcs_vm_exit_information
 
    /* due to vectored events */
    vmcs_t(vmcs_exit_info_int_info_t,      int_info);
-   vmcs_t(raw32_t,                        int_err_code);
-   
-   /* during event delivery */ 
+   vmcs_t(excp32_err_code_t,              int_err_code);
+
+   /* during event delivery */
    vmcs_t(vmcs_exit_info_idt_vect_t,      idt_info);
-   vmcs_t(raw32_t,                        idt_err_code);
+   vmcs_t(excp32_err_code_t,              idt_err_code);
 
    /* vmexit on insn execution */
    vmcs_t(raw32_t,                        insn_len);

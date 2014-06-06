@@ -234,9 +234,6 @@ typedef union cpuid_feature_info_ebx
 
 #ifndef __INIT__
 
-#define CPUID_FAIL     0
-#define CPUID_SUCCESS  1
-
 #ifdef CONFIG_ARCH_AMD
 #include <svm_exit_cpuid.h>
 #else

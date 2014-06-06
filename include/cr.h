@@ -207,10 +207,6 @@ typedef union control_register_4
 */
 #ifndef __INIT__
 
-#define CR_FAIL       0
-#define CR_FAULT      1
-#define CR_SUCCESS    2
-
 #define __valid_cr_regs(_gpr,_cr)     (_gpr <= GPR64_RAX && _cr <= 4 && _cr != 1)
 #define __valid_cr_access()           (__rmode() || !__cpl)
 

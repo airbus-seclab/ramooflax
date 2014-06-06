@@ -17,8 +17,8 @@
 */
 #include <emulate.h>
 #include <intr.h>
-#include <info_data.h>
 #include <debug.h>
+#include <info_data.h>
 
 extern info_data_t *info;
 
@@ -29,7 +29,7 @@ extern info_data_t *info;
 ** CF set on error
 ** AH = status
 ** 01h keyboard controller is in secure mode
-** 86h function not supported 
+** 86h function not supported
 */
 static int emulate_int15_a20_disable()
 {
@@ -40,7 +40,7 @@ static int emulate_int15_a20_disable()
 
    dev_a20_set(0);
 
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -61,7 +61,7 @@ static int emulate_int15_a20_enable()
 
     dev_a20_set(1);
 
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -75,7 +75,7 @@ static int emulate_int15_a20_enable()
 ** CF set on error
 ** AH = status 01h
 ** keyboard controller is in secure mode
-** 86h function not supported 
+** 86h function not supported
 */
 static int emulate_int15_a20_status()
 {
@@ -86,7 +86,7 @@ static int emulate_int15_a20_status()
    __rflags.cf = 0;
    __post_access(__rflags);
 
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -97,7 +97,7 @@ static int emulate_int15_a20_status()
 **     0 supported on keyboard controller
 **     1 supported with bit 1 of I/O port 92h
 **  14-2 reserved
-**    15 additional data is available (location not yet defined) 
+**    15 additional data is available (location not yet defined)
 ** CF set on error
 ** AH = status 01h keyboard controller is in secure mode
 ** 86h function not supported
@@ -110,7 +110,7 @@ static int emulate_int15_a20_support()
    __rflags.cf = 0;
    __post_access(__rflags);
 
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -140,8 +140,8 @@ static int emulate_int15_get_ext_mem()
 
    if(x.raw == 0)
    {
-      debug(EMU_INSN, "no extended memory found\n");
-      return EMU_FAIL;
+      debug(EMU_RMODE, "no extended memory found\n");
+      return VM_FAIL;
    }
 
    info->vm.cpu.gpr->rax.wlow = (15<<10);
@@ -153,7 +153,7 @@ static int emulate_int15_get_ext_mem()
    __rflags.cf = 0;
    __post_access(__rflags);
 
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -170,7 +170,7 @@ static int emulate_int15_old_get_ext_mem()
    __rflags.cf = 0;
    __post_access(__rflags);
 
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -194,10 +194,10 @@ static int emulate_int15_smap()
    smap = &info->vm.dev.mem.smap;
 
    if(gpr->rdx.low != BIOS_SMAP_ID)
-      return EMU_FAULT;
+      return VM_FAULT;
 
    if(gpr->rcx.low < sizeof(smap_e_t))
-      return EMU_FAULT;
+      return VM_FAULT;
 
    if(gpr->rcx.low > sizeof(smap_e_t))
       gpr->rcx.low = sizeof(smap_e_t);
@@ -209,7 +209,7 @@ static int emulate_int15_smap()
    {
       gpr->rbx.low = 0;
       gpr->rcx.low = 0;
-      return EMU_SUCCESS;
+      return VM_DONE;
    }
 
    src.linear = (offset_t)smap->raw + crt_offset;
@@ -229,11 +229,11 @@ static int emulate_int15_smap()
    if(vmm_area_range(dst.linear, gpr->rcx.low))
    {
       debug(SMAP, "vm stores smap entry into vmm area\n");
-      return EMU_FAIL;
+      return VM_FAIL;
    }
 
    memcpy(dst.addr, src.addr, gpr->rcx.low);
-   return EMU_SUCCESS;
+   return VM_DONE;
 }
 
 int emulate_int15()
@@ -246,47 +246,47 @@ int emulate_int15()
       debug(SMAP, "get smap\n");
       switch(emulate_int15_smap())
       {
-      case EMU_SUCCESS:
+      case VM_DONE:
 	 __rflags.cf = 0;
 	 rax->low = BIOS_SMAP_ID;
 	 break;
-      case EMU_FAULT:
+      case VM_FAULT:
 	 __rflags.cf = 1;
 	 rax->bhigh = BIOS_SMAP_ERROR;
 	 break;
       default:
-	 return EMU_FAIL;
+	 return VM_FAIL;
       }
       __post_access(__rflags);
-      return EMU_SUCCESS;
+      return VM_DONE;
 
    case BIOS_GET_EXT_MEM_32:
    case BIOS_GET_EXT_MEM:
-      debug(EMU_INSN, "get ext mem\n");
+      debug(EMU_RMODE, "get ext mem\n");
       return emulate_int15_get_ext_mem();
    case BIOS_DISABLE_A20:
-      debug(EMU_INSN, "disable a20\n");
+      debug(EMU_RMODE, "disable a20\n");
       return emulate_int15_a20_disable();
    case BIOS_ENABLE_A20:
-      debug(EMU_INSN, "enable a20\n");
+      debug(EMU_RMODE, "enable a20\n");
       return emulate_int15_a20_enable();
    case BIOS_STATUS_A20:
-      debug(EMU_INSN, "status a20\n");
+      debug(EMU_RMODE, "status a20\n");
       return emulate_int15_a20_status();
    case BIOS_SUPPORT_A20:
-      debug(EMU_INSN, "support a20\n");
+      debug(EMU_RMODE, "support a20\n");
       return emulate_int15_a20_support();
    }
 
    switch(rax->bhigh)
    {
    case BIOS_OLD_GET_EXT_MEM:
-      debug(EMU, "get old ext mem\n");
+      debug(EMU_RMODE, "get old ext mem\n");
       return emulate_int15_old_get_ext_mem();
    case BIOS_GET_BIG_MEM:
-      debug(EMU, "Get big mem !\n");
-      return EMU_FAIL;
+      debug(EMU_RMODE, "Get big mem !\n");
+      return VM_FAIL;
    }
 
-   return EMU_SUCCESS_LET_RIP;
+   return VM_DONE_LET_RIP;
 }

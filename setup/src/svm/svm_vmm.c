@@ -25,7 +25,7 @@ extern info_data_t *info;
 void svm_vmm_init()
 {
    wr_msr_host_state(&info->vm.cpu.vmc->vmm_vmcb);
-   svm_enable();
+   set_amd_efer((AMD_EFER_SVME|AMD_EFER_NXE), 1);
 
    svm_vmsave(&info->vm.cpu.vmc->vmm_vmcb);
    svm_vm_init();

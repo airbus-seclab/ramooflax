@@ -32,28 +32,25 @@ int __svm_vmexit_resolve_pf()
 	 ,fault, vm_ctrls.exit_info_1.npf.p
 	 ,vm_ctrls.exit_info_1.npf.wr, vm_ctrls.exit_info_1.npf.us
 	 ,vm_ctrls.exit_info_1.npf.rsv, vm_ctrls.exit_info_1.npf.id);
- 
+
    pg_show(fault);
    return __svm_vmexit_inject_exception(PF_EXCP, vm_ctrls.exit_info_1.low, fault);
 }
 
 int svm_vmexit_resolve_npf()
 {
-   offset_t addr  = vm_ctrls.exit_info_2.raw;
-   offset_t paddr = 0;
+   vmcb_exit_info_npf_t error;
+   offset_t             gvaddr, gpaddr;
 
-   if(vmm_area(addr))
-      debug(SVM_NPF, "guest access into vmm area !\n");
-
-   if(npg_walk(addr, &paddr))
-      debug(SVM_NPF, "guest paddr 0x%X -> system paddr 0x%X\n", addr, paddr);
+   error.raw = vm_ctrls.exit_info_1.raw;
+   gpaddr    = vm_ctrls.exit_info_2.raw;
+   gvaddr    = __rip.raw & 0xffffffffUL;
 
    debug(SVM_NPF,
-	 "#NPF 0x%X (p:%d wr:%d us:%d rsv:%d id:%d final:%d ptb:%d)\n"
-	 ,addr, vm_ctrls.exit_info_1.npf.p
-	 ,vm_ctrls.exit_info_1.npf.wr, vm_ctrls.exit_info_1.npf.us
-	 ,vm_ctrls.exit_info_1.npf.rsv, vm_ctrls.exit_info_1.npf.id
-	 ,vm_ctrls.exit_info_1.npf.final, vm_ctrls.exit_info_1.npf.ptb);
+	 "#NPF gv 0x%X gp 0x%X err 0x%X "
+	 "details (p:%d wr:%d us:%d rsv:%d id:%d final:%d ptb:%d)\n"
+	 ,gvaddr, gpaddr, error.raw, error.p, error.wr, error.us
+	 ,error.rsv, error.id, error.final, error.ptb);
 
-   return 0;
+   return VM_FAIL;
 }

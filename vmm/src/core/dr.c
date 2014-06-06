@@ -58,7 +58,7 @@ void set_dr(uint8_t n, offset_t addr)
 static int __resolve_dr_rd(uint8_t dr, uint8_t gpr)
 {
    info->vm.cpu.gpr->raw[gpr].low = info->vm.dr_shadow[dr].low;
-   return DR_SUCCESS;
+   return VM_DONE;
 }
 
 /*
@@ -82,7 +82,7 @@ static int __resolve_dr_wr(uint8_t dr, uint8_t gpr)
       info->vm.dr_shadow[dr].low |= 0x400;
    }
 
-   return DR_SUCCESS;
+   return VM_DONE;
 }
 
 int __resolve_dr(uint8_t wr, uint8_t dr, uint8_t gpr)
@@ -90,16 +90,16 @@ int __resolve_dr(uint8_t wr, uint8_t dr, uint8_t gpr)
    if(!__valid_dr_access())
    {
       __inject_exception(GP_EXCP, 0, 0);
-      return DR_FAULT;
+      return VM_FAULT;
    }
 
    if(!__valid_dr_regs(gpr, dr))
-      return DR_FAIL;
+      return VM_FAIL;
 
    if(__cr4.de && (dr == 4 || dr == 5))
    {
       __inject_exception(UD_EXCP, 0, 0);
-      return DR_FAULT;
+      return VM_FAULT;
    }
 
    if(dr > 5)
@@ -111,7 +111,7 @@ int __resolve_dr(uint8_t wr, uint8_t dr, uint8_t gpr)
       info->vm.dr_shadow[4].low |= DR6_BD;
       info->vm.dr_shadow[5].low &= ~DR7_GD;
       __inject_exception(DB_EXCP, 0, 0);
-      return DR_FAULT;
+      return VM_FAULT;
    }
 
    if(wr)

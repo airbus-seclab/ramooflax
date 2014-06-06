@@ -15,8 +15,8 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <pool.h>
 #include <paging.h>
+#include <pool.h>
 #include <string.h>
 #include <debug.h>
 #include <info_data.h>
@@ -48,7 +48,8 @@ static inline npg_pte64_t* __npg_new_pt()
 
 static inline npg_pdpe_t* __npg_get_pdpe_nocheck(offset_t addr)
 {
-   return &info->vm.cpu.pg.pdp[pml4_idx(addr)][pdp_idx(addr)];
+   vm_pgmem_t *pg = npg_get_active_paging();
+   return &pg->pdp[pml4_idx(addr)][pdp_idx(addr)];
 }
 
 static inline npg_pde64_t* __npg_get_pde_nocheck(npg_pdpe_t *pdpe, offset_t addr)
@@ -65,7 +66,8 @@ static inline npg_pte64_t* __npg_get_pte_nocheck(npg_pde64_t *pde, offset_t addr
 
 static inline npg_pdpe_t* __npg_get_pdpe(offset_t addr)
 {
-   npg_pml4e_t *pml4e = &info->vm.cpu.pg.pml4[pml4_idx(addr)];
+   vm_pgmem_t  *pg = npg_get_active_paging();
+   npg_pml4e_t *pml4e = &pg->pml4[pml4_idx(addr)];
 
    if(!npg_present(pml4e))
       return 0;
@@ -89,14 +91,31 @@ static inline npg_pte64_t* __npg_get_pte(npg_pde64_t *pde, offset_t addr)
    return __npg_get_pte_nocheck(pde, addr);
 }
 
+npg_pte64_t* _npg_get_pte(offset_t addr)
+{
+   npg_pdpe_t  *pdpe = __npg_get_pdpe(addr);
+   npg_pde64_t *pde;
+
+   if(!pdpe || !npg_present(pdpe) || npg_large(pdpe))
+      return (npg_pte64_t*)0;
+
+   pde = __npg_get_pde(pdpe, addr);
+
+   if(!pde || !npg_present(pde) || npg_large(pde))
+      return (npg_pte64_t*)0;
+
+   return __npg_get_pte(pde, addr);
+}
+
 /* resolve pdpe (pdp tables are pre-allocated) */
 static inline npg_pdpe_t* __npg_resolve_pdpe(offset_t addr, uint64_t attr)
 {
+   vm_pgmem_t  *pg = npg_get_active_paging();
    npg_pml4e_t *pml4e;
    npg_pdpe_t  *pdp;
 
-   pml4e = &info->vm.cpu.pg.pml4[pml4_idx(addr)];
-   pdp   = info->vm.cpu.pg.pdp[pml4_idx(addr)];
+   pml4e = &pg->pml4[pml4_idx(addr)];
+   pdp   = pg->pdp[pml4_idx(addr)];
 
    if(!npg_present(pml4e))
       npg_set_entry(pml4e, attr, page_nr(pdp));
@@ -130,7 +149,7 @@ npg_pde64_t* __npg_resolve_pde(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
 ** resolve pte (allocate pt if needed for non-large pde
 ** return 0 if large page
 */
-static inline 
+static inline
 npg_pte64_t* __npg_resolve_pte(npg_pde64_t *pde, offset_t addr, uint64_t attr)
 {
    npg_pte64_t *pt;
@@ -379,15 +398,17 @@ static void _npg_unmap_2M(offset_t addr, uint64_t __unused__ attr)
    __npg_unmap_2M(pde);
 }
 
-static void _npg_unmap_4K(offset_t addr, uint64_t __unused__ attr)
+/*
+** remap finest 4k
+*/
+npg_pte64_t* _npg_remap_finest_4K(offset_t addr)
 {
    npg_pdpe_t  *pdpe = __npg_get_pdpe(addr);
    npg_pde64_t *pde;
-   npg_pte64_t *pte;
 
-   debug(PG, "unmap 4K 0x%X\n", addr);
+   debug(PG, "remap 4K finest 0x%X\n", addr);
    if(!pdpe || !npg_present(pdpe))
-      return;
+      return (npg_pte64_t*)0;
 
    if(npg_large(pdpe))
       __npg_remap_1G_finest(pdpe, addr);
@@ -395,13 +416,21 @@ static void _npg_unmap_4K(offset_t addr, uint64_t __unused__ attr)
    pde = __npg_get_pde(pdpe, addr);
 
    if(!pde || !npg_present(pde))
-      return;
+      return (npg_pte64_t*)0;
 
    if(npg_large(pde))
       __npg_remap_2M_finest(pde, addr);
 
-   pte = __npg_get_pte(pde, addr);
-   npg_zero(pte);
+   return __npg_get_pte(pde, addr);
+}
+
+static void _npg_unmap_4K(offset_t addr, uint64_t __unused__ attr)
+{
+   debug(PG, "unmap 4K 0x%X\n", addr);
+   npg_pte64_t *pte = _npg_remap_finest_4K(addr);
+
+   if(pte)
+      npg_zero(pte);
 }
 
 static void _npg_remap_512G(offset_t addr, uint64_t attr)

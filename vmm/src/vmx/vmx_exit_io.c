@@ -16,21 +16,20 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_exit_io.h>
-#include <info_data.h>
+#include <emulate.h>
 #include <dev.h>
 #include <debug.h>
+#include <info_data.h>
 
 extern info_data_t *info;
 
 int vmx_vmexit_resolve_io()
 {
    if(!dev_access())
-      return 0;
+      return VM_FAIL;
 
-   info->vm.cpu.emu_done = 1;
    vmcs_read(vm_exit_info.insn_len);
-   vm_update_rip(vm_exit_info.insn_len.raw);
-   return 1;
+   return emulate_done(VM_DONE, vm_exit_info.insn_len.raw);
 }
 
 int __vmx_io_init(io_insn_t *io)

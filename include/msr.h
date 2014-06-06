@@ -187,11 +187,6 @@ typedef union pat_register
 
 #ifndef __INIT__
 
-#define MSR_FAIL        0
-#define MSR_SUCCESS     1
-#define MSR_NATIVE      2  /* commit to physical msr */
-#define MSR_FAULT       3
-
 #ifdef CONFIG_ARCH_AMD
 #include <svm_exit_msr.h>
 #else

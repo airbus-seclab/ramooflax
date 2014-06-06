@@ -211,9 +211,7 @@ static void vmx_vmexit_show_event()
 	    break;
 	 case GP_EXCP:
 	 {
-	    gp_err_t gp;
-	    gp.raw = vm_exit_info.int_err_code.raw;
-	    if(gp.idt && !_xx_lmode())
+	    if(vm_exit_info.int_err_code.sl.idt && !_xx_lmode())
 	    {
 	       int_desc_t *idt = (int_desc_t*)(vm_state.idtr.base.raw & 0xffffffff);
 
@@ -233,7 +231,8 @@ static void vmx_vmexit_show_event()
 	       }
 
 	       printf("#GP related to IDT entry 0x%x [0x%X]\n"
-		      ,gp.idx, idt[gp.idx].raw);
+		      ,vm_exit_info.int_err_code.sl.idx
+		      ,idt[vm_exit_info.int_err_code.sl.idx].raw);
 	    }
 	    break;
 	 }
@@ -244,12 +243,24 @@ static void vmx_vmexit_show_event()
 
 static void vmx_vmexit_show_deliver()
 {
+   if(vm_entry_ctrls.int_info.v)
+   {
+      char *name = vmx_vmexit_string_from_vector_type(vm_entry_ctrls.int_info.type,
+						      vm_entry_ctrls.int_info.vector);
+      printf("-\nentry event     : %s (%d) vector 0x%x err_code 0x%x\n"
+	     ,name
+	     ,vm_entry_ctrls.int_info.type
+	     ,vm_entry_ctrls.int_info.vector
+	     ,vm_entry_ctrls.int_info.dec?vm_entry_ctrls.err_code.raw:0);
+   }
+
    if(vm_exit_info.idt_info.v)
    {
       char *name = vmx_vmexit_string_from_vector_type(vm_exit_info.idt_info.type,
 						      vm_exit_info.idt_info.vector);
       printf("-\nidt delivery    : %s (%d) vector 0x%x err_code 0x%x\n"
-	     ,name,vm_exit_info.idt_info.type
+	     ,name
+	     ,vm_exit_info.idt_info.type
 	     ,vm_exit_info.idt_info.vector
 	     ,vm_exit_info.idt_info.v_err?vm_exit_info.idt_err_code.raw:0);
    }
@@ -392,11 +403,11 @@ void vmx_vmexit_show()
 void vmx_vmexit_failure()
 {
    vmx_vmexit_show();
-   while(1)
 #ifdef CONFIG_GDBSTUB
-      gdbstub()
+   while(1) gdbstub();
+#else
+   lock_vmm();
 #endif
-	 ;
 }
 
 void __regparm__(1) vmx_vmresume_failure(vmx_insn_err_t vmx_err)

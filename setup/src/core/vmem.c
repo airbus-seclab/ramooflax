@@ -30,10 +30,10 @@ extern info_data_t *info;
 
 static void vm_pagemem_init()
 {
-   npg_pdpe_t *pdp = info->vm.cpu.pg.pdp[0];
+   npg_pdpe_t *pdp = info->vm.cpu.pg[0].pdp[0];
 
    npg_init();
-   npg_set_entry(&info->vm.cpu.pg.pml4[0], npg_dft_attr, page_nr(pdp));
+   npg_set_entry(&info->vm.cpu.pg[0].pml4[0], npg_dft_attr, page_nr(pdp));
 }
 
 /*
@@ -111,7 +111,7 @@ static void segmem_init()
 
    tss = (sys64_seg_desc_t*)&gdt[vmm_tss_seg_idx];
    tss64_desc(tss, (offset_t)&info->vmm.cpu.sg->tss);
- 
+
    gdtr.desc  = gdt;
    gdtr.limit = sizeof(info->vmm.cpu.sg->gdt) - 1;
 

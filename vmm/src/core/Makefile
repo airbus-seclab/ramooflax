@@ -12,6 +12,9 @@ obj :=	idt.o			\
 	msr.o			\
 	disasm.o		\
 	emulate.o		\
+	emulate_insn.o		\
+	emulate_rmode.o		\
+	emulate_int.o		\
 	emulate_int15.o		\
 	pvl.o			\
 	vm.o			\

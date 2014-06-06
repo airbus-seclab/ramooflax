@@ -40,7 +40,7 @@ void db_check_stp()
    __pre_access(__dr6);
    __dr6.bs = 1;
 
-   if(__ctrl_evt_excp_dbg(DB_EXCP) == CTRL_EVT_IGNORE)
+   if(__ctrl_evt_excp_dbg(DB_EXCP) == VM_IGNORE)
    {
       __rflags.tf = 0;
       __post_access(__rflags);

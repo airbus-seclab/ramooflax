@@ -16,7 +16,8 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <dbg_hard_stp.h>
-#include <emulate.h>
+#include <disasm.h>
+#include <emulate_insn.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -83,18 +84,21 @@ static void dbg_hard_stp_release()
    dbg_hard_release();
 }
 
-static int dbg_hard_stp_event_sysenter()
+static int dbg_hard_stp_event_fast_syscall(int tf)
 {
-   __rflags.tf = 0;
-   __post_access(__rflags);
-   return CTRL_EVT_DONE;
-}
+   int rc;
 
-static int dbg_hard_stp_event_sysexit()
-{
-   __rflags.tf = 1;
-   __post_access(__rflags);
-   return CTRL_EVT_DONE;
+   dbg_hard_stp_restore_context();
+   rc = emulate_insn(&info->vm.cpu.disasm);
+   dbg_hard_stp_setup_context();
+
+   if(rc == VM_DONE_LET_RIP)
+   {
+      __rflags.tf = tf;
+      __post_access(__rflags);
+   }
+
+   return rc;
 }
 
 /*
@@ -102,36 +106,24 @@ static int dbg_hard_stp_event_sysexit()
 */
 int dbg_hard_stp_event_gp()
 {
-   ud_t disasm;
-   int  rc;
+   size_t mn;
 
    if(!dbg_hard_stp_enabled())
-      return CTRL_EVT_IGNORE;
+      return VM_IGNORE;
 
    debug(DBG_HARD_STP, "sstep #GP event\n");
 
-   dbg_hard_stp_restore_context();
+   if(!disassemble(&info->vm.cpu.disasm))
+      return VM_FAIL;
 
-   if(!disassemble(&disasm))
-      return CTRL_EVT_FAIL;
-
-   rc = __emulate_insn(&disasm);
-   dbg_hard_stp_setup_context();
-
-   switch(rc)
+   mn = info->vm.cpu.disasm.mnemonic;
+   switch(mn)
    {
-   case EMU_FAULT:       return CTRL_EVT_FAULT;
-   case EMU_UNSUPPORTED: return CTRL_EVT_IGNORE;
-   case EMU_FAIL:        return CTRL_EVT_FAIL;
+   case UD_Isysenter: return dbg_hard_stp_event_fast_syscall(0);
+   case UD_Isysexit:  return dbg_hard_stp_event_fast_syscall(1);
    }
 
-   if(disasm.mnemonic == UD_Isysenter)
-      return dbg_hard_stp_event_sysenter();
-
-   if(disasm.mnemonic == UD_Isysexit)
-      return dbg_hard_stp_event_sysexit();
-
-   return CTRL_EVT_IGNORE;
+   return VM_IGNORE;
 }
 
 int dbg_hard_stp_event()
@@ -141,7 +133,7 @@ int dbg_hard_stp_event()
    dbg_evt_t *evt;
 
    if(!dbg_hard_stp_enabled())
-      return CTRL_EVT_IGNORE;
+      return VM_IGNORE;
 
    debug(DBG_HARD_STP, "sstep event\n");
 
@@ -154,7 +146,7 @@ int dbg_hard_stp_event()
    if(dbg_hard_stp_requestor() == DBG_REQ_VMM)
    {
       debug(DBG_HARD_STP, "internal sstep event\n");
-      return CTRL_EVT_INTERN;
+      return VM_INTERN;
    }
 
    vm_get_code_addr(&addr, 0, &mode);
@@ -164,7 +156,7 @@ int dbg_hard_stp_event()
    evt->addr = addr;
 
    debug(DBG_HARD_STP, "prepared sstep ctrl event for 0x%X\n", evt->addr);
-   return CTRL_EVT_DONE;
+   return VM_DONE;
 }
 
 void dbg_hard_stp_enable(uint8_t req)

@@ -43,7 +43,7 @@
 #define __gs                    (__state.gs)
 #define __ss                    (__state.ss)
 
-#define __vmexit_on_insn()      (__svm_vmexit_on_insn() || info->vm.cpu.emu_done)
+#define __vmexit_on_insn()      (__svm_vmexit_on_insn() || info->vm.cpu.emu_sts.done)
 
 #define __cpl                   (__state.cpl)
 #define __gdtr                  (__state.gdtr)
@@ -86,9 +86,12 @@
 /*
 ** Paging & TLBs
 */
+#include <svm_npt.h>
+
 #define npg_init()                     svm_npt_map()
 #define npg_cr3                        __ctrls.ncr3
-#define npg_dft_attr                  (PG_USR|PG_RW)
+#define npg_dft_attr                   ((uint64_t)(PG_USR|PG_RW))
+#define npg_dft_attr_nx                ((uint64_t)(PG_USR|PG_RW|PG_NX))
 #define npg_get_attr(_e)               pg_get_attr(_e)
 #define npg_present(_e)                pg_present(_e)
 #define npg_large(_e)                  pg_large(_e)
@@ -114,6 +117,7 @@
 	 __ctrls.tlb_ctrl.tlb_control = VMCB_TLB_CTL_NONE;	\
    })
 
+#define npg_invlpg(_va)          invlpga((offset_t)_va)
 #define __flush_asid_tlbs(_t)    (__ctrls.tlb_ctrl.tlb_control = _t)
 #define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
@@ -124,8 +128,19 @@
       npg_cr3.pml4.pcd = (gcr3)->pcd;	\
    })
 
+#define npg_cr3_set(_addr)              (npg_cr3.addr = page_nr((_addr)))
+
 /* XXX: check bits violation (cf. 15.25.10) */
 #define __update_npg_pdpe()		({1;})
+#define npg_get_asid()	                (__ctrls.tlb_ctrl.guest_asid)
+#define npg_set_asid(_x)                ({__ctrls.tlb_ctrl.guest_asid = (_x);})
+
+#define npg_err_t                       vmcb_exit_info_npf_t
+#define npg_error_not_present(_e)       (_e.p == 0)
+#define npg_error_execute(_e)           (_e.id)
+
+#define npg_error()                     (__ctrls.exit_info_1.npf)
+#define npg_fault()                     (__ctrls.exit_info_2.raw)
 
 /*
 ** CR0 cache
@@ -195,13 +210,30 @@
 #define __allow_icebp()          ({ __ctrls.vmm_insn_bitmap.icebp = 0; })
 #define __deny_icebp()           ({ __ctrls.vmm_insn_bitmap.icebp = 1; })
 
+#define __allow_sgdt()           ({ __ctrls.sys_insn_bitmap.gdtr_read = 0; })
+#define __deny_sgdt()            ({ __ctrls.sys_insn_bitmap.gdtr_read = 1; })
+#define __allow_sidt()           ({ __ctrls.sys_insn_bitmap.idtr_read = 0; })
+#define __deny_sidt()            ({ __ctrls.sys_insn_bitmap.idtr_read = 1; })
+#define __allow_sldt()           ({ __ctrls.sys_insn_bitmap.ldtr_read = 0; })
+#define __deny_sldt()            ({ __ctrls.sys_insn_bitmap.ldtr_read = 1; })
+
+#define __allow_lgdt()           ({ __ctrls.sys_insn_bitmap.gdtr_write = 0; })
+#define __deny_lgdt()            ({ __ctrls.sys_insn_bitmap.gdtr_write = 1; })
+#define __allow_lidt()           ({ __ctrls.sys_insn_bitmap.idtr_write = 0; })
+#define __deny_lidt()            ({ __ctrls.sys_insn_bitmap.idtr_write = 1; })
+#define __allow_lldt()           ({ __ctrls.sys_insn_bitmap.ldtr_write = 0; })
+#define __deny_lldt()            ({ __ctrls.sys_insn_bitmap.ldtr_write = 1; })
+
+#define __allow_gdt_access()     ({ __allow_sgdt(); __allow_lgdt(); })
+#define __deny_gdt_access()      ({ __deny_sgdt(); __deny_lgdt(); })
+
 /*
 ** Events
 */
 #define __exit_reason            __ctrls.exit_code.low
 #define __vmexit_on_excp()       __svm_vmexit_on_excp()
 #define __exception_vector      (__ctrls.exit_code.low - SVM_VMEXIT_EXCP_START)
-#define __exception_error        __ctrls.exit_info_1.low
+#define __exception_error        __ctrls.exit_info_1.excp
 #define __exception_fault       (__ctrls.exit_info_2.raw & 0xffffffffULL)
 #define __injecting_exception() (__ctrls.event_injection.v?1:0)
 

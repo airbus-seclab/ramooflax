@@ -259,7 +259,7 @@ static void gdb_cmd_st_brk(uint8_t *data, size_t len)
       return;
    }
 
-   if(rc == DBG_BRK_OK)
+   if(rc == VM_DONE)
    {
       gdb_ok();
       return;
@@ -293,7 +293,7 @@ static void gdb_cmd_rm_brk(uint8_t *data, size_t len)
       return;
    }
 
-   if(rc == DBG_BRK_OK)
+   if(rc == VM_DONE)
    {
       gdb_ok();
       return;

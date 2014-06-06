@@ -64,7 +64,7 @@
 ** Long mode
 */
 #define PG_NX_BIT       63
-#define PG_NX           (1<<PG_NX_BIT)
+#define PG_NX           (1UL<<PG_NX_BIT)
 
 /************************************************************************
  ********************** 32 bits paging without PAE **********************

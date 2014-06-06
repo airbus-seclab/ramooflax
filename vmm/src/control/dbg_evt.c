@@ -27,7 +27,7 @@ int dbg_evt_soft()
    ctrl_evt_hdl_t hdlr;
    int            rc = dbg_soft_event(&hdlr);
 
-   if(rc == CTRL_EVT_DONE)
+   if(rc == VM_DONE)
    {
       arg_t arg;
       arg.addr = &info->vmm.ctrl.dbg.evt;
@@ -57,7 +57,7 @@ int dbg_evt_hard()
       rc = dbg_hard_brk_event(&hdlr);
    }
 
-   if(rc == CTRL_EVT_DONE)
+   if(rc == VM_DONE)
    {
       arg_t arg;
       arg.addr = &info->vmm.ctrl.dbg.evt;

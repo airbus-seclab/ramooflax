@@ -92,6 +92,7 @@ void ctrl_active_cr3_enable(cr3_reg_t cr3)
 {
    info->vmm.ctrl.stored_cr3.raw = cr3.raw;
    info->vmm.ctrl.active_cr3 = &info->vmm.ctrl.stored_cr3;
+   ctrl_traps_set_update(1);
    ctrl_set_cr3(1);
 
    debug(CTRL, "active cr3: 0x%X (0x%X <=> 0x%X)\n"
@@ -103,6 +104,7 @@ void ctrl_active_cr3_enable(cr3_reg_t cr3)
 void ctrl_active_cr3_disable()
 {
    info->vmm.ctrl.active_cr3 = &__cr3;
+   ctrl_traps_set_update(1);
    ctrl_set_cr3_keep(0);
    ctrl_set_cr3(0);
 }

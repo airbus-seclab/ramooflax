@@ -20,6 +20,7 @@
 #include <vmx_vm.h>
 #include <vmx_vmcs_acc.h>
 #include <emulate.h>
+#include <emulate_int.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -37,7 +38,7 @@ int vmx_vmexit_resolve_gp()
       return emulate();
 
    if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_HW_INT)
-      return __emulate_hard_interrupt(vm_exit_info.idt_info.vector);
+      return emulate_hard_interrupt(vm_exit_info.idt_info.vector);
 
    return 0;
 }

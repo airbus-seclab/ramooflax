@@ -194,11 +194,7 @@ typedef union vmcb_idt_delivery
 
 } __attribute__((packed)) vmcb_idt_delivery_t;
 
-
-/*
-** VMCB Exit Information 1
-*/
-typedef union vmcb_exit_info_1
+typedef union vmcb_exit_info_io
 {
    struct
    {
@@ -216,8 +212,16 @@ typedef union vmcb_exit_info_1
       uint64_t    rsrvd:3;
       uint64_t    port:16;  /* port number */
 
-   } __attribute__((packed)) io;
+   } __attribute__((packed));
 
+   raw64_t;
+
+} __attribute__((packed)) vmcb_exit_info_io_t;
+
+typedef vmcb_exit_info_io_t svm_io_t;
+
+typedef union vmcb_exit_info_smi
+{
    struct
    {
       uint64_t    smi_rc:1; /* (1) External (0) Internal */
@@ -237,22 +241,43 @@ typedef union vmcb_exit_info_1
       uint64_t    brk:4;    /* i/o breakpoint */
       uint64_t    port:16;  /* port number */
 
-   } __attribute__((packed)) smi;
-
-   struct
-   {
-      pf_err_t;
-
-      uint32_t  final:1;  /* while resolving guest final addr */
-      uint32_t  ptb:1;    /* while resolving guest page table */
-
-   } __attribute__((packed)) npf;
+   } __attribute__((packed));
 
    raw64_t;
 
-} __attribute__((packed)) vmcb_exit_info_1_t;
+} __attribute__((packed)) vmcb_exit_info_smi_t;
 
-typedef vmcb_exit_info_1_t svm_io_t;
+typedef union vmcb_exit_info_npf
+{
+   struct
+   {
+      uint64_t    p:1;      /* non-present (0) */
+      uint64_t    wr:1;     /* read (0), write (1)  */
+      uint64_t    us:1;     /* kernel (0), user (1) */
+      uint64_t    rsv:1;    /* reserved bits violation */
+      uint64_t    id:1;     /* 1 insn fetch */
+      uint64_t    r:27;     /* reserved */
+      uint64_t    final:1;  /* while resolving guest final addr */
+      uint64_t    ptb:1;    /* while resolving guest page table */
+
+   } __attribute__((packed));
+
+   raw64_t;
+
+} __attribute__((packed)) vmcb_exit_info_npf_t;
+
+/*
+** VMCB Exit Information 1
+*/
+typedef union vmcb_exit_info_1
+{
+   vmcb_exit_info_io_t   io;
+   vmcb_exit_info_smi_t  smi;
+   vmcb_exit_info_npf_t  npf;
+   excp32_err_code_t     excp;
+   raw64_t;
+
+} __attribute__((packed)) vmcb_exit_info_1_t;
 
 /*
 ** Control part of VMCB

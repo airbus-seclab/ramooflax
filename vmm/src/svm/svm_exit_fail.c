@@ -119,7 +119,7 @@ static void svm_vmexit_show_cr()
 	  "cr4             : 0x%x\n"
 	  "tpr             : 0x%x\n"
 	  "eflags          : 0x%x (vm:%d rf:%d iopl:%d if:%d tf:%d)\n"
-	  "efer            : 0x%x (lma:%d lme:%d)\n"
+	  "efer            : 0x%x (lma:%d lme:%d svme:%d nxe:%d)\n"
 	  "gdtr (limit)    : 0x%x (0x%x)\n"
 	  "idtr (limit)    : 0x%x (0x%x)\n"
 	  ,vm_state.cpl
@@ -132,6 +132,7 @@ static void svm_vmexit_show_cr()
 	  ,vm_state.rflags.rf,vm_state.rflags.iopl
 	  ,vm_state.rflags.IF,vm_state.rflags.tf
 	  ,vm_state.efer.eax, vm_state.efer.lma, vm_state.efer.lme
+	  ,vm_state.efer.svme, vm_state.efer.nxe
 	  ,vm_state.gdtr.base.low, vm_state.gdtr.limit.raw
 	  ,vm_state.idtr.base.low, vm_state.idtr.limit.raw);
 }
@@ -177,9 +178,10 @@ static void svm_vmexit_show_excp()
    printf("-\nexception : vector 0x%x err_code 0x%x\n",n,vm_ctrls.exit_info_1.low);
    if(n == GP_EXCP)
    {
-      gp_err_t e; e.raw = vm_ctrls.exit_info_1.low;
       printf("#GP error : idx 0x%x ti %d idt %d ext %d\n"
-	     ,e.idx, e.ti, e.idt, e.ext);
+	     ,vm_ctrls.exit_info_1.excp.sl.idx
+	     ,vm_ctrls.exit_info_1.excp.sl.ti
+	     ,vm_ctrls.exit_info_1.excp.sl.ext);
    }
 }
 
@@ -226,11 +228,10 @@ static void svm_vmexit_show_event()
    }
    else if(vm_ctrls.exit_code.low == SVM_VMEXIT_IOIO)
    {
-      svm_io_t *io = (svm_io_t*)&vm_ctrls.exit_info_1;
+      svm_io_t *io = &vm_ctrls.exit_info_1.io;
 
       printf("-\n i/o  : d %d s %d rep %d port 0x%x\n"
-	     ,io->io.d,io->io.s
-	     ,io->io.rep,io->io.port);
+	     ,io->d,io->s,io->rep,io->port);
    }
 }
 
@@ -350,9 +351,10 @@ void svm_vmexit_show()
 void svm_vmexit_failure()
 {
    svm_vmexit_show();
-   while(1)
+
 #ifdef CONFIG_GDBSTUB
-      gdbstub()
+   while(1) gdbstub();
+#else
+   lock_vmm();
 #endif
-	 ;
 }

@@ -64,7 +64,7 @@ void __regparm__(2) __vmcs_force_flush(raw64_t *val, vmcs_field_enc_t enc)
 
       if(!vmx_vmwrite(&vmx_err, val->raw, enc.raw))
 	 panic("vmwrite(0x%x) err %d\n", val->raw, enc.raw);
-   
+
       //debug(VMX,"vmwrite(0x%x) = 0x%X\n", enc.raw, val->raw);
       return;
    }

@@ -120,10 +120,6 @@ typedef union debug_register_7
 */
 #ifndef __INIT__
 
-#define DR_FAIL       0
-#define DR_FAULT      1
-#define DR_SUCCESS    2
-
 #define __valid_dr_regs(_gpr,_dr)     (_gpr <= GPR64_RAX && _dr <= 7)
 #define __valid_dr_access()           (__rmode() || !__cpl)
 

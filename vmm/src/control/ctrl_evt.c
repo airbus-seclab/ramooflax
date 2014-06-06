@@ -17,6 +17,9 @@
 */
 #include <ctrl.h>
 #include <debug.h>
+#include <disasm.h>
+#include <emulate.h>
+#include <emulate_insn.h>
 #include <info_data.h>
 
 extern info_data_t    *info;
@@ -27,7 +30,7 @@ int __ctrl_evt_excp_dbg(uint32_t vector)
    arg_t arg;
 
    if(!(info->vmm.ctrl.dbg.excp & (1<<vector)))
-      return CTRL_EVT_IGNORE;
+      return VM_IGNORE;
 
    switch(vector)
    {
@@ -39,7 +42,7 @@ int __ctrl_evt_excp_dbg(uint32_t vector)
    debug(CTRL_EVT, "unhandled ctrl dbg excp %d\n", vector);
    arg.low = vector;
    ctrl_evt_setup(CTRL_EVT_TYPE_EXCP, 0, arg);
-   return CTRL_EVT_DONE;
+   return VM_DONE;
 }
 
 static int __ctrl_evt_excp_user(uint32_t vector)
@@ -52,7 +55,34 @@ static int __ctrl_evt_excp_user(uint32_t vector)
    }
 
    /* force vmm to inject exception */
-   return CTRL_EVT_IGNORE;
+   return VM_IGNORE;
+}
+
+static int __ctrl_evt_excp_vmm_np()
+{
+   debug(CTRL_EVT, "#NP\n");
+   return VM_IGNORE;
+}
+
+static int __ctrl_evt_excp_vmm_gp()
+{
+   debug(CTRL_EVT, "#GP\n");
+   return VM_IGNORE;
+}
+
+static int __ctrl_evt_excp_vmm(uint32_t vector)
+{
+   if(!(info->vm.cpu.dflt_excp & (1<<vector)))
+      return VM_IGNORE;
+
+   switch(vector)
+   {
+   case NP_EXCP: return __ctrl_evt_excp_vmm_np();
+   case GP_EXCP: return __ctrl_evt_excp_vmm_gp();
+   }
+
+   debug(CTRL_EVT, "unhandled ctrl vmm excp %d (ignoring)\n", vector);
+   return VM_IGNORE;
 }
 
 int ctrl_evt_cr_rd(uint8_t n)
@@ -62,10 +92,10 @@ int ctrl_evt_cr_rd(uint8_t n)
       arg_t arg;
       arg.blow = n;
       ctrl_evt_setup(CTRL_EVT_TYPE_CR_RD, 0, arg);
-      return CTRL_EVT_DONE;
+      return VM_DONE;
    }
 
-   return CTRL_EVT_IGNORE;
+   return VM_IGNORE;
 }
 
 int ctrl_evt_cr_wr(uint8_t n)
@@ -75,20 +105,19 @@ int ctrl_evt_cr_wr(uint8_t n)
       arg_t arg;
       arg.blow = n;
       ctrl_evt_setup(CTRL_EVT_TYPE_CR_WR, 0, arg);
-      return CTRL_EVT_DONE;
+      return VM_DONE;
    }
 
-   return CTRL_EVT_IGNORE;
+   return VM_IGNORE;
 }
 
 int ctrl_evt_excp(uint32_t vector)
 {
    int rc;
 
-   debug(CTRL_EVT, "Exception Event #%d\n", vector);
-
-   if((rc=__ctrl_evt_excp_dbg(vector)) == CTRL_EVT_IGNORE)
-      rc = __ctrl_evt_excp_user(vector);
+   if((rc = __ctrl_evt_excp_vmm(vector)) == VM_IGNORE)
+      if((rc = __ctrl_evt_excp_dbg(vector)) == VM_IGNORE)
+	 rc = __ctrl_evt_excp_user(vector);
 
    return rc;
 }
@@ -107,11 +136,10 @@ int ctrl_evt_setup(uint8_t type, ctrl_evt_hdl_t hdl, arg_t arg)
    }
 
    debug(CTRL_EVT
-	 , "setup ctrl evt %d hdl 0x%X arg 0x%X\n"
-	 , info->vmm.ctrl.event.type
-	 , info->vmm.ctrl.event.hdl
-	 , info->vmm.ctrl.event.arg);
-
+   	 , "setup ctrl evt %d hdl 0x%X arg 0x%X\n"
+   	 , info->vmm.ctrl.event.type
+   	 , info->vmm.ctrl.event.hdl
+   	 , info->vmm.ctrl.event.arg);
    return 1;
 }
 

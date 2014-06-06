@@ -17,41 +17,43 @@
 */
 #include <insn.h>
 #include <vmm.h>
-#include <debug.h>
+#include <emulate.h>
+#include <emulate_int.h>
 #include <intr.h>
 #include <info_data.h>
+#include <debug.h>
 
 extern info_data_t *info;
 
+int resolve_hypercall()
+{
+   return VM_FAIL;
+}
+
 int resolve_invd()
 {
-   asm volatile("invd");
-   info->vm.cpu.emu_done = 1;
-   vm_update_rip(INVD_INSN_SZ);
-   return 1;
+   asm volatile ("invd");
+   return emulate_done(VM_DONE, INVD_INSN_SZ);
 }
 
 int resolve_wbinvd()
 {
    asm volatile ("wbinvd");
-   info->vm.cpu.emu_done = 1;
-   vm_update_rip(WBINVD_INSN_SZ);
-   return 1;
+   return emulate_done(VM_DONE, WBINVD_INSN_SZ);
 }
 
 int resolve_hlt()
 {
-   info->vm.cpu.emu_done = 1;
-   return 0;
+   return VM_FAIL;
 }
 
 int resolve_icebp()
 {
-   info->vm.cpu.emu_done = 1;
-   return 0;
+   int rc = emulate_int1();
+   return emulate_done(rc, 1);
 }
 
 int resolve_default()
 {
-   return 0;
+   return VM_FAIL;
 }

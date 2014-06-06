@@ -219,10 +219,12 @@ typedef union ept_page_table_entry_64
 #define VMX_EPT_MEM_TYPE_WP          5
 #define VMX_EPT_MEM_TYPE_WB          6
 
+#define VMX_EPT_PVL_RW               3
+#define VMX_EPT_PVL_RX               5
 #define VMX_EPT_PVL_RWX              7
 #define ept_dft_pvl                  VMX_EPT_PVL_RWX
 
-#define ept_dft_attr				\
+#define __ept_dft_attr(_pvl)			\
    ({						\
       uint64_t type, attr;			\
 						\
@@ -231,9 +233,12 @@ typedef union ept_page_table_entry_64
       else					\
 	 type = VMX_EPT_MEM_TYPE_UC;		\
 						\
-      attr = (type<<3) | ept_dft_pvl;		\
+      attr = (type<<3) | _pvl;			\
       attr;					\
    })
+
+#define ept_dft_attr     __ept_dft_attr(ept_dft_pvl)
+#define ept_dft_attr_nx  __ept_dft_attr(VMX_EPT_PVL_RW)
 
 uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
 

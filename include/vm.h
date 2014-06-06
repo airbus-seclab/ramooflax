@@ -20,25 +20,17 @@
 
 #include <config.h>
 #include <types.h>
-#include <realmem.h>
-#include <paging.h>
-#include <smap.h>
-#include <excp.h>
-#include <insn.h>
-#include <dev.h>
-#include <dev_ps2.h>
-#include <dev_kbd.h>
-#include <dev_pic.h>
-#include <dev_uart.h>
 
 /*
-** General VM settings
+** VM-EXIT handling return codes
 */
-#define VM_ENTRY_POINT         RM_BASE_IP
-
-#define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0x19cd;
-//#define vm_set_entry()         *(uint32_t*)VM_ENTRY_POINT = 0x19cd16cd;
-//#define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0xfeeb;
+#define VM_FAIL              0
+#define VM_FAULT             1
+#define VM_DONE              2
+#define VM_DONE_LET_RIP      3
+#define VM_NATIVE            4
+#define VM_IGNORE            5
+#define VM_INTERN            6
 
 /*
 ** VM architecture dependant stuff
@@ -54,6 +46,27 @@ typedef svm_bazaar_t  vm_bazaar_t;
 typedef vmx_vmc_t     vmc_t;
 typedef vmx_bazaar_t  vm_bazaar_t;
 #endif
+
+#include <realmem.h>
+#include <paging.h>
+#include <smap.h>
+#include <excp.h>
+#include <insn.h>
+#include <dev.h>
+#include <dev_ps2.h>
+#include <dev_kbd.h>
+#include <dev_pic.h>
+#include <dev_uart.h>
+#include <disasm.h>
+
+/*
+** General VM settings
+*/
+#define VM_ENTRY_POINT         RM_BASE_IP
+
+#define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0x19cd;
+//#define vm_set_entry()         *(uint32_t*)VM_ENTRY_POINT = 0x19cd16cd;
+//#define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0xfeeb;
 
 /*
 ** VM data structures
@@ -80,14 +93,30 @@ typedef union vm_cpu_skill
 
 } __attribute__((packed)) vm_cpu_skill_t;
 
+typedef union emulate_status
+{
+   struct
+   {
+      uint8_t done:1;
+      uint8_t dis:1;
+
+   } __attribute__((packed));
+
+   uint8_t raw;
+
+} __attribute__((packed)) emu_sts_t;
+
 typedef struct vm_cpu
 {
-   vm_pgmem_t     pg;        /* virtual paging tables */
+   vm_pgmem_t     pg[1];     /* virtual paging tables */
    uint32_t       dflt_excp; /* default exception mask */
-   uint8_t        emu_done;  /* emulation engine called */
+   uint8_t        active_pg; /* which virtual paging to apply */
    vm_cpu_skill_t skillz;    /* vm cpu skillz */
    vmc_t          *vmc;      /* hardware virtualization data, strictly aligned */
    gpr64_ctx_t    *gpr;      /* vm GPRs (in vmm stack) */
+
+   ud_t           disasm;
+   emu_sts_t      emu_sts;
    uint8_t        insn_cache[X86_MAX_INSN_LEN];
 
 } __attribute__((packed)) vm_cpu_t;

@@ -20,12 +20,6 @@
 
 #include <types.h>
 
-#define CTRL_EVT_FAIL     0
-#define CTRL_EVT_DONE     1
-#define CTRL_EVT_INTERN   2
-#define CTRL_EVT_IGNORE   3
-#define CTRL_EVT_FAULT    3
-
 typedef int (*ctrl_evt_hdl_t)(arg_t);
 
 #define CTRL_EVT_TYPE_CR_RD    0

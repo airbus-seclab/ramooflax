@@ -18,9 +18,7 @@
 #ifndef __VMX_EXIT_DT_H__
 #define __VMX_EXIT_DT_H__
 
-#define VMX_DT_FAIL      0
-#define VMX_DT_SUCCESS   1
-#define VMX_DT_FAULT     2
+#include <types.h>
 
 /*
 ** Functions

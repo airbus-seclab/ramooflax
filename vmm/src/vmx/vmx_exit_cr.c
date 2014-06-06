@@ -19,6 +19,7 @@
 #include <vmx_exit_fail.h>
 #include <vmx_vmcs_acc.h>
 #include <emulate.h>
+#include <emulate_insn.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -78,23 +79,16 @@ int vmx_vmexit_resolve_cr_access()
       break;
    case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_LMSW:
       if(access->lmsw_op)
-	 return 0;
+	 return VM_FAIL;
       rc = vmx_vmexit_resolve_lmsw(info->vm.cpu.gpr->raw[gpr].wlow);
       break;
    case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_CLTS:
       rc = emulate_clts();
       break;
    default:
-      return 0;
+      return VM_FAIL;
    }
 
-   if(rc == CR_SUCCESS)
-   {
-      info->vm.cpu.emu_done = 1;
-      vmcs_read(vm_exit_info.insn_len);
-      vm_update_rip(vm_exit_info.insn_len.raw);
-      return 1;
-   }
-
-   return 0;
+   vmcs_read(vm_exit_info.insn_len);
+   return emulate_done(rc, vm_exit_info.insn_len.raw);
 }

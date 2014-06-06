@@ -19,30 +19,12 @@
 #define __EMULATE_H__
 
 #include <types.h>
-#include <asm.h>
-#include <disasm.h>
-
-/*
-** emulation return codes
-*/
-#define EMU_FAIL              0
-#define EMU_FAULT             1
-#define EMU_SUCCESS           2
-#define EMU_SUCCESS_LET_RIP   3
-#define EMU_UNSUPPORTED       4
 
 /*
 ** Functions
 */
 int   emulate();
-void  emulate_unsupported(ud_t*);
-int   emulate_int15();
-int   emulate_clts();
-
-int   __emulate_insn(ud_t*);
-int   __emulate_exception(uint8_t);
-int   __emulate_hard_interrupt(uint8_t);
-int   __emulate_soft_interrupt(uint8_t);
+int   emulate_done(int, size_t);
 
 #endif
 

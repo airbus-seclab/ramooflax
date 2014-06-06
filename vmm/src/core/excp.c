@@ -122,8 +122,8 @@ int resolve_exception()
       __post_access(__cr2);
    }
 
-   if((rc=ctrl_evt_excp(__exception_vector)) == CTRL_EVT_IGNORE)
-      __inject_exception(__exception_vector, __exception_error, __exception_fault);
+   if((rc=ctrl_evt_excp(__exception_vector)) == VM_IGNORE)
+      __inject_exception(__exception_vector, __exception_error.raw, __exception_fault);
 
    return rc;
 }

@@ -16,6 +16,11 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <ctrl_evt.h>
+#include <dbg.h>
+#include <debug.h>
+#include <info_data.h>
+
+extern info_data_t *info;
 
 static int local_evt_cr_rd(arg_t __unused__ arg)
 {

@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_exit_dr.h>
+#include <emulate.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -25,18 +26,14 @@ int vmx_vmexit_resolve_dr_access()
 {
    vmcs_exit_info_dr_t *access;
    uint8_t             gpr;
+   int                 rc;
 
    vmcs_read(vm_exit_info.qualification);
    access = &vm_exit_info.qualification.dr;
    gpr = GPR64_RAX - (access->gpr & GPR64_RAX);
 
-   if(__resolve_dr(!access->dir, access->nr, gpr) == DR_SUCCESS)
-   {
-      info->vm.cpu.emu_done = 1;
-      vmcs_read(vm_exit_info.insn_len);
-      vm_update_rip(vm_exit_info.insn_len.raw);
-      return 1;
-   }
+   rc = __resolve_dr(!access->dir, access->nr, gpr);
+   vmcs_read(vm_exit_info.insn_len);
 
-   return 0;
+   return emulate_done(rc, vm_exit_info.insn_len.raw);
 }

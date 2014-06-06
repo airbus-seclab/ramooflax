@@ -140,7 +140,7 @@ static void vmx_vmcs_exec_controls_init()
 
    vm_exec_ctrls.eptp.cache = VMX_EPT_MEM_TYPE_WB;
    vm_exec_ctrls.eptp.pwl   = 3;
-   vm_exec_ctrls.eptp.addr  = page_nr(info->vm.cpu.pg.pml4);
+   vm_exec_ctrls.eptp.addr  = page_nr(info->vm.cpu.pg[0].pml4);
 
    vm_exec_ctrls.vpid.raw   = 1;
 

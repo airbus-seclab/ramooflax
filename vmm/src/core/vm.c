@@ -93,11 +93,19 @@ void vm_rewind_rip(offset_t offset)
    __post_access(__rip);
 }
 
+int __vm_local_resolve_pmem(vm_access_t __unused__ *access)
+{
+   return 1;
+}
+
 int __vm_local_access_pmem(vm_access_t *access)
 {
    loc_t src, dst;
 
    if(vmm_area_range(access->addr, access->len))
+      return 0;
+
+   if(!__vm_local_resolve_pmem(access))
       return 0;
 
    if(access->wr)
@@ -121,6 +129,9 @@ int __vm_remote_access_pmem(vm_access_t *access)
    size_t done, len;
 
    if(vmm_area_range(access->addr, access->len))
+      return 0;
+
+   if(!__vm_local_resolve_pmem(access))
       return 0;
 
    loc.linear = access->addr;
@@ -281,4 +292,10 @@ int vm_enter_rmode()
    __deny_io_range(KBD_START_PORT, KBD_END_PORT);
 
    return 1;
+}
+
+void vm_setup_npg(int who)
+{
+   npg_set_active_paging(who);
+   npg_set_active_paging_cpu();
 }
