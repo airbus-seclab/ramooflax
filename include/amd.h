@@ -18,7 +18,7 @@
 #ifndef __AMD_CPU_H__
 #define __AMD_CPU_H__
 
-#define VMMCALL_INSN_SZ           3
+#define HYPERCALL_INSN_SZ        3
 
 /*
 ** We enabling interrupts we assume
@@ -123,7 +123,7 @@ typedef union amd_conf_addr_htt_ctrl_reg
 ** Miscellaneous Control
 */
 
-/* North Bridge Capabilities 
+/* North Bridge Capabilities
 */
 #define AMD_CONFIG_ADDR_MISC_FUNC       3
 #define AMD_CONFIG_ADDR_MISC_NORTH_REG  ((0xe8/4)<<2)

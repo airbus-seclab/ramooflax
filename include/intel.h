@@ -21,12 +21,11 @@
 #include <cr.h>
 
 #define X86_OPCODE_VMCALL         0xc1010f
+#define HYPERCALL_INSN_SZ         3
 
 /*
-** We enabling interrupts we assume
-** that they are off
-** We disabling interrupts we assume
-** that they are on
+** When  enabling interrupts we assume that they are off
+** When disabling interrupts we assume that they are on
 */
 #define force_interrupts_on()     asm volatile( "sti ; nop" )
 #define force_interrupts_off()    asm volatile( "cli" )
