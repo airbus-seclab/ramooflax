@@ -26,6 +26,7 @@
 #include <insn.h>
 #include <cpuid.h>
 
+#include <config.h>
 #ifdef CONFIG_ARCH_AMD
 #include <amd.h>
 #else
