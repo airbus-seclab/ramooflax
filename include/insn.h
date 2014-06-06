@@ -18,6 +18,15 @@
 #ifndef __INSN_H__
 #define __INSN_H__
 
+#include <types.h>
+
+#include <config.h>
+#ifdef CONFIG_ARCH_AMD
+#include <amd.h>
+#else
+#include <intel.h>
+#endif
+
 /*
 ** Some x86 insn definitions
 */
@@ -35,7 +44,7 @@
 
 /* group1 prefix */
 #define X86_PREFIX_REP       0xf3
-/* group2 prefix */	     
+/* group2 prefix */
 #define X86_PREFIX_CS        0x2e
 #define X86_PREFIX_SS        0x36
 #define X86_PREFIX_DS        0x3e
@@ -43,7 +52,7 @@
 #define X86_PREFIX_FS        0x64
 #define X86_PREFIX_GS        0x65
 
-/* group3/4 prefix force 32 or 16 bits depending on execution mode */	     
+/* group3/4 prefix force 32 or 16 bits depending on execution mode */
 #define X86_PREFIX_OP        0x66
 #define X86_PREFIX_ADDR      0x67
 
@@ -66,11 +75,11 @@
 /*
 ** rdtsc
 */
-#define rdtsc()						\
-   ({							\
-      raw64_t x;					\
-      asm volatile ("rdtsc":"=a"(x.low),"=d"(x.high));	\
-      x.raw;						\
+#define rdtsc()							\
+   ({								\
+      raw64_t x;						\
+      asm volatile ("lfence;rdtsc":"=a"(x.low),"=d"(x.high));	\
+      x.raw;							\
    })
 
 /*
@@ -113,6 +122,10 @@
 #define __halt()  asm volatile ("hlt")
 
 /*
+** Lock VMM
+*/
+#define lock_vmm() ({ while(1) { __halt(); force_interrupts_off(); } })
+/*
 ** 32 bits swap
 */
 #define swap32(_x_)					\
@@ -134,6 +147,7 @@
 ** functions
 */
 #ifndef __INIT__
+int  resolve_hypercall();
 int  resolve_invd();
 int  resolve_wbinvd();
 int  resolve_icebp();
