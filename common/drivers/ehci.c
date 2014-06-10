@@ -298,7 +298,7 @@ void __ehci_port_own(dbgp_info_t *dbgp_i)
    {
       io_wait(1000);
       portsc.raw = dbgp_i->ehci_psc->raw;
-   
+
    } while(portsc.own);
 }
 
