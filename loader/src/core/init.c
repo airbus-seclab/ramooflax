@@ -108,6 +108,7 @@ static void validate(mbi_t *mbi)
    if(mbi->mods_count < 1)
       panic("invalid module count");
 
+   mbi_check_boot_loader(mbi);
    check_cpu_skillz();
 }
 

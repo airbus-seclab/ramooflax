@@ -107,10 +107,10 @@ static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
       vm->pt = pt64_nr(info->hrd.mem.top - 1) + 1;
 
    debug(PMEM,
-	 "- vmm needs %d pd and %d pt\n"
-	 "- vm  needs %d pd and %d pt\n"
+	 "vmm needs %d pd and %d pt\n"
+	 "vm  needs %d pd and %d pt\n"
 	 , vmm->pd, vmm->pt
-	 , vm->pd, vm->pt );
+	 , vm->pd, vm->pt);
 }
 
 int pmem_pool_opt_hdl(char *str, void *data)
@@ -154,7 +154,7 @@ void pmem_init(mbi_t *mbi)
    vmm_elf_sz = elf_module_load_size(mod);
    pool_sz = pmem_vm_pg_pool_size(&vm_pg);
 
-   if(mbi_get_opt(mod, "pool", pmem_pool_opt_hdl, (void*)&pool_opt))
+   if(mbi_get_opt(mbi, mod, "pool", pmem_pool_opt_hdl, (void*)&pool_opt))
    {
       debug(PMEM, "increasing pool sz by %D*PAGE_SIZE\n", pool_opt);
       pool_sz += pool_opt*PAGE_SIZE;
@@ -235,16 +235,16 @@ void pmem_init(mbi_t *mbi)
    info = info_r;
 
    debug(PMEM,
-	 " - area start    = 0x%X\n"
-	 " - area end      = 0x%X\n"
-	 " - area size     = %D B (%D KB)\n"
-	 " - vmm stack     = 0x%X\n"
-	 " - vmm pool      = 0x%X (%D KB)\n"
-	 " - vmm elf       = 0x%X - 0x%X (%D B)\n"
-	 " - gdt           = 0x%X\n"
-	 " - idt           = 0x%X\n"
-	 " - pml4          = 0x%X\n"
-	 " - vm  vmc       = 0x%X\n"
+	 "area start    = 0x%X\n"
+	 "area end      = 0x%X\n"
+	 "area size     = %D B (%D KB)\n"
+	 "vmm stack     = 0x%X\n"
+	 "vmm pool      = 0x%X (%D KB)\n"
+	 "vmm elf       = 0x%X - 0x%X (%D B)\n"
+	 "gdt           = 0x%X\n"
+	 "idt           = 0x%X\n"
+	 "pml4          = 0x%X\n"
+	 "vm  vmc       = 0x%X\n"
 	 ,info->area.start
 	 ,info->area.end
 	 ,info->area.size, (info->area.size)>>10
@@ -254,6 +254,5 @@ void pmem_init(mbi_t *mbi)
 	 ,info->vmm.cpu.sg->gdt
 	 ,info->vmm.cpu.sg->idt
 	 ,info->vmm.cpu.pg.pml4
-	 ,info->vm.cpu.vmc
-      );
+	 ,info->vm.cpu.vmc);
 }

@@ -1,1 +1,1 @@
-obj := print.o elf.o string.o
+obj := print.o elf.o string.o mbi.o
