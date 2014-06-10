@@ -35,7 +35,7 @@ size_t   snprintf(char*, size_t, const char*, ...);
 size_t   __vprintf(const char*, va_list);
 size_t   __vsnprintf(char*, size_t, const char*, va_list);
 
-#ifdef __INIT__
+#ifdef __LOADER__
 #include <video.h>
 #define debug_write(data,size)    video_write(data,size)
 #else
