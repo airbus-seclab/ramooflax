@@ -220,7 +220,7 @@ function do_grub()
 # root check
 if [ $(id -u) -ne 0 ]; then
     log "Must be root: try \"sudo $*\""
-    return 1
+    exit 1
 fi
 
 # Tools
