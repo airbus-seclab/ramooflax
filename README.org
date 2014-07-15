@@ -22,6 +22,8 @@ For Intel ones, Ramooflax needs /EPT/ and /Unrestricted guest/ features present 
 
 For AMD ones, the only required feature is /RVI/ and can be found into *Phenom II* CPUs. Some details are given on this [[http://en.wikipedia.org/wiki/AMD-V#AMD_virtualization_.28AMD-V.29][wikipedia]] page.
 
+Ramooflax can run under VMware workstation/fusion using the "virtualize vm-x/EPT" feature. But you still need a skilled enough CPU.
+
 Notice that you can also run Ramooflax under Bochs 2.4.6.
 
 * How does it work ?
@@ -38,11 +40,7 @@ Ramooflax needs to be installed on a bootable storage (ie USB key with GRUB).
 
 * Documentation
 
-Check the Ramooflax wiki pages. Here is a brief description of the files:
- - ramooflax_fr.pdf is a french article describing ramooflax
- - ramooflax_slides_fr.pdf is a french presentation held at SSTIC 2011
- - ramooflax_en.pdf and ramooflax_slides_en.pdf are the corresponding english versions
- - info_data_t.mm is a freemind map which describes data structures of the hypervisor
+All documents can be found on the Ramooflax [[https://github.com/sduverger/ramooflax/wiki][wiki]] pages.
 
 * Software requirements
 
@@ -50,7 +48,7 @@ Ramooflax has only been compiled/tested using gcc-4.4. The loader is a 32 bits E
 
 Under Debian-like systems, the following packages are needed whether you run a 32 or 64 bits OS:
 
-$ sudo apt-get install gcc-4.4 gcc-4.4-multilib make dialog
+$ sudo apt-get install gcc-4.4 gcc-4.4-multilib make
 
 * Limitations
 
@@ -82,15 +80,12 @@ This will build the loader, setup and vmm binaries.
 
 * Installing
 
-We provide an install script
-
 $ make install
 
-It is only here for convenience. It only mounts the device associated to the directory specified at configuration time (/install/ menu), copies the built binaries and then unmount the device.
+The installation rules looks for a script named /installer.sh/. We provide an example script, located in /tools/, which updates a VMware virtual disk image. You can define your own one.
 
-You need to setup your system (ie /etc/fstab) before installing and most important prepare by yourself the bootable storage on which ramooflax is to be installed.
+Ramooflax needs a /multiboot compliant/ bootloader (such as GRUB). The following GRUB 1 (legacy) entry can be defined to boot ramooflax:
 
-It is recommended to use GRUB 1 (legacy) with the following entry:
 #+BEGIN_EXAMPLE
 title  Ramooflax
 root   (hd0,0)
@@ -98,6 +93,28 @@ kernel /loader.bin
 module /setup.bin
 module /vmm.bin
 #+END_EXAMPLE
+
+We also provide a disk image creation tool (which needs GRUB legacy), in /tools/:
+
+#+BEGIN_EXAMPLE
+sudo ./tools/create_disk.sh ramooflax.img 32M ../grub/ loader/build/loader.bin setup/build/setup.bin vmm/build/vmm.bin 
+
+[+] building disk image (32MB)
+[+] create part on disk image
+[+] formating disk
+[+] mounting disk
+[+] copy grub
+[+] installing files
+[+] configure grub
+[+] install grub
+[+] unmounting disk
+
+Disk is ready !
+- mnt it using : "mount -o loop,offset=512 ramooflax.img /mnt"
+- run it using : "qemu -hda ramooflax.img"
+#+END_EXAMPLE
+
+The tool builds a GRUB bootable disk image of the given size, with ramooflax as default entry.
 
 * Using
 
