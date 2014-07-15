@@ -130,7 +130,7 @@ function configure_grub()
 
     log "[+] configure grub"
     ${CAT} >${tdir}/boot/grub/menu.lst <<EOF
-timeout 0
+timeout 5
 title Ramooflax
 root (hd0,0)
 kernel $kline
