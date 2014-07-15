@@ -37,7 +37,7 @@ function usage()
     echo >&2
     echo "Usage: $0 <disk> <size> <grub dir> <kernel> [mods]" >&2
     echo "      <disk>      vdisk filename" >&2
-    echo "      <size>      vdisk size" >&2
+    echo "      <size>      vdisk size (same as 'dd' tool)" >&2
     echo "      <grub dir>  grub stage files directory" >&2
     echo "      <kernel>    kernel file for grub" >&2
     echo "      [mods]      list of optional modules to load" >&2
