@@ -42,9 +42,7 @@ include tools/rulz.mk
 
 ifeq ($(act),install)
 $(tbin):
-	@$(pre-inst)
 	@$(inst)
-	@$(post-inst)
 else
 INCLUDE := -I$(tgt)/include -Iinclude
 

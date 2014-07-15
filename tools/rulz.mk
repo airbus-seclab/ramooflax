@@ -2,17 +2,13 @@
 ######################### You should not modify ! ###########################
 #############################################################################
 
-define pre-inst
-vmware-mount "/home/stf/vmware/Debian 7 64-bit/Debian 7 64-bit.vmdk" 1 "/home/stf/vmware/Debian 7 64-bit/mnt/"
-endef
-
 define inst
-$(CP) $@ "/home/stf/vmware/Debian 7 64-bit/mnt/boot/"$(notdir $@)
+sudo $(INSTOOL) $@
 echo "    CP    $@"
 endef
 
 define post-inst
-vmware-mount -X
+sudo vmware-mount -X
 endef
 
 define __pre-inst

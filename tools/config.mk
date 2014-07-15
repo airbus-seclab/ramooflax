@@ -19,6 +19,7 @@ RM         := $(shell which rm)
 CP         := $(shell which cp)
 SED        := $(shell which sed)
 FIND       := $(shell which find)
+INSTOOL    := tools/installer.sh
 
 CFLG_WRN   := -Wall -W
 CFLG_KRN   := -pipe -nostdlib -nostdinc -ffreestanding -fms-extensions
