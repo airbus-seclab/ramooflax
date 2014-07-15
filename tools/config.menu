@@ -1,6 +1,6 @@
 menu   main
 title  Ramooflax (c) configuration
-data   build, debug, inst
+data   build, debug
 
 menu   build
 title  Building selection
@@ -11,11 +11,6 @@ menu   debug
 title  Debugging selection
 desc   debug, select debug info
 data   gen_dbg, svm_dbg, vmx_dbg
-
-input  inst
-title  Enter media mount point
-desc   install, change install directory
-data   CONFIG_INST_DIR
 
 choice cpu
 title  Choose the manufacturer on which the vmm will run
