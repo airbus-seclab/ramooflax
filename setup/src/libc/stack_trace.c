@@ -25,7 +25,8 @@ void stack_trace()
 {
    offset_t *rbp, *rip;
 
-   printf("\n------ Stack Trace [rsp: 0x%X | rip 0x%X]\n", get_rsp(), get_rip());
+   printf("\n------ Setup Stack Trace [rsp: 0x%X | rip 0x%X]\n",
+	  get_rsp(), get_rip());
 
    rbp = (offset_t*)get_rbp();
 

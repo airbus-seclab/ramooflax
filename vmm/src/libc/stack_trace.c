@@ -28,7 +28,7 @@ void stack_trace()
 {
    offset_t *rbp, *rip;
 
-   printf("\n------ Stack Trace ------ \n"
+   printf("\n------ VMM Stack Trace ------ \n"
 	  "vmm stack boundaries [0x%X - 0x%X] rsp 0x%X\n"
 	  "vmm relocation base 0x%X\n"
 	  , page_align(info->vmm.stack_bottom - VMM_MIN_STACK_SIZE)
@@ -38,7 +38,7 @@ void stack_trace()
 
    rbp = (offset_t*)get_rbp();
 
-   while(rbp && rbp<STACK_BASE)
+   while(rbp && rbp < STACK_BASE)
    {
       rip = (offset_t*)(*(rbp+1));
       rbp = (offset_t*)(*rbp);
