@@ -35,6 +35,8 @@ size_t   snprintf(char*, size_t, const char*, ...);
 size_t   __vprintf(const char*, va_list);
 size_t   __vsnprintf(char*, size_t, const char*, va_list);
 
+#define debug_flush()             ({})
+
 #ifdef __LOADER__
 #include <video.h>
 #define debug_write(data,size)    video_write(data,size)
@@ -46,6 +48,8 @@ size_t   __vsnprintf(char*, size_t, const char*, va_list);
 #ifdef CONFIG_PRINT_UART
 #include <uart.h>
 #define debug_write(data,size)    uart_write(data,size)
+#undef debug_flush
+#define debug_flush()             uart_flush()
 #else
 #define debug_write(data,size)    ({})
 #endif

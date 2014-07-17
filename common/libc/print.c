@@ -41,6 +41,7 @@ void __panic(const char *fname, const char *format, ...)
    __vprintf(format, params);
    va_end(params);
 
+   debug_flush();
    lock_vmm();
 }
 

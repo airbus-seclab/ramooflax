@@ -132,3 +132,14 @@ size_t uart_write(uint8_t *data, size_t n)
    return buf.sz;
 }
 
+void uart_flush()
+{
+   size_t s = 16;
+
+   while(s)
+      if(__uart_can_send(SERIAL_COM1))
+      {
+	 __uart_send_char(SERIAL_COM1, 0);
+	 s--;
+      }
+}

@@ -341,5 +341,6 @@ void  uart_init();
 
 size_t  uart_read(uint8_t*, size_t);
 size_t  uart_write(uint8_t*, size_t);
+void    uart_flush();
 
 #endif
