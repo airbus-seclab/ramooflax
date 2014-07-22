@@ -5,12 +5,12 @@ data   build, debug
 menu   build
 title  Building selection
 desc   build, change build settings
-data   cpu, dev, opt
+data   cpu, dev, drv, opt
 
 menu   debug
 title  Debugging selection
 desc   debug, select debug info
-data   gen_dbg, svm_dbg, vmx_dbg
+data   gen_dbg, vmx_dbg, svm_dbg
 
 choice cpu
 title  Choose the manufacturer on which the vmm will run
@@ -19,18 +19,28 @@ data   CONFIG_ARCH, intel, amd
 
 menu   dev
 title  Device selection
-desc   devices, select devices
+desc   devices, select debug/control devices
 data   remotedev, debugdev
 
 choice remotedev
 title  Choose the device used to remote control the vmm
 desc   remote, select remote control device
-data   CONFIG_REMOTE, ehci:EHCI Debug Port, uart:Serial Port, none:No remote control
+data   CONFIG_REMOTE, ehci:EHCI Debug Port, uart:Serial Port, net:Network card, none:No remote control
 
 choice debugdev
 title  Choose the device used to output debug messages
 desc   debug, select debug output device
-data   CONFIG_PRINT, ehci:EHCI Debug Port, uart:Serial Port, none:No debug output
+data   CONFIG_PRINT, video:VGA card, ehci:EHCI Debug Port, uart:Serial Port, net:Network card, none:No debug output
+
+menu   drv
+title  Device drivers selection
+desc   drivers, select device drivers
+data   network
+
+choice network
+title  Choose the network driver
+desc   network, select network driver
+data   CONFIG_NET_DRV, e1000:Intel 82545 EM, none:No network driver
 
 toggle opt
 title  Toggle various options
@@ -42,10 +52,10 @@ title  Toggle generic debug info
 desc   generic, select generic debug info
 data   CONFIG_VMEXIT_TRACE:show vmexit count on each debug line
 
-toggle svm_dbg
-title  Toggle AMD SVM debug info
-desc   svm, select AMD SVM debug info
-
 toggle vmx_dbg
 title  Toggle Intel VMX debug info
 desc   vmx, select Intel VMX debug info
+
+toggle svm_dbg
+title  Toggle AMD SVM debug info
+desc   svm, select AMD SVM debug info

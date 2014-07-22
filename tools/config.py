@@ -104,32 +104,31 @@ class Config(Ordict):
 
     def write(self):
         try:
-            self.__add_helpers()
+            self.__helpers()
             self.__write()
         except:
             print "failed to write config"
             sys.exit(1)
 
-    def __add_helpers(self):
-            if self.dico["CONFIG_REMOTE"] != "none":
-                k="CONFIG_HAS_REMOTE"
-                self.__setitem__(k, "yes")
-                self._opt.append(k)
+    def __set_helper(self, helper):
+        vh = self.dico["CONFIG_"+helper]
+        if vh != "none":
+            self.__setitem__("CONFIG_HAS_"+helper, "yes")
+            self.__setitem__("CONFIG_HAS_"+vh.upper(), "yes")
 
-            self._opt.append("CONFIG_HAS_EHCI")
-            self._opt.append("CONFIG_HAS_UART")
+    def __helpers(self):
+        for device in ["PRINT","REMOTE","VIDEO","EHCI","UART","NET"]:
+            self.__setitem__("CONFIG_HAS_"+device, "no")
 
-            if self.dico["CONFIG_REMOTE"] == "ehci" or \
-                    self.dico["CONFIG_PRINT"] == "ehci":
-                self.__setitem__("CONFIG_HAS_EHCI", "yes")
-            else:
-                self.__setitem__("CONFIG_HAS_EHCI", "no")
+        for driver in ["E1000"]:
+            self.__setitem__("CONFIG_HAS_"+driver, "no")
 
-            if self.dico["CONFIG_REMOTE"] == "uart" or \
-                    self.dico["CONFIG_PRINT"] == "uart":
-                self.__setitem__("CONFIG_HAS_UART", "yes")
-            else:
-                self.__setitem__("CONFIG_HAS_UART", "no")
+        self.__set_helper("PRINT")
+        self.__set_helper("REMOTE")
+
+        if self.dico["CONFIG_HAS_NET"] == "yes":
+            driver = self.dico["CONFIG_NET_DRV"].upper()
+            self.__setitem__("CONFIG_HAS_"+driver, "yes")
 
     def __write(self):
         fc = open(self.files["config"],"w")
@@ -148,7 +147,7 @@ class Config(Ordict):
             fc.write("%s=%s\n" % (k,v))
             if v == "yes":
                 fh.write("#define %s\n" % k)
-            elif v != "no" and k != "CONFIG_INST_DIR":
+            elif v != "no":
                 fh.write("#define %s_%s\n" % (k,v.upper()))
 
         for k in self._dbg:
@@ -174,6 +173,7 @@ class Menu:
     def __init__(self, fconf):
         self.config = Config(fconf)
         self.file = "tools/config.menu"
+        self.help = "(q/backspace) quit, (enter/space) select"
         self.cancel_keys = (ord('q'), curses.KEY_BACKSPACE)
         self.active_keys = (ord('\n'), ord(' '))
         self.colors = { 'title': (1, curses.COLOR_CYAN, curses.COLOR_BLACK),
@@ -271,7 +271,8 @@ class Node:
         self.tag = tag
         self.title = dico["title"]
         self.data = dico.get("data")
-        self.name, self.desc = map(lambda x: x.strip(), dico.get("desc",",").split(','))
+        self.name, self.desc = map(lambda x: x.strip(), \
+                                       dico.get("desc",",").split(','))
 
     def _parse(self, data_needed=True):
         if data_needed and self.data == None:
@@ -369,6 +370,8 @@ class Node:
             self.root.screen.addstr(self.ml,0, "(+)", col)
         else:
             self.root.screen.addstr(self.ml,0, "   ", curses.color_pair(0))
+
+        self.root.screen.addstr(self.ml, 5, self.root.help, col)
 
     def __refresh(self):
         if self.redisplay == Redisplay.one:
