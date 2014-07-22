@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,26 +15,30 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <dev.h>
-#include <ehci.h>
 #include <e1000.h>
-#include <uart.h>
+#include <config.h>
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-void dev_init()
+#ifdef __INIT__
+void e1000_init()
 {
-#ifdef CONFIG_HAS_EHCI
-   ehci_init();
+   e1000_info_t *net = &info->hrd.dev.net;
+
+   pci_cfg_e1000(net);
+}
 #endif
 
-#ifdef CONFIG_HAS_E1000
-   e1000_init();
-#endif
+size_t e1000_write(uint8_t *data, size_t n)
+{
+   data += n;
+   return 0;
+}
 
-#ifdef CONFIG_HAS_UART
-   uart_init();
-#endif
+size_t e1000_read(uint8_t *data, size_t n)
+{
+   data += n;
+   return 0;
 }

@@ -30,8 +30,14 @@
 #define ctrl_io_read(data,size)     uart_read(data,size)
 #define ctrl_io_write(data,size)    uart_write(data,size)
 #else
+#ifdef CONFIG_REMOTE_NET
+#include <net.h>
+#define ctrl_io_read(data,size)     net_read(data,size)
+#define ctrl_io_write(data,size)    net_write(data,size)
+#else
 #define ctrl_io_read(data,size)     ({0;})
 #define ctrl_io_write(data,size)    ({})
+#endif
 #endif
 #endif
 

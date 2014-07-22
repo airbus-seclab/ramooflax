@@ -51,7 +51,12 @@ size_t   __vsnprintf(char*, size_t, const char*, va_list);
 #undef debug_flush
 #define debug_flush()             uart_flush()
 #else
+#ifdef CONFIG_PRINT_NET
+#include <net.h>
+#define debug_write(data,size)    net_write(data,size)
+#else
 #define debug_write(data,size)    ({})
+#endif
 #endif
 #endif
 #endif

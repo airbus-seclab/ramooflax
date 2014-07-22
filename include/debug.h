@@ -38,6 +38,10 @@
 #undef CONFIG_UART_DBG
 #endif
 
+#if !defined __INIT__ && defined(CONFIG_PRINT_NET) && defined(CONFIG_NET_DBG)
+#undef CONFIG_NET_DBG
+#endif
+
 /*
 ** Debug macro
 */

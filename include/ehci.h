@@ -19,7 +19,7 @@
 #define __EHCI_H__
 
 #include <types.h>
-#include <pci.h>
+#include <pci_dbgp.h>
 
 /*
 ** PID (with complement)

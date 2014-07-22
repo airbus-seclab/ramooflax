@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,26 +15,21 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <dev.h>
-#include <ehci.h>
-#include <e1000.h>
-#include <uart.h>
-#include <debug.h>
-#include <info_data.h>
+#ifndef __PCI_E1000_H__
+#define __PCI_E1000_H__
 
-extern info_data_t *info;
+#include <types.h>
+#include <pci.h>
 
-void dev_init()
-{
-#ifdef CONFIG_HAS_EHCI
-   ehci_init();
+/*
+** Specific Intel 82545/EM pci config space
+*/
+
+/*
+** Functions
+*/
+struct e1000_info;
+
+void pci_cfg_e1000(struct e1000_info*);
+
 #endif
-
-#ifdef CONFIG_HAS_E1000
-   e1000_init();
-#endif
-
-#ifdef CONFIG_HAS_UART
-   uart_init();
-#endif
-}

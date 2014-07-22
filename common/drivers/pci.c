@@ -16,101 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <pci.h>
-#include <ehci.h>
-#include <print.h>
 #include <debug.h>
-
-/*
-** Retrieve EHCI Debug Port stuff :
-**  - io mem registers to setup
-**  - ehci controller and debug port
-**  - board ids
-*/
-void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
-{
-   pci_cfg_dbg_cap_t dbg_cap;
-   pci_cfg_val_t     *pci = &dbgp_i->pci;
-   loc_t             loc;
-
-   dbgp_i->port = DBGP_INVALID;
-   dbgp_i->addr = 0;
-
-   pci->data.raw = PCI_DBGP_CAP_ID;
-   if(!pci_search(pci_check_cap, pci))
-      panic("no ehci debug port found");
-
-   dbg_cap.raw = pci->data.raw;
-
-   if(!pci_read_mm_bar(pci, dbg_cap.nr))
-      panic("could not get ehci registers");
-
-   loc.linear = pci->data.raw;
-   dbgp_i->ehci_cap = (ehci_host_cap_reg_t*)loc.addr;
-
-   pci_cfg_dbgp_vendor_specific(dbgp_i);
-
-   if(dbgp_i->port == DBGP_INVALID)
-      dbgp_i->port = dbgp_i->ehci_cap->hcs.dbg_nr;
-
-   if(!dbgp_i->port)
-      panic("could not get portsc for debug port");
-
-   loc.linear = pci->data.raw + dbgp_i->ehci_cap->length;
-   dbgp_i->ehci_opr = (ehci_host_op_reg_t*)loc.addr;
-
-   loc.linear = pci->data.raw + dbg_cap.offset;
-   dbgp_i->ehci_dbg = (ehci_dbgp_reg_t*)loc.addr;
-
-   dbgp_i->ehci_psc = &dbgp_i->ehci_opr->portsc[dbgp_i->port - 1];
-}
-
-void pci_cfg_dbgp_vendor_specific(dbgp_info_t *dbgp_i)
-{
-   pci_cfg_dev_vdr_t dvd;
-   pci_cfg_val_t     *pci = &dbgp_i->pci;
-
-   pci->addr.reg = PCI_CFG_DEV_VDR_OFFSET;
-   dvd.raw = pci_cfg_read(pci->addr);
-
-   switch(dvd.vendor)
-   {
-   case PCI_CFG_VENDOR_NVIDIA:
-      pci_cfg_dbgp_nvidia(dbgp_i);
-      break;
-   default:
-      break;
-   }
-}
-
-/*
-** nForce 430 MCP51 allows to set the default value
-** for debug port number found into ehci registers
-**
-** By default the value is the same in this register
-** and in the ehci registers, that is #1 (0), but on the
-** development board the usb port 0 is not accessible.
-**
-** Using this register you can change the default
-** value found into ehci registers on next power-up.
-**
-** This value will be reset when AC is physically
-** unplugged.
-*/
-void pci_cfg_dbgp_nvidia(dbgp_info_t *dbgp_i)
-{
-   uint32_t      mcp51;
-   pci_cfg_val_t *pci = &dbgp_i->pci;
-
-   dbgp_i->port = 2; /* XXX: we should identify ports and let user choose */
-
-   pci->addr.reg = 0x74;
-   mcp51 = pci_cfg_read(pci->addr);
-
-   mcp51 &= ~(0xf<<12);
-   mcp51 |=  (dbgp_i->port & 0xf)<<12;
-
-   pci_cfg_write(pci->addr, mcp51);
-}
 
 /*
 ** pci->addr should be initialized
@@ -168,7 +74,7 @@ int pci_check_cap(pci_cfg_val_t *pci)
 	 if(cap.id == pci->data.blow)
 	 {
 	    pci->data.raw = cap.raw;
-	    debug(EHCI, "pci b%d d%d f%d r%d = 0x%x\n"
+	    debug(PCI, "pci b%d d%d f%d r%d = 0x%x\n"
 		  ,pci->addr.bus, pci->addr.dev, pci->addr.fnc, pci->addr.reg
 		  ,pci->data.raw);
 	    return 1;
@@ -183,18 +89,18 @@ int pci_check_cap(pci_cfg_val_t *pci)
 
 /*
 ** apply match() to every fnc of every dev found
+** returns 'nth' matching one if possible
 **
 ** pci->data might be changed by match()
 */
-int pci_search(pci_search_t match, pci_cfg_val_t *pci)
+int pci_search(pci_search_t match, size_t nth, pci_cfg_val_t *pci)
 {
    pci_cfg_dev_vdr_t dvd;
-   uint32_t          bus, dev, fnc;
-#ifdef CONFIG_EHCI_2ND
-   int               found=0;
    pci_cfg_val_t     pci_bk;
-#endif
+   uint32_t          bus, dev, fnc;
+   size_t            found;
 
+   found = 0;
    pci->addr.raw  = 0;
    pci->addr.enbl = 1;
 
@@ -217,28 +123,24 @@ int pci_search(pci_search_t match, pci_cfg_val_t *pci)
 	       continue;
 
 	    if(match(pci))
-#ifdef CONFIG_EHCI_2ND
 	    {
-	       if(++found == 2)
+	       if(++found == nth)
 		  return 1;
 
 	       pci_bk.addr.raw = pci->addr.raw;
 	       pci_bk.data.raw = pci->data.raw;
 	    }
-#else
-	       return 1;
-#endif
 	 }
       }
    }
-#ifdef CONFIG_EHCI_2ND
+
    if(found)
    {
       pci->addr.raw = pci_bk.addr.raw;
       pci->data.raw = pci_bk.data.raw;
       return 1;
    }
-#endif
+
    return 0;
 }
 

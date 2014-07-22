@@ -1,5 +1,5 @@
-/*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+ /*
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,26 +15,11 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <dev.h>
-#include <ehci.h>
+#include <pci_e1000.h>
 #include <e1000.h>
-#include <uart.h>
 #include <debug.h>
-#include <info_data.h>
 
-extern info_data_t *info;
-
-void dev_init()
+void pci_cfg_e1000(e1000_info_t *net)
 {
-#ifdef CONFIG_HAS_EHCI
-   ehci_init();
-#endif
-
-#ifdef CONFIG_HAS_E1000
-   e1000_init();
-#endif
-
-#ifdef CONFIG_HAS_UART
-   uart_init();
-#endif
+   net = net;
 }

@@ -22,12 +22,16 @@
 #include <types.h>
 #include <smap.h>
 #include <ehci.h>
+#include <e1000.h>
 #include <io.h>
 
 typedef struct hardware_device_data
 {
 #ifdef CONFIG_HAS_EHCI
    dbgp_info_t dbgp;
+#endif
+#ifdef CONFIG_HAS_E1000
+   e1000_info_t net;
 #endif
 
 } __attribute__((packed)) hrdw_dev_t;
