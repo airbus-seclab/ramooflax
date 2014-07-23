@@ -11,7 +11,7 @@ CONFTOOL   := tools/config.py
 CONFIG     := .config
 
 CC_MODEL   := small
-CCVER      := 4.4
+CCVER      := 4.8
 CC         := $(shell which gcc-$(CCVER))
 CPP        := $(shell which cpp-$(CCVER))
 LD         := $(shell which ld)

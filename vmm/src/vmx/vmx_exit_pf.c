@@ -30,6 +30,7 @@ int __vmx_vmexit_resolve_pf()
 
 int vmx_vmexit_resolve_ept_viol()
 {
+#ifdef VMX_EPT_DBG
    vmcs_exit_info_ept_t error;
    offset_t             gvaddr, gpaddr;
 
@@ -54,6 +55,7 @@ int vmx_vmexit_resolve_ept_viol()
 	 ,error.r, error.w, error.x
 	 ,error.gr, error.gw, error.gx
 	 ,error.gl, error.final, error.nmi);
+#endif
 
    return VM_FAIL;
 }
