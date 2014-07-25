@@ -37,28 +37,22 @@ size_t   __vsnprintf(char*, size_t, const char*, va_list);
 
 #define debug_flush()             ({})
 
-#ifdef __LOADER__
+#if defined __LOADER__ || defined CONFIG_PRINT_VIDEO
 #include <video.h>
 #define debug_write(data,size)    video_write(data,size)
-#else
-#ifdef CONFIG_PRINT_EHCI
+#elif defined CONFIG_PRINT_EHCI
 #include <ehci.h>
 #define debug_write(data,size)    dbgp_write(data,size)
-#else
-#ifdef CONFIG_PRINT_UART
+#elif defined CONFIG_PRINT_UART
 #include <uart.h>
 #define debug_write(data,size)    uart_write(data,size)
 #undef debug_flush
 #define debug_flush()             uart_flush()
-#else
-#ifdef CONFIG_PRINT_NET
+#elif defined CONFIG_PRINT_NET
 #include <net.h>
 #define debug_write(data,size)    net_write(data,size)
 #else
 #define debug_write(data,size)    ({})
-#endif
-#endif
-#endif
 #endif
 
 #endif

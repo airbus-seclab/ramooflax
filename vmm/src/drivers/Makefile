@@ -1,5 +1,9 @@
 obj := dummy.o
 
+ifeq ($(CONFIG_HAS_VIDEO),yes)
+obj += video.o
+endif
+
 ifeq ($(CONFIG_HAS_EHCI),yes)
 obj += ehci.o
 endif
