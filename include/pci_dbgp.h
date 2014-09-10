@@ -26,14 +26,22 @@
 */
 #define PCI_CFG_EHCI_INT_LINE_OFFSET 0x3c  /* 8 bits */
 
-#define PCI_CFG_EHCI_BAR_CLASS_BASE  0xc
-#define PCI_CFG_EHCI_BAR_CLASS_SUB   0x3
-#define PCI_CFG_EHCI_BAR_CLASS_PI    0x20
+#define PCI_CFG_EHCI_CLASS_BASE  0xc
+#define PCI_CFG_EHCI_CLASS_SUB   0x3
+#define PCI_CFG_EHCI_CLASS_PI    0x20
 
-#define pci_class_is_ehci(_cc_)						\
-   ((_cc_).class.base == PCI_CFG_EHCI_BAR_CLASS_BASE &&			\
-    (_cc_).class.sub  == PCI_CFG_EHCI_BAR_CLASS_SUB  &&			\
-    (_cc_).class.pi   == PCI_CFG_EHCI_BAR_CLASS_PI)
+typedef struct pci_config_space_class_code
+{
+   uint8_t  pi;
+   uint8_t  sub;
+   uint8_t  base;
+
+} __attribute__((packed)) pci_cfg_class_t;
+
+#define pci_class_is_ehci(_cc_)				\
+   ((_cc_).class.base == PCI_CFG_EHCI_CLASS_BASE &&	\
+    (_cc_).class.sub  == PCI_CFG_EHCI_CLASS_SUB  &&	\
+    (_cc_).class.pi   == PCI_CFG_EHCI_CLASS_PI)
 
 typedef union pci_config_space_ehci_bar
 {
@@ -42,7 +50,7 @@ typedef union pci_config_space_ehci_bar
       uint32_t  zero:1;
       uint32_t  type:2; /* 0: 32 bits, 2: 64 bits*/
       uint32_t  rsvd:5;
-      uint32_t  addr:24;
+      uint32_t  addr:24; /* address bits [31:8] */
 
    } __attribute__((packed));
 

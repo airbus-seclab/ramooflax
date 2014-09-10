@@ -62,6 +62,14 @@ typedef enum { false=0, true } bool_t;
 #define offsetof(type,field)     ((offset_t)(&(((type*)0)->field)))
 
 /*
+** Cast pointer from value
+*/
+#define setptr(field, offset) ({		\
+	 loc_t x = { .linear = offset };	\
+	 field = (typeof (field))x.addr;	\
+      })
+
+/*
 ** Remove warnings
 */
 #define __unused__		  __attribute__ ((unused))
@@ -234,6 +242,8 @@ typedef union location
    fptr32_t  *f32;
    fptr64_t  *f64;
 
+   raw64_t;
+
 } __attribute__((packed)) loc_t;
 
 /*
@@ -249,12 +259,7 @@ typedef struct buffer
 /*
 ** Generic argument
 */
-typedef union argument
-{
-   loc_t;
-   raw64_t;
-
-} __attribute__((packed)) arg_t;
+typedef loc_t arg_t;
 
 
 #endif

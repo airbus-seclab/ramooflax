@@ -77,21 +77,21 @@ void ehci_controller_postinit(dbgp_info_t *dbgp_i)
 
 void ehci_acquire(dbgp_info_t *dbgp_i)
 {
-   pci_cfg_usblegsup_t legsup;
+   pci_cfg_val_t       *pci = &dbgp_i->pci;
+   pci_cfg_usblegsup_t *legsup = (pci_cfg_usblegsup_t*)&pci->data.raw;
 
    debug(EHCI,"acquire ehci:");
-   dbgp_i->pci.addr.reg =
-      dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGSUP_OFFSET;
+   pci->addr.reg = dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGSUP_OFFSET;
 
    while(1)
    {
-      legsup.raw = pci_cfg_read(dbgp_i->pci.addr);
+      pci_cfg_read(pci);
 
-      if(!legsup.bios_sem && legsup.os_sem)
+      if(!legsup->bios_sem && legsup->os_sem)
 	 break;
 
-      legsup.os_sem = 1;
-      pci_cfg_write(dbgp_i->pci.addr, legsup.raw);
+      legsup->os_sem = 1;
+      pci_cfg_write(pci);
       io_wait(100000);
    }
    debug(EHCI,"done.\n");
@@ -99,21 +99,21 @@ void ehci_acquire(dbgp_info_t *dbgp_i)
 
 void ehci_release(dbgp_info_t *dbgp_i)
 {
-   pci_cfg_usblegsup_t legsup;
+   pci_cfg_val_t       *pci = &dbgp_i->pci;
+   pci_cfg_usblegsup_t *legsup = (pci_cfg_usblegsup_t*)&pci->data.raw;
 
    debug(EHCI,"release ehci:");
-   dbgp_i->pci.addr.reg =
-      dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGSUP_OFFSET;
+   pci->addr.reg = dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGSUP_OFFSET;
 
    while(1)
    {
-      legsup.raw = pci_cfg_read(dbgp_i->pci.addr);
+      pci_cfg_read(pci);
 
-      if(!legsup.os_sem && legsup.bios_sem)
+      if(!legsup->os_sem && legsup->bios_sem)
 	 break;
 
-      legsup.os_sem = 0;
-      pci_cfg_write(dbgp_i->pci.addr, legsup.raw);
+      legsup->os_sem = 0;
+      pci_cfg_write(pci);
       io_wait(100000);
    }
    debug(EHCI,"done.\n");
@@ -121,25 +121,25 @@ void ehci_release(dbgp_info_t *dbgp_i)
 
 void ehci_remove_smi(dbgp_info_t *dbgp_i)
 {
-   pci_cfg_usblegctl_t legctl;
+   pci_cfg_val_t       *pci = &dbgp_i->pci;
+   pci_cfg_usblegctl_t *legctl = (pci_cfg_usblegctl_t*)&pci->data.raw;
 
    debug(EHCI,"remove ehci SMI:");
-   dbgp_i->pci.addr.reg =
-      dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGCTL_OFFSET;
+   pci->addr.reg = dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGCTL_OFFSET;
 
-   legctl.raw = pci_cfg_read(dbgp_i->pci.addr);
+   pci_cfg_read(pci);
 
-   legctl.smi_enbl = 0;
-   legctl.smi_err_enbl = 0;
-   legctl.smi_pc_enbl = 0;
-   legctl.smi_flr_enbl = 0;
-   legctl.smi_hse_enbl = 0;
-   legctl.smi_aa_enbl = 0;
-   legctl.smi_os_own_enbl = 0;
-   legctl.smi_pci_cmd_enbl = 0;
-   legctl.smi_bar_enbl = 0;
+   legctl->smi_enbl = 0;
+   legctl->smi_err_enbl = 0;
+   legctl->smi_pc_enbl = 0;
+   legctl->smi_flr_enbl = 0;
+   legctl->smi_hse_enbl = 0;
+   legctl->smi_aa_enbl = 0;
+   legctl->smi_os_own_enbl = 0;
+   legctl->smi_pci_cmd_enbl = 0;
+   legctl->smi_bar_enbl = 0;
 
-   pci_cfg_write(dbgp_i->pci.addr, legctl.raw);
+   pci_cfg_write(pci);
    debug(EHCI,"done.\n");
 }
 

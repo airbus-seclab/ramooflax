@@ -28,27 +28,28 @@
 */
 void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
 {
-   pci_cfg_dbg_cap_t dbg_cap;
-   pci_cfg_val_t     *pci = &dbgp_i->pci;
-   loc_t             loc;
+   pci_cfg_dbg_cap_t  dbg_cap;
+   pci_cfg_ehci_bar_t bar;
+   loc_t              loc;
+   pci_cfg_val_t      *pci = &dbgp_i->pci;
 
    dbgp_i->port = DBGP_INVALID;
    dbgp_i->addr = 0;
 
-   pci->data.raw = PCI_DBGP_CAP_ID;
 #ifdef CONFIG_EHCI_2ND
-   if(!pci_search(pci_check_cap, 2, pci))
+   if(!pci_search(pci_check_cap, PCI_DBGP_CAP_ID, 2, pci))
 #else
-   if(!pci_search(pci_check_cap, 1, pci))
+   if(!pci_search(pci_check_cap, PCI_DBGP_CAP_ID, 1, pci))
 #endif
       panic("no ehci debug port found");
 
    dbg_cap.raw = pci->data.raw;
 
-   if(!pci_read_mm_bar(pci, dbg_cap.nr))
+   if(!pci_read_bar(pci, dbg_cap.nr-1))
       panic("could not get ehci registers");
 
-   loc.linear = pci->data.raw;
+   bar.raw = pci->br.raw;
+   loc.linear = bar.addr<<8;
    dbgp_i->ehci_cap = (ehci_host_cap_reg_t*)loc.addr;
 
    pci_cfg_dbgp_vendor_specific(dbgp_i);
@@ -59,10 +60,10 @@ void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
    if(!dbgp_i->port)
       panic("could not get portsc for debug port");
 
-   loc.linear = pci->data.raw + dbgp_i->ehci_cap->length;
+   loc.linear = bar.addr + dbgp_i->ehci_cap->length;
    dbgp_i->ehci_opr = (ehci_host_op_reg_t*)loc.addr;
 
-   loc.linear = pci->data.raw + dbg_cap.offset;
+   loc.linear = bar.addr + dbg_cap.offset;
    dbgp_i->ehci_dbg = (ehci_dbgp_reg_t*)loc.addr;
 
    dbgp_i->ehci_psc = &dbgp_i->ehci_opr->portsc[dbgp_i->port - 1];
@@ -70,13 +71,12 @@ void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
 
 void pci_cfg_dbgp_vendor_specific(dbgp_info_t *dbgp_i)
 {
-   pci_cfg_dev_vdr_t dvd;
-   pci_cfg_val_t     *pci = &dbgp_i->pci;
+   pci_cfg_val_t *pci = &dbgp_i->pci;
 
    pci->addr.reg = PCI_CFG_DEV_VDR_OFFSET;
-   dvd.raw = pci_cfg_read(pci->addr);
+   pci_cfg_read(pci);
 
-   switch(dvd.vendor)
+   switch(pci->dv.vendor)
    {
    case PCI_CFG_VENDOR_NVIDIA:
       pci_cfg_dbgp_nvidia(dbgp_i);
@@ -102,16 +102,15 @@ void pci_cfg_dbgp_vendor_specific(dbgp_info_t *dbgp_i)
 */
 void pci_cfg_dbgp_nvidia(dbgp_info_t *dbgp_i)
 {
-   uint32_t      mcp51;
    pci_cfg_val_t *pci = &dbgp_i->pci;
 
    dbgp_i->port = 2; /* XXX: we should identify ports and let user choose */
 
    pci->addr.reg = 0x74;
-   mcp51 = pci_cfg_read(pci->addr);
+   pci_cfg_read(pci);
 
-   mcp51 &= ~(0xf<<12);
-   mcp51 |=  (dbgp_i->port & 0xf)<<12;
+   pci->data.raw &= ~(0xf<<12);
+   pci->data.raw |=  (dbgp_i->port & 0xf)<<12;
 
-   pci_cfg_write(pci->addr, mcp51);
+   pci_cfg_write(pci);
 }

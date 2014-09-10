@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,3 +15,19 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+#include <checksum.h>
+#include <debug.h>
+#include <info_data.h>
+
+extern info_data_t *info;
+
+uint16_t rfc1071_checksum(uint16_t *data, size_t len)
+{
+   raw32_t chk = {.raw = 0};
+
+   len /= 2;
+   while(len--)
+      chk.raw += *data++;
+
+   return ~(chk.wlow + chk.whigh);
+}

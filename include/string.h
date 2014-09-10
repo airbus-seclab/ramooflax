@@ -34,17 +34,28 @@
       load_flags(save);				\
    })
 
+
+#define  __rep_8_16(b) ((((uint16_t)b)<<8)|((uint16_t)b))
+#define  __rep_8_32(b) ((((uint32_t)__rep_8_16(b))<<16)|((uint32_t)__rep_8_16(b)))
+
+#define __replicate_byte_on_word(b)  __rep_8_16(b)
+#define __replicate_byte_on_dword(b) __rep_8_32(b)
+
 #ifdef __X86_64__
-#define __replicate_byte_on_long(_c)		\
-   (_c<<56)|(_c<<48)|(_c<<40)|(_c<<32)|(_c<<24)|(_c<<16)|(_c<<8)|_c;
+
+#define __rep_8_64(b)  ((((uint64_t)__rep_8_32(b))<<32)|((uint64_t)__rep_8_32(b)))
+#define __replicate_byte_on_long(b) __rep_8_64(b)
 #define __memset(d,v,t,l)   asm volatile ("rex.w rep stosl"::"D"(d),"a"(v),"c"(t))
 #define __memcpy(d,s,t,l)   asm volatile ("rex.w rep movsl"::"D"(d),"S"(s),"c"(t))
+
 #else
-#define __replicate_byte_on_long(_c)		\
-   (_c<<24)|(_c<<16)|(_c<<8)|_c;
+
+#define __replicate_byte_on_long(b) __rep_8_32(b)
 #define __memset(d,v,t,l)   asm volatile ("rep stosl"::"D"(d),"a"(v),"c"(t))
 #define __memcpy(d,s,t,l)   asm volatile ("rep movsl"::"D"(d),"S"(s),"c"(t))
+
 #endif
+
 
 #define _memset(d,v,t)      __fix_str_dir(__memset,d,v,t,0)
 #define _memcpy(d,s,t)      __fix_str_dir(__memcpy,d,s,t,0)
@@ -74,7 +85,7 @@ static inline void* memset(void *dst, uint8_t c, size_t size)
 
    if(cnt)
    {
-      ulong_t lc = __replicate_byte_on_long((ulong_t)c);
+      ulong_t lc = __replicate_byte_on_long(c);
       _memset(dloc.linear, lc, cnt);
       dloc.linear += cnt*sizeof(ulong_t);
    }

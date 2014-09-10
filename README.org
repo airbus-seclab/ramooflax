@@ -82,7 +82,11 @@ This will build the loader, setup and vmm binaries.
 
 $ make install
 
-The installation rules looks for a script named /installer.sh/. We provide an example script, located in /tools/, which updates a VMware virtual disk image. You can define your own one.
+The installation rules looks for a script named /installer.sh/. We provide example scripts, located in /tools/, which update VMware and QEMU virtual disk images. You can define your own one and override the /INSTOOL/ make variable:
+
+#+BEGIN_EXAMPLE
+make INSTOOL=tools/installer_qemu.sh install
+#+END_EXAMPLE
 
 Ramooflax needs a /multiboot compliant/ bootloader (such as GRUB). The following GRUB 1 (legacy) entry can be defined to boot ramooflax:
 

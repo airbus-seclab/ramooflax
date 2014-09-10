@@ -20,82 +20,68 @@
 
 /*
 ** pci->addr should be initialized
-** pci->data will receive BAR addr
-**
 ** only handle 32 bits mem BARs
 */
-int pci_read_bar(pci_cfg_val_t *pci, uint32_t nr, uint8_t io)
+int pci_read_bar(pci_cfg_val_t *pci, uint32_t idx)
 {
-   pci_cfg_bar_mem_t bar;
-
-   if(nr<1 || nr>6)
+   if(idx > 5)
       return 0;
 
-   pci->addr.reg = PCI_CFG_BAR_OFFSET + (nr - 1)*4;
-   bar.raw = pci_cfg_read(pci->addr);
+   pci->addr.reg = PCI_CFG_BAR_OFFSET + idx*4;
+   pci_cfg_read(pci);
 
-   if(io)
-      return 0;
-
-   if(bar.io != io)
-      return 0;
-
-   if(!bar.io && bar.type)
-      return 0;
-
-   pci->data.raw = bar.addr<<8;
-   return 1;
+   return !(pci->br.io || pci->br.type);
 }
 
 /*
-** pci->addr should be initialized
-** pci->data should be set to CAP_ID to check
+** For each pci_check_xxx() :
+**
+** - pci->addr should point to a valid function
+** - pci->data will hold the matched value after return
 */
-int pci_check_cap(pci_cfg_val_t *pci)
+int pci_check_cap(pci_cfg_val_t *pci, uint32_t val)
 {
-   pci_cfg_cmd_sts_t cmd_sts;
+   pci_cfg_cap_t cap = { .raw = val };
 
    pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
-   cmd_sts.raw = pci_cfg_read(pci->addr);
+   pci_cfg_read(pci);
 
-   if(cmd_sts.sts.cap_list)
+   if(pci->cs.sts.cap_list)
    {
-      uint32_t      next_cap;
-      pci_cfg_cap_t cap;
+      uint32_t next_cap;
 
       pci->addr.reg = PCI_CFG_CAP_OFFSET;
-      next_cap = pci_cfg_read(pci->addr) & 0xfc;
+      pci_cfg_read(pci);
+      next_cap =  pci->data.raw & 0xfc;
 
       while(next_cap)
       {
 	 pci->addr.reg = next_cap;
-	 cap.raw = pci_cfg_read(pci->addr);
+	 pci_cfg_read(pci);
 
-	 if(cap.id == pci->data.blow)
-	 {
-	    pci->data.raw = cap.raw;
-	    debug(PCI, "pci b%d d%d f%d r%d = 0x%x\n"
-		  ,pci->addr.bus, pci->addr.dev, pci->addr.fnc, pci->addr.reg
-		  ,pci->data.raw);
+	 if(pci->cp.id == cap.id)
 	    return 1;
-	 }
 
-	 next_cap = cap.next & 0xfc;
+	 next_cap = pci->cp.next & 0xfc;
       }
    }
 
    return 0;
 }
 
+int pci_check_dvd(pci_cfg_val_t *pci, uint32_t val)
+{
+   return (pci->dv.raw == val);
+}
+
 /*
-** apply match() to every fnc of every dev found
+** apply match() to every fn/dev/bus found
 ** returns 'nth' matching one if possible
 **
 ** pci->data might be changed by match()
 */
-int pci_search(pci_search_t match, size_t nth, pci_cfg_val_t *pci)
+int pci_search(pci_search_t match, uint32_t val, size_t nth, pci_cfg_val_t *pci)
 {
-   pci_cfg_dev_vdr_t dvd;
    pci_cfg_val_t     pci_bk;
    uint32_t          bus, dev, fnc;
    size_t            found;
@@ -117,13 +103,17 @@ int pci_search(pci_search_t match, size_t nth, pci_cfg_val_t *pci)
 	    pci->addr.fnc = fnc;
 
 	    pci->addr.reg = PCI_CFG_DEV_VDR_OFFSET;
-	    dvd.raw = pci_cfg_read(pci->addr);
+	    pci_cfg_read(pci);
 
-	    if(dvd.vendor == 0xffff)
+	    if(pci->dv.vendor == 0xffff)
 	       continue;
 
-	    if(match(pci))
+	    if(match(pci, val))
 	    {
+	       debug(PCI, "pci match b%d d%d f%d r%d = 0x%x\n"
+		     ,pci->addr.bus, pci->addr.dev, pci->addr.fnc
+		     ,pci->addr.reg, pci->data.raw);
+
 	       if(++found == nth)
 		  return 1;
 
@@ -142,5 +132,18 @@ int pci_search(pci_search_t match, size_t nth, pci_cfg_val_t *pci)
    }
 
    return 0;
+}
+
+void pci_dump_registers(pci_cfg_val_t *pci)
+{
+   size_t n, r;
+
+   for(n=0 ; n<16 ; n++)
+   {
+      r = n*4;
+      pci->addr.reg = r;
+      pci_cfg_read(pci);
+      debug(PCI_E1000, "pci reg #%d 0x%x: 0x%x\n", n, r, pci->data.raw);
+   }
 }
 

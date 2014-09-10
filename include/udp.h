@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,53 +15,47 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __DEV_H__
-#define __DEV_H__
+#ifndef __UDP_H__
+#define __UDP_H__
 
-#include <config.h>
 #include <types.h>
-#include <smap.h>
-#include <io.h>
+#include <checksum.h>
+#include <insn.h>
 
-#ifdef CONFIG_HAS_EHCI
-#include <ehci.h>
-#endif
-#ifdef CONFIG_HAS_NET
-#include <net.h>
-#endif
-
-typedef struct hardware_device_data
+typedef union udp_header
 {
-#ifdef CONFIG_HAS_EHCI
-   dbgp_info_t dbgp;
-#endif
-#ifdef CONFIG_HAS_NET
-   net_info_t  net;
-#endif
+   struct
+   {
+      uint16_t   src;
+      uint16_t   dst;
+      uint16_t   len;
+      uint16_t   chk;
 
-} __attribute__((packed)) hrdw_dev_t;
+   } __attribute__((packed));
 
-typedef struct hardware_memory_data
+   uint8_t raw[8];
+
+} __attribute__((packed)) udp_hdr_t;
+
+typedef union udp_pseudo_header
 {
-   offset_t top;
+   struct
+   {
+      uint32_t src;
+      uint32_t dst;
+      uint8_t  zero;
+      uint8_t  proto;
+      uint16_t len;
 
-} __attribute__((packed)) hrdw_mem_t;
+   } __attribute__((packed));
 
-typedef struct hardware_information_data
-{
-   hrdw_dev_t dev;
-   hrdw_mem_t mem;
+   uint8_t raw[12];
 
-} __attribute__((packed)) hrdw_t;
+} __attribute__((packed)) udp_phdr_t;
 
 /*
-** Funtions
+** Functions
 */
-#ifdef __INIT__
-void  dev_init();
-#else
-int   dev_access();
-void  dev_a20_set(uint8_t);
-#endif
+size_t udp_pkt(udp_hdr_t*);
 
 #endif

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,31 +15,33 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <dev.h>
-#include <uart.h>
+#include <icmp.h>
+#include <string.h>
 #include <debug.h>
 #include <info_data.h>
 
-#ifdef CONFIG_HAS_EHCI
-#include <ehci.h>
-#endif
-#ifdef CONFIG_HAS_NET
-#include <net.h>
-#endif
-
 extern info_data_t *info;
 
-void dev_init()
+size_t icmp_echo_request(icmp_hdr_t *hdr)
 {
-#ifdef CONFIG_HAS_UART
-   uart_init();
-#endif
+   loc_t      data;
+   size_t     dlen, len;
 
-#ifdef CONFIG_HAS_EHCI
-   ehci_init();
-#endif
+   hdr->type = ICMP_TYPE_ECHO_REQUEST;
+   hdr->code = 0;
 
-#ifdef CONFIG_HAS_NET
-   net_init();
-#endif
+   hdr->ping.id  = swap16(0xcafe);
+   hdr->ping.seq = swap16(0);
+
+   data.addr = hdr;
+   data.linear += sizeof(icmp_hdr_t);
+
+   dlen = 4;
+   memset(data.addr, 'a', dlen);
+
+   len = sizeof(icmp_hdr_t) + dlen;
+   icmp_checksum(hdr, len);
+
+   debug(ICMP, "icmp pkt len %d (hdr %d)\n", len, sizeof(icmp_hdr_t));
+   return len;
 }

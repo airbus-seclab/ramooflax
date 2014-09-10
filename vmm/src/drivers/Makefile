@@ -1,4 +1,4 @@
-obj := dummy.o
+obj :=
 
 ifeq ($(CONFIG_HAS_VIDEO),yes)
 obj += video.o

@@ -1,6 +1,14 @@
 #!/usr/bin/make -f
 
-SUBDIRS := core drivers libc devices disasm control
+SUBDIRS := core libc devices disasm control
+
+ifeq ($(CONFIG_HAS_DRV),yes)
+SUBDIRS += drivers
+endif
+
+ifeq ($(CONFIG_HAS_NET),yes)
+SUBDIRS += net
+endif
 
 ifeq ($(CONFIG_ARCH),amd)
 SUBDIRS += svm

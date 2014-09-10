@@ -34,5 +34,8 @@ void __regparm__(1) init(mbi_t *mbi)
    pmem_init(mbi);
    vmem_init();
    intr_init();
+
+   net_test();
+
    vmm_init();
 }

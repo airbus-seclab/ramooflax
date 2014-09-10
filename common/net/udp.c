@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,31 +15,29 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <dev.h>
-#include <uart.h>
+#include <udp.h>
 #include <debug.h>
 #include <info_data.h>
 
-#ifdef CONFIG_HAS_EHCI
-#include <ehci.h>
-#endif
-#ifdef CONFIG_HAS_NET
-#include <net.h>
-#endif
-
 extern info_data_t *info;
 
-void dev_init()
+size_t udp_pkt(udp_hdr_t *hdr)
 {
-#ifdef CONFIG_HAS_UART
-   uart_init();
-#endif
+   loc_t   data;
+   size_t  dlen, len;
 
-#ifdef CONFIG_HAS_EHCI
-   ehci_init();
-#endif
+   data.addr = hdr;
+   data.linear += sizeof(udp_hdr_t);
 
-#ifdef CONFIG_HAS_NET
-   net_init();
-#endif
+   dlen = 4;
+   memcpy(data.addr, "abcd", dlen);
+
+   len = sizeof(udp_hdr_t) + dlen;
+
+   hdr->src = swap16(0x1337);
+   hdr->dst = swap16(2000);
+   hdr->len = swap16(len);
+   hdr->chk = 0;
+
+   return len;
 }

@@ -32,13 +32,13 @@ int resolve_hypercall()
 
 int resolve_invd()
 {
-   asm volatile ("invd");
+   invd();
    return emulate_done(VM_DONE, INVD_INSN_SZ);
 }
 
 int resolve_wbinvd()
 {
-   asm volatile ("wbinvd");
+   wbinvd();
    return emulate_done(VM_DONE, WBINVD_INSN_SZ);
 }
 

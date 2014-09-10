@@ -15,39 +15,55 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __PCI_E1000_H__
-#define __PCI_E1000_H__
+#ifndef __ETHERNET_H__
+#define __ETHERNET_H__
 
 #include <types.h>
+#include <insn.h>
 
-/*
-** Specific Intel 82545/EM pci config space
-*/
-#define PCI_CFG_DEVICE_i82540EM     0x100e
-#define PCI_CFG_DEVICE_i82545EM_C   0x100f
-#define PCI_CFG_DEVICE_i82545EM_F   0x1011
-#define PCI_CFG_CLASS_i8254x        0x20000
-#define PCI_CFG_INT_OFFSET          0x3c
+typedef union mac_address
+{
+   uint16_t  word[3];
+   uint8_t   byte[6];
 
-typedef union pci_config_space_e1k_bar
+} __attribute__((packed)) mac_addr_t;
+
+#define MAC_STR_SZ (sizeof(mac_addr_t)*3)
+
+#define ETHER_TYPE_IP   0x0800
+#define ETHER_TYPE_ARP  0x0806
+
+typedef union ethernet_header
 {
    struct
    {
-      uint32_t  io:1;     /* 0: mem */
-      uint32_t  type:2;   /* 0: 32 bits, 2: 64 bits*/
-      uint32_t  pfch:1;   /* 0 non-prefetchable space */
+      mac_addr_t dst;
+      mac_addr_t src;
+
+      union
+      {
+	 uint16_t   type;
+	 uint16_t   len;
+
+      } __attribute__((packed));
 
    } __attribute__((packed));
 
-   raw32_t;
+   uint8_t raw[14];
 
-} __attribute__((packed)) pci_cfg_e1k_bar_t;
+} __attribute__((packed)) eth_hdr_t;
 
 /*
 ** Functions
 */
-struct net_info;
+size_t eth_ip(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
+size_t eth_arp(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
+void   eth_dissect(loc_t, size_t);
 
-void pci_cfg_e1k(struct net_info*);
+void   mac_str(mac_addr_t*, char*);
+int    mac_cmp(mac_addr_t*, mac_addr_t*);
+void   mac_copy(mac_addr_t*, mac_addr_t*);
+void   mac_rst(mac_addr_t*, uint8_t);
+void   mac_set(mac_addr_t*, char*);
 
 #endif

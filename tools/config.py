@@ -117,7 +117,7 @@ class Config(Ordict):
             self.__setitem__("CONFIG_HAS_"+vh.upper(), "yes")
 
     def __helpers(self):
-        for device in ["PRINT","REMOTE","VIDEO","EHCI","UART","NET"]:
+        for device in ["PRINT","REMOTE","DRV","VIDEO","EHCI","UART","NET"]:
             self.__setitem__("CONFIG_HAS_"+device, "no")
 
         for driver in ["E1000"]:
@@ -126,9 +126,13 @@ class Config(Ordict):
         self.__set_helper("PRINT")
         self.__set_helper("REMOTE")
 
-        if self.dico["CONFIG_HAS_NET"] == "yes":
-            driver = self.dico["CONFIG_NET_DRV"].upper()
-            self.__setitem__("CONFIG_HAS_"+driver, "yes")
+        if self.dico["CONFIG_HAS_PRINT"] == "yes" or \
+                self.dico["CONFIG_HAS_REMOTE"] == "yes":
+            self.__setitem__("CONFIG_HAS_DRV", "yes")
+
+            if self.dico["CONFIG_HAS_NET"] == "yes":
+                driver = self.dico["CONFIG_NET_DRV"].upper()
+                self.__setitem__("CONFIG_HAS_"+driver, "yes")
 
     def __write(self):
         fc = open(self.files["config"],"w")

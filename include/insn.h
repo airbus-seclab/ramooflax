@@ -119,15 +119,23 @@
 /*
 ** Barbarian halt
 */
-#define __halt()  asm volatile ("hlt")
+#define __halt()  ({ asm volatile ("hlt"); })
 
 /*
 ** Lock VMM
 */
 #define lock_vmm() ({ while(1) { __halt(); force_interrupts_off(); } })
+
 /*
-** 32 bits swap
+** 16/32/64 bits swap
 */
+#define swap16(_x_)						\
+   ({								\
+      uint16_t _v_;						\
+      asm volatile ("ror $8, %%ax":"=a"(_v_):"a"(_x_));		\
+      _v_;							\
+   })
+
 #define swap32(_x_)					\
    ({							\
       uint32_t _v_;					\
@@ -142,6 +150,11 @@
       _v_;						\
    })
 
+/*
+** Asm to C insn
+*/
+#define invd()      ({ asm volatile ("invd");   })
+#define wbinvd()    ({ asm volatile ("wbinvd"); })
 
 /*
 ** functions

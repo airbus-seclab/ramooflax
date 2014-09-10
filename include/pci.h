@@ -22,51 +22,6 @@
 #include <asm.h>
 
 /*
-** i/o access
-*/
-#define PCI_CONFIG_ADDR 0xcf8
-#define PCI_CONFIG_DATA 0xcfc
-
-typedef union pci_config_address_register
-{
-   struct
-   {
-      uint32_t   reg:8;
-      uint32_t   fnc:3;
-      uint32_t   dev:5;
-      uint32_t   bus:8;
-      uint32_t   rsvd:7;
-      uint32_t   enbl:1;
-
-   } __attribute__((packed));
-
-   raw32_t;
-
-} __attribute__((packed)) pci_cfg_addr_t;
-
-#define pci_cfg_read(addr)			\
-   ({						\
-      outl(addr.raw, PCI_CONFIG_ADDR);		\
-      inl(PCI_CONFIG_DATA);			\
-   })
-
-#define pci_cfg_write(addr,data)		\
-   ({						\
-      outl(addr.raw, PCI_CONFIG_ADDR);		\
-      outl(data, PCI_CONFIG_DATA);		\
-   })
-
-/*
-** Usefull pci data structure
-*/
-typedef struct pci_config_value
-{
-   pci_cfg_addr_t addr;
-   raw32_t        data;
-
-} __attribute__((packed)) pci_cfg_val_t;
-
-/*
 ** pci device configuration space
 */
 #define PCI_CFG_DEV_VDR_OFFSET      0x0    /* dev & vendor id */
@@ -74,6 +29,7 @@ typedef struct pci_config_value
 #define PCI_CFG_CLASS_REV_OFFSET    0x8    /* class code & revision */
 #define PCI_CFG_BAR_OFFSET          0x10   /* bar set */
 #define PCI_CFG_CAP_OFFSET          0x34   /* capabilities pointer */
+#define PCI_CFG_INT_OFFSET          0x3c   /* interrupts info */
 
 #define PCI_CFG_VENDOR_INTEL        0x8086
 #define PCI_CFG_VENDOR_NVIDIA       0x10de
@@ -156,20 +112,12 @@ typedef union pci_config_space_command_status
 
 } __attribute__((packed)) pci_cfg_cmd_sts_t;
 
-typedef struct pci_config_space_class_code
-{
-   uint8_t  pi;
-   uint8_t  sub;
-   uint8_t  base;
-
-} __attribute__((packed)) pci_cfg_class_t;
-
 typedef union pci_config_space_class_revision
 {
    struct
    {
-      uint8_t          revision;
-      pci_cfg_class_t  class;
+      uint32_t     revision:8;
+      uint32_t     class:24;
 
    } __attribute__((packed));
 
@@ -177,34 +125,22 @@ typedef union pci_config_space_class_revision
 
 } __attribute__((packed)) pci_cfg_class_rev_t;
 
-typedef union pci_config_space_bar_mem
+
+#define PCI_CFG_MEM_BAR_64   2
+
+typedef union pci_config_space_bar
 {
    struct
    {
-      uint32_t   io:1;        /* 0: mem based, 1: I/O based */
-      uint32_t   type:2;      /* 0: 32 bits, 2: 64 bits */
-      uint32_t   rsv:5;       /* reserved in EHCI spec */
-      uint32_t   addr:24;
+      uint32_t   io:1;        /* 0: mem, 1: i/o */
+      uint32_t   type:2;      /* 0: 32 bits, 2:64 bits */
 
    } __attribute__((packed));
 
    raw32_t;
 
-} __attribute__((packed)) pci_cfg_bar_mem_t;
+} __attribute__((packed)) pci_cfg_bar_t;
 
-typedef union pci_config_space_bar_io
-{
-   struct
-   {
-      uint32_t   one:1;
-      uint32_t   zero:1;
-      uint32_t   base_addr:30;
-
-   } __attribute__((packed));
-
-   raw32_t;
-
-} __attribute__((packed)) pci_cfg_bar_io_t;
 
 typedef union pci_config_space_capability
 {
@@ -220,17 +156,89 @@ typedef union pci_config_space_capability
 
 } __attribute__((packed)) pci_cfg_cap_t;
 
+/*
+** i/o access
+*/
+#define PCI_CONFIG_ADDR 0xcf8
+#define PCI_CONFIG_DATA 0xcfc
+
+typedef union pci_config_address_register
+{
+   struct
+   {
+      uint32_t   reg:8;
+      uint32_t   fnc:3;
+      uint32_t   dev:5;
+      uint32_t   bus:8;
+      uint32_t   rsvd:7;
+      uint32_t   enbl:1;
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) pci_cfg_addr_t;
+
+/*
+** Generic pci data structure
+*/
+typedef struct pci_config_value
+{
+   pci_cfg_addr_t addr;
+
+   union
+   {
+      pci_cfg_dev_vdr_t     dv;
+      pci_cfg_cmd_sts_t     cs;
+      pci_cfg_class_rev_t   cr;
+      pci_cfg_bar_t         br;
+      pci_cfg_cap_t         cp;
+
+      raw32_t data;
+
+   } __attribute__((packed));
+
+} __attribute__((packed)) pci_cfg_val_t;
+
+#define pci_cfg_read(_pci)				\
+   ({							\
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);		\
+      (_pci)->data.raw = inl(PCI_CONFIG_DATA);		\
+   })
+
+#define pci_cfg_write(_pci)				\
+   ({							\
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);		\
+      outl((_pci)->data.raw, PCI_CONFIG_DATA);		\
+   })
+
+#define pci_cfg_read64(_pci)				\
+   ({							\
+      pci_cfg_val_t xpci;				\
+      raw64_t       data;				\
+							\
+      xpci.addr.raw = (_pci)->addr.raw;			\
+							\
+      pci_cfg_read(&xpci);				\
+      data.low = xpci.data.raw;				\
+      							\
+      xpci.addr.reg += 4;				\
+      pci_cfg_read(&xpci);				\
+      data.high = xpci.data.raw;			\
+      							\
+      data.raw;						\
+   })
 
 /*
 ** Functions
 */
-typedef int (*pci_search_t)(pci_cfg_val_t*);
+typedef int (*pci_search_t)(pci_cfg_val_t*, uint32_t);
 
-int  pci_search(pci_search_t, size_t, pci_cfg_val_t*);
-int  pci_check_cap(pci_cfg_val_t*);
-int  pci_read_bar(pci_cfg_val_t*, uint32_t, uint8_t);
+int  pci_check_cap(pci_cfg_val_t*, uint32_t);
+int  pci_check_dvd(pci_cfg_val_t*, uint32_t);
 
-#define pci_read_mm_bar(pci,nr)  pci_read_bar(pci,nr,0)
-#define pci_read_io_bar(pci,nr)  pci_read_bar(pci,nr,1)
+int  pci_read_bar(pci_cfg_val_t*, uint32_t);
+int  pci_search(pci_search_t, uint32_t, size_t, pci_cfg_val_t*);
+void pci_dump_registers(pci_cfg_val_t*);
 
 #endif

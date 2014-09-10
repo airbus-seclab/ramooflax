@@ -170,6 +170,9 @@ void pmem_init(mbi_t *mbi)
 	    + pmem_vmm_pg_size(&vmm_pg)
 	    + pmem_vm_pg_size(&vm_pg)
 	    + sizeof(vmc_t)
+#ifdef CONFIG_HAS_NET
+	    + net_mem_size_arch()
+#endif
 	    + sizeof(vmm_sgmem_t)
 	    + vmm_elf_sz + sizeof(long)
 	    + smap_sz
@@ -198,9 +201,16 @@ void pmem_init(mbi_t *mbi)
    area = pmem_vmm_pg_alloc(vmm, area, &vmm_pg);
    area = pmem_vm_pg_alloc(vm, area, &vm_pg);
 
+   /* page and 16B aligned */
    vm->cpu.vmc = (vmc_t*)area;
    area += sizeof(vmc_t);
 
+#ifdef CONFIG_HAS_NET
+   /* 16b aligned */
+   area = net_mem_init(area);
+#endif
+
+   /* 8B aligned */
    vmm->cpu.sg = (vmm_sgmem_t*)area;
    area += sizeof(vmm_sgmem_t);
 
@@ -244,7 +254,7 @@ void pmem_init(mbi_t *mbi)
 	 "gdt           = 0x%X\n"
 	 "idt           = 0x%X\n"
 	 "pml4          = 0x%X\n"
-	 "vm  vmc       = 0x%X\n"
+	 "vm vmc        = 0x%X\n"
 	 ,info->area.start
 	 ,info->area.end
 	 ,info->area.size, (info->area.size)>>10
@@ -254,5 +264,22 @@ void pmem_init(mbi_t *mbi)
 	 ,info->vmm.cpu.sg->gdt
 	 ,info->vmm.cpu.sg->idt
 	 ,info->vmm.cpu.pg.pml4
-	 ,info->vm.cpu.vmc);
+	 ,info->vm.cpu.vmc
+      );
+
+
+   debug_warning();
+/*
+  read IA32_VMX_BASIC to check:
+  - memory types for vmcs and data pointed to by pointers in the vmcs
+  - vmcs should be in cache coherent regions
+  - msr/io bitmaps should be in write back regions
+
+  XXX: fix pmem.c/vmem.c to respect that
+
+  mmio memory should be mapped to uncachable
+  or pte should be set PCD/PWT
+*/
+
+
 }

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,26 +15,15 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __CTRL_IO_H__
-#define __CTRL_IO_H__
+#ifndef __CHECKSUM_H__
+#define __CHECKSUM_H__
 
-#include <config.h>
+#include <types.h>
 
-#ifdef CONFIG_REMOTE_EHCI
-#include <ehci.h>
-#define ctrl_io_read(data,size)     dbgp_read(data,size)
-#define ctrl_io_write(data,size)    dbgp_write(data,size)
-#elif defined CONFIG_REMOTE_UART
-#include <uart.h>
-#define ctrl_io_read(data,size)     uart_read(data,size)
-#define ctrl_io_write(data,size)    uart_write(data,size)
-#elif defined CONFIG_REMOTE_NET
-#include <net_io.h>
-#define ctrl_io_read(data,size)     net_read(data,size)
-#define ctrl_io_write(data,size)    net_write(data,size)
-#else
-#define ctrl_io_read(data,size)     ({0;})
-#define ctrl_io_write(data,size)    ({})
-#endif
+/*
+** Functions
+*/
+
+uint16_t rfc1071_checksum(uint16_t*, size_t);
 
 #endif
