@@ -21,6 +21,7 @@
 #include <types.h>
 #include <checksum.h>
 #include <insn.h>
+#include <ip.h>
 
 #define ICMP_TYPE_ECHO_REPLY      0
 #define ICMP_TYPE_ECHO_REQUEST    8
@@ -75,6 +76,10 @@ typedef union icmp_header
       (_hdr_)->chk = rfc1071_checksum((uint16_t*)(_hdr_), (_ln_)); \
    })
 
-size_t icmp_echo_request(icmp_hdr_t*);
+typedef size_t (*icmp_gen_t)(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);
+
+size_t icmp_echo_request(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);
+size_t icmp_echo_reply(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);
+void   icmp_dissect(ip_addr_t, loc_t, size_t);
 
 #endif

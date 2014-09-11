@@ -74,13 +74,13 @@ size_t __eth_gen(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
    return sizeof(eth_hdr_t);
 }
 
-size_t eth_ip(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
+size_t eth_ip_pkt(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
 {
    hdr->type = swap16(ETHER_TYPE_IP);
    return __eth_gen(hdr, src, dst);
 }
 
-size_t eth_arp(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
+size_t eth_arp_pkt(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
 {
    hdr->type = swap16(ETHER_TYPE_ARP);
    return __eth_gen(hdr, src, dst);

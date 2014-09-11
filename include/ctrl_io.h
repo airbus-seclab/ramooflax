@@ -29,7 +29,7 @@
 #define ctrl_io_read(data,size)     uart_read(data,size)
 #define ctrl_io_write(data,size)    uart_write(data,size)
 #elif defined CONFIG_REMOTE_NET
-#include <net_io.h>
+#include <net.h>
 #define ctrl_io_read(data,size)     net_read(data,size)
 #define ctrl_io_write(data,size)    net_write(data,size)
 #else

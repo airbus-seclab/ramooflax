@@ -297,28 +297,77 @@ void e1k_tx_on(net_info_t *net)
    e1k->tx.ctl->raw = tctl.raw;
 }
 
-void e1k_send_pkt(net_info_t *net, void *pkt, size_t len)
+/* static void e1k_recv_status(net_info_t *net) */
+/* { */
+/*    e1k_info_t      *e1k = &net->arch; */
+/*    e1k_sts_reg_t   sts; */
+/*    e1k_ic_reg_t    icr; */
+
+/*    loc_t rdfh  = {.linear = e1k->base.linear + 0x2410}; */
+/*    loc_t rdft  = {.linear = e1k->base.linear + 0x2418}; */
+/*    loc_t rdfhs = {.linear = e1k->base.linear + 0x2420}; */
+/*    loc_t rdfts = {.linear = e1k->base.linear + 0x2428}; */
+/*    loc_t rdfpc = {.linear = e1k->base.linear + 0x2430}; */
+
+/*    sts.raw = e1k->sts->raw; */
+/*    icr.raw = e1k->icr->raw; */
+
+/*    debug(E1000, */
+/* 	 "e1k status:" */
+/* 	 " fd %d lu %d fid %d txoff %d speed %d tbi %d" */
+/* 	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n" */
+/* 	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode */
+/* 	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd */
+/*       ); */
+
+/*    debug(E1000, */
+/* 	 "e1k icr:" */
+/* 	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d" */
+/* 	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d" */
+/* 	 " gpi %d:%d txdlow %d srpd %d\n" */
+/* 	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0 */
+/* 	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint */
+/* 	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd */
+/*       ); */
+
+/*    debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n" */
+/* 	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32); */
+/* } */
+
+/*
+** XXX:
+** Better do a memory allocator for TX dma packet buffers
+** and store them in tx desc only when needed
+*/
+offset_t e1k_tx_get_pktbuf(e1k_info_t *e1k)
+{
+   return e1k->mem.tdesc[e1k->tx.dt->raw].addr;
+}
+
+void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
 {
    e1k_info_t           *e1k;
-   volatile e1k_tdesc_t *desc;
-   size_t               tdt;
-   e1k_tdesc_cmd_t      cmd;
-   e1k_tdesc_sts_t      sts;
+   volatile e1k_tdesc_t *dsc;
+   e1k_tdesc_cmd_t       cmd;
+   e1k_tdesc_sts_t       sts;
+   size_t                tdt;
 
    e1k = &net->arch;
    tdt = e1k->tx.dt->raw;
-   desc = &e1k->mem.tdesc[tdt];
+   dsc = &e1k->mem.tdesc[tdt];
 
-   /* XXX: handle multi-descriptor spanning */
-   memcpy((void*)desc->addr, pkt, min(len,TX_BUFF_SZ));
-   desc->len = len;
+   dsc->addr = pkt.linear;
+   dsc->len = len;
+
+   /* memcpy((void*)dsc->addr, data, min(len,TX_BUFF_SZ)); */
+   /* dsc->len = len; */
 
 #ifdef CONFIG_E1000_DBG
    {
       size_t i=0;
       debug(E1000, "snd pkt (%d 0x%x):", len, len);
       for(i=0 ; i<len ; i++)
-	 debug(E1000, " %x", ((uint8_t*)pkt)[i]);
+	 debug(E1000, " %x", pkt.u8[i]);
       debug(E1000,"\n");
    }
 #endif
@@ -326,70 +375,32 @@ void e1k_send_pkt(net_info_t *net, void *pkt, size_t len)
    cmd.raw = 0;
    cmd.eop = 1;
    cmd.rs = 1;
-   desc->cmd.raw = cmd.raw ;
-
-   tdt = (tdt+1)%TX_DESC_NR;
-   e1k->tx.dt->raw = tdt;
+   dsc->cmd.raw = cmd.raw ;
+   e1k->tx.dt->raw = (tdt+1)%TX_DESC_NR;
 
    debug(E1000, "sending packet ... ");
    do
    {
-      io_wait(1000000);
-      sts.raw = desc->sts.raw;
+      io_wait(1000);
+      sts.raw = dsc->sts.raw;
    } while(!sts.dd);
    debug(E1000, "done.\n");
 }
 
-static void e1k_recv_status(net_info_t *net)
+size_t e1k_recv_pkt(net_info_t *net, void *data, size_t len)
 {
-   e1k_info_t      *e1k = &net->arch;
-   e1k_sts_reg_t   sts;
-   e1k_ic_reg_t    icr;
+   e1k_info_t           *e1k;
+   volatile e1k_rdesc_t *dsc;
+   e1k_rdesc_sts_t       sts;
+   size_t                rdt;
 
-   loc_t rdfh  = {.linear = e1k->base.linear + 0x2410};
-   loc_t rdft  = {.linear = e1k->base.linear + 0x2418};
-   loc_t rdfhs = {.linear = e1k->base.linear + 0x2420};
-   loc_t rdfts = {.linear = e1k->base.linear + 0x2428};
-   loc_t rdfpc = {.linear = e1k->base.linear + 0x2430};
-
-   sts.raw = e1k->sts->raw;
-   icr.raw = e1k->icr->raw;
-
-   debug(E1000,
-	 "e1k status:"
-	 " fd %d lu %d fid %d txoff %d speed %d tbi %d"
-	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n"
-	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode
-	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd
-      );
-
-   debug(E1000,
-	 "e1k icr:"
-	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d"
-	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d"
-	 " gpi %d:%d txdlow %d srpd %d\n"
-	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0
-	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint
-	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd
-      );
-
-   debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n"
-	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32);
-}
-
-size_t e1k_recv_pkt(net_info_t *net, void *pkt, size_t len)
-{
-   e1k_info_t           *e1k = &net->arch;
-   volatile e1k_rdesc_t *desc;
-   e1k_rdesc_sts_t      sts;
-   size_t               rdt;
-
+   e1k = &net->arch;
    rdt = (e1k->rx.dt->raw+1)%RX_DESC_NR;
-   desc = &e1k->mem.rdesc[rdt];
-   sts.raw = desc->sts.raw;
+   dsc = &e1k->mem.rdesc[rdt];
+   sts.raw = dsc->sts.raw;
 
    /* e1k_rdesc_err_t err; */
-   /* err.raw = desc->err.raw; */
+   /* err.raw = dsc->err.raw; */
    /* e1k_ic_reg_t icr; */
    /* icr.raw = e1k->icr->raw; */
 
@@ -397,34 +408,22 @@ size_t e1k_recv_pkt(net_info_t *net, void *pkt, size_t len)
       return 0;
 
    /* XXX: pkt size mgmt */
-   memcpy(pkt, (void*)desc->addr, min(desc->len, len));
+   memcpy(data, (void*)dsc->addr, min(dsc->len, len));
 
 #ifdef CONFIG_E1000_DBG
    {
       size_t i=0;
       debug(E1000, "rcv pkt tail %d, eop %d, len %d:",
-	    rdt, sts.eop, desc->len, desc->len);
+	    rdt, sts.eop, dsc->len, dsc->len);
 
-      for(i=0 ; i<desc->len ; i++)
-	 debug(E1000, " %x", ((uint8_t*)pkt)[i]);
+      for(i=0 ; i<dsc->len ; i++)
+	 debug(E1000, " %x", ((uint8_t*)data)[i]);
       debug(E1000,"\n");
    }
 #endif
 
-   desc->sts.raw = 0;
+   dsc->sts.raw = 0;
    e1k->rx.dt->raw = rdt;
 
-   return desc->len;
-}
-
-size_t e1k_write(uint8_t *data, size_t n)
-{
-   data += n;
-   return 0;
-}
-
-size_t e1k_read(uint8_t *data, size_t n)
-{
-   data += n;
-   return 0;
+   return dsc->len;
 }

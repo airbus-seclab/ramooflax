@@ -72,8 +72,14 @@ typedef struct arp_cache_table
 void   arp_init();
 #endif
 
-size_t arp_who_has(arp_hdr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
-size_t arp_is_at(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
+typedef size_t (*arp_gen_t)(arp_hdr_t*,
+			    mac_addr_t*, mac_addr_t*,
+			    ip_addr_t, ip_addr_t);
+
+size_t arp_who_has_pkt(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
+size_t arp_is_at_pkt(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
+
+int    arp_cache_lookup(ip_addr_t, mac_addr_t*);
 void   arp_dissect(loc_t, size_t);
 
 #endif

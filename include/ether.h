@@ -30,6 +30,8 @@ typedef union mac_address
 
 #define MAC_STR_SZ (sizeof(mac_addr_t)*3)
 
+#define ETHER_FRAME_SZ  1500
+
 #define ETHER_TYPE_IP   0x0800
 #define ETHER_TYPE_ARP  0x0806
 
@@ -56,8 +58,11 @@ typedef union ethernet_header
 /*
 ** Functions
 */
-size_t eth_ip(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
-size_t eth_arp(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
+typedef size_t (*eth_gen_t)(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
+
+size_t eth_ip_pkt(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
+size_t eth_arp_pkt(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
+
 void   eth_dissect(loc_t, size_t);
 
 void   mac_str(mac_addr_t*, char*);

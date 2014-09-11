@@ -75,8 +75,11 @@ typedef union ip_header
       (_hdr_)->chk = rfc1071_checksum((uint16_t*)(_hdr_), sizeof(ip_hdr_t)); \
    })
 
-size_t ip_icmp_pkt(ip_hdr_t*, size_t);
-size_t ip_udp_pkt(ip_hdr_t*, size_t);
+typedef size_t (*ip_gen_t)(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);
+
+size_t ip_udp_pkt(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);
+size_t ip_icmp_pkt(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);
+
 void   ip_dissect(loc_t, size_t);
 void   ip_str(ip_addr_t, char*);
 

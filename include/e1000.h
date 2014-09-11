@@ -344,6 +344,7 @@ typedef union e1k_transmit_descriptor_status
       uint8_t   dd:1;
       uint8_t   ec:1;
       uint8_t   lc:1;
+
       uint8_t   rsv:5;
 
    } __attribute__((packed));
@@ -444,8 +445,8 @@ typedef struct e1k_memory_data
 {
    volatile e1k_rdesc_t *rdesc;
    volatile e1k_tdesc_t *tdesc;
-
-   loc_t    rx_dma, tx_dma;
+   loc_t                rx_dma;
+   loc_t                tx_dma;
 
 } __attribute__((packed)) e1k_mem_t;
 
@@ -481,6 +482,7 @@ struct net_info;
 
 #ifdef __INIT__
 void     e1k_init(struct net_info*);
+
 size_t   e1k_mem_size();
 offset_t e1k_mem_init(e1k_info_t*, offset_t);
 void     e1k_rx_init(e1k_info_t*);
@@ -489,9 +491,9 @@ void     e1k_tx_init(e1k_info_t*);
 
 void     e1k_rx_on(struct net_info*);
 void     e1k_tx_on(struct net_info*);
-void     e1k_send_pkt(struct net_info*, void*, size_t);
+void     e1k_send_pkt(struct net_info*, loc_t, size_t);
 size_t   e1k_recv_pkt(struct net_info*, void*, size_t);
-size_t   e1k_write(uint8_t*, size_t);
-size_t   e1k_read(uint8_t*, size_t);
+
+offset_t e1k_tx_get_pktbuf(e1k_info_t*);
 
 #endif

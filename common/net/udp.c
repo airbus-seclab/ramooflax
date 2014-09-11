@@ -21,23 +21,41 @@
 
 extern info_data_t *info;
 
-size_t udp_pkt(udp_hdr_t *hdr)
+size_t udp_pkt(udp_hdr_t *hdr, uint16_t sport, uint16_t dport, size_t dlen)
 {
-   loc_t   data;
-   size_t  dlen, len;
+   size_t len = sizeof(udp_hdr_t) + dlen;
 
-   data.addr = hdr;
-   data.linear += sizeof(udp_hdr_t);
-
-   dlen = 4;
-   memcpy(data.addr, "abcd", dlen);
-
-   len = sizeof(udp_hdr_t) + dlen;
-
-   hdr->src = swap16(0x1337);
-   hdr->dst = swap16(2000);
+   hdr->src = swap16(sport);
+   hdr->dst = swap16(dport);
    hdr->len = swap16(len);
    hdr->chk = 0;
 
    return len;
+}
+
+void udp_dissect(loc_t pkt, size_t len)
+{
+   net_info_t *net = &info->hrd.dev.net;
+   udp_hdr_t  *hdr = (udp_hdr_t*)pkt.addr;
+   buffer_t    buf;
+
+   hdr->src = swap16(hdr->src);
+   hdr->dst = swap16(hdr->dst);
+   hdr->len = swap16(hdr->len);
+
+   debug(UDP, "received UDP src %d dst %d len %D\n", hdr->src, hdr->dst, hdr->len);
+
+   if(hdr->dst != net->port)
+      return;
+
+   buf.data.linear = pkt.linear + sizeof(udp_hdr_t);
+   buf.sz = len - sizeof(udp_hdr_t);
+
+   {
+      size_t i;
+      debug(UDP, "UDP received (%D):", buf.sz);
+      for(i=0 ; i<buf.sz ; i++)
+	 debug(UDP, "\\x%x", buf.data.u8[i]);
+      debug(UDP,"\n");
+   }
 }

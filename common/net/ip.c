@@ -34,91 +34,104 @@ void ip_str(ip_addr_t ip, char *str)
 	    ,i._wlow.blow);
 }
 
-size_t ip_icmp_pkt(ip_hdr_t *hdr, size_t len)
+size_t ip_udp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
 {
-   size_t plen = sizeof(ip_hdr_t) + len;
-
-   memset(hdr, 0, sizeof(ip_hdr_t));
-
-   hdr->ver = 4;
-   hdr->ihl = sizeof(ip_hdr_t)/sizeof(uint32_t);
-   hdr->ttl = 0xff;
-   hdr->proto = IP_PROTO_ICMP;
-
-   hdr->frag.raw = swap16(hdr->frag.raw);
-   hdr->id = swap16(1);
-   hdr->len = swap16(plen);
-   hdr->src = swap32(0x7f000001);
-   hdr->dst = swap32(0xffffffff);
-
-   ip_checksum(hdr);
-
-   debug(IP, "ip icmp pkt len %d (hdr %d)\n", plen, sizeof(ip_hdr_t));
-   return plen;
-}
-
-size_t ip_udp_pkt(ip_hdr_t *hdr, size_t len)
-{
-   loc_t      loc;
-   udp_phdr_t *pudp;
+   udp_phdr_t *psd;
    udp_hdr_t  *udp;
-   ip_addr_t  ipsrc, ipdst;
-   size_t     plen;
+   loc_t       pkt;
+   size_t      len;
 
-   ipsrc = 0x7f000001;
-   ipdst = 0x0a5600e1; //10.86.0.225
+   pkt.addr = hdr;
+   pkt.linear += sizeof(ip_hdr_t);
+   udp = (udp_hdr_t*)pkt.addr;
 
-   loc.addr = hdr;
-   loc.linear += sizeof(ip_hdr_t);
-   udp = (udp_hdr_t*)loc.addr;
+   pkt.linear -= sizeof(udp_phdr_t);
+   psd = (udp_phdr_t*)pkt.addr;
 
-   loc.linear -= sizeof(udp_phdr_t);
-   pudp = (udp_phdr_t*)loc.addr;
+   psd->src = swap32(src);
+   psd->dst = swap32(dst);
+   psd->zero = 0;
+   psd->proto = IP_PROTO_UDP;
+   psd->len = swap16(dlen);
 
-   pudp->src = swap32(ipsrc);
-   pudp->dst = swap32(ipdst);
-   pudp->zero = 0;
-   pudp->proto = IP_PROTO_UDP;
-   pudp->len = swap16(len);
-
-   plen = sizeof(udp_phdr_t) + len;
-   if(plen % 2)
+   /* XXX: off-by-one
+   ** pkt buffer are always greater than
+   ** maximum frame sz, so it's safe to
+   ** align on 2 bytes
+   */
+   len = sizeof(udp_phdr_t) + dlen;
+   if(len % 2)
    {
-      loc.linear += plen;
-      *loc.u8 = 0;
-      plen++;
+      pkt.linear += len;
+      *pkt.u8 = 0;
+      len++;
    }
 
-   udp->chk = rfc1071_checksum((uint16_t*)pudp, plen);
+   udp->chk = rfc1071_checksum((uint16_t*)psd, len);
    if(!udp->chk)
       udp->chk = ~udp->chk;
 
    debug(IP, "ip udp chk 0x%x\n", udp->chk);
 
-   plen = sizeof(ip_hdr_t) + len;
-
-   memset(hdr, 0, sizeof(ip_hdr_t));
+   len = sizeof(ip_hdr_t) + dlen;
 
    hdr->ver = 4;
    hdr->ihl = sizeof(ip_hdr_t)/sizeof(uint32_t);
+   hdr->ecn = hdr-> dscp = 0;
    hdr->ttl = 0xff;
    hdr->proto = IP_PROTO_UDP;
 
    hdr->frag.raw = swap16(hdr->frag.raw);
    hdr->id = swap16(1);
-   hdr->len = swap16(plen);
-   hdr->src = swap32(ipsrc);
-   hdr->dst = swap32(ipdst);
+   hdr->len = swap16(len);
+   hdr->src = swap32(src);
+   hdr->dst = swap32(dst);
 
    ip_checksum(hdr);
 
-   debug(IP, "ip udp pkt len %d (hdr %d)\n", plen, sizeof(ip_hdr_t));
-   return plen;
+   debug(IP, "ip udp pkt len %d (hdr %d)\n", len, sizeof(ip_hdr_t));
+   return len;
+}
+
+size_t ip_icmp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
+{
+   size_t len = sizeof(ip_hdr_t) + dlen;
+
+   hdr->ver = 4;
+   hdr->ihl = sizeof(ip_hdr_t)/sizeof(uint32_t);
+   hdr->ecn = hdr-> dscp = 0;
+   hdr->ttl = 0xff;
+   hdr->proto = IP_PROTO_ICMP;
+
+   hdr->frag.raw = swap16(hdr->frag.raw);
+   hdr->id = swap16(1);
+   hdr->len = swap16(len);
+   hdr->src = swap32(src);
+   hdr->dst = swap32(dst);
+
+   ip_checksum(hdr);
+
+   debug(IP, "ip icmp pkt len %d (hdr %d)\n", len, sizeof(ip_hdr_t));
+   return len;
 }
 
 void ip_dissect(loc_t pkt, size_t len)
 {
    ip_hdr_t *hdr = (ip_hdr_t*)pkt.addr;
 
-   debug(IP, "rcv ip pkt %d\n", len);
+   if(hdr->ver != 4)
+      return;
+
+   hdr->frag.raw = swap16(hdr->frag.raw);
+   hdr->id = swap16(hdr->id);
+   hdr->len = swap16(hdr->len);
+   hdr->src = swap32(hdr->src);
+   hdr->dst = swap32(hdr->src);
+
+   pkt.linear += sizeof(ip_hdr_t);
+
+   if(hdr->proto == IP_PROTO_ICMP)
+      icmp_dissect(hdr->src, pkt, len - sizeof(ip_hdr_t));
+   else if(hdr->proto == IP_PROTO_UDP)
+      udp_dissect(pkt, len - sizeof(ip_hdr_t));
 }
