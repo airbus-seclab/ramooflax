@@ -23,14 +23,40 @@
 
 extern info_data_t *info;
 
-static size_t __icmp_echo(icmp_hdr_t *hdr,
+static char* __icmp_type_str(uint8_t type)
+{
+   switch(type)
+   {
+   case ICMP_TYPE_ECHO_REPLY:   return "echo-reply";
+   case ICMP_TYPE_ECHO_REQUEST: return "echo-request";
+   case ICMP_TYPE_DEST_UNREACH: return "dest-unreach";
+   case ICMP_TYPE_REDIRECT:     return "redirect";
+   case ICMP_TYPE_TIME_EXCEED:  return "time-exceed";
+   }
+
+   return "unknown";
+}
+
+static size_t __icmp_gen(icmp_hdr_t *hdr, uint8_t type, uint8_t code, size_t dlen)
+{
+   size_t len;
+
+   hdr->type = type;
+   hdr->code = code;
+
+   len = sizeof(icmp_hdr_t) + dlen;
+   icmp_checksum(hdr, len);
+
+   debug(ICMP, "snd ICMP %s rest 0x%x\n", __icmp_type_str(type), hdr->rest);
+   return len;
+}
+
+static size_t __icmp_echo(icmp_hdr_t *hdr, uint8_t type,
 			  uint16_t id, uint16_t seq,
 			  void *data, size_t dlen)
 {
-   loc_t  pkt;
-   size_t len;
+   loc_t pkt;
 
-   hdr->code = 0;
    hdr->ping.id  = swap16(id);
    hdr->ping.seq = swap16(seq);
 
@@ -38,32 +64,28 @@ static size_t __icmp_echo(icmp_hdr_t *hdr,
    pkt.linear += sizeof(icmp_hdr_t);
    memcpy(pkt.addr, data, dlen);
 
-   len = sizeof(icmp_hdr_t) + dlen;
-   icmp_checksum(hdr, len);
-
-   debug(ICMP, "icmp pkt len %d (hdr %d)\n", len, sizeof(icmp_hdr_t));
-   return len;
+   return __icmp_gen(hdr, type, 0, dlen);
 }
 
 size_t icmp_echo_request(icmp_hdr_t *hdr,
 			 uint16_t id, uint16_t seq,
 			 void *data, size_t dlen)
 {
-   hdr->type = ICMP_TYPE_ECHO_REQUEST;
-   return __icmp_echo(hdr, id, seq, data, dlen);
+   return __icmp_echo(hdr, ICMP_TYPE_ECHO_REQUEST, id, seq, data, dlen);
 }
 
 size_t icmp_echo_reply(icmp_hdr_t *hdr,
 		       uint16_t id, uint16_t seq,
 		       void *data, size_t dlen)
 {
-   hdr->type = ICMP_TYPE_ECHO_REPLY;
-   return __icmp_echo(hdr, id, seq, data, dlen);
+   return __icmp_echo(hdr, ICMP_TYPE_ECHO_REPLY, id, seq, data, dlen);
 }
 
 void icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
 {
    icmp_hdr_t *hdr = (icmp_hdr_t*)pkt.addr;
+
+   debug(ICMP, "rcv ICMP %s\n", __icmp_type_str(hdr->type));
 
    if(hdr->type == ICMP_TYPE_ECHO_REQUEST)
    {
@@ -82,11 +104,9 @@ void icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
       hdr->ping.seq = swap16(hdr->ping.seq);
 
       data.linear = pkt.linear + sizeof(icmp_hdr_t);
-
       rlen = net_gen_pong_pkt(ip, rpkt,
 			      hdr->ping.id, hdr->ping.seq,
 			      data.addr, len - sizeof(icmp_hdr_t));
-
       if(!rlen)
       {
 #ifdef CONFIG_ICMP_DBG

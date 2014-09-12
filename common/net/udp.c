@@ -30,6 +30,18 @@ size_t udp_pkt(udp_hdr_t *hdr, uint16_t sport, uint16_t dport, size_t dlen)
    hdr->len = swap16(len);
    hdr->chk = 0;
 
+   debug(UDP, "snd UDP sport %d dport %d len %d\n", sport, dport, len);
+
+   {
+      size_t i;
+      loc_t data;
+      data.addr = hdr;
+      data.linear += sizeof(udp_hdr_t);
+      debug(UDP, "snd UDP data (%d): ", dlen);
+      for(i=0 ; i<dlen ; i++)
+   	 debug(UDP, "%c", data.u8[i]);
+      debug(UDP,"\n");
+   }
    return len;
 }
 
@@ -43,19 +55,28 @@ void udp_dissect(loc_t pkt, size_t len)
    hdr->dst = swap16(hdr->dst);
    hdr->len = swap16(hdr->len);
 
-   debug(UDP, "received UDP src %d dst %d len %D\n", hdr->src, hdr->dst, hdr->len);
-
-   if(hdr->dst != net->port)
-      return;
+   debug(UDP, "rcv UDP src %d dst %d len %d (remain %d)\n"
+	 ,hdr->src, hdr->dst, hdr->len, len);
 
    buf.data.linear = pkt.linear + sizeof(udp_hdr_t);
-   buf.sz = len - sizeof(udp_hdr_t);
+   buf.sz = hdr->len - sizeof(udp_hdr_t);
 
    {
       size_t i;
-      debug(UDP, "UDP received (%D):", buf.sz);
+      debug(UDP, "rcv UDP data (%d): ", buf.sz);
       for(i=0 ; i<buf.sz ; i++)
-	 debug(UDP, "\\x%x", buf.data.u8[i]);
+   	 debug(UDP, "%c", buf.data.u8[i]);
       debug(UDP,"\n");
    }
+
+   if(hdr->dst != net->port || hdr->src != net->peer.port)
+      return;
+
+   /* XXX:
+   ** manage connection state with GDB
+   ** client port may change over
+   ** different connections
+   */
+
+   net_write(buf.data.u8, buf.sz);
 }

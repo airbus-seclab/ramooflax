@@ -435,10 +435,10 @@ typedef struct e1k_tx_registers
 
 } __attribute__((packed)) e1k_tx_reg_t;
 
-#define RX_DESC_NR  8
+#define RX_DESC_NR  16
 #define RX_BUFF_SZ  2048
 
-#define TX_DESC_NR  8
+#define TX_DESC_NR  16
 #define TX_BUFF_SZ  2048
 
 typedef struct e1k_memory_data
@@ -492,7 +492,7 @@ void     e1k_tx_init(e1k_info_t*);
 void     e1k_rx_on(struct net_info*);
 void     e1k_tx_on(struct net_info*);
 void     e1k_send_pkt(struct net_info*, loc_t, size_t);
-size_t   e1k_recv_pkt(struct net_info*, void*, size_t);
+size_t   e1k_recv_pkt(struct net_info*, loc_t, size_t);
 
 offset_t e1k_tx_get_pktbuf(e1k_info_t*);
 

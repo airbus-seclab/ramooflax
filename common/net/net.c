@@ -80,9 +80,7 @@ void net_test_recv()
 
    while(1)
    {
-      //io_wait(100000);
-
-      len = net_recv_pkt(net, pkt.addr, sizeof(data));
+      len = net_recv_pkt(net, pkt, sizeof(data));
       if(!len)
 	 continue;
 
@@ -176,19 +174,6 @@ size_t _net_gen_ip_pkt(ip_gen_t builder,
    return net_gen_eth_ip_pkt(&mac, pkt) + builder(hdr, src, dst, dlen);
 }
 
-size_t net_gen_udp_pkt(ip_addr_t ip, uint16_t port, loc_t pkt, size_t dlen)
-{
-   net_info_t *net = &info->hrd.dev.net;
-   udp_hdr_t  *hdr;
-   loc_t       udp;
-
-   udp.linear += pkt.linear + sizeof(eth_hdr_t) + sizeof(ip_hdr_t);
-   hdr = (udp_hdr_t*)udp.addr;
-
-   return _net_gen_ip_pkt(ip_udp_pkt, net->ip, ip, pkt,
-			  udp_pkt(hdr, net->port, port, dlen));
-}
-
 size_t _net_gen_icmp_pkt(icmp_gen_t builder,
 			 ip_addr_t ip, loc_t pkt,
 			 uint16_t id, uint16_t seq,
@@ -216,6 +201,19 @@ size_t net_gen_pong_pkt(ip_addr_t ip, loc_t pkt,
 			void *data, size_t len)
 {
    return _net_gen_icmp_pkt(icmp_echo_reply, ip, pkt, id, seq, data, len);
+}
+
+size_t net_gen_udp_pkt(ip_addr_t ip, uint16_t port, loc_t pkt, size_t dlen)
+{
+   net_info_t *net = &info->hrd.dev.net;
+   udp_hdr_t  *hdr;
+   loc_t       udp;
+
+   udp.linear = pkt.linear + sizeof(eth_hdr_t) + sizeof(ip_hdr_t);
+   hdr = (udp_hdr_t*)udp.addr;
+
+   return _net_gen_ip_pkt(ip_udp_pkt, net->ip, ip, pkt,
+			  udp_pkt(hdr, net->port, port, dlen));
 }
 
 static size_t __net_write(net_info_t *net, loc_t pkt, loc_t dpkt, buffer_t *buf)

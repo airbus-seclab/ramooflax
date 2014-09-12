@@ -67,7 +67,7 @@ void mac_set(mac_addr_t *mac, char *hex)
    mac_copy(mac, (mac_addr_t*)hex);
 }
 
-size_t __eth_gen(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
+static size_t __eth_gen(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
 {
    mac_copy(&hdr->src, src);
    mac_copy(&hdr->dst, dst);

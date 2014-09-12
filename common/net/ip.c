@@ -34,6 +34,39 @@ void ip_str(ip_addr_t ip, char *str)
 	    ,i._wlow.blow);
 }
 
+static size_t __ip_gen(ip_hdr_t *hdr,
+		       ip_addr_t src, ip_addr_t dst,
+		       uint8_t proto, size_t dlen)
+{
+   size_t len = sizeof(ip_hdr_t) + dlen;
+
+   hdr->ver = 4;
+   hdr->ihl = sizeof(ip_hdr_t)/sizeof(uint32_t);
+   hdr->ecn = hdr-> dscp = 0;
+   hdr->ttl = 0xff;
+   hdr->proto = proto;
+
+   hdr->frag.raw = 0;
+   hdr->id = swap16(1);
+   hdr->len = swap16(len);
+   hdr->src = swap32(src);
+   hdr->dst = swap32(dst);
+
+   ip_checksum(hdr);
+
+#ifdef CONFIG_IP_DBG
+   {
+      char ips[IP_STR_SZ];
+      char ipd[IP_STR_SZ];
+      ip_str(src, ips);
+      ip_str(dst, ipd);
+      debug(IP, "snd IP src %s dst %s len %d\n", ips, ipd, len);
+   }
+#endif
+
+   return len;
+}
+
 size_t ip_udp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
 {
    udp_phdr_t *psd;
@@ -71,48 +104,13 @@ size_t ip_udp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
    if(!udp->chk)
       udp->chk = ~udp->chk;
 
-   debug(IP, "ip udp chk 0x%x\n", udp->chk);
-
-   len = sizeof(ip_hdr_t) + dlen;
-
-   hdr->ver = 4;
-   hdr->ihl = sizeof(ip_hdr_t)/sizeof(uint32_t);
-   hdr->ecn = hdr-> dscp = 0;
-   hdr->ttl = 0xff;
-   hdr->proto = IP_PROTO_UDP;
-
-   hdr->frag.raw = swap16(hdr->frag.raw);
-   hdr->id = swap16(1);
-   hdr->len = swap16(len);
-   hdr->src = swap32(src);
-   hdr->dst = swap32(dst);
-
-   ip_checksum(hdr);
-
-   debug(IP, "ip udp pkt len %d (hdr %d)\n", len, sizeof(ip_hdr_t));
-   return len;
+   /* debug(IP, "snd UDP chk 0x%x\n", udp->chk); */
+   return __ip_gen(hdr, src, dst, IP_PROTO_UDP, dlen);
 }
 
 size_t ip_icmp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
 {
-   size_t len = sizeof(ip_hdr_t) + dlen;
-
-   hdr->ver = 4;
-   hdr->ihl = sizeof(ip_hdr_t)/sizeof(uint32_t);
-   hdr->ecn = hdr-> dscp = 0;
-   hdr->ttl = 0xff;
-   hdr->proto = IP_PROTO_ICMP;
-
-   hdr->frag.raw = swap16(hdr->frag.raw);
-   hdr->id = swap16(1);
-   hdr->len = swap16(len);
-   hdr->src = swap32(src);
-   hdr->dst = swap32(dst);
-
-   ip_checksum(hdr);
-
-   debug(IP, "ip icmp pkt len %d (hdr %d)\n", len, sizeof(ip_hdr_t));
-   return len;
+   return __ip_gen(hdr, src, dst, IP_PROTO_ICMP, dlen);
 }
 
 void ip_dissect(loc_t pkt, size_t len)

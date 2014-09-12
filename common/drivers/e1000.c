@@ -349,7 +349,7 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    e1k_info_t           *e1k;
    volatile e1k_tdesc_t *dsc;
    e1k_tdesc_cmd_t       cmd;
-   e1k_tdesc_sts_t       sts;
+   /* e1k_tdesc_sts_t       sts; */
    size_t                tdt;
 
    e1k = &net->arch;
@@ -359,18 +359,16 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    dsc->addr = pkt.linear;
    dsc->len = len;
 
-   /* memcpy((void*)dsc->addr, data, min(len,TX_BUFF_SZ)); */
-   /* dsc->len = len; */
+   debug(E1000, "--> [TDT %d] len %d\n", tdt, len);
 
-#ifdef CONFIG_E1000_DBG
-   {
-      size_t i=0;
-      debug(E1000, "snd pkt (%d 0x%x):", len, len);
-      for(i=0 ; i<len ; i++)
-	 debug(E1000, " %x", pkt.u8[i]);
-      debug(E1000,"\n");
-   }
-#endif
+/* #ifdef CONFIG_E1000_DBG */
+/*    { */
+/*       size_t i=0; */
+/*       for(i=0 ; i<len ; i++) */
+/* 	 debug(E1000, " %x", pkt.u8[i]); */
+/*       debug(E1000,"\n"); */
+/*    } */
+/* #endif */
 
    cmd.raw = 0;
    cmd.eop = 1;
@@ -378,16 +376,16 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    dsc->cmd.raw = cmd.raw ;
    e1k->tx.dt->raw = (tdt+1)%TX_DESC_NR;
 
-   debug(E1000, "sending packet ... ");
-   do
-   {
-      io_wait(1000);
-      sts.raw = dsc->sts.raw;
-   } while(!sts.dd);
-   debug(E1000, "done.\n");
+   /* debug(E1000, "sending packet ... "); */
+   /* do */
+   /* { */
+   /*    io_wait(1000); */
+   /*    sts.raw = dsc->sts.raw; */
+   /* } while(!sts.dd); */
+   /* debug(E1000, "done.\n"); */
 }
 
-size_t e1k_recv_pkt(net_info_t *net, void *data, size_t len)
+size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
 {
    e1k_info_t           *e1k;
    volatile e1k_rdesc_t *dsc;
@@ -408,19 +406,18 @@ size_t e1k_recv_pkt(net_info_t *net, void *data, size_t len)
       return 0;
 
    /* XXX: pkt size mgmt */
-   memcpy(data, (void*)dsc->addr, min(dsc->len, len));
+   memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
 
-#ifdef CONFIG_E1000_DBG
-   {
-      size_t i=0;
-      debug(E1000, "rcv pkt tail %d, eop %d, len %d:",
-	    rdt, sts.eop, dsc->len, dsc->len);
+   debug(E1000, "<-- [RDT %d] len %d eop %d\n", rdt, dsc->len, sts.eop);
 
-      for(i=0 ; i<dsc->len ; i++)
-	 debug(E1000, " %x", ((uint8_t*)data)[i]);
-      debug(E1000,"\n");
-   }
-#endif
+/* #ifdef CONFIG_E1000_DBG */
+/*    { */
+/*       size_t i=0; */
+/*       for(i=0 ; i<dsc->len ; i++) */
+/* 	 debug(E1000, " %x", ((uint8_t*)data)[i]); */
+/*       debug(E1000,"\n"); */
+/*    } */
+/* #endif */
 
    dsc->sts.raw = 0;
    e1k->rx.dt->raw = rdt;
