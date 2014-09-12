@@ -55,11 +55,11 @@ void udp_dissect(loc_t pkt, size_t len)
    hdr->dst = swap16(hdr->dst);
    hdr->len = swap16(hdr->len);
 
-   debug(UDP, "rcv UDP src %d dst %d len %d (remain %d)\n"
+   debug(UDP, "rcv UDP src %d dst %d hdr len %d pkt len %d\n"
 	 ,hdr->src, hdr->dst, hdr->len, len);
 
    buf.data.linear = pkt.linear + sizeof(udp_hdr_t);
-   buf.sz = hdr->len - sizeof(udp_hdr_t);
+   buf.sz = min(len, hdr->len) - sizeof(udp_hdr_t);
 
    {
       size_t i;

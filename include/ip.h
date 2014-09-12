@@ -21,9 +21,7 @@
 #include <types.h>
 #include <checksum.h>
 #include <insn.h>
-
-#define IP_PROTO_ICMP 0x01
-#define IP_PROTO_UDP  0x11
+#include <ip_proto.h>
 
 typedef union ip_header_fragment
 {

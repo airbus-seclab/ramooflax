@@ -23,6 +23,34 @@
 
 extern info_data_t *info;
 
+static char* __ip_proto_str(uint8_t proto)
+{
+   switch(proto)
+   {
+   case IP_PROTO_ICMP:   return "icmp";
+   case IP_PROTO_IGMP:   return "igmp";
+   case IP_PROTO_GGP:    return "ggp";
+   case IP_PROTO_IPINIP: return "ipinip";
+   case IP_PROTO_TCP:    return "tcp";
+   case IP_PROTO_EGP:    return "egp";
+   case IP_PROTO_IGP:    return "igp";
+   case IP_PROTO_CHAOS:  return "chaos";
+   case IP_PROTO_UDP:    return "udp";
+   case IP_PROTO_RDP:    return "rdp";
+   case IP_PROTO_IP6:    return "ip6";
+   case IP_PROTO_GRE:    return "gre";
+   case IP_PROTO_ICMP6:  return "icmp6";
+   case IP_PROTO_CFTP:   return "cftp";
+   case IP_PROTO_VISA:   return "visa";
+   case IP_PROTO_TTP:    return "ttp";
+   case IP_PROTO_OSPF:   return "ospf";
+   case IP_PROTO_L2TP:   return "l2tp";
+   case IP_PROTO_PTP:    return "ptp";
+   case IP_PROTO_SCTP:   return "sctp";
+   }
+   return "unknown";
+}
+
 void ip_str(ip_addr_t ip, char *str)
 {
    raw32_t i = { .raw = ip };
@@ -125,6 +153,18 @@ void ip_dissect(loc_t pkt, size_t len)
    hdr->len = swap16(hdr->len);
    hdr->src = swap32(hdr->src);
    hdr->dst = swap32(hdr->src);
+
+#ifdef CONFIG_IP_DBG
+   {
+      char ips[IP_STR_SZ];
+      char ipd[IP_STR_SZ];
+      ip_str(hdr->src, ips);
+      ip_str(hdr->dst, ipd);
+      debug(IP, "rcv IP %s src %s dst %s len %d off %d MF %d DF %d\n"
+	    ,__ip_proto_str(hdr->proto), ips, ipd, hdr->len
+	    ,hdr->frag.off, hdr->frag.mf, hdr->frag.df);
+   }
+#endif
 
    pkt.linear += sizeof(ip_hdr_t);
 

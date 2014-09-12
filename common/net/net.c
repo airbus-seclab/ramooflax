@@ -69,18 +69,20 @@ void net_setup()
    }
 }
 
+
 void net_test_recv()
 {
    net_info_t *net = &info->hrd.dev.net;
-   uint8_t     data[200];
    size_t      len;
    loc_t       pkt;
 
-   pkt.u8 = data;
+   static uint8_t frame[2048];
+
+   pkt.u8 = frame;
 
    while(1)
    {
-      len = net_recv_pkt(net, pkt, sizeof(data));
+      len = net_recv_pkt(net, pkt, sizeof(frame));
       if(!len)
 	 continue;
 

@@ -405,6 +405,9 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    if(!sts.dd)
       return 0;
 
+   if(!sts.eop)
+      debug(E1000, "-----!!!!!! NEED TO READ MORE PACKET (eop=0)\n");
+
    /* XXX: pkt size mgmt */
    memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
 
