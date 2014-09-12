@@ -13,4 +13,5 @@ include/config.h
 include/config_debug.h
 tools/clean_tty
 tools/toolchain
+tools/installer*
 !.gitignore
