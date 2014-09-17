@@ -77,8 +77,8 @@ typedef size_t (*ip_gen_t)(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);
 
 size_t ip_udp_pkt(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);
 size_t ip_icmp_pkt(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);
-
-void   ip_dissect(loc_t, size_t);
+int    ip_dissect(loc_t, size_t, buffer_t*);
 void   ip_str(ip_addr_t, char*);
+int    ip_from_str(char*, ip_addr_t*);
 
 #endif

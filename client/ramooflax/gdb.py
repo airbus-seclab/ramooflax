@@ -20,9 +20,13 @@ import socket, errno
 from utils import Utils
 
 class GDB:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, mode):
         self.ip = ip
         self.port = port
+        if mode == "udp":
+            self.mode = socket.SOCK_DGRAM
+        else:
+            self.mode = socket.SOCK_STREAM
         self.__sk = None
         self.__cache = ""
         self.__waiting = False
@@ -31,7 +35,7 @@ class GDB:
         return self.__sk
 
     def __connect(self):
-        self.__sk = socket.socket()
+        self.__sk = socket.socket(socket.AF_INET, self.mode)
         try:
             self.__sk.connect((self.ip,self.port))
         except socket.error as (err, msg):
@@ -134,10 +138,11 @@ class GDB:
 
     def recv_raw(self, expected):
         if Utils.debug:
-            print "receiving raw data"
+            print "receiving raw data (expect %d)" % (expected)
         l = len(self.__cache)
         while l < expected:
-            data, dl = self.__recv(expected - l)
+            #data, dl = self.__recv(expected - l)
+            data, dl = self.__recv(4096)
             l += dl
             if Utils.debug:
                 print "\r%d/%d" % (l, expected),

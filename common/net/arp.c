@@ -54,6 +54,15 @@ size_t arp_who_has_pkt(arp_hdr_t *hdr,
 		       mac_addr_t *hwsrc, mac_addr_t *hwdst,
 		       ip_addr_t src, ip_addr_t dst)
 {
+#ifdef CONFIG_ARP_DBG
+   {
+      char ips[IP_STR_SZ];
+      char ipd[IP_STR_SZ];
+      ip_str(dst, ipd);
+      ip_str(src, ips);
+      debug(ARP, "snd ARP who_has %s say %s\n", ipd, ips);
+   }
+#endif
    return __arp_op(hdr, ARP_OP_REQUEST, hwsrc, hwdst, src, dst);
 }
 
@@ -61,6 +70,15 @@ size_t arp_is_at_pkt(arp_hdr_t *hdr,
 		     mac_addr_t *hwsrc, mac_addr_t *hwdst,
 		     ip_addr_t src, ip_addr_t dst)
 {
+#ifdef CONFIG_ARP_DBG
+   {
+      char ips[IP_STR_SZ];
+      char macs[MAC_STR_SZ];
+      ip_str(src, ips);
+      mac_str(hwsrc, macs);
+      debug(ARP, "snd ARP is_at %s say %s\n", macs, ips);
+   }
+#endif
    return __arp_op(hdr, ARP_OP_REPLY, hwsrc, hwdst, src, dst);
 }
 
@@ -69,7 +87,27 @@ static void arp_cache_update(ip_addr_t ip, mac_addr_t *mac)
    arp_tbl_t *arp = &info->hrd.dev.net.arp;
    size_t     i, end;
 
+   end = (!arp->cache[arp->tail].ip) ? arp->tail : ARP_CACHE_SZ;
+
+   for(i=0 ; i<end ; i++)
+      if(arp->cache[i].ip == ip)
+      {
+	 if(!mac_cmp(&arp->cache[i].mac, mac))
+	 {
+	    mac_copy(&arp->cache[i].mac, mac);
 #ifdef CONFIG_ARP_DBG
+	    goto __cache_updated;
+#endif
+	 }
+	 return ;
+      }
+
+   arp->cache[arp->tail].ip = ip;
+   mac_copy(&arp->cache[arp->tail].mac, mac);
+   arp->tail = (arp->tail+1)%ARP_CACHE_SZ;
+
+#ifdef CONFIG_ARP_DBG
+__cache_updated:
    {
       char ips[IP_STR_SZ];
       char macs[MAC_STR_SZ];
@@ -78,21 +116,6 @@ static void arp_cache_update(ip_addr_t ip, mac_addr_t *mac)
       debug(ARP, "arp cache update %s %s\n", ips, macs);
    }
 #endif
-
-   end = (!arp->cache[arp->tail].ip) ? arp->tail : ARP_CACHE_SZ;
-
-   for(i=0 ; i<end ; i++)
-      if(arp->cache[i].ip == ip)
-      {
-	 if(!mac_cmp(&arp->cache[i].mac, mac))
-	    mac_copy(&arp->cache[i].mac, mac);
-
-	 return;
-      }
-
-   arp->cache[arp->tail].ip = ip;
-   mac_copy(&arp->cache[arp->tail].mac, mac);
-   arp->tail = (arp->tail+1)%ARP_CACHE_SZ;
 }
 
 int arp_cache_lookup(ip_addr_t ip, mac_addr_t *mac)
@@ -112,7 +135,7 @@ int arp_cache_lookup(ip_addr_t ip, mac_addr_t *mac)
    return 0;
 }
 
-void __arp_dissect_who_has(arp_hdr_t *hdr)
+static int __arp_dissect_who_has(arp_hdr_t *hdr)
 {
    net_info_t *net = &info->hrd.dev.net;
    loc_t       pkt;
@@ -124,37 +147,28 @@ void __arp_dissect_who_has(arp_hdr_t *hdr)
       char ipd[IP_STR_SZ];
       ip_str(hdr->pdst, ipd);
       ip_str(hdr->psrc, ips);
-      debug(ARP, "arp who_has %s say %s\n", ipd, ips);
+      debug(ARP, "rcv ARP who_has %s say %s\n", ipd, ips);
    }
 #endif
 
    arp_cache_update(hdr->psrc, &hdr->hwsrc);
 
    if(hdr->pdst != net->ip)
-      return;
+      return NET_DISSECT_IGN;
 
    pkt.linear = net_tx_get_pktbuf();
    if(!pkt.linear)
    {
       debug(ARP, "failed to arp-is-at (no more pkt)\n");
-      return;
+      return NET_DISSECT_FAIL;
    }
 
    len = net_gen_arp_is_at_pkt(&hdr->hwsrc, hdr->psrc, pkt);
    net_send_pkt(net, pkt, len);
-
-#ifdef CONFIG_ARP_DBG
-   {
-      char ips[IP_STR_SZ];
-      char macs[MAC_STR_SZ];
-      ip_str(net->ip, ips);
-      mac_str(&net->mac, macs);
-      debug(ARP, "arp is_at %s say %s\n", macs, ips);
-   }
-#endif
+   return NET_DISSECT_OK;
 }
 
-void __arp_dissect_is_at(arp_hdr_t *hdr)
+int __arp_dissect_is_at(arp_hdr_t *hdr)
 {
 #ifdef CONFIG_ARP_DBG
    {
@@ -162,14 +176,15 @@ void __arp_dissect_is_at(arp_hdr_t *hdr)
       char macs[MAC_STR_SZ];
       ip_str(hdr->psrc, ips);
       mac_str(&hdr->hwsrc, macs);
-      debug(ARP, "arp %s is_at %s\n", ips, macs);
+      debug(ARP, "rcv ARP %s is_at %s\n", ips, macs);
    }
 #endif
 
    arp_cache_update(hdr->psrc, &hdr->hwsrc);
+   return NET_DISSECT_OK;
 }
 
-void arp_dissect(loc_t pkt, size_t __unused__ len)
+int arp_dissect(loc_t pkt, size_t __unused__ len)
 {
    arp_hdr_t *hdr = (arp_hdr_t*)pkt.addr;
 
@@ -179,13 +194,15 @@ void arp_dissect(loc_t pkt, size_t __unused__ len)
 
    if(hdr->hwtype != ARP_TYPE_ETH   ||
       hdr->proto  != ETHER_TYPE_IP)
-      return;
+      return NET_DISSECT_FAIL;
 
    hdr->psrc = swap32(hdr->psrc);
    hdr->pdst = swap32(hdr->pdst);
 
    if(hdr->op == ARP_OP_REQUEST)
-      __arp_dissect_who_has(hdr);
+      return __arp_dissect_who_has(hdr);
    else if(hdr->op == ARP_OP_REPLY)
-      __arp_dissect_is_at(hdr);
+      return __arp_dissect_is_at(hdr);
+
+   return NET_DISSECT_IGN;
 }

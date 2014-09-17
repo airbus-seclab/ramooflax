@@ -28,6 +28,14 @@
 #include <udp.h>
 
 /*
+** Dissection status
+*/
+#define NET_DISSECT_FAIL 0
+#define NET_DISSECT_OK   1
+#define NET_DISSECT_IGN  2
+#define NET_DISSECT_UDP  3
+
+/*
 ** Convenient macro
 */
 #define HDR_FRAME_SZ  (sizeof(eth_hdr_t)+sizeof(ip_hdr_t)+sizeof(udp_hdr_t))
@@ -101,6 +109,7 @@ size_t net_gen_arp_is_at_pkt(mac_addr_t*, ip_addr_t, loc_t);
 size_t net_gen_udp_pkt(ip_addr_t, uint16_t, loc_t, size_t);
 size_t net_gen_ping_pkt(ip_addr_t, loc_t, uint16_t);
 size_t net_gen_pong_pkt(ip_addr_t, loc_t, uint16_t, uint16_t, void*, size_t);
+
 
 #ifdef CONFIG_HAS_E1000
 #define net_rx_on(n)               e1k_rx_on(n)

@@ -600,7 +600,7 @@ void gdb_send_packet()
    gdb_checksum(gdb_buffer.data.u8, gdb_buffer.sz, &gdb_answer[gdb_buffer.sz+3]);
    gdb_io_write(pkt, sz);
 
-   debug(GDBSTUB_PKT, "snd (%D): [", sz);
+   debug(GDBSTUB_PKT, "gdb sent (%D): [", sz);
 #ifdef CONFIG_GDBSTUB_PKT_DBG
    debug_write(pkt, sz);
    debug_write((uint8_t*)"]\n", 2);

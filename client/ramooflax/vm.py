@@ -36,10 +36,11 @@ Virtual Machine Controller
  - you can type ^C while interactive to quit
  - you can access 'cpu' and 'mem' attributes (help(vm.cpu) ...)
     """
-    def __init__(self, manufacturer, loc):
+    def __init__(self, manufacturer, loc, mode="udp"):
         try:
             self.ip, self.port = loc.split(':')
             self.port = int(self.port)
+            self.mode = mode
         except ValueError:
             print "give \"ip:port\" string"
             raise
@@ -48,7 +49,7 @@ Virtual Machine Controller
         self.__session = False
         self.__state = VMState.working
         self.__stop_request = False
-        self.__gdb = gdb.GDB(self.ip, self.port)
+        self.__gdb = gdb.GDB(self.ip, self.port, self.mode)
 
         self.cpu = cpu.CPU(manufacturer, self.__gdb)
         self.mem = memory.Memory(self.cpu, self.__gdb)

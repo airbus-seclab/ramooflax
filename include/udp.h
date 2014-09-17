@@ -57,6 +57,6 @@ typedef union udp_pseudo_header
 ** Functions
 */
 size_t udp_pkt(udp_hdr_t*, uint16_t, uint16_t, size_t);
-void   udp_dissect(loc_t, size_t);
+int    udp_dissect(loc_t, size_t, buffer_t*);
 
 #endif

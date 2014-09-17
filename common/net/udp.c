@@ -30,14 +30,14 @@ size_t udp_pkt(udp_hdr_t *hdr, uint16_t sport, uint16_t dport, size_t dlen)
    hdr->len = swap16(len);
    hdr->chk = 0;
 
-   debug(UDP, "snd UDP sport %d dport %d len %d\n", sport, dport, len);
+   debug(UDP, "snd UDP sport %d dport %d len %D\n", sport, dport, len);
 
    {
       size_t i;
       loc_t data;
       data.addr = hdr;
       data.linear += sizeof(udp_hdr_t);
-      debug(UDP, "snd UDP data (%d): ", dlen);
+      debug(UDP, "snd UDP data (%D): ", dlen);
       for(i=0 ; i<dlen ; i++)
    	 debug(UDP, "%c", data.u8[i]);
       debug(UDP,"\n");
@@ -45,38 +45,37 @@ size_t udp_pkt(udp_hdr_t *hdr, uint16_t sport, uint16_t dport, size_t dlen)
    return len;
 }
 
-void udp_dissect(loc_t pkt, size_t len)
+int udp_dissect(loc_t pkt, size_t len, buffer_t *rcv)
 {
    net_info_t *net = &info->hrd.dev.net;
    udp_hdr_t  *hdr = (udp_hdr_t*)pkt.addr;
-   buffer_t    buf;
 
    hdr->src = swap16(hdr->src);
    hdr->dst = swap16(hdr->dst);
    hdr->len = swap16(hdr->len);
 
-   debug(UDP, "rcv UDP src %d dst %d hdr len %d pkt len %d\n"
+   debug(UDP, "rcv UDP src %d dst %d hdr len %d pkt len %D\n"
 	 ,hdr->src, hdr->dst, hdr->len, len);
 
-   buf.data.linear = pkt.linear + sizeof(udp_hdr_t);
-   buf.sz = min(len, hdr->len) - sizeof(udp_hdr_t);
+   rcv->data.linear = pkt.linear + sizeof(udp_hdr_t);
+   rcv->sz = min(len, hdr->len) - sizeof(udp_hdr_t);
 
+#ifdef CONFIG_UDP_DBG
    {
       size_t i;
-      debug(UDP, "rcv UDP data (%d): ", buf.sz);
-      for(i=0 ; i<buf.sz ; i++)
-   	 debug(UDP, "%c", buf.data.u8[i]);
+      debug(UDP, "rcv UDP data (%d): ", rcv->sz);
+      for(i=0 ; i<rcv->sz ; i++)
+   	 debug(UDP, "%c", rcv->data.u8[i]);
       debug(UDP,"\n");
    }
+#endif
 
-   if(hdr->dst != net->port || hdr->src != net->peer.port)
-      return;
+   if(hdr->dst != net->port)
+      return NET_DISSECT_IGN;
 
-   /* XXX:
-   ** manage connection state with GDB
-   ** client port may change over
-   ** different connections
-   */
+   /* XXX */
+   if(net->peer.port != hdr->src)
+      net->peer.port = hdr->src;
 
-   net_write(buf.data.u8, buf.sz);
+   return NET_DISSECT_UDP;
 }

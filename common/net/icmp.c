@@ -81,7 +81,7 @@ size_t icmp_echo_reply(icmp_hdr_t *hdr,
    return __icmp_echo(hdr, ICMP_TYPE_ECHO_REPLY, id, seq, data, dlen);
 }
 
-void icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
+int icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
 {
    icmp_hdr_t *hdr = (icmp_hdr_t*)pkt.addr;
 
@@ -97,7 +97,7 @@ void icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
       if(!rpkt.linear)
       {
 	 debug(ICMP, "faild to echo-reply (no more pkt)\n");
-	 return;
+	 return NET_DISSECT_FAIL;
       }
 
       hdr->ping.id = swap16(hdr->ping.id);
@@ -114,9 +114,12 @@ void icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
 	 ip_str(ip, ips);
 	 debug(ICMP, "failed to echo-reply to %s\n", ips);
 #endif
-	 return;
+	 return NET_DISSECT_FAIL;
       }
 
       net_send_pkt(net, rpkt, rlen);
+      return NET_DISSECT_OK;
    }
+
+   return NET_DISSECT_IGN;
 }

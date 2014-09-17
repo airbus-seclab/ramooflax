@@ -79,16 +79,19 @@ void pci_cfg_e1k(net_info_t *net)
    setptr(e1k->fcah,   e1k->base.linear + 0x2c);
    setptr(e1k->fct,    e1k->base.linear + 0x30);
    setptr(e1k->fcttv,  e1k->base.linear + 0x170);
+
    setptr(e1k->icr,    e1k->base.linear + 0xc0);
    setptr(e1k->ics,    e1k->base.linear + 0xc8);
    setptr(e1k->ims,    e1k->base.linear + 0xd0);
    setptr(e1k->imc,    e1k->base.linear + 0xd8);
+
    setptr(e1k->rx.ctl, e1k->base.linear + 0x100);
    setptr(e1k->rx.bal, e1k->base.linear + 0x2800);
    setptr(e1k->rx.bah, e1k->base.linear + 0x2804);
    setptr(e1k->rx.dl,  e1k->base.linear + 0x2808);
    setptr(e1k->rx.dh,  e1k->base.linear + 0x2810);
    setptr(e1k->rx.dt,  e1k->base.linear + 0x2818);
+
    setptr(e1k->tx.ctl, e1k->base.linear + 0x400);
    setptr(e1k->tx.ipg, e1k->base.linear + 0x410);
    setptr(e1k->tx.bal, e1k->base.linear + 0x3800);
@@ -96,6 +99,7 @@ void pci_cfg_e1k(net_info_t *net)
    setptr(e1k->tx.dl,  e1k->base.linear + 0x3808);
    setptr(e1k->tx.dh,  e1k->base.linear + 0x3810);
    setptr(e1k->tx.dt,  e1k->base.linear + 0x3818);
+
    setptr(e1k->mta,    e1k->base.linear + 0x5200);
    setptr(e1k->ra,     e1k->base.linear + 0x5400);
 

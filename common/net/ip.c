@@ -62,6 +62,32 @@ void ip_str(ip_addr_t ip, char *str)
 	    ,i._wlow.blow);
 }
 
+int ip_from_str(char *str, ip_addr_t *ip)
+{
+   size_t    i, n, m, max;
+   uint64_t  x;
+
+   max = min(strlen(str), 15);
+   i = n = 0; m = 3;
+
+   while(m != 0)
+   {
+      while(i < max && str[i] != '.') i++;
+
+      if(i == max || !dec_to_uint64((uint8_t*)&str[n], i - n, &x) || x > 255)
+	 return 0;
+
+      *ip |= x<<(m--*8);
+      n = ++i;
+   }
+
+   if(n == max || !dec_to_uint64((uint8_t*)&str[n], max - n, &x) || x > 255)
+      return 0;
+
+   *ip |= x;
+   return 1;
+}
+
 static size_t __ip_gen(ip_hdr_t *hdr,
 		       ip_addr_t src, ip_addr_t dst,
 		       uint8_t proto, size_t dlen)
@@ -88,7 +114,7 @@ static size_t __ip_gen(ip_hdr_t *hdr,
       char ipd[IP_STR_SZ];
       ip_str(src, ips);
       ip_str(dst, ipd);
-      debug(IP, "snd IP src %s dst %s len %d\n", ips, ipd, len);
+      debug(IP, "snd IP src %s dst %s len %D\n", ips, ipd, len);
    }
 #endif
 
@@ -141,18 +167,18 @@ size_t ip_icmp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
    return __ip_gen(hdr, src, dst, IP_PROTO_ICMP, dlen);
 }
 
-void ip_dissect(loc_t pkt, size_t len)
+int ip_dissect(loc_t pkt, size_t len, buffer_t *rcv)
 {
    ip_hdr_t *hdr = (ip_hdr_t*)pkt.addr;
 
    if(hdr->ver != 4)
-      return;
+      return NET_DISSECT_FAIL;
 
    hdr->frag.raw = swap16(hdr->frag.raw);
    hdr->id = swap16(hdr->id);
    hdr->len = swap16(hdr->len);
    hdr->src = swap32(hdr->src);
-   hdr->dst = swap32(hdr->src);
+   hdr->dst = swap32(hdr->dst);
 
 #ifdef CONFIG_IP_DBG
    {
@@ -160,16 +186,18 @@ void ip_dissect(loc_t pkt, size_t len)
       char ipd[IP_STR_SZ];
       ip_str(hdr->src, ips);
       ip_str(hdr->dst, ipd);
-      debug(IP, "rcv IP %s src %s dst %s len %d off %d MF %d DF %d\n"
+      debug(IP, "rcv IP %s src %s dst %s len %d id %d off %d mf %d df %d\n"
 	    ,__ip_proto_str(hdr->proto), ips, ipd, hdr->len
-	    ,hdr->frag.off, hdr->frag.mf, hdr->frag.df);
+	    ,hdr->id, hdr->frag.off, hdr->frag.mf, hdr->frag.df);
    }
 #endif
 
    pkt.linear += sizeof(ip_hdr_t);
 
    if(hdr->proto == IP_PROTO_ICMP)
-      icmp_dissect(hdr->src, pkt, len - sizeof(ip_hdr_t));
+      return icmp_dissect(hdr->src, pkt, len - sizeof(ip_hdr_t));
    else if(hdr->proto == IP_PROTO_UDP)
-      udp_dissect(pkt, len - sizeof(ip_hdr_t));
+      return udp_dissect(pkt, len - sizeof(ip_hdr_t), rcv);
+
+   return NET_DISSECT_IGN;
 }

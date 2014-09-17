@@ -80,6 +80,6 @@ typedef size_t (*icmp_gen_t)(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);
 
 size_t icmp_echo_request(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);
 size_t icmp_echo_reply(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);
-void   icmp_dissect(ip_addr_t, loc_t, size_t);
+int    icmp_dissect(ip_addr_t, loc_t, size_t);
 
 #endif

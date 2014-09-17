@@ -80,6 +80,6 @@ size_t arp_who_has_pkt(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_
 size_t arp_is_at_pkt(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
 
 int    arp_cache_lookup(ip_addr_t, mac_addr_t*);
-void   arp_dissect(loc_t, size_t);
+int    arp_dissect(loc_t, size_t);
 
 #endif

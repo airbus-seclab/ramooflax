@@ -63,7 +63,7 @@ typedef size_t (*eth_gen_t)(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
 size_t eth_ip_pkt(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
 size_t eth_arp_pkt(eth_hdr_t*, mac_addr_t*, mac_addr_t*);
 
-void   eth_dissect(loc_t, size_t);
+int    eth_dissect(loc_t, size_t, buffer_t*);
 
 void   mac_str(mac_addr_t*, char*);
 int    mac_cmp(mac_addr_t*, mac_addr_t*);

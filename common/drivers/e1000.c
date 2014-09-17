@@ -180,7 +180,7 @@ void e1k_rx_init(e1k_info_t *e1k)
       e1k->mem.rdesc[i].addr = e1k->mem.rx_dma.linear + i*RX_BUFF_SZ;
       e1k->mem.rdesc[i].sts.raw = 0;
 
-      debug(E1000, "set rdesc%d 0x%x buffer addr = 0x%X\n"
+      debug(E1000, "set rdesc%D 0x%X buffer addr = 0x%X\n"
 	    ,i, &e1k->mem.rdesc[i], e1k->mem.rdesc[i].addr);
    }
 
@@ -232,7 +232,7 @@ void e1k_tx_init(e1k_info_t *e1k)
    for(i=0 ; i<TX_DESC_NR ; i++)
    {
       e1k->mem.tdesc[i].addr = e1k->mem.tx_dma.linear + i*TX_BUFF_SZ;
-      debug(E1000, "set tdesc%d 0x%x buffer addr = 0x%X\n"
+      debug(E1000, "set tdesc%D 0x%X buffer addr = 0x%X\n"
 	    ,i, &e1k->mem.tdesc[i], e1k->mem.tdesc[i].addr);
    }
 
@@ -297,6 +297,125 @@ void e1k_tx_on(net_info_t *net)
    e1k->tx.ctl->raw = tctl.raw;
 }
 
+/*
+** XXX:
+** Better do a memory allocator for TX dma packet buffers
+** and store them in tx desc only when needed
+*/
+offset_t e1k_tx_get_pktbuf(e1k_info_t *e1k)
+{
+   return e1k->mem.tdesc[e1k->tx.dt->raw].addr;
+}
+
+void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
+{
+   e1k_info_t           *e1k;
+   volatile e1k_tdesc_t *dsc;
+   e1k_tdesc_cmd_t       cmd;
+   /* e1k_tdesc_sts_t       sts; */
+   uint32_t              tdt;
+
+   e1k = &net->arch;
+   tdt = e1k->tx.dt->raw;
+   dsc = &e1k->mem.tdesc[tdt];
+
+   dsc->addr = pkt.linear;
+   dsc->len = len;
+
+   debug(E1000, "--> [TDT %d] len %d\n", tdt, dsc->len);
+
+   /* { */
+   /*    size_t i; */
+   /*    volatile e1k_rdesc_t *d; */
+   /*    e1k_rdesc_sts_t s; */
+   /*    debug(E1000, "[deep check] RDT %d RDH %d\n",e1k->rx.dt->raw,e1k->rx.dh->raw); */
+   /*    for(i=0 ;i<RX_DESC_NR ; i++) */
+   /*    { */
+   /* 	 d = &e1k->mem.rdesc[i]; */
+   /* 	 s.raw = d->sts.raw; */
+   /* 	 debug(E1000, " %d:%d", i, s.dd); */
+   /*    } */
+   /*    debug(E1000,"\n"); */
+   /* } */
+
+/* #ifdef CONFIG_E1000_DBG */
+/*    { */
+/*       size_t i=0; */
+/*       for(i=0 ; i<len ; i++) */
+/* 	 debug(E1000, " %x", pkt.u8[i]); */
+/*       debug(E1000,"\n"); */
+/*    } */
+/* #endif */
+
+   cmd.raw = 0;
+   cmd.eop = 1;
+   cmd.rs = 1;
+   dsc->cmd.raw = cmd.raw ;
+   e1k->tx.dt->raw = (tdt+1)%TX_DESC_NR;
+
+   /* debug(E1000, "sending packet ... "); */
+   /* do */
+   /* { */
+   /*    io_wait(1000); */
+   /*    sts.raw = dsc->sts.raw; */
+   /* } while(!sts.dd); */
+   /* debug(E1000, "done.\n"); */
+}
+
+size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
+{
+   e1k_info_t           *e1k;
+   volatile e1k_rdesc_t *dsc;
+   e1k_rdesc_sts_t       sts;
+   uint32_t              rdt;
+
+   e1k = &net->arch;
+   rdt = (e1k->rx.dt->raw+1)%RX_DESC_NR;
+   dsc = &e1k->mem.rdesc[rdt];
+   sts.raw = dsc->sts.raw;
+
+   /* e1k_rdesc_err_t err; */
+   /* err.raw = dsc->err.raw; */
+   /* e1k_ic_reg_t icr; */
+   /* icr.raw = e1k->icr->raw; */
+
+   if(!sts.dd)
+      return 0;
+
+   if(!sts.eop)
+      debug(E1000, "[RDT %d] !!! WRN !!! eop == 0\n", rdt);
+
+   memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
+   debug(E1000, "<-- [RDT %d] len %d eop %d\n", rdt, dsc->len, sts.eop);
+
+/* #ifdef CONFIG_E1000_DBG */
+/*    { */
+/*       size_t i=0; */
+/*       for(i=0 ; i<dsc->len ; i++) */
+/* 	 debug(E1000, " %x", ((uint8_t*)data)[i]); */
+/*       debug(E1000,"\n"); */
+/*    } */
+/* #endif */
+
+   /* { */
+   /*    size_t i; */
+   /*    volatile e1k_rdesc_t *d; */
+   /*    e1k_rdesc_sts_t s; */
+   /*    debug(E1000, "[deep check] RDT %d RDH %d\n",e1k->rx.dt->raw,e1k->rx.dh->raw); */
+   /*    for(i=0 ;i<RX_DESC_NR ; i++) */
+   /*    { */
+   /* 	 d = &e1k->mem.rdesc[i]; */
+   /* 	 s.raw = d->sts.raw; */
+   /* 	 debug(E1000, " %d:%d", i, s.dd); */
+   /*    } */
+   /*    debug(E1000,"\n"); */
+   /* } */
+
+   dsc->sts.raw = 0;
+   e1k->rx.dt->raw = rdt;
+   return dsc->len;
+}
+
 /* static void e1k_recv_status(net_info_t *net) */
 /* { */
 /*    e1k_info_t      *e1k = &net->arch; */
@@ -333,97 +452,3 @@ void e1k_tx_on(net_info_t *net)
 /*    debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n" */
 /* 	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32); */
 /* } */
-
-/*
-** XXX:
-** Better do a memory allocator for TX dma packet buffers
-** and store them in tx desc only when needed
-*/
-offset_t e1k_tx_get_pktbuf(e1k_info_t *e1k)
-{
-   return e1k->mem.tdesc[e1k->tx.dt->raw].addr;
-}
-
-void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
-{
-   e1k_info_t           *e1k;
-   volatile e1k_tdesc_t *dsc;
-   e1k_tdesc_cmd_t       cmd;
-   /* e1k_tdesc_sts_t       sts; */
-   size_t                tdt;
-
-   e1k = &net->arch;
-   tdt = e1k->tx.dt->raw;
-   dsc = &e1k->mem.tdesc[tdt];
-
-   dsc->addr = pkt.linear;
-   dsc->len = len;
-
-   debug(E1000, "--> [TDT %d] len %d\n", tdt, len);
-
-/* #ifdef CONFIG_E1000_DBG */
-/*    { */
-/*       size_t i=0; */
-/*       for(i=0 ; i<len ; i++) */
-/* 	 debug(E1000, " %x", pkt.u8[i]); */
-/*       debug(E1000,"\n"); */
-/*    } */
-/* #endif */
-
-   cmd.raw = 0;
-   cmd.eop = 1;
-   cmd.rs = 1;
-   dsc->cmd.raw = cmd.raw ;
-   e1k->tx.dt->raw = (tdt+1)%TX_DESC_NR;
-
-   /* debug(E1000, "sending packet ... "); */
-   /* do */
-   /* { */
-   /*    io_wait(1000); */
-   /*    sts.raw = dsc->sts.raw; */
-   /* } while(!sts.dd); */
-   /* debug(E1000, "done.\n"); */
-}
-
-size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
-{
-   e1k_info_t           *e1k;
-   volatile e1k_rdesc_t *dsc;
-   e1k_rdesc_sts_t       sts;
-   size_t                rdt;
-
-   e1k = &net->arch;
-   rdt = (e1k->rx.dt->raw+1)%RX_DESC_NR;
-   dsc = &e1k->mem.rdesc[rdt];
-   sts.raw = dsc->sts.raw;
-
-   /* e1k_rdesc_err_t err; */
-   /* err.raw = dsc->err.raw; */
-   /* e1k_ic_reg_t icr; */
-   /* icr.raw = e1k->icr->raw; */
-
-   if(!sts.dd)
-      return 0;
-
-   if(!sts.eop)
-      debug(E1000, "-----!!!!!! NEED TO READ MORE PACKET (eop=0)\n");
-
-   /* XXX: pkt size mgmt */
-   memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
-
-   debug(E1000, "<-- [RDT %d] len %d eop %d\n", rdt, dsc->len, sts.eop);
-
-/* #ifdef CONFIG_E1000_DBG */
-/*    { */
-/*       size_t i=0; */
-/*       for(i=0 ; i<dsc->len ; i++) */
-/* 	 debug(E1000, " %x", ((uint8_t*)data)[i]); */
-/*       debug(E1000,"\n"); */
-/*    } */
-/* #endif */
-
-   dsc->sts.raw = 0;
-   e1k->rx.dt->raw = rdt;
-
-   return dsc->len;
-}

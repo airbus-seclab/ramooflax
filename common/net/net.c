@@ -51,13 +51,18 @@ void net_setup()
 {
    net_info_t *net = &info->hrd.dev.net;
 
-   net->port = 1337;
-   net->ip   = 0xac108380; //172.16.131.128
-   net->mk   = 0xffffff00; //255.255.255.0
-   net->gw   = 0xac108301; //172.16.131.1
+/* vmware vmnet1 */
+   ip_from_str("172.16.131.128", &net->ip);
+   ip_from_str("172.16.131.1", &net->gw);
+   ip_from_str("255.255.255.0", &net->mk);
 
-   net->peer.ip   = 0xac108301; //172.16.131.1
-   net->peer.port = 5000;
+/* parallels host only */
+   /* ip_from_str("10.37.129.128", &net->ip); */
+   /* ip_from_str("10.37.129.2", &net->gw); */
+   /* ip_from_str("255.255.255.0", &net->mk); */
+
+   net->port = 1337;
+   net->peer.ip = net->gw;
 
    {
       loc_t  pkt;
@@ -69,24 +74,31 @@ void net_setup()
    }
 }
 
-
 void net_test_recv()
 {
-   net_info_t *net = &info->hrd.dev.net;
-   size_t      len;
-   loc_t       pkt;
-
-   static uint8_t frame[2048];
-
-   pkt.u8 = frame;
+   uint8_t data[256];
+   size_t  len;
 
    while(1)
    {
-      len = net_recv_pkt(net, pkt, sizeof(frame));
+      //io_wait(10000000);
+      //io_wait(1000000);
+
+      len = net_read(data, sizeof(data));
+
       if(!len)
 	 continue;
 
-      eth_dissect(pkt, len);
+      /* debug(NET, "net rcv (%D):\n", len); */
+
+/* #ifdef CONFIG_NET_DBG */
+/*       { */
+/* 	 size_t i; */
+/* 	 for(i=0 ; i<len ; i++) */
+/* 	    debug(NET, "%c", data[i]); */
+/* 	 debug(NET,"\n"); */
+/*       } */
+/* #endif */
    }
 }
 
@@ -218,11 +230,17 @@ size_t net_gen_udp_pkt(ip_addr_t ip, uint16_t port, loc_t pkt, size_t dlen)
 			  udp_pkt(hdr, net->port, port, dlen));
 }
 
-static size_t __net_write(net_info_t *net, loc_t pkt, loc_t dpkt, buffer_t *buf)
+static size_t __net_write(net_info_t *net, buffer_t *buf)
 {
+   loc_t  pkt, data;
    size_t len;
 
-   memcpy(dpkt.addr, buf->data.addr, buf->sz);
+   pkt.linear  = net_tx_get_pktbuf();
+   if(!pkt.linear)
+      return 0;
+
+   data.linear = pkt.linear + HDR_FRAME_SZ;
+   memcpy(data.addr, buf->data.addr, buf->sz);
 
    len = net_gen_udp_pkt(net->peer.ip, net->peer.port, pkt, buf->sz);
    if(!len)
@@ -235,24 +253,18 @@ static size_t __net_write(net_info_t *net, loc_t pkt, loc_t dpkt, buffer_t *buf)
 size_t net_write(uint8_t *data, size_t len)
 {
    net_info_t *net = &info->hrd.dev.net;
-   loc_t       pkt, dpkt;
    buffer_t    buf;
    size_t      times, last, cnt;
 
    __divrm(len, DATA_FRAME_SZ, times, last);
 
-   pkt.linear  = net_tx_get_pktbuf();
-   if(!pkt.linear)
-      return 0;
-
-   dpkt.linear = pkt.linear + HDR_FRAME_SZ;
    buf.data.u8 = data;
    buf.sz = DATA_FRAME_SZ;
    cnt = 0;
 
    while(times--)
    {
-      size_t sz = __net_write(net, pkt, dpkt, &buf);
+      size_t sz = __net_write(net, &buf);
       cnt += sz;
       buf.data.linear += sz;
    }
@@ -260,13 +272,61 @@ size_t net_write(uint8_t *data, size_t len)
    if(last)
    {
       buf.sz = last;
-      cnt += __net_write(net, pkt, dpkt, &buf);
+      cnt += __net_write(net, &buf);
    }
 
    return cnt;
 }
 
+static size_t __net_read(net_info_t *net, buffer_t *buf)
+{
+   static uint8_t frame[RX_BUFF_SZ];
+   loc_t          pkt;
+   buffer_t       rcv;
+   size_t         len;
+
+   pkt.u8 = frame;
+   len = net_recv_pkt(net, pkt, sizeof(frame));
+
+   if(!len || eth_dissect(pkt, len, &rcv) != NET_DISSECT_UDP)
+      return 0;
+
+   len = min(buf->sz, rcv.sz);
+   if(len)
+      memcpy(buf->data.addr, rcv.data.addr, len);
+
+   return len;
+}
+
 size_t net_read(uint8_t *data, size_t len)
 {
-   return (size_t)data + len;
+   net_info_t *net = &info->hrd.dev.net;
+   buffer_t    buf;
+   size_t      times, last, cnt;
+
+   __divrm(len, DATA_FRAME_SZ, times, last);
+
+   buf.data.u8 = data;
+   buf.sz = DATA_FRAME_SZ;
+   cnt = 0;
+
+   while(times--)
+   {
+      size_t sz = __net_read(net, &buf);
+
+      if(sz < buf.sz)
+	 return cnt;
+
+      cnt += sz;
+      buf.data.linear += sz;
+   }
+
+   if(last)
+   {
+      buf.sz = last;
+      cnt += __net_read(net, &buf);
+   }
+
+   return cnt;
 }
+

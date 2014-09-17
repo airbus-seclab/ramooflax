@@ -86,7 +86,7 @@ size_t eth_arp_pkt(eth_hdr_t *hdr, mac_addr_t *src, mac_addr_t *dst)
    return __eth_gen(hdr, src, dst);
 }
 
-void eth_dissect(loc_t pkt, size_t len)
+int eth_dissect(loc_t pkt, size_t len, buffer_t *rcv)
 {
    eth_hdr_t *hdr = (eth_hdr_t*)pkt.addr;
 
@@ -95,7 +95,9 @@ void eth_dissect(loc_t pkt, size_t len)
    pkt.linear += sizeof(eth_hdr_t);
 
    if(hdr->type == ETHER_TYPE_ARP)
-      arp_dissect(pkt, len - sizeof(eth_hdr_t));
+      return arp_dissect(pkt, len - sizeof(eth_hdr_t));
    else if(hdr->type == ETHER_TYPE_IP)
-      ip_dissect(pkt, len - sizeof(eth_hdr_t));
+      return ip_dissect(pkt, len - sizeof(eth_hdr_t), rcv);
+
+   return NET_DISSECT_IGN;
 }
