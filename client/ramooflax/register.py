@@ -43,7 +43,6 @@ class Register(object):
 
     def __write_commit(self):
         self.__wr = False
-        return self.__value
 
     def __need_commit(self):
         return self.__wr
@@ -79,7 +78,8 @@ class Register(object):
         self.__write_update(value)
 
     def _commit(self):
-        return self.__encode(self.__write_commit())
+        self.__write_commit()
+        return self.__encode()
 
     def __send(self):
         self.__write(self.__idx, self._commit())
