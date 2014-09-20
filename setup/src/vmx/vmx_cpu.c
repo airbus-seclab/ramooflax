@@ -62,21 +62,22 @@ static void vmx_cpu_features()
       rd_msr_vmx_entry_ctls(info->vm.vmx_fx_entry);
    }
 
-   if(!vmx_allow_proc2(info->vm.vmx_fx_proc))
+   if(!info->vm.vmx_fx_proc.proc2)
       panic("vmx missing features (secondary proc based) !");
 
    rd_msr_vmx_proc2_ctls(info->vm.vmx_fx_proc2);
 
-   if(!vmx_allow_ept(info->vm.vmx_fx_proc2))
+   /* if(!vmx_allow_ept(info->vm.vmx_fx_proc2)) */
+   if(!info->vm.vmx_fx_proc2.ept)
       panic("vmx ept not supported");
 
-   if(!vmx_allow_dt(info->vm.vmx_fx_proc2))
+   if(!info->vm.vmx_fx_proc2.dt)
       panic("vmx desc table exiting not supported");
 
-   if(!vmx_allow_vpid(info->vm.vmx_fx_proc2))
+   if(!info->vm.vmx_fx_proc2.vpid)
       panic("vmx vpid not supported");
 
-   if(!vmx_allow_uguest(info->vm.vmx_fx_proc2))
+   if(!info->vm.vmx_fx_proc2.uguest)
       panic("vmx missing unrestricted guest\n");
 
    rd_msr_vmx_ept_cap(info->vm.vmx_ept_cap);

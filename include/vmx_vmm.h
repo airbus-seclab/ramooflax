@@ -67,7 +67,7 @@ typedef struct vmx_bazaar
    vmx_basic_info_msr_t vmx_info;
    vmx_pin_ctls_msr_t   vmx_fx_pin;
    vmx_proc_ctls_msr_t  vmx_fx_proc;
-   vmx_proc_ctls_msr_t  vmx_fx_proc2;
+   vmx_proc2_ctls_msr_t vmx_fx_proc2;
    vmx_exit_ctls_msr_t  vmx_fx_exit;
    vmx_entry_ctls_msr_t vmx_fx_entry;
    vmx_fixed_cr_msr_t   vmx_fx_cr0;

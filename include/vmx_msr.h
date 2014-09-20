@@ -20,6 +20,7 @@
 
 #include <types.h>
 #include <msr.h>
+#include <vmx_types.h>
 
 /*
 ** IA32_EFER_MSR
@@ -202,6 +203,14 @@ typedef union vmx_basic_info_msr
 */
 #define vmx_set_fixed(_rg,_fx)           ((_rg) = ((_rg) & _fx.allow_1) | _fx.allow_0)
 
+/* XXX: make a macro to create the following
+** vmx_xxx_msr types with fields:
+** - allowed0
+** - allowed1
+** - specific bitfields of subsequent type
+**   from vmx_vmcs.h (pin, proc, proc2, ...)
+*/
+
 /*
 ** VMX_PINBASED_CTLS MSR
 */
@@ -224,12 +233,18 @@ typedef union vmx_pinbased_ctls_msr
 /*
 ** VMX_PROCBASED_CTLS MSR
 */
-typedef union vmx_procbased_ctls_msr
+typedef union vmx_primary_processor_based_ctls_msr
 {
    struct
    {
       uint32_t  allow_0;
-      uint32_t  allow_1;
+
+      union
+      {
+	 uint32_t allow_1;
+	 vmcs_exec_ctl_proc_based_fields_t;
+
+      } __attribute__((packed));
 
    } __attribute__((packed));
 
@@ -237,15 +252,29 @@ typedef union vmx_procbased_ctls_msr
 
 } __attribute__((packed)) vmx_proc_ctls_msr_t;
 
+typedef union vmx_secondary_processor_based_ctls_msr
+{
+   struct
+   {
+      uint32_t  allow_0;
+
+      union
+      {
+	 uint32_t allow_1;
+	 vmcs_exec_ctl_proc2_based_fields_t;
+
+      } __attribute__((packed));
+
+   } __attribute__((packed));
+
+   msr_t;
+
+} __attribute__((packed)) vmx_proc2_ctls_msr_t;
+
+
 #define rd_msr_vmx_proc_ctls(val)      rd_msr64(0x482UL,(val).edx,(val).eax)
 #define rd_msr_vmx_proc2_ctls(val)     rd_msr64(0x48bUL,(val).edx,(val).eax)
 #define rd_msr_vmx_true_proc_ctls(val) rd_msr64(0x48eUL,(val).edx,(val).eax)
-
-#define vmx_allow_proc2(_fx)           (_fx.allow_1 & (1<<31))
-#define vmx_allow_ept(_fx)             (_fx.allow_1 & (1<<1))
-#define vmx_allow_dt(_fx)              (_fx.allow_1 & (1<<2))
-#define vmx_allow_vpid(_fx)            (_fx.allow_1 & (1<<5))
-#define vmx_allow_uguest(_fx)          (_fx.allow_1 & (1<<7))
 
 /*
 ** VMX_EXIT_CTLS MSR
@@ -403,8 +432,6 @@ typedef union vmx_ept_vpid_cap_msr
 } __attribute__((packed)) vmx_ept_cap_msr_t;
 
 #define rd_msr_vmx_ept_cap(val)        rd_msr64(0x48cUL,(val).edx,(val).eax)
-
-
 
 
 #endif
