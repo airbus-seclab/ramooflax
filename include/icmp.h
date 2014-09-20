@@ -70,10 +70,10 @@ typedef union icmp_header
 /*
 ** Functions
 */
-#define icmp_checksum(_hdr_, _ln_)				   \
-   ({								   \
-      (_hdr_)->chk = 0;						   \
-      (_hdr_)->chk = rfc1071_checksum((uint16_t*)(_hdr_), (_ln_)); \
+#define icmp_checksum(_hdr_, _ln_)					\
+   ({									\
+      (_hdr_)->chk = 0;							\
+      (_hdr_)->chk = swap16(rfc1071_checksum((uint16_t*)(_hdr_), (_ln_))); \
    })
 
 typedef size_t (*icmp_gen_t)(icmp_hdr_t*, uint16_t, uint16_t, void*, size_t);

@@ -23,6 +23,7 @@
 
 extern info_data_t *info;
 
+#ifdef CONFIG_ICMP_DBG
 static char* __icmp_type_str(uint8_t type)
 {
    switch(type)
@@ -36,6 +37,7 @@ static char* __icmp_type_str(uint8_t type)
 
    return "unknown";
 }
+#endif
 
 static size_t __icmp_gen(icmp_hdr_t *hdr, uint8_t type, uint8_t code, size_t dlen)
 {

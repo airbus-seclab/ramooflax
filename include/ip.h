@@ -70,7 +70,7 @@ typedef union ip_header
 #define ip_checksum(_hdr_)						\
    ({									\
       (_hdr_)->chk = 0;							\
-      (_hdr_)->chk = rfc1071_checksum((uint16_t*)(_hdr_), sizeof(ip_hdr_t)); \
+      (_hdr_)->chk = swap16(rfc1071_checksum((uint16_t*)(_hdr_), sizeof(ip_hdr_t))); \
    })
 
 typedef size_t (*ip_gen_t)(ip_hdr_t*, ip_addr_t, ip_addr_t, size_t);

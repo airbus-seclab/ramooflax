@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <checksum.h>
+#include <insn.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -27,7 +28,7 @@ uint16_t rfc1071_checksum(uint16_t *data, size_t len)
 
    len /= 2;
    while(len--)
-      chk.raw += *data++;
+      chk.raw += swap16(*data++);
 
-   return ~(chk.wlow + chk.whigh);
+   return ~adc16(chk.whigh, chk.wlow);
 }

@@ -42,4 +42,16 @@ static inline uint32_t pgcd(uint32_t a, uint32_t b)
    asm volatile ("div %%ecx":"=a"(r),"=d"(m):"a"(a),"d"(0),"c"(b))
 #endif
 
+#define adc16(a,b)							\
+   ({									\
+      uint16_t v;							\
+      asm volatile (							\
+	 "add %%dx, %%ax\n"						\
+	 "adc $0, %%ax"							\
+	 :"=a"(v)							\
+	 :"a"((a)),"d"((b))						\
+	 :"memory");							\
+      v;								\
+   })
+
 #endif

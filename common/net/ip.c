@@ -23,6 +23,7 @@
 
 extern info_data_t *info;
 
+#ifdef CONFIG_IP_DBG
 static char* __ip_proto_str(uint8_t proto)
 {
    switch(proto)
@@ -50,6 +51,7 @@ static char* __ip_proto_str(uint8_t proto)
    }
    return "unknown";
 }
+#endif
 
 void ip_str(ip_addr_t ip, char *str)
 {
@@ -69,6 +71,7 @@ int ip_from_str(char *str, ip_addr_t *ip)
 
    max = min(strlen(str), 15);
    i = n = 0; m = 3;
+   *ip = 0;
 
    while(m != 0)
    {
@@ -154,7 +157,7 @@ size_t ip_udp_pkt(ip_hdr_t *hdr, ip_addr_t src, ip_addr_t dst, size_t dlen)
       len++;
    }
 
-   udp->chk = rfc1071_checksum((uint16_t*)psd, len);
+   udp->chk = swap16(rfc1071_checksum((uint16_t*)psd, len));
    if(!udp->chk)
       udp->chk = ~udp->chk;
 
