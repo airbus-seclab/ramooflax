@@ -16,7 +16,6 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_vmm.h>
-#include <vmx_vm.h>
 #include <vmx_insn.h>
 #include <debug.h>
 #include <info_data.h>
@@ -48,6 +47,4 @@ void vmx_vmm_init()
 
    if(!vmx_vmxon(&vmcs_addr.raw))
       panic("failed to enter vmx root operations");
-
-   vmx_vm_init();
 }

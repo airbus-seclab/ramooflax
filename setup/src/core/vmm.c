@@ -16,46 +16,23 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmm.h>
-#include <vm.h>
-#include <mp.h>
-#include <dev_kbd.h>
-#include <dev_pic.h>
-#include <dev_uart.h>
-#include <dev_io_ports.h>
-
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-static void vmm_dev_init()
+static void vmm_ctrl_init()
 {
-   info->vm.dev.mem.a20 = 1;
-
-   dev_kbd_init(&info->vm.dev.kbd);
-   dev_uart_init(&info->vm.dev.uart, SERIAL_COM1);
-
-   /* proxify to detect rebase for uart irq injection */
-   info->vm.dev.pic1_icw2 = DFLT_PIC1_ICW2;
-   __deny_io_range(PIC1_START_PORT, PIC1_END_PORT);
-
-   /* lazzy emulation */
-   __deny_io_range(COM1_START_PORT, COM1_END_PORT);
-
-   /* monitor reboot and A20 */
-   __deny_io_range(KBD_START_PORT, KBD_END_PORT);
-   __deny_io(PS2_SYS_CTRL_PORT_A);
-}
-
-void __regparm__(1) vmm_start()
-{
-   vm_set_entry();
-   vmm_vmc_start();
+   info->vmm.ctrl.active_cr3 = &__cr3;
 }
 
 void vmm_init()
 {
-   info->vm.cpu.dflt_excp = VM_RMODE_EXCP_BITMAP;
+   vmm_ctrl_init();
    vmm_vmc_init();
-   vmm_dev_init();
+}
+
+void __regparm__(1) vmm_start()
+{
+   vmm_vmc_start();
 }

@@ -36,10 +36,8 @@ static void svm_cpu_features()
       panic("svm feature BIOS-locked");
 }
 
-void svm_vm_cpu_init()
+static void svm_cpu_skillz()
 {
-   svm_cpu_features();
-
    info->vm.cpu.skillz.pg_2M = 1;
    info->vm.cpu.skillz.pg_1G = info->vmm.cpu.skillz.pg_1G;
 
@@ -53,4 +51,10 @@ void svm_vm_cpu_init()
       info->vm.cpu.skillz.flush_tlb     = VMCB_TLB_CTL_FLUSH_ALL;
       info->vm.cpu.skillz.flush_tlb_glb = VMCB_TLB_CTL_FLUSH_ALL;
    }
+}
+
+void svm_vm_cpu_skillz_init()
+{
+   svm_cpu_features();
+   svm_cpu_skillz();
 }

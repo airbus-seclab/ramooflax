@@ -137,7 +137,7 @@ static void vmx_cpu_skillz()
 	 ,info->vm.max_paddr);
 }
 
-void vmx_vm_cpu_init()
+void vmx_vm_cpu_skillz_init()
 {
    vmx_cpu_features();
    vmx_cpu_skillz();

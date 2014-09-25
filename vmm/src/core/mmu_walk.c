@@ -200,6 +200,7 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
    uint32_t paddr;
    uint32_t vaddr = _vaddr & 0xffffffff;
 
+   debug(PG_W, "(0x%X) gCR3->addr 0x%x\n", cr3, cr3->addr);
 
    pd = (pde32_t*)page_addr(cr3->addr);
    if(vmm_area(pd))
@@ -207,6 +208,8 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
       debug(PG_W, "pd in vmm area\n");
       goto __failure;
    }
+
+   debug(PG_W, "page directory 0x%X\n", (offset_t)pd);
 
    pde = &pd[pd32_idx(vaddr)];
    if(!pg_present(pde))
@@ -217,6 +220,7 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
 
    if(__cr4.pse && pg_large(pde))
    {
+      debug(PG_W, "large page found (pde->addr 0x%x)\n", (uint32_t)pde->page.addr);
       paddr = pg_4M_addr((uint32_t)pde->page.addr) + pg_4M_offset(vaddr);
       *psz = PG_4M_SIZE;
       goto __prepare_addr;
@@ -228,6 +232,8 @@ int pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, offset_t *_paddr, size_t *psz
       debug(PG_W, "pt in vmm area\n");
       goto __failure;
    }
+
+   debug(PG_W, "page table @ 0x%X\n", (offset_t)pt);
 
    pte = &pt[pt32_idx(vaddr)];
    if(!pg_present(pte))
@@ -246,7 +252,7 @@ __prepare_addr:
       goto __failure;
    }
 
-   /* debug(PG_W, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr); */
+   debug(PG_W, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr);
    *_paddr = (offset_t)paddr;
    return 1;
 

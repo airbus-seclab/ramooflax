@@ -26,11 +26,11 @@
 void  cpu_init();
 
 #ifdef CONFIG_ARCH_AMD
-void svm_vm_cpu_init();
-#define vm_cpu_init()   svm_vm_cpu_init()
+void svm_vm_cpu_skillz_init();
+#define vm_cpu_skillz_init()   svm_vm_cpu_skillz_init()
 #else
-void vmx_vm_cpu_init();
-#define vm_cpu_init()   vmx_vm_cpu_init()
+void vmx_vm_cpu_skillz_init();
+#define vm_cpu_skillz_init()   vmx_vm_cpu_skillz_init()
 #endif
 
 #endif

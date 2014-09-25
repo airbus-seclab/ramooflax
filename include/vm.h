@@ -38,13 +38,15 @@
 #ifdef CONFIG_ARCH_AMD
 #include <svm_vmm.h>
 #include <svm_vm.h>
-typedef svm_vmc_t     vmc_t;
-typedef svm_bazaar_t  vm_bazaar_t;
+typedef svm_vmc_t       vmc_t;
+typedef svm_bazaar_t    vm_bazaar_t;
+#define vm_vmc_init()   svm_vm_init()
 #else
 #include <vmx_vmm.h>
 #include <vmx_vm.h>
-typedef vmx_vmc_t     vmc_t;
-typedef vmx_bazaar_t  vm_bazaar_t;
+typedef vmx_vmc_t       vmc_t;
+typedef vmx_bazaar_t    vm_bazaar_t;
+#define vm_vmc_init()   vmx_vm_init()
 #endif
 
 #include <realmem.h>
@@ -165,7 +167,9 @@ typedef struct vm_access
 /*
 ** Functions
 */
-#ifndef __INIT__
+#ifdef __INIT__
+void  vm_init();
+#else
 void  vm_get_code_addr(offset_t*, offset_t, int*);
 void  vm_get_stack_addr(offset_t*, offset_t, int*);
 

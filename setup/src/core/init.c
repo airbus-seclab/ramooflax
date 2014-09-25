@@ -22,6 +22,7 @@
 #include <vmem.h>
 #include <intr.h>
 #include <vmm.h>
+#include <vm.h>
 #include <info_data.h>
 
 static info_data_t __info;
@@ -35,4 +36,5 @@ void __regparm__(1) init(mbi_t *mbi)
    vmem_init();
    intr_init();
    vmm_init();
+   vm_init();
 }

@@ -27,4 +27,7 @@ void svm_vm_init()
    info->vm.dr_shadow[5].raw = 0x400;
 
    svm_vmcb_init();
+
+   /* vmrun needs vmcb addr in eax */
+   info->vm.cpu.gpr->rax.raw = (offset_t)&info->vm.cpu.vmc->vm_vmcb;
 }

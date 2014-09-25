@@ -22,7 +22,7 @@
 
 extern info_data_t *info;
 
-static void vmm_cpu_init_skillz()
+static void vmm_cpu_skillz_init()
 {
    info->vmm.cpu.skillz.pg_1G = page_1G_supported();
 
@@ -30,13 +30,8 @@ static void vmm_cpu_init_skillz()
 	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no");
 }
 
-static void vmm_cpu_init()
-{
-   vmm_cpu_init_skillz();
-}
-
 void cpu_init()
 {
-   vmm_cpu_init();
-   vm_cpu_init();
+   vmm_cpu_skillz_init();
+   vm_cpu_skillz_init();
 }

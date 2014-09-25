@@ -16,7 +16,6 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <svm_vmm.h>
-#include <svm_vm.h>
 #include <svm_insn.h>
 #include <info_data.h>
 
@@ -26,10 +25,5 @@ void svm_vmm_init()
 {
    wr_msr_host_state(&info->vm.cpu.vmc->vmm_vmcb);
    set_amd_efer((AMD_EFER_SVME|AMD_EFER_NXE), 1);
-
    svm_vmsave(&info->vm.cpu.vmc->vmm_vmcb);
-   svm_vm_init();
-
-   /* vmrun needs vmcb addr in eax */
-   info->vm.cpu.gpr->rax.raw = (offset_t)&info->vm.cpu.vmc->vm_vmcb;
 }
