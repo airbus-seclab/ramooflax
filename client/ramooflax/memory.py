@@ -36,12 +36,6 @@ class Memory:
     def __decode_val(self, val):
         return int(Utils.revert_string_bytes(val), 16)
 
-    def __read(self, addr, n):
-        return self.__decode_val(self.__gdb.read_mem(self.__encode_addr(addr), n))
-
-    def __write(self, addr, val, n):
-        self.__gdb.write_mem(self.__encode_addr(addr), self.__encode_val(val, n), n)
-
     def _flush(self):
         return
 
@@ -51,6 +45,19 @@ class Memory:
     def _quit(self):
         return
 
+    def cr_sync(self):
+        self.__cpu.sr["cr0"]._flush()
+        self.__cpu.sr["cr3"]._flush()
+        self.__cpu.sr["cr4"]._flush()
+
+    def __read(self, addr, n):
+        self.cr_sync()
+        return self.__decode_val(self.__gdb.read_mem(self.__encode_addr(addr),n))
+
+    def __write(self, addr, val, n):
+        self.cr_sync()
+        self.__gdb.write_mem(self.__encode_addr(addr),self.__encode_val(val,n),n)
+
     def read_byte(self, addr):
         return self.__read(addr, 1)
     def read_word(self, addr):
@@ -59,12 +66,6 @@ class Memory:
         return self.__read(addr, 4)
     def read_qword(self, addr):
         return self.__read(addr, 8)
-    def pread(self, addr, sz):
-        encoded = self.__encode(addr,16)+self.__encode(sz,16)
-        return self.__gdb.read_pmem(encoded, sz)
-    def vread(self, addr, sz):
-        encoded = self.__encode(addr,16)+self.__encode(sz,16)
-        return self.__gdb.read_vmem(encoded, sz)
 
     def write_byte(self, addr, val):
         return self.__write(addr, val, 1)
@@ -74,16 +75,29 @@ class Memory:
         return self.__write(addr, val, 4)
     def write_qword(self, addr, val):
         return self.__write(addr, val, 8)
+
+    def pread(self, addr, sz):
+        encoded = self.__encode(addr,16)+self.__encode(sz,16)
+        return self.__gdb.read_pmem(encoded, sz)
+
     def pwrite(self, addr, data):
         sz = len(data)
         encoded = self.__encode(addr,16)+self.__encode(sz,16)
         self.__gdb.write_pmem(encoded, data, sz)
+
+    def vread(self, addr, sz):
+        self.cr_sync()
+        encoded = self.__encode(addr,16)+self.__encode(sz,16)
+        return self.__gdb.read_vmem(encoded, sz)
+
     def vwrite(self, addr, data):
+        self.cr_sync()
         sz = len(data)
         encoded = self.__encode(addr,16)+self.__encode(sz,16)
         self.__gdb.write_vmem(encoded, data, sz)
 
     def translate(self, addr):
-        return int(self.__gdb.translate(self.__encode_addr(addr), self.__cpu.sz), 16)
+        self.cr_sync()
+        return int(self.__gdb.translate(self.__encode_addr(addr),self.__cpu.sz),16)
 
 

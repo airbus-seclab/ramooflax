@@ -324,7 +324,11 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
    if(!__paging())
       paddr = vaddr;
    else if(!__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz))
-      return (void)gdb_err_mem();
+   {
+      debug(GDBSTUB, "memory translation failure\n");
+      gdb_err_mem();
+      return;
+   }
 
    debug(GDBSTUB_CMD, "sending 0x%X\n", paddr);
 

@@ -19,6 +19,16 @@ import socket, errno
 
 from utils import Utils
 
+class GDBError(Exception):
+    def __init__(self, value):
+        self.value = value
+        self._dico = {0x00:"generic",
+                      0x0e:"memory",
+                      0x0c:"out of memory",
+                      0x16:"invalid"}
+    def __str__(self):
+        return self._dico.get(self.value, "unknown")
+
 class GDB:
     def __init__(self, ip, port, mode):
         self.ip = ip
@@ -169,7 +179,7 @@ class GDB:
                 print l,"in cache,",expected,"expected"
 
             if "$E" in self.__cache:
-                break
+                expected = l
 
         if Utils.debug:
             print "cache", repr(self.__cache)
@@ -198,6 +208,9 @@ class GDB:
             if Utils.debug:
                 print "still",len(self.__cache),"in cache"
                 print "done",done,"still",expected,"to process"
+
+            if isinstance(data, GDBError):
+                raise data
 
         return data
 
@@ -242,13 +255,14 @@ class GDB:
         elif sz == 0:
             print "received \"Unsupported\""
         elif sz == 3 and msg[0] == 'E':
-            self.__parse_error(msg[1:])
+            return self.__parse_error(msg[1:])
         return None
 
     def __parse_error(self, data):
         try:
             err = int(data,16)
             print "received error:", str(err)
+            return GDBError(err)
         except ValueError:
             print "bad error value received:", repr(data)
 
