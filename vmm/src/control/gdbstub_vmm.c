@@ -321,13 +321,10 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
 
    debug(GDBSTUB_CMD, "translating 0x%X\n", vaddr);
 
-   if(__paging())
-   {
-      if(!__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz))
-	 paddr = 0;
-   }
-   else
+   if(!__paging())
       paddr = vaddr;
+   else if(!__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz))
+      return (void)gdb_err_mem();
 
    debug(GDBSTUB_CMD, "sending 0x%X\n", paddr);
 
