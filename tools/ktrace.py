@@ -39,6 +39,7 @@ for i in range(len(symbols)):
 #read trace
 fd = sys.stdin
 line = fd.readline()
+print "\n == VMM Trace ==\n"
 while line != "":
     addr = line[:-1]
     if addr == "":
@@ -48,7 +49,8 @@ while line != "":
     addr = int(addr,16)
     for i in range(len(symbols)):
         if addr >= symbols[i][0] and addr < symbols[i][0]+symbols[i][1]:
-            print "[0x%x] %s (0x%x)" % (addr,symbols[i][2],symbols[i][0])
+            print "[RIP 0x%.16x FCT 0x%.16x] %s"%(addr,symbols[i][0],symbols[i][2])
+            sys.stdout.flush()
             break
 
     line = fd.readline()
