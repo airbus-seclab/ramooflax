@@ -34,4 +34,3 @@ int dev_ps2(ps2_t *ps2, io_insn_t *io)
    dev_a20_set((uint8_t)ps2->enabled_a20);
    return 1;
 }
-

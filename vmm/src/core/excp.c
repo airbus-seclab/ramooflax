@@ -74,22 +74,27 @@ void vmm_excp_mce()
 void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
 {
    debug(EXCP,
-	 "vmm %s exception\n"
+	 "\nvmm %s exception\n"
 	 " . excp #%d error 0x%X\n"
 	 " . cs:rip 0x%X:0x%X\n"
 	 " . ss:rsp 0x%X:0x%X\n"
 	 " . rflags 0x%X\n"
 	 ,exception_names[ctx->nr.blow]
 	 ,ctx->nr.blow, ctx->err.raw
-	 ,ctx->cs.raw, ctx->rip.raw
-	 ,ctx->ss.raw, ctx->rsp.raw
+	 ,ctx->cs.raw,  ctx->rip.raw
+	 ,ctx->ss.raw,  ctx->rsp.raw
 	 ,ctx->rflags.raw);
 
    switch(ctx->nr.blow)
    {
+   case NMI_EXCP:
+      debug(EXCP, "#NMI (ignored)\n");
+      return;
+
    case MC_EXCP:
       vmm_excp_mce();
       break;
+
    case PF_EXCP:
       debug(EXCP,
 	    "#PF details: p:%d wr:%d us:%d id:%d addr 0x%X\n"
@@ -99,13 +104,14 @@ void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
 	    ,ctx->err.pf.id
 	    ,get_cr2());
       break;
+
    case GP_EXCP:
       debug(EXCP,
 	    "#GP details: ext:%d idt:%d ti:%d index:%d\n"
-	    ,ctx->err.gp.ext
-	    ,ctx->err.gp.idt
-	    ,ctx->err.gp.ti
-	    ,ctx->err.gp.idx);
+	    ,ctx->err.sl.ext
+	    ,ctx->err.sl.idt
+	    ,ctx->err.sl.ti
+	    ,ctx->err.sl.idx);
       break;
    }
 

@@ -125,7 +125,7 @@ static void vmx_vmcs_exec_controls_io_init()
 static void vmx_vmcs_exec_controls_init()
 {
    //vm_exec_ctrls.pin.preempt = 1;
-   vm_exec_ctrls.pin.nmi     = 1;
+   //vm_exec_ctrls.pin.nmi     = 1;
 
    vm_exec_ctrls.proc.tsc   = 1;
    vm_exec_ctrls.proc.cr3l  = 1;
