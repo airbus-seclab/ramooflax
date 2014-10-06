@@ -98,7 +98,7 @@ static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    vmx_vmexit_resolve_preempt,          //PREEMPT
    resolve_default,                     //INVVPID
    resolve_wbinvd,                      //WBINVD
-   resolve_default                      //XSETBV
+   vmx_vmexit_resolve_xsetbv            //XSETBV
 };
 
 static void vmx_vmexit_tsc_rebase(raw64_t tsc)

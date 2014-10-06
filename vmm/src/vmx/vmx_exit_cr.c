@@ -92,3 +92,24 @@ int vmx_vmexit_resolve_cr_access()
    vmcs_read(vm_exit_info.insn_len);
    return emulate_done(rc, vm_exit_info.insn_len.raw);
 }
+
+int vmx_vmexit_resolve_xsetbv()
+{
+   gpr64_ctx_t *ctx = info->vm.cpu.gpr;
+   int          rc;
+   cr4_reg_t    cr4;
+
+   vmcs_read(vm_state.cr4);
+   vmcs_read(vm_exec_ctrls.cr4_read_shadow);
+
+   cr4.raw = get_cr4();
+
+   debug(VMX_CR0, "cr4 %d gcr4 %d %d\n"
+	 ,cr4.osxsave, vm_state.cr4.osxsave, vm_exec_ctrls.cr4_read_shadow.osxsave);
+
+   asm volatile("xsetbv"::"a"(ctx->rax.low),"c"(ctx->rcx.low),"d"(ctx->rdx.low));
+   rc = VM_DONE; /* XXX: #GP, #UD ... */
+
+   vmcs_read(vm_exit_info.insn_len);
+   return emulate_done(rc, vm_exit_info.insn_len.raw);
+}

@@ -118,20 +118,21 @@ static void vmx_vmexit_show_cr()
 {
    printf("-\n"
 	  "cpl             : %d\n"
-	  "cr0             : 0x%x (pe:%d pg:%d)\n"
+	  "cr0             : 0x%x (pe:%d pg:%d ne:%d)\n"
 	  "cr2             : 0x%X\n"
 	  "cr3             : 0x%X\n"
-	  "cr4             : 0x%x (pae:%d pse:%d pge:%d)\n"
+	  "cr4             : 0x%x (pae:%d pse:%d pge:%d vmxe:%d)\n"
 	  "eflags          : 0x%x (vm:%d rf:%d iopl:%d if:%d tf:%d)\n"
 	  "efer (shadow)   : 0x%x (lma:%d lme:%d nxe:%d)\n"
-	  "efer            : 0x%x (lma:%d lme:%d nxe:%d) ia32e:%d\n"
+	  "efer            : 0x%x (lma:%d lme:%d nxe:%d ia32e:%d)\n"
 	  "gdtr (limit)    : 0x%x (0x%x)\n"
 	  "idtr (limit)    : 0x%x (0x%x)\n"
 	  ,__cpl
-	  ,vm_state.cr0.low, vm_state.cr0.pe, vm_state.cr0.pg
+	  ,vm_state.cr0.low, vm_state.cr0.pe, vm_state.cr0.pg, vm_state.cr0.ne
 	  ,vm_state.cr2.raw
 	  ,vm_state.cr3.raw
-	  ,vm_state.cr4.low, vm_state.cr4.pae, vm_state.cr4.pse, vm_state.cr4.pge
+	  ,vm_state.cr4.low, vm_state.cr4.pae
+	  ,vm_state.cr4.pse, vm_state.cr4.pge, vm_state.cr4.vmxe
 	  ,vm_state.rflags.low,vm_state.rflags.vm
 	  ,vm_state.rflags.rf,vm_state.rflags.iopl
 	  ,vm_state.rflags.IF,vm_state.rflags.tf

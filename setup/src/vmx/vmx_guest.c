@@ -29,7 +29,7 @@ static void vmx_vmcs_guest_nonregister_state_init()
 
    rd_msr_vmx_misc_data(misc_data);
    misc_data.eax = (misc_data.eax>>6) & 0x3;
-   vm_state.activity_state.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE & misc_data.eax;
+   vm_state.activity_state.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE&misc_data.eax;
 
    vm_state.vmcs_link_ptr.raw = -1ULL;
    //vm_state.preempt_timer.raw = 1;
