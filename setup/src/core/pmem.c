@@ -267,7 +267,6 @@ void pmem_init(mbi_t *mbi)
 	 ,info->vm.cpu.vmc
       );
 
-
    debug_warning();
 /*
   read IA32_VMX_BASIC to check:

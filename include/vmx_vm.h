@@ -167,9 +167,10 @@
 /*
 ** CR registers
 */
-#define __cr0_cache_update(_guest)   \
-   ({				     \
-      /* XXX: set EPT as UC */	     \
+#define __cr0_cache_update(_guest)			\
+   ({							\
+      /* XXX: set EPT as UC */				\
+      debug(CR0, "cr0 cache update not implemented\n");	\
    })
 
 #define __cr0_update(_gst)			\

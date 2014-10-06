@@ -33,7 +33,7 @@ static void __resolve_cpuid_native()
 static void __resolve_cpuid_feature()
 {
    /* gpr64_ctx_t *ctx = info->vm.cpu.gpr; */
-   /* ctx->rcx.low &= ~CPUID_ECX_FEAT_MWAIT; */
+   /* ctx->rcx.low &= ~CPUID_ECX_FEAT_MONITOR; */
    /* ctx->rdx.low &= ~CPUID_EDX_FEAT_APIC; */
 }
 
