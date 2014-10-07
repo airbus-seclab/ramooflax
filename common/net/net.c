@@ -28,38 +28,30 @@ static void net_params(mbi_t *mbi)
    net_info_t    *net = &info->hrd.dev.net;
    module_t      *mod = (module_t*)((offset_t)mbi->mods_addr + sizeof(module_t));
    mbi_opt_hdl_t  hdl = (mbi_opt_hdl_t)ip_from_str;
-   char           str[IP_STR_SZ];
 
-   if(mbi_get_opt(mbi, mod, "ip", hdl, (void*)&net->ip))
-   {
-      ip_str(net->ip, str);
-      debug(PMEM, "ip addr %s\n", str);
-   }
+   if(!mbi_get_opt(mbi, mod, "ip", hdl, (void*)&net->ip))
+      panic("need ip=x.x.x.x on vmm module cmd line\n");
 
-   if(mbi_get_opt(mbi, mod, "netmask", hdl, (void*)&net->mk))
-   {
-      ip_str(net->mk, str);
-      debug(PMEM, "netmask %s\n", str);
-   }
+   if(!mbi_get_opt(mbi, mod, "netmask", hdl, (void*)&net->mk))
+      panic("need netmask=x.x.x.x on vmm module cmd line\n");
 
-   if(mbi_get_opt(mbi, mod, "gateway", hdl, (void*)&net->gw))
-   {
-      ip_str(net->gw, str);
-      debug(PMEM, "gateway %s\n", str);
-   }
-
-/* vmware vmnet1 */
-   /* ip_from_str("172.16.131.128", &net->ip); */
-   /* ip_from_str("172.16.131.1", &net->gw); */
-   /* ip_from_str("255.255.255.0", &net->mk); */
-
-/* parallels host only */
-   /* ip_from_str("10.37.129.128", &net->ip); */
-   /* ip_from_str("10.37.129.2", &net->gw); */
-   /* ip_from_str("255.255.255.0", &net->mk); */
+   if(!mbi_get_opt(mbi, mod, "gateway", hdl, (void*)&net->gw))
+      panic("need gateway=x.x.x.x on vmm module cmd line\n");
 
    net->peer.ip = net->gw;
    net->port = 1337;
+
+#ifdef CONFIG_NET_DBG
+   {
+      char str[IP_STR_SZ];
+      ip_str(net->ip, str);
+      debug(NET, "ip addr %s\n", str);
+      ip_str(net->mk, str);
+      debug(PMEM, "netmask %s\n", str);
+      ip_str(net->gw, str);
+      debug(PMEM, "gateway %s\n", str);
+   }
+#endif
 }
 void net_init(mbi_t *mbi)
 {
