@@ -171,13 +171,12 @@ static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
       io->src.addr = (void*)&info->vm.cpu.gpr->rax.low;
    }
 
-   if(io->sz != 1)
+   switch(io->sz)
    {
-      debug(DEV_IO, "simple io size != 1 not supported\n");
-      return 0;
+   case 1: *io->dst.u8  = *io->src.u8;  break;
+   case 2: *io->dst.u16 = *io->src.u16; break;
+   case 4: *io->dst.u32 = *io->src.u32; break;
    }
-
-   *io->dst.u8 = *io->src.u8;
 
    sz->done      += io->sz;
    sz->available -= io->sz;
@@ -186,7 +185,7 @@ static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
    return 1;
 }
 
-static void dev_io_pic_proxy(io_insn_t *io, uint8_t data)
+static void __io_pic_detect(io_insn_t *io, uint8_t data)
 {
    static uint8_t wait_icw2 = 0;
 
@@ -207,83 +206,63 @@ static void dev_io_pic_proxy(io_insn_t *io, uint8_t data)
    }
 }
 
-static int dev_io_string_proxify(io_insn_t *io)
+static int __io_string_native(io_insn_t *io, void *device)
 {
-   io_size_t sz;
-   raw32_t   data;
-
-   sz.done = 0;
-   sz.miss = io->sz;
-   sz.available = sizeof(raw32_t);
+   raw32_t *data = (raw32_t*)device;
 
    if(io->rep)
    {
-      debug(DEV_IO, "rep prefix not implemented on proxy string io\n");
+      debug(DEV_IO, "native io string rep prefix not supported\n");
       return 0;
    }
 
    if(io->sz != 1)
    {
-      debug(DEV_IO, "proxy string io size != 1 not supported\n");
+      debug(DEV_IO, "native io string size != 1 not supported\n");
       return 0;
    }
 
    /* backward not checked as we only allow sz = 1 and no rep */
 
    if(io->in)
+      insb(data, io->port);
+   else
    {
-      insb(&data, io->port);
-      return __io_insn_string(io, (void*)&data, &sz);
+      __io_pic_detect(io, data->blow);
+      outsb(data, io->port);
    }
 
-   if(!__io_insn_string(io, (void*)&data, &sz))
-      return 0;
-
-   dev_io_pic_proxy(io, data.blow);
-   outsb(&data, io->port);
    return 1;
 }
 
-static int dev_io_simple_proxify(io_insn_t *io)
+static int __io_simple_native(io_insn_t *io, void *device)
 {
-   io_size_t sz;
-   raw32_t   data;
-
-   sz.done = 0;
-   sz.miss = io->sz;
-   sz.available = sizeof(raw32_t);
+   raw32_t *data = (raw32_t*)device;
 
    if(io->in)
-   {
       switch(io->sz)
       {
-      case 1: data.blow = inb(io->port); break;
-      case 2: data.wlow = inw(io->port); break;
-      case 4: data.raw  = inl(io->port); break;
+      case 1: data->blow = inb(io->port); break;
+      case 2: data->wlow = inw(io->port); break;
+      case 4: data->raw  = inl(io->port); break;
       }
-
-      debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, data.raw);
-      return __io_insn_simple(io, &data, &sz);
-   }
    else
-   {
-      if(!__io_insn_simple(io, &data, &sz))
-	 return 0;
-
-      debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, data.raw);
-
       switch(io->sz)
       {
-      case 1:
-	 dev_io_pic_proxy(io, data.blow);
-	 outb(data.blow, io->port);
-	 break;
-
-      case 2: outw(data.wlow, io->port); break;
-      case 4: outl(data.raw,  io->port); break;
+      case 1: __io_pic_detect(io, data->blow); outb(data->blow, io->port); break;
+      case 2: outw(data->wlow, io->port); break;
+      case 4: outl(data->raw,  io->port); break;
       }
-      return 1;
-   }
+
+   return 1;
+}
+
+int dev_io_native(io_insn_t *io, void *device)
+{
+   if(io->s)
+      return __io_string_native(io, device);
+
+   return __io_simple_native(io, device);
 }
 
 int dev_io_insn(io_insn_t *io, void *device, io_size_t *sz)
@@ -297,10 +276,34 @@ int dev_io_insn(io_insn_t *io, void *device, io_size_t *sz)
    return __io_insn_simple(io, device, sz);
 }
 
+int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
+{
+   raw32_t   data;
+   io_size_t sz = { .available = sizeof(raw32_t) };
+
+   if(io->in)
+   {
+      dev_io_native(io, &data);
+      debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, data.raw);
+
+      if(filter)
+	 filter(&data);
+
+      return dev_io_insn(io, &data, &sz);
+   }
+
+   if(!dev_io_insn(io, &data, &sz))
+      return 0;
+
+   if(filter)
+      filter(&data);
+
+   debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, data.raw);
+   dev_io_native(io, &data);
+   return 1;
+}
+
 int dev_io_proxify(io_insn_t *io)
 {
-   if(io->s)
-      return dev_io_string_proxify(io);
-
-   return dev_io_simple_proxify(io);
+   return dev_io_proxify_filter(io, NULL);
 }

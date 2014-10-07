@@ -42,6 +42,11 @@ int dev_access()
 
    __io_init(&io);
 
+#ifdef CONFIG_HAS_NET
+   if(io.port == PCI_CONFIG_ADDR || io.port == PCI_CONFIG_DATA)
+      return dev_pci(&io);
+#endif
+
    if(io.port == PS2_SYS_CTRL_PORT_A)
       return dev_ps2(&info->vm.dev.ps2, &io);
 

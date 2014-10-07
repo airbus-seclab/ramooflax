@@ -75,10 +75,14 @@ typedef struct io_size
 
 } io_size_t;
 
+typedef int (*io_flt_hdl_t)(void*);
+
 /*
 ** Functions
 */
 int  dev_io_insn(io_insn_t*, void*, io_size_t*);
+int  dev_io_native(io_insn_t*, void*);
 int  dev_io_proxify(io_insn_t*);
+int  dev_io_proxify_filter(io_insn_t*, io_flt_hdl_t);
 
 #endif

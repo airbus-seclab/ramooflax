@@ -20,6 +20,7 @@
 
 #include <types.h>
 #include <asm.h>
+#include <io.h>
 
 /*
 ** pci device configuration space
@@ -33,6 +34,7 @@
 
 #define PCI_CFG_VENDOR_INTEL        0x8086
 #define PCI_CFG_VENDOR_NVIDIA       0x10de
+#define PCI_CFG_DEVICE_INVALID      0xffff
 
 typedef union pci_config_space_dev_vendor
 {
@@ -240,5 +242,7 @@ int  pci_check_dvd(pci_cfg_val_t*, uint32_t);
 int  pci_read_bar(pci_cfg_val_t*, uint32_t);
 int  pci_search(pci_search_t, uint32_t, size_t, pci_cfg_val_t*);
 void pci_dump_registers(pci_cfg_val_t*);
+
+int  dev_pci(io_insn_t*);
 
 #endif

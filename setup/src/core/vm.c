@@ -43,6 +43,11 @@ static void vm_dev_init()
    /* monitor reboot and A20 */
    __deny_io_range(KBD_START_PORT, KBD_END_PORT);
    __deny_io(PS2_SYS_CTRL_PORT_A);
+
+   /* prevent net card detection */
+#ifdef CONFIG_HAS_NET
+   __deny_io(PCI_CONFIG_ADDR);
+#endif
 }
 
 static void vm_cpu_init()
