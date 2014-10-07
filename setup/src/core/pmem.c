@@ -113,9 +113,17 @@ static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
 	 , vm->pd, vm->pt);
 }
 
-int pmem_pool_opt_hdl(char *str, void *data)
+static int pmem_pool_opt_hdl(char *str, void *arg)
 {
-   return dec_to_uint64((uint8_t*)str, strlen(str), (uint64_t*)data);
+   uint64_t *data = (uint64_t*)arg;
+
+   if(!dec_to_uint64((uint8_t*)str, strlen(str), data))
+      return 0;
+
+   if((*data)*PAGE_SIZE >= info->area.end/2)
+      debug(PMEM, "pool sz might be too big\n");
+
+   return 1;
 }
 
 /*
@@ -154,6 +162,9 @@ void pmem_init(mbi_t *mbi)
    vmm_elf_sz = elf_module_load_size(mod);
    pool_sz = pmem_vm_pg_pool_size(&vm_pg);
 
+   if(!page_aligned(info->area.end))
+      info->area.end = page_align(info->area.end);
+
    if(mbi_get_opt(mbi, mod, "pool", pmem_pool_opt_hdl, (void*)&pool_opt))
    {
       debug(PMEM, "increasing pool sz by %D*PAGE_SIZE\n", pool_opt);
@@ -161,9 +172,6 @@ void pmem_init(mbi_t *mbi)
    }
 
    pool_desc_sz = sizeof(pool_pg_desc_t)*(pool_sz/PAGE_SIZE);
-
-   if(!page_aligned(info->area.end))
-      info->area.end = page_align(info->area.end);
 
    fixed = (VMM_MIN_STACK_SIZE
 	    + pool_sz
@@ -180,6 +188,9 @@ void pmem_init(mbi_t *mbi)
 	    + sizeof(info_data_t));
 
    info->area.start = page_align(info->area.end - fixed);
+   if(info->area.start >= info->area.end)
+      panic("not enough memory: end 0x%x fixed 0x%x\n", info->area.end, fixed);
+
    info->area.size  = info->area.end - info->area.start;
    memset((void*)info->area.start, 0, info->area.size);
 

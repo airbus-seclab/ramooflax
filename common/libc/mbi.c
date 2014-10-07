@@ -21,17 +21,20 @@
 
 static int __mbi_parse_opt(char **pstr, char *wopt, mbi_opt_hdl_t hdl, void *res)
 {
-   char *str = *pstr, *opt, *val=0;
+   char *str, *val, *opt, *oe, *ve;
+   char oec, vec;
    int  rc = 1;
 
-   /* get name */
-   opt = str++;
+   str = *pstr;
+   oe = ve = val = 0;
+   opt = str++; /* get name */
 
    /* get value */
    for( ; *str && *str != '=' && *str != ' '; str++);
 
    if(*str == '=')
    {
+      oe = str; oec = *oe;
       *str++ = '\x00';
       val = str;
 
@@ -39,10 +42,16 @@ static int __mbi_parse_opt(char **pstr, char *wopt, mbi_opt_hdl_t hdl, void *res
 
       /* if more options terminates value */
       if(*str)
+      {
+	 ve = str; vec = *ve;
 	 *str++ = '\x00';
+      }
    }
    else if(*str == ' ')
+   {
+      oe = str; oec = *oe;
       *str++ = '\x00';
+   }
 
    /* check name */
    for( ; *wopt && *opt && *wopt == *opt ; wopt++, opt++);
@@ -54,6 +63,9 @@ static int __mbi_parse_opt(char **pstr, char *wopt, mbi_opt_hdl_t hdl, void *res
       rc = hdl(val, res);
 
 __leave:
+   if(oe && *oe != oec) *oe = oec;
+   if(ve && *ve != vec) *ve = vec;
+
    *pstr = str;
    return rc;
 
@@ -91,6 +103,8 @@ int mbi_get_opt(mbi_t *mbi, module_t *mod, char *opt, mbi_opt_hdl_t hdl, void *r
 {
    int  rc;
    char *str = (char*)((offset_t)mod->cmdline);
+
+   debug(MBI, "mbi getopt %s on %s\n", opt, str);
 
    /* GRUB 1 keeps module name */
    if(mbi->flags & MBI_FLAG_VER)
