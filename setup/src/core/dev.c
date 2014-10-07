@@ -29,7 +29,7 @@
 
 extern info_data_t *info;
 
-void dev_init()
+void dev_init(mbi_t *mbi)
 {
 #ifdef CONFIG_HAS_UART
    uart_init();
@@ -40,6 +40,6 @@ void dev_init()
 #endif
 
 #ifdef CONFIG_HAS_NET
-   net_init();
+   net_init(mbi);
 #endif
 }

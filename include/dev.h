@@ -22,6 +22,7 @@
 #include <types.h>
 #include <smap.h>
 #include <io.h>
+#include <mbi.h>
 
 #ifdef CONFIG_HAS_EHCI
 #include <ehci.h>
@@ -58,7 +59,7 @@ typedef struct hardware_information_data
 ** Funtions
 */
 #ifdef __INIT__
-void  dev_init();
+void  dev_init(mbi_t *mbi);
 #else
 int   dev_access();
 void  dev_a20_set(uint8_t);

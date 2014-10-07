@@ -23,12 +23,62 @@
 extern info_data_t *info;
 
 #ifdef __INIT__
-void net_init()
+static void net_params(mbi_t *mbi)
+{
+   net_info_t    *net = &info->hrd.dev.net;
+   module_t      *mod = (module_t*)((offset_t)mbi->mods_addr + sizeof(module_t));
+   mbi_opt_hdl_t  hdl = (mbi_opt_hdl_t)ip_from_str;
+   char           str[IP_STR_SZ];
+
+   if(mbi_get_opt(mbi, mod, "ip", hdl, (void*)&net->ip))
+   {
+      ip_str(net->ip, str);
+      debug(PMEM, "ip addr %s\n", str);
+   }
+
+   if(mbi_get_opt(mbi, mod, "netmask", hdl, (void*)&net->mk))
+   {
+      ip_str(net->mk, str);
+      debug(PMEM, "netmask %s\n", str);
+   }
+
+   if(mbi_get_opt(mbi, mod, "gateway", hdl, (void*)&net->gw))
+   {
+      ip_str(net->gw, str);
+      debug(PMEM, "gateway %s\n", str);
+   }
+
+/* vmware vmnet1 */
+   /* ip_from_str("172.16.131.128", &net->ip); */
+   /* ip_from_str("172.16.131.1", &net->gw); */
+   /* ip_from_str("255.255.255.0", &net->mk); */
+
+/* parallels host only */
+   /* ip_from_str("10.37.129.128", &net->ip); */
+   /* ip_from_str("10.37.129.2", &net->gw); */
+   /* ip_from_str("255.255.255.0", &net->mk); */
+
+   net->peer.ip = net->gw;
+   net->port = 1337;
+}
+void net_init(mbi_t *mbi)
 {
    net_info_t *net = &info->hrd.dev.net;
 
    net_init_arch(net);
+   net_params(mbi);
    arp_init();
+}
+
+static void net_arp_gw()
+{
+   net_info_t *net = &info->hrd.dev.net;
+   loc_t      pkt;
+   size_t     len;
+
+   pkt.linear = net_tx_get_pktbuf();
+   len = net_gen_arp_who_has_pkt(net->gw, pkt);
+   net_send_pkt(net, pkt, len);
 }
 
 offset_t net_mem_init(offset_t area)
@@ -42,37 +92,11 @@ offset_t net_mem_init(offset_t area)
    net_rx_on(net);
    net_tx_on(net);
 
-   net_setup();
+   net_arp_gw();
 
    return off;
 }
 
-void net_setup()
-{
-   net_info_t *net = &info->hrd.dev.net;
-
-/* vmware vmnet1 */
-   ip_from_str("172.16.131.128", &net->ip);
-   ip_from_str("172.16.131.1", &net->gw);
-   ip_from_str("255.255.255.0", &net->mk);
-
-/* parallels host only */
-   /* ip_from_str("10.37.129.128", &net->ip); */
-   /* ip_from_str("10.37.129.2", &net->gw); */
-   /* ip_from_str("255.255.255.0", &net->mk); */
-
-   net->port = 1337;
-   net->peer.ip = net->gw;
-
-   {
-      loc_t  pkt;
-      size_t len;
-
-      pkt.linear = net_tx_get_pktbuf();
-      len = net_gen_arp_who_has_pkt(net->gw, pkt);
-      net_send_pkt(net, pkt, len);
-   }
-}
 
 void net_test_recv()
 {

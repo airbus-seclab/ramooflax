@@ -60,7 +60,7 @@ typedef struct arp_cache_table_entry
 
 typedef struct arp_cache_table
 {
-   arp_cache_t  cache[ARP_CACHE_SZ];
+   arp_cache_t  cache[ARP_CACHE_SZ]; /* XXX: based on netmask */
    size_t       tail;
 
 } __attribute__((packed)) arp_tbl_t;

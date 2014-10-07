@@ -26,6 +26,7 @@
 #include <ip.h>
 #include <icmp.h>
 #include <udp.h>
+#include <mbi.h>
 
 /*
 ** Dissection status
@@ -77,9 +78,8 @@ typedef struct net_info
 ** Functions
 */
 #ifdef __INIT__
-void     net_init();
+void     net_init(mbi_t *mbi);
 offset_t net_mem_init(offset_t);
-void     net_setup();
 void     net_test();
 
 #ifdef CONFIG_HAS_E1000

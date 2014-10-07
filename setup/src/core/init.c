@@ -30,7 +30,7 @@ static info_data_t __info;
 
 void __regparm__(1) init(mbi_t *mbi)
 {
-   dev_init();
+   dev_init(mbi);
    cpu_init();
    pmem_init(mbi);
    vmem_init();
