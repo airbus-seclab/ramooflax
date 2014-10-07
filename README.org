@@ -44,15 +44,15 @@ All documents can be found on the Ramooflax [[https://github.com/sduverger/ramoo
 
 * Software requirements
 
-Ramooflax has only been compiled/tested using gcc-4.4. The loader is a 32 bits ELF while the setup and vmm kernels are 64 bits ELF.
+ramooflax has been compiled/tested using gcc-4.8. The loader is a 32 bits ELF while the setup and vmm kernels are 64 bits ELF.
 
 Under Debian-like systems, the following packages are needed whether you run a 32 or 64 bits OS:
 
-$ sudo apt-get install gcc-4.4 gcc-4.4-multilib make
+$ sudo apt-get install gcc-4.8 gcc-4.8-multilib make
 
 * Limitations
 
-Intel and AMD are *both* supported. Notice that multi-cores are not supported, so you will only have one core while running virtualized.
+Intel and AMD are *both* supported. Notice that multi-cores feature is not supported yet, so you will only have one core while running virtualized.
 
 It is recommended to read the documentation.
 
@@ -68,7 +68,7 @@ $ make distclean config
 
 Under the /build/ menu you will be able to choose from Intel or AMD manufacturer, which control device you want to use, debug device and so on.
 
-For the time being, it is recommended to use EHCI as controlling device and UART as debugging one (this is the default).
+For the time being, it is recommended to use NET as controlling device and UART as debugging one.
 
 * Building
 
@@ -95,7 +95,7 @@ title  Ramooflax
 root   (hd0,0)
 kernel /loader.bin
 module /setup.bin
-module /vmm.bin
+module /vmm.bin pool=1234 ip=192.168.0.2 gateway=192.168.0.1 netmask=255.255.255.0
 #+END_EXAMPLE
 
 We also provide a disk image creation tool (which needs GRUB legacy), in /tools/:
@@ -124,6 +124,8 @@ The tool builds a GRUB bootable disk image of the given size, with ramooflax as 
 
 You will need python (tested with 2.6.x) to run the client.
 
+** EHCI interface
+
 If you use the EHCI Debug device configuration to control the hypervisor from the remote client, you will need a USB debug device on the client side.
 
 You can either buy one or use the DBGP USB Gadget provided into the Linux kernel since the 2.6.36 version.
@@ -131,3 +133,13 @@ You can either buy one or use the DBGP USB Gadget provided into the Linux kernel
 To be able to use such a Gadget, you need a *device* USB controller as found in embedded ARM development boards or smartphones.
 
 Please read documentation to have usage examples of the client API.
+
+** Network interface
+
+Do not forget to provide Ramooflax network settings on vmm module cmd line into the GRUB configuration entry.
+
+As shown into /Installing/ section, you can provide /ip/, /netmask/ and /gateway/ options to the vmm module.
+
+Reaching the hypervisor will depend on your setup (real machine, running on a host using VMware, ...) for the IP configuration part.
+
+The VMM is listening to /UDP/ port /1337/.
