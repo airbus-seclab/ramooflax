@@ -249,6 +249,7 @@ int __vmx_vmexit_idt_deliver_pmode()
       debug_warning();
 
       vm_entry_ctrls.int_info.raw = vm_exit_info.idt_info.raw;
+      vm_entry_ctrls.int_info.r = 0; /* take care of reserved bits */
       vmcs_dirty(vm_entry_ctrls.int_info);
 
       return 1;
