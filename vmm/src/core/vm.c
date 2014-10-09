@@ -95,6 +95,12 @@ void vm_rewind_rip(offset_t offset)
 
 int __vm_local_resolve_pmem(vm_access_t __unused__ *access)
 {
+   /*
+   ** XXX: need to check
+   ** - segment limit
+   ** - segment valid
+   ** - align check
+   */
    return 1;
 }
 

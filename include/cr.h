@@ -73,6 +73,24 @@ typedef union control_register_0
 } __attribute__((packed)) cr0_reg_t;
 
 /*
+** XCR0
+*/
+typedef union extended_control_register_0
+{
+   struct
+   {
+      uint64_t    x87:1;   /* FPU/MMX state must be 1 */
+      uint64_t    sse:1;   /* SSE state */
+      uint64_t    avx:1;   /* AVX state */
+      uint64_t    rsv:61;
+
+   } __attribute__((packed));
+
+   raw64_t;
+
+} __attribute__((packed)) xcr0_reg_t;
+
+/*
 ** CR3
 */
 typedef union control_register_3

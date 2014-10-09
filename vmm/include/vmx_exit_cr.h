@@ -23,6 +23,5 @@
 */
 void __vmx_vmexit_cr_update_mask();
 int    vmx_vmexit_resolve_cr_access();
-int    vmx_vmexit_resolve_xsetbv();
 
 #endif

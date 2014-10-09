@@ -95,18 +95,12 @@ typedef union vm_cpu_skill
 
 } __attribute__((packed)) vm_cpu_skill_t;
 
-typedef union emulate_status
+typedef enum emulate_status
 {
-   struct
-   {
-      uint8_t done:1;
-      uint8_t dis:1;
-
-   } __attribute__((packed));
-
-   uint8_t raw;
-
-} __attribute__((packed)) emu_sts_t;
+   EMU_STS_AVL,
+   EMU_STS_NATIVE,
+   EMU_STS_DONE
+} emu_sts_t;
 
 typedef struct vm_cpu
 {

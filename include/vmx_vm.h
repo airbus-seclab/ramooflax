@@ -49,8 +49,6 @@
 #define __gs                    __state.gs
 #define __ss                    __state.ss
 
-#define __vmexit_on_insn()      (__vmx_vmexit_on_insn() || info->vm.cpu.emu_sts.done)
-
 #define __cpl                   __state.cs.selector.rpl
 #define __gdtr                  __state.gdtr
 #define __idtr                  __state.idtr
@@ -165,6 +163,31 @@
    })
 
 /*
+** Masks
+*/
+#define __exception_bitmap      __exec_ctrls.excp_bitmap
+#define __update_exception_mask()		\
+   ({						\
+      __exception_bitmap.raw =			\
+	 info->vm.cpu.dflt_excp  |		\
+	 info->vmm.ctrl.usr.excp |		\
+	 info->vmm.ctrl.dbg.excp;		\
+      vmcs_dirty(__exec_ctrls.excp_bitmap);	\
+   })
+
+/*
+** Instructions
+*/
+#define __vmexit_on_insn()						\
+   (__vmx_vmexit_on_insn() || info->vm.cpu.emu_sts == EMU_STS_DONE)
+
+#define __insn_sz()				\
+   ({						\
+      vmcs_read(__exit_info.insn_len);		\
+      __exit_info.insn_len.raw;			\
+   })
+
+/*
 ** CR registers
 */
 #define __cr0_cache_update(_guest)			\
@@ -187,18 +210,6 @@
       __post_access(__cr4_real);		\
    })
 
-/*
-** Masks
-*/
-#define __exception_bitmap      __exec_ctrls.excp_bitmap
-#define __update_exception_mask()		\
-   ({						\
-      __exception_bitmap.raw =			\
-	 info->vm.cpu.dflt_excp  |		\
-	 info->vmm.ctrl.usr.excp |		\
-	 info->vmm.ctrl.dbg.excp;		\
-      vmcs_dirty(__exec_ctrls.excp_bitmap);	\
-   })
 
 #ifndef __INIT__
 #include <vmx_exit_cr.h>

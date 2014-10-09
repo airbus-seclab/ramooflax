@@ -39,6 +39,7 @@
 #define MSR_INSN_SZ           2
 #define INVD_INSN_SZ          2
 #define WBINVD_INSN_SZ        2
+#define XSETBV_INSN_SZ        3
 
 #define X86_MAX_INSN_LEN     15
 
@@ -153,8 +154,9 @@
 /*
 ** Asm to C insn
 */
-#define invd()      ({ asm volatile ("invd");   })
-#define wbinvd()    ({ asm volatile ("wbinvd"); })
+#define invd()        ({ asm volatile ("invd");   })
+#define wbinvd()      ({ asm volatile ("wbinvd"); })
+#define xsetbv(a,c,d) ({ asm volatile ("xsetbv"::"a"(a),"c"(c),"d"(d)); })
 
 /*
 ** functions
@@ -165,6 +167,7 @@ int  resolve_invd();
 int  resolve_wbinvd();
 int  resolve_icebp();
 int  resolve_hlt();
+int  resolve_xsetbv();
 int  resolve_default();
 #endif
 

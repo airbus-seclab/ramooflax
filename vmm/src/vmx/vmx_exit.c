@@ -98,7 +98,7 @@ static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    vmx_vmexit_resolve_preempt,          //PREEMPT
    resolve_default,                     //INVVPID
    resolve_wbinvd,                      //WBINVD
-   vmx_vmexit_resolve_xsetbv            //XSETBV
+   resolve_xsetbv,                     //XSETBV
 };
 
 static void vmx_vmexit_tsc_rebase(raw64_t tsc)
@@ -141,7 +141,7 @@ static void vmx_vmexit_post_hdl(raw64_t tsc)
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    vmcs_dirty(vm_state.rsp);
 
-   info->vm.cpu.emu_sts.raw = 0;
+   info->vm.cpu.emu_sts = EMU_STS_AVL;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    vmx_vmexit_tsc_rebase(tsc);
@@ -245,7 +245,10 @@ int __vmx_vmexit_idt_deliver_pmode()
 	 vmcs_dirty(vm_entry_ctrls.err_code);
       }
 
-      /* interrupt shadow ? */
+      /*
+      ** - interrupt shadow
+      ** - read 31.7.1.1 reflecting exceptions to guest software
+      */
       debug_warning();
 
       vm_entry_ctrls.int_info.raw = vm_exit_info.idt_info.raw;

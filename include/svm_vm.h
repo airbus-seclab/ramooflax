@@ -43,8 +43,6 @@
 #define __gs                    (__state.gs)
 #define __ss                    (__state.ss)
 
-#define __vmexit_on_insn()      (__svm_vmexit_on_insn() || info->vm.cpu.emu_sts.done)
-
 #define __cpl                   (__state.cpl)
 #define __gdtr                  (__state.gdtr)
 #define __idtr                  (__state.idtr)
@@ -196,6 +194,24 @@
       __ctrls.dr_read_bitmap = -1;	\
       __ctrls.dr_write_bitmap = -1;	\
    })
+
+/*
+** Instructions
+*/
+#define __vmexit_on_insn()						\
+   (__svm_vmexit_on_insn() || info->vm.cpu.emu_sts == EMU_STS_DONE)
+
+/* XXX
+** we may have prefix etc before a standard instruction
+** instead of directly giving size (ie. invd=2, int1=1...)
+** we should refer to our disasm engine
+*/
+#define __insn_sz()				\
+   ({						\
+      debug_warning();				\
+      0;
+   })
+
 
 #define __allow_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 0; })
 #define __deny_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 1; })

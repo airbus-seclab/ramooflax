@@ -20,11 +20,13 @@
 
 #include <types.h>
 
+#define emulate_native() ({info->vm.cpu.emu_sts = EMU_STS_NATIVE;})
+
 /*
 ** Functions
 */
-int   emulate();
-int   emulate_done(int, size_t);
+int  emulate();
+int  emulate_done(int, size_t);
 
 #endif
 

@@ -17,6 +17,7 @@
 */
 #include <io.h>
 #include <dev_io_ports.h>
+#include <emulate.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -110,9 +111,6 @@ static int __io_insn_string_out(io_insn_t *io, io_size_t *sz)
    return 1;
 }
 
-/*
-** XXX: need security checks on linear address (segments, ...)
-*/
 static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
 {
    if(io->sz != 1)
@@ -257,8 +255,12 @@ static int __io_simple_native(io_insn_t *io, void *device)
    return 1;
 }
 
+/*
+** Faults checks are done in vm_mem access
+*/
 int dev_io_native(io_insn_t *io, void *device)
 {
+   emulate_native();
    if(io->s)
       return __io_string_native(io, device);
 

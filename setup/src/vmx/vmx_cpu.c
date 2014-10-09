@@ -139,8 +139,6 @@ static void vmx_cpu_skillz()
 
 void vmx_vm_cpu_skillz_init()
 {
-   set_cr4(get_cr4()|CR4_OSXSAVE);
-
    vmx_cpu_features();
    vmx_cpu_skillz();
 }

@@ -71,10 +71,33 @@ void vmm_excp_mce()
    }
 }
 
+static int __resolve_exception(uint32_t vector, uint32_t error, uint64_t fault)
+{
+   int rc;
+
+   if((rc=ctrl_evt_excp(vector)) == VM_IGNORE)
+      __inject_exception(vector, error, fault);
+
+   return rc;
+}
+
+int resolve_exception()
+{
+   if(__exception_vector == PF_EXCP)
+   {
+      __cr2.raw = __exception_fault;
+      __post_access(__cr2);
+   }
+
+   return __resolve_exception(__exception_vector,
+			      __exception_error.raw,
+			      __exception_fault);
+}
+
 void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
 {
    debug(EXCP,
-	 "\nvmm %s exception\n"
+	 "\nvmm native exception -= %s =-\n"
 	 " . excp #%d error 0x%X\n"
 	 " . cs:rip 0x%X:0x%X\n"
 	 " . ss:rsp 0x%X:0x%X\n"
@@ -116,20 +139,4 @@ void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
    }
 
    panic("vmm exception !\n");
-}
-
-int resolve_exception()
-{
-   int rc;
-
-   if(__exception_vector == PF_EXCP)
-   {
-      __cr2.raw = __exception_fault;
-      __post_access(__cr2);
-   }
-
-   if((rc=ctrl_evt_excp(__exception_vector)) == VM_IGNORE)
-      __inject_exception(__exception_vector, __exception_error.raw, __exception_fault);
-
-   return rc;
 }

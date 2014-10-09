@@ -30,6 +30,7 @@ static int __resolve_msr_rd()
    if(rc == VM_NATIVE)
    {
       gpr64_ctx_t *ctx = info->vm.cpu.gpr;
+      emulate_native();
       __rd_msr(ctx->rax.low, ctx->rcx.low, ctx->rdx.low);
    }
 
@@ -38,11 +39,13 @@ static int __resolve_msr_rd()
 
 static int __resolve_msr_wr()
 {
+   /* XXX: check reserved bits and raise #GP */
    int rc = __resolve_msr_arch(1);
 
    if(rc == VM_NATIVE)
    {
       gpr64_ctx_t *ctx = info->vm.cpu.gpr;
+      emulate_native();
       __wr_msr(ctx->rax.low, ctx->rcx.low, ctx->rdx.low);
    }
 
@@ -51,11 +54,12 @@ static int __resolve_msr_wr()
 
 int resolve_msr(uint8_t wr)
 {
+   /* XXX: check reserved/unimplemented MSR and raise #GP */
    int rc = wr ? __resolve_msr_wr() : __resolve_msr_rd();
 
    debug(MSR, "%smsr 0x%x | 0x%x 0x%x\n"
 	 , wr?"wr":"rd", info->vm.cpu.gpr->rcx.low
 	 , info->vm.cpu.gpr->rdx.low, info->vm.cpu.gpr->rax.low);
 
-   return emulate_done(rc, MSR_INSN_SZ);
+   return emulate_done(rc, max(__insn_sz(), MSR_INSN_SZ));
 }

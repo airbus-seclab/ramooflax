@@ -29,7 +29,7 @@ int emulate_done(int rc, size_t sz)
    case VM_DONE:
       vm_update_rip(sz);
    case VM_DONE_LET_RIP:
-      info->vm.cpu.emu_sts.done = 1;
+      info->vm.cpu.emu_sts = EMU_STS_DONE;
       break;
    }
 

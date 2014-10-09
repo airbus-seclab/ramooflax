@@ -27,6 +27,7 @@ static void __resolve_cpuid_native()
 {
    gpr64_ctx_t *ctx = info->vm.cpu.gpr;
 
+   emulate_native();
    __cpuid(ctx->rax.low, ctx->rbx.low, ctx->rcx.low, ctx->rdx.low);
 }
 
@@ -66,6 +67,6 @@ static int __resolve_cpuid()
 
 int resolve_cpuid()
 {
-   return emulate_done(__resolve_cpuid(), CPUID_INSN_SZ);
+   return emulate_done(__resolve_cpuid(), max(__insn_sz(), CPUID_INSN_SZ));
 }
 
