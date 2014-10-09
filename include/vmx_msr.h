@@ -172,6 +172,9 @@ static inline uint64_t __lbr_nehalem(ulong_t idx)
 */
 #define IA32_VMX_BASIC_MSR                    0x480UL
 
+#define IA32_VMX_BASIC_VMCS_MM_TYPE_UC        0
+#define IA32_VMX_BASIC_VMCS_MM_TYPE_WC        6
+
 typedef union vmx_basic_info_msr
 {
    struct

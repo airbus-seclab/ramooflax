@@ -46,6 +46,7 @@ static void vmx_cpu_features()
    rd_msr_vmx_basic_info(info->vm.vmx_info);
 
    debug(VMX_CPU, "vmx revision %d\n", info->vm.vmx_info.revision_id);
+   debug(VMX_CPU, "vmx vmcs mem type %d\n", info->vm.vmx_info.mem_type);
 
    if(!info->vm.vmx_info.io_insn)
       panic("vmx ins/outs info not given on VM-exit");
@@ -70,7 +71,6 @@ static void vmx_cpu_features()
 
    rd_msr_vmx_proc2_ctls(info->vm.vmx_fx_proc2);
 
-   /* if(!vmx_allow_ept(info->vm.vmx_fx_proc2)) */
    if(!info->vm.vmx_fx_proc2.ept)
       panic("vmx ept not supported");
 
