@@ -181,7 +181,7 @@ void vmx_ept_map()
 
 void vmx_ept_unmap()
 {
-   asm volatile ("wbinvd");
+   wbinvd();
    invept(VMCS_EPT_INV_ALL);
    invvpid(VMCS_VPID_INV_ALL);
    npg_unmap(0, info->hrd.mem.top);
