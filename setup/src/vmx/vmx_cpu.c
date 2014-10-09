@@ -47,6 +47,9 @@ static void vmx_cpu_features()
 
    debug(VMX_CPU, "vmx revision %d\n", info->vm.vmx_info.revision_id);
 
+   if(!info->vm.vmx_info.io_insn)
+      panic("vmx ins/outs info not given on VM-exit");
+
    if(info->vm.vmx_info.true_f1)
    {
       rd_msr_vmx_true_pin_ctls(info->vm.vmx_fx_pin);

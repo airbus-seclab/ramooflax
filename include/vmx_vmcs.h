@@ -301,12 +301,15 @@ typedef struct vmcs_region
 
 } __attribute__((packed)) vmcs_region_t;
 
+/*
+** Maximum vmcs size (cf. IA32_VMX_BASIC msr)
+*/
 #define VMCS_CPU_REGION_SZ  0x1000
 
 typedef union vmcs_cpu_region
 {
    vmcs_region_t;
-   uint8_t raw[VMCS_CPU_REGION_SZ]; /* XXX: alloc sz is given */
+   uint8_t raw[VMCS_CPU_REGION_SZ];
 
 } __attribute__((packed)) vmcs_cpu_region_t;
 

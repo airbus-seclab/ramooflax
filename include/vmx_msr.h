@@ -170,6 +170,8 @@ static inline uint64_t __lbr_nehalem(ulong_t idx)
 /*
 ** VMX_BASIC_INFO MSR
 */
+#define IA32_VMX_BASIC_MSR                    0x480UL
+
 typedef union vmx_basic_info_msr
 {
    struct
@@ -190,7 +192,7 @@ typedef union vmx_basic_info_msr
 
 } __attribute__((packed)) vmx_basic_info_msr_t;
 
-#define rd_msr_vmx_basic_info(val)      rd_msr64(0x480UL,(val).edx,(val).eax)
+#define rd_msr_vmx_basic_info(val)  rd_msr64(IA32_VMX_BASIC_MSR,(val).edx,(val).eax)
 
 /*
 ** VMX fixed bits settings
