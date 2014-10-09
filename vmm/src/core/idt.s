@@ -17,6 +17,9 @@
 */
 .text
 
+.globl resume
+.type  resume,"function"
+
 idt_checkmode:
 	bt	$8, irq_msg(%rip)
 	jnc	idt_common
