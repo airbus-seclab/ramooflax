@@ -37,7 +37,7 @@ void vmx_vmm_init()
    vmx_set_fixed(cr0.low, info->vm.vmx_fx_cr0);
    set_cr0(cr0);
 
-   cr4.raw = get_cr4()|CR4_OSXSAVE;
+   cr4.raw = get_cr4();
    vmx_set_fixed(cr4.low, info->vm.vmx_fx_cr4);
    set_cr4(cr4);
 

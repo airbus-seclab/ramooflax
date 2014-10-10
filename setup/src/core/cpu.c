@@ -26,6 +26,13 @@ static void vmm_cpu_skillz_init()
 {
    info->vmm.cpu.skillz.pg_1G = page_1G_supported();
 
+   if(osxsave_supported())
+   {
+      cr4_reg_t cr4 = { .raw = get_cr4()|CR4_OSXSAVE };
+      set_cr4(cr4);
+      debug(CPU, "vmm osxsave enabled for xsetbv()\n");
+   }
+
    debug(CPU, "vmm 1GB pages support: %s\n"
 	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no");
 }

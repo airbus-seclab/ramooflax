@@ -104,63 +104,63 @@ typedef union cpuid_feature_info_ebx
 
 } __attribute__((packed)) cpuid_feat_info_ebx_t;
 
-#define CPUID_EXC_FEAT_SSE3_BIT         0
-#define CPUID_EXC_FEAT_PCLMULQDQ_BIT    1
-#define CPUID_EXC_FEAT_DTES64_BIT       2
-#define CPUID_EXC_FEAT_MONITOR_BIT      3
-#define CPUID_EXC_FEAT_DSCPL_BIT        4
-#define CPUID_EXC_FEAT_VMX_BIT          5
-#define CPUID_EXC_FEAT_SMX_BIT          6
-#define CPUID_EXC_FEAT_EIST_BIT         7
-#define CPUID_EXC_FEAT_TM2_BIT          8
-#define CPUID_EXC_FEAT_SSSE3_BIT        9
-#define CPUID_EXC_FEAT_CNXT_BIT        10
-#define CPUID_EXC_FEAT_FMA_BIT         12
-#define CPUID_EXC_FEAT_CMPXCHG16B_BIT  13
-#define CPUID_EXC_FEAT_xTPR_BIT        14
-#define CPUID_EXC_FEAT_PDCM_BIT        15
-#define CPUID_EXC_FEAT_PCID_BIT        17
-#define CPUID_EXC_FEAT_DCA_BIT         18
-#define CPUID_EXC_FEAT_SSE41_BIT       19
-#define CPUID_EXC_FEAT_SSE42_BIT       20
-#define CPUID_EXC_FEAT_x2APIC_BIT      21
-#define CPUID_EXC_FEAT_MOVBE_BIT       22
-#define CPUID_EXC_FEAT_POPCNT_BIT      23
-#define CPUID_EXC_FEAT_TSCD_BIT        24
-#define CPUID_EXC_FEAT_AESNI_BIT       25
-#define CPUID_EXC_FEAT_XSAVE_BIT       26
-#define CPUID_EXC_FEAT_OSXSAVE_BIT     27
-#define CPUID_EXC_FEAT_AVX_BIT         28
-#define CPUID_EXC_FEAT_RDRAND_BIT      30
+#define CPUID_ECX_FEAT_SSE3_BIT         0
+#define CPUID_ECX_FEAT_PCLMULQDQ_BIT    1
+#define CPUID_ECX_FEAT_DTES64_BIT       2
+#define CPUID_ECX_FEAT_MONITOR_BIT      3
+#define CPUID_ECX_FEAT_DSCPL_BIT        4
+#define CPUID_ECX_FEAT_VMX_BIT          5
+#define CPUID_ECX_FEAT_SMX_BIT          6
+#define CPUID_ECX_FEAT_EIST_BIT         7
+#define CPUID_ECX_FEAT_TM2_BIT          8
+#define CPUID_ECX_FEAT_SSSE3_BIT        9
+#define CPUID_ECX_FEAT_CNXT_BIT        10
+#define CPUID_ECX_FEAT_FMA_BIT         12
+#define CPUID_ECX_FEAT_CMPXCHG16B_BIT  13
+#define CPUID_ECX_FEAT_xTPR_BIT        14
+#define CPUID_ECX_FEAT_PDCM_BIT        15
+#define CPUID_ECX_FEAT_PCID_BIT        17
+#define CPUID_ECX_FEAT_DCA_BIT         18
+#define CPUID_ECX_FEAT_SSE41_BIT       19
+#define CPUID_ECX_FEAT_SSE42_BIT       20
+#define CPUID_ECX_FEAT_x2APIC_BIT      21
+#define CPUID_ECX_FEAT_MOVBE_BIT       22
+#define CPUID_ECX_FEAT_POPCNT_BIT      23
+#define CPUID_ECX_FEAT_TSCD_BIT        24
+#define CPUID_ECX_FEAT_AESNI_BIT       25
+#define CPUID_ECX_FEAT_XSAVE_BIT       26
+#define CPUID_ECX_FEAT_OSXSAVE_BIT     27
+#define CPUID_ECX_FEAT_AVX_BIT         28
+#define CPUID_ECX_FEAT_RDRAND_BIT      30
 
-#define CPUID_EXC_FEAT_SSE3        (1<<CPUID_EXC_FEAT_SSE3_BIT)
-#define CPUID_EXC_FEAT_PCLMULQDQ   (1<<CPUID_EXC_FEAT_PCLMULQDQ_BIT)
-#define CPUID_EXC_FEAT_DTES64      (1<<CPUID_EXC_FEAT_DTES64_BIT)
-#define CPUID_EXC_FEAT_MONITOR     (1<<CPUID_EXC_FEAT_MONITOR_BIT)
-#define CPUID_EXC_FEAT_DSCPL       (1<<CPUID_EXC_FEAT_DSCPL_BIT)
-#define CPUID_EXC_FEAT_VMX         (1<<CPUID_EXC_FEAT_VMX_BIT)
-#define CPUID_EXC_FEAT_SMX         (1<<CPUID_EXC_FEAT_SMX_BIT)
-#define CPUID_EXC_FEAT_EIST        (1<<CPUID_EXC_FEAT_EIST_BIT)
-#define CPUID_EXC_FEAT_TM2         (1<<CPUID_EXC_FEAT_TM2_BIT)
-#define CPUID_EXC_FEAT_SSSE3       (1<<CPUID_EXC_FEAT_SSSE3_BIT)
-#define CPUID_EXC_FEAT_CNXT        (1<<CPUID_EXC_FEAT_CNXT_BIT)
-#define CPUID_EXC_FEAT_FMA         (1<<CPUID_EXC_FEAT_FMA_BIT)
-#define CPUID_EXC_FEAT_CMPXCHG16B  (1<<CPUID_EXC_FEAT_CMPXCHG16B_BIT)
-#define CPUID_EXC_FEAT_xTPR        (1<<CPUID_EXC_FEAT_xTPR_BIT)
-#define CPUID_EXC_FEAT_PDCM        (1<<CPUID_EXC_FEAT_PDCM_BIT)
-#define CPUID_EXC_FEAT_PCID        (1<<CPUID_EXC_FEAT_PCID_BIT)
-#define CPUID_EXC_FEAT_DCA         (1<<CPUID_EXC_FEAT_DCA_BIT)
-#define CPUID_EXC_FEAT_SSE41       (1<<CPUID_EXC_FEAT_SSE41_BIT)
-#define CPUID_EXC_FEAT_SSE42       (1<<CPUID_EXC_FEAT_SSE42_BIT)
-#define CPUID_EXC_FEAT_x2APIC      (1<<CPUID_EXC_FEAT_x2APIC_BIT)
-#define CPUID_EXC_FEAT_MOVBE       (1<<CPUID_EXC_FEAT_MOVBE_BIT)
-#define CPUID_EXC_FEAT_POPCNT      (1<<CPUID_EXC_FEAT_POPCNT_BIT)
-#define CPUID_EXC_FEAT_TSCD        (1<<CPUID_EXC_FEAT_TSCD_BIT)
-#define CPUID_EXC_FEAT_AESNI       (1<<CPUID_EXC_FEAT_AESNI_BIT)
-#define CPUID_EXC_FEAT_XSAVE       (1<<CPUID_EXC_FEAT_XSAVE_BIT)
-#define CPUID_EXC_FEAT_OSXSAVE     (1<<CPUID_EXC_FEAT_OSXSAVE_BIT)
-#define CPUID_EXC_FEAT_AVX         (1<<CPUID_EXC_FEAT_AVX_BIT)
-#define CPUID_EXC_FEAT_RDRAND      (1<<CPUID_EXC_FEAT_RDRAND_BIT)
+#define CPUID_ECX_FEAT_SSE3        (1<<CPUID_ECX_FEAT_SSE3_BIT)
+#define CPUID_ECX_FEAT_PCLMULQDQ   (1<<CPUID_ECX_FEAT_PCLMULQDQ_BIT)
+#define CPUID_ECX_FEAT_DTES64      (1<<CPUID_ECX_FEAT_DTES64_BIT)
+#define CPUID_ECX_FEAT_MONITOR     (1<<CPUID_ECX_FEAT_MONITOR_BIT)
+#define CPUID_ECX_FEAT_DSCPL       (1<<CPUID_ECX_FEAT_DSCPL_BIT)
+#define CPUID_ECX_FEAT_VMX         (1<<CPUID_ECX_FEAT_VMX_BIT)
+#define CPUID_ECX_FEAT_SMX         (1<<CPUID_ECX_FEAT_SMX_BIT)
+#define CPUID_ECX_FEAT_EIST        (1<<CPUID_ECX_FEAT_EIST_BIT)
+#define CPUID_ECX_FEAT_TM2         (1<<CPUID_ECX_FEAT_TM2_BIT)
+#define CPUID_ECX_FEAT_SSSE3       (1<<CPUID_ECX_FEAT_SSSE3_BIT)
+#define CPUID_ECX_FEAT_CNXT        (1<<CPUID_ECX_FEAT_CNXT_BIT)
+#define CPUID_ECX_FEAT_FMA         (1<<CPUID_ECX_FEAT_FMA_BIT)
+#define CPUID_ECX_FEAT_CMPXCHG16B  (1<<CPUID_ECX_FEAT_CMPXCHG16B_BIT)
+#define CPUID_ECX_FEAT_xTPR        (1<<CPUID_ECX_FEAT_xTPR_BIT)
+#define CPUID_ECX_FEAT_PDCM        (1<<CPUID_ECX_FEAT_PDCM_BIT)
+#define CPUID_ECX_FEAT_PCID        (1<<CPUID_ECX_FEAT_PCID_BIT)
+#define CPUID_ECX_FEAT_DCA         (1<<CPUID_ECX_FEAT_DCA_BIT)
+#define CPUID_ECX_FEAT_SSE41       (1<<CPUID_ECX_FEAT_SSE41_BIT)
+#define CPUID_ECX_FEAT_SSE42       (1<<CPUID_ECX_FEAT_SSE42_BIT)
+#define CPUID_ECX_FEAT_x2APIC      (1<<CPUID_ECX_FEAT_x2APIC_BIT)
+#define CPUID_ECX_FEAT_MOVBE       (1<<CPUID_ECX_FEAT_MOVBE_BIT)
+#define CPUID_ECX_FEAT_POPCNT      (1<<CPUID_ECX_FEAT_POPCNT_BIT)
+#define CPUID_ECX_FEAT_TSCD        (1<<CPUID_ECX_FEAT_TSCD_BIT)
+#define CPUID_ECX_FEAT_AESNI       (1<<CPUID_ECX_FEAT_AESNI_BIT)
+#define CPUID_ECX_FEAT_XSAVE       (1<<CPUID_ECX_FEAT_XSAVE_BIT)
+#define CPUID_ECX_FEAT_OSXSAVE     (1<<CPUID_ECX_FEAT_OSXSAVE_BIT)
+#define CPUID_ECX_FEAT_AVX         (1<<CPUID_ECX_FEAT_AVX_BIT)
+#define CPUID_ECX_FEAT_RDRAND      (1<<CPUID_ECX_FEAT_RDRAND_BIT)
 
 #define CPUID_EDX_FEAT_FPU_BIT          0
 #define CPUID_EDX_FEAT_VME_BIT          1
@@ -224,26 +224,24 @@ typedef union cpuid_feature_info_ebx
 
 #define cpuid_features(eCx,eDx)        __cpuid_2(CPUID_FEATURE_INFO,eCx,eDx)
 
-#define vme_supported()				\
-   ({						\
-      uint32_t c=0,d;				\
-      cpuid_features(c,d);			\
-      (d & CPUID_EDX_FEAT_VME)?1:0;		\
+#define cpuid_has_c_feat(feAt)	\
+   ({		       		\
+      uint32_t c=0,d;		\
+      cpuid_features(c,d);	\
+      (c & (feAt))?1:0;		\
    })
 
-#define apic_supported()			\
-   ({						\
-      uint32_t c=0,d;				\
-      cpuid_features(c,d);			\
-      (d & CPUID_EDX_FEAT_APIC)?1:0;		\
+#define cpuid_has_d_feat(feAt)	\
+   ({				\
+      uint32_t c,d=0;		\
+      cpuid_features(c,d);	\
+      (d & (feAt))?1:0;		\
    })
 
-#define perf_cap_supported()			\
-   ({						\
-      uint32_t c,d=0;				\
-      cpuid_features(c,d);			\
-      (c & CPUID_ECX_FEAT_PDCM)?1:0;	\
-   })
+#define perf_cap_supported()  cpuid_has_c_feat(CPUID_ECX_FEAT_PDCM)
+#define osxsave_supported()   cpuid_has_c_feat(CPUID_ECX_FEAT_XSAVE)
+#define vme_supported()       cpuid_has_d_feat(CPUID_EDX_FEAT_VME)
+#define apic_supported()      cpuid_has_d_feat(CPUID_EDX_FEAT_APIC)
 
 /*
 ** CPUID Extended Processor Features
