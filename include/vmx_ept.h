@@ -69,7 +69,8 @@ typedef union vmcs_extended_page_table_pointer
    {
       uint64_t   cache:3;     /* 0=UC, 6=WB, others invalid */
       uint64_t   pwl:3;       /* page walk length - 1 */
-      uint64_t   r1:6;        /* reserved */
+      uint64_t   ad:1;        /* enable accessed & dirty flags */
+      uint64_t   rsv:5;       /* reserved */
       uint64_t   addr:52;     /* EPT pml4 physical addr */
 
    } __attribute__((packed));
@@ -113,9 +114,12 @@ typedef union ept_page_map_level_4_entry
       uint64_t  r:1;
       uint64_t  w:1;
       uint64_t  x:1;
-      uint64_t  r1:5;
-      uint64_t  ign:4;
-      uint64_t  addr:52;   /* bit 12 */
+      uint64_t  rsv:5;
+      uint64_t  acc:1;
+      uint64_t  ign0:3;
+      uint64_t  addr:40;   /* bit 12 */
+      uint64_t  ign1:11;   /* bit 52 */
+      uint64_t  sve:1;
 
    } __attribute__((packed));
 
@@ -130,9 +134,12 @@ typedef union ept_page_directory_pointer_entry
       uint64_t  r:1;
       uint64_t  w:1;
       uint64_t  x:1;
-      uint64_t  r1:5;
-      uint64_t  ign:4;
-      uint64_t  addr:52;    /* bit 12 */
+      uint64_t  rsv:5;
+      uint64_t  acc:1;
+      uint64_t  ign0:3;
+      uint64_t  addr:40;    /* bit 12 */
+      uint64_t  ign1:11;    /* bit 52 */
+      uint64_t  sve:1;
 
    } __attribute__((packed));
 
@@ -144,9 +151,13 @@ typedef union ept_page_directory_pointer_entry
       uint64_t  type:3;
       uint64_t  ign_pat:1;
       uint64_t  ps:1;       /* bit 7 */
-      uint64_t  ign:4;
-      uint64_t  r1:18;
-      uint64_t  addr:34;    /* bit 30 */
+      uint64_t  acc:1;
+      uint64_t  d:1;
+      uint64_t  ign0:2;     /* bit 10 */
+      uint64_t  rsv:18;
+      uint64_t  addr:22;    /* bit 30 */
+      uint64_t  ign1:11;    /* bit 52 */
+      uint64_t  sve:1;
 
    } __attribute__((packed)) page;
 
@@ -162,8 +173,11 @@ typedef union ept_page_directory_entry_64
       uint64_t  w:1;
       uint64_t  x:1;
       uint64_t  r1:5;
-      uint64_t  ign:4;
-      uint64_t  addr:52;    /* bit 12 */
+      uint64_t  acc:1;
+      uint64_t  ign0:3;
+      uint64_t  addr:40;    /* bit 12 */
+      uint64_t  ign1:11;    /* bit 52 */
+      uint64_t  sve:1;
 
    } __attribute__((packed));
 
@@ -175,9 +189,13 @@ typedef union ept_page_directory_entry_64
       uint64_t  type:3;
       uint64_t  ign_pat:1;
       uint64_t  ps:1;       /* bit 7 */
-      uint64_t  ign:4;
-      uint64_t  r1:9;
-      uint64_t  addr:43;    /* bit 21 */
+      uint64_t  acc:1;
+      uint64_t  d:1;
+      uint64_t  ign0:2;      /* bit 10 */
+      uint64_t  rsv:9;
+      uint64_t  addr:31;    /* bit 21 */
+      uint64_t  ign1:11;    /* bit 52 */
+      uint64_t  sve:1;
 
    } __attribute__((packed)) page;
 
@@ -194,8 +212,13 @@ typedef union ept_page_table_entry_64
       uint64_t  x:1;
       uint64_t  type:3;
       uint64_t  ign_pat:1;
-      uint64_t  ign:5;
-      uint64_t  addr:52;    /* bit 12 */
+      uint64_t  ign0:1;
+      uint64_t  acc:1;
+      uint64_t  d:1;
+      uint64_t  ign1:2;     /* bit 10 */
+      uint64_t  addr:40;    /* bit 12 */
+      uint64_t  ign3:11;    /* bit 52 */
+      uint64_t  sve:1;
 
    } __attribute__((packed));
 
@@ -207,8 +230,10 @@ typedef union ept_page_table_entry_64
 ** Macros
 */
 
-/* use ignored bit to tell this mapping is covered by MTRR */
-#define VMX_EPT_SET_MTRR_BIT         8
+/*
+** Use ignored bit to tell this mapping is covered by MTRR
+*/
+#define VMX_EPT_SET_MTRR_BIT         52
 #define ept_has_mtrr                 ((1UL)<<VMX_EPT_SET_MTRR_BIT)
 
 #define VMX_EPT_KEEP_MTRR_TYPE       (ept_has_mtrr|(7UL<<3))

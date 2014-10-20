@@ -418,7 +418,8 @@ typedef union vmx_ept_vpid_cap_msr
       uint64_t  pg_1g:1;      /* 17    allow ept pdpte to map 1GB page */
       uint64_t  r5:2;         /* 18-19 reserved */
       uint64_t  invept:1;     /* 20    invept insn supported */
-      uint64_t  r6:4;         /* 21-24 reserved */
+      uint64_t  dirty:1;      /* 21    access & dirty flag in ept entry */
+      uint64_t  r6:3;         /* 22-24 reserved */
       uint64_t  invept_s:1;   /* 25    single context invept */
       uint64_t  invept_a:1;   /* 26    all context invept */
       uint64_t  r7:5;         /* 27-31 reserved */
