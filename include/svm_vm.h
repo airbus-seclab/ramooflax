@@ -87,7 +87,6 @@
 #include <svm_npt.h>
 
 #define npg_init()                     svm_npt_map()
-#define npg_cr3                        __ctrls.ncr3
 #define npg_dft_attr                   ((uint64_t)(PG_USR|PG_RW))
 #define npg_dft_attr_nx                ((uint64_t)(PG_USR|PG_RW|PG_NX))
 #define npg_get_attr(_e)               pg_get_attr(_e)
@@ -126,6 +125,7 @@
       npg_cr3.pml4.pcd = (gcr3)->pcd;	\
    })
 
+#define npg_cr3                        __ctrls.ncr3
 #define npg_cr3_set(_addr)              (npg_cr3.addr = page_nr((_addr)))
 
 /* XXX: check bits violation (cf. 15.25.10) */
@@ -206,12 +206,7 @@
 ** instead of directly giving size (ie. invd=2, int1=1...)
 ** we should refer to our disasm engine
 */
-#define __insn_sz()				\
-   ({						\
-      debug_warning();				\
-      0;
-   })
-
+#define __insn_sz()	         ({ 0; })
 
 #define __allow_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 0; })
 #define __deny_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 1; })

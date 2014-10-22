@@ -120,7 +120,7 @@ typedef union control_register_3
       uint64_t  pwt:1;
       uint64_t  pcd:1;
       uint64_t  r2:7;
-      uint64_t  addr:40;
+      uint64_t  addr:40; /* bit 12 */
 
    } __attribute__((packed)) pml4;
 

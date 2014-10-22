@@ -175,7 +175,7 @@ int __vm_access_mem(vm_access_t *access)
 
    while(len)
    {
-      if(!__pg_walk(access->cr3, vaddr, &access->addr, &psz))
+      if(!__pg_walk(access->cr3, vaddr, &access->addr, &psz, 1))
       {
 	 debug(VM_ACCESS, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
 	 return 0;
@@ -304,4 +304,32 @@ void vm_setup_npg(int who)
 {
    npg_set_active_paging(who);
    npg_set_active_paging_cpu();
+}
+
+/*
+** Resolve guest virtual into guest physical
+*/
+int vm_pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
+{
+   if(!__paging())
+   {
+      debug(VM, "walk while paging disabled !\n");
+      return 0;
+   }
+
+   return __pg_walk(&__cr3, vaddr, paddr, psz, 1);
+}
+
+/*
+** Resolve guest virtual into system physical
+**/
+int vm_full_walk(offset_t vaddr, offset_t *paddr)
+{
+   size_t   sz;
+   offset_t gp;
+
+   if(vm_pg_walk(vaddr, &gp, &sz))
+      return npg_walk(gp, paddr);
+
+   return 0;
 }

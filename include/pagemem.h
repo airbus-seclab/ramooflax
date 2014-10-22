@@ -232,7 +232,8 @@ typedef union page_directory_pointer_entry
       uint64_t  pcd:1;
       uint64_t  r1:4;
       uint64_t  ign:3;
-      uint64_t  addr:52;
+      uint64_t  addr:40; /* bit 12 */
+      uint64_t  r2:12;
 
    } __attribute__((packed)) pae; /* specific pae pdpte register */
 

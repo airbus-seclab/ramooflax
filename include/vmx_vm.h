@@ -99,7 +99,6 @@
 #include <vmx_ept.h>
 
 #define npg_init()                     vmx_ept_map()
-#define npg_cr3                        __exec_ctrls.eptp
 #define npg_dft_attr                   ept_dft_attr
 #define npg_dft_attr_nx                ept_dft_attr_nx
 #define npg_get_attr(_e)               ept_pg_get_attr(_e)
@@ -128,6 +127,7 @@
 #define __update_npg_cache(_x)	 ({})
 #define __update_npg_pdpe()	 vmx_ept_update_pdpe()
 
+#define npg_cr3                        __exec_ctrls.eptp
 #define npg_cr3_set(_addr)				\
    ({							\
       __exec_ctrls.eptp.addr = page_nr((_addr));	\

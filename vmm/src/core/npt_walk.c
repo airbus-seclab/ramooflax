@@ -22,8 +22,10 @@
 extern info_data_t *info;
 
 /*
-** VM nested page walking services using VM cpu skillz
-** as we depend upon NPT features
+** Nested page walking services
+**
+** . we use VM cpu skillz as we depend
+**   upon nested mmu features
 */
 int npg_walk(offset_t vaddr, offset_t *paddr)
 {
@@ -33,12 +35,12 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    npg_pde64_t *pd, *pde;
    npg_pte64_t *pt, *pte;
 
-   debug(PG_W, "npg_walk on 0x%X\n", vaddr);
-   debug(PG_W, "nested CR3: 0x%X\n", npg_cr3.raw);
+   __pre_access(npg_cr3);
+   debug(PG_W, "nested cr3 0x%X\n", npg_cr3.raw);
 
    pml4e = &pg->pml4[pml4_idx(vaddr)];
+   debug(PG_W, "pml4e @ 0x%X = 0x%X\n", (offset_t)pml4e, pml4e->raw);
 
-   debug(PG_W, "pml4e @ 0x%X = %x %x\n", (offset_t)pml4e, pml4e->high, pml4e->low);
    if(!npg_present(pml4e))
    {
       debug(PG_W, "pml4e not present\n");
@@ -46,8 +48,8 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    }
 
    pdpe = &pg->pdp[pml4_idx(vaddr)][pdp_idx(vaddr)];
+   debug(PG_W, "pdpe @ 0x%X = 0x%X\n", (offset_t)pdpe, pdpe->raw);
 
-   debug(PG_W, "pdpe @ 0x%X = %x %x\n", (offset_t)pdpe, pdpe->high, pdpe->low);
    if(!npg_present(pdpe))
    {
       debug(PG_W, "pdpe not present\n");
@@ -62,8 +64,8 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
 
    pd  = (npg_pde64_t*)page_addr(pdpe->addr);
    pde = &pd[pd64_idx(vaddr)];
+   debug(PG_W, "pde @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
 
-   debug(PG_W, "pde @ 0x%X = %x %x\n", (offset_t)pde, pde->high, pde->low);
    if(!npg_present(pde))
    {
       debug(PG_W, "pde not present\n");
@@ -78,8 +80,8 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
 
    pt  = (npg_pte64_t*)page_addr(pde->addr);
    pte = &pt[pt64_idx(vaddr)];
+   debug(PG_W, "pte @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
 
-   debug(PG_W, "pte @ 0x%X = %x %x\n", (offset_t)pte, pte->high, pte->low);
    if(!npg_present(pte))
    {
       debug(PG_W, "pte not present\n");
@@ -89,6 +91,6 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    *paddr = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
 
 __success:
-   debug(PG_W, "paddr 0x%X -> nested addr 0x%X\n", vaddr, *paddr);
+   debug(PG_W, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, *paddr);
    return 1;
 }

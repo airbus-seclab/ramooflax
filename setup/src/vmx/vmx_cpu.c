@@ -135,9 +135,11 @@ static void vmx_cpu_skillz()
 	 "vm 1GB pages support: %s\n"
 	 "vm 2MB pages support: %s\n"
 	 "vm max physical addr: 0x%X\n"
+	 "mtrr variable count : %d\n"
 	 ,info->vm.cpu.skillz.pg_1G?"yes":"no"
 	 ,info->vm.cpu.skillz.pg_2M?"yes":"no"
-	 ,info->vm.max_paddr);
+	 ,info->vm.max_paddr
+	 ,info->vm.mtrr_cap.vcnt);
 }
 
 void vmx_vm_cpu_skillz_init()

@@ -111,7 +111,7 @@ static void svm_vmexit_post_hdl(raw64_t tsc)
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    info->vm.cpu.gpr->rax.raw = (offset_t)&info->vm.cpu.vmc->vm_vmcb;
 
-   info->vm.cpu.emu_sts.raw = 0;
+   info->vm.cpu.emu_sts = EMU_STS_AVL;
 
    info->vmm.ctrl.vmexit_cnt.raw++;
    svm_vmexit_tsc_rebase(tsc);

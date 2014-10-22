@@ -67,11 +67,12 @@ typedef union vmcs_extended_page_table_pointer
 {
    struct
    {
-      uint64_t   cache:3;     /* 0=UC, 6=WB, others invalid */
+      uint64_t   cache:3;     /* 0=UC, 6=WB, other reserved */
       uint64_t   pwl:3;       /* page walk length - 1 */
       uint64_t   ad:1;        /* enable accessed & dirty flags */
-      uint64_t   rsv:5;       /* reserved */
-      uint64_t   addr:52;     /* EPT pml4 physical addr */
+      uint64_t   rsv0:5;      /* reserved */
+      uint64_t   addr:40;     /* bit 12, EPT pml4 physical addr */
+      uint64_t   rsv1:12;     /* bit 52, reserved */
 
    } __attribute__((packed));
 
@@ -172,7 +173,7 @@ typedef union ept_page_directory_entry_64
       uint64_t  r:1;
       uint64_t  w:1;
       uint64_t  x:1;
-      uint64_t  r1:5;
+      uint64_t  rsv:5;
       uint64_t  acc:1;
       uint64_t  ign0:3;
       uint64_t  addr:40;    /* bit 12 */

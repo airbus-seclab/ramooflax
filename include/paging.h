@@ -66,19 +66,11 @@ void npg_setup_a20();
 /*
 ** Classical && Nested walking functions
 */
-int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*);
-int    pg_walk(offset_t, offset_t*, size_t*);
-int   npg_walk(offset_t, offset_t*);
+int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*, int);
+int  npg_walk(offset_t, offset_t*);
 
-static inline void pg_show(offset_t vaddr)
-{
-   size_t   psz;
-   offset_t paddr;
-   offset_t naddr;
+#define vmm_pg_walk(c,v,p,s)   __pg_walk(c,v,p,s,0)
 
-   if(pg_walk(vaddr, &paddr, &psz))
-      npg_walk(paddr, &naddr);
-}
 #endif
 
 #endif

@@ -208,29 +208,26 @@ static void vmx_vmexit_show_event()
 	 switch(vm_exit_info.int_info.vector)
 	 {
 	 case PF_EXCP:
-	    pg_show(__cr2.raw);
+	 {
+	    offset_t paddr;
+	    vm_full_walk(__cr2.raw, &paddr);
+	    printf("cr2 0x%X -> nested 0x%X\n", __cr2.raw, paddr);
 	    break;
+	 }
 	 case GP_EXCP:
 	 {
 	    if(vm_exit_info.int_err_code.sl.idt && !_xx_lmode())
 	    {
 	       int_desc_t *idt = (int_desc_t*)(vm_state.idtr.base.raw & 0xffffffff);
+	       offset_t    paddr;
 
-	       if(__paging())
+	       if(!vm_full_walk((offset_t)idt, &paddr))
 	       {
-		  size_t   psz;
-		  offset_t paddr;
-		  offset_t naddr;
-
-		  if(!pg_walk((offset_t)idt, &paddr, &psz) || !npg_walk(paddr, &naddr))
-		  {
-		     printf("#GP related to IDT and IDT is no mapped\n");
-		     return;
-		  }
-
-		  idt = (int_desc_t*)naddr;
+		  printf("#GP related to IDT and IDT is no mapped\n");
+		  return;
 	       }
 
+	       idt = (int_desc_t*)paddr;
 	       printf("#GP related to IDT entry 0x%x [0x%X]\n"
 		      ,vm_exit_info.int_err_code.sl.idx
 		      ,idt[vm_exit_info.int_err_code.sl.idx].raw);
