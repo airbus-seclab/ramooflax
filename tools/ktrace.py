@@ -48,8 +48,14 @@ while line != "":
 
     addr = int(addr,16)
     for i in range(len(symbols)):
-        if addr >= symbols[i][0] and addr < symbols[i][0]+symbols[i][1]:
-            print "[RIP 0x%.16x FCT 0x%.16x] %s"%(addr,symbols[i][0],symbols[i][2])
+        start = symbols[i][0]
+        size  = symbols[i][1]
+        name  = symbols[i][2]
+        if addr >= start and addr < start+size:
+            if "resume_from_intr" in name:
+                print "\n     **** Exception/Interrupt in VMM ****\n"
+            else:
+                print "[RIP 0x%.16x FCT 0x%.16x] %s"%(addr,start,name)
             sys.stdout.flush()
             break
 

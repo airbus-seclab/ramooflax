@@ -17,8 +17,8 @@
 */
 .text
 
-.globl resume
-.type  resume,"function"
+.globl resume_from_intr
+.type  resume_from_intr,"function"
 
 idt_checkmode:
 	bt	$8, irq_msg(%rip)
@@ -68,7 +68,7 @@ idt_common_rcx:
 	mov	%rsp, %rdi
 	call	intr_hdlr
 
-resume:
+resume_from_intr:
 	pop	%r15
 	pop	%r14
 	pop	%r13
