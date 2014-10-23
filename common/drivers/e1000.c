@@ -199,9 +199,10 @@ void e1k_rx_init(e1k_info_t *e1k)
    debug(E1000, "read RDL/RDH/RDT = 0x%x 0x%x 0x%x\n"
 	 ,e1k->rx.dl->raw, e1k->rx.dh->raw, e1k->rx.dt->raw);
 
-   e1k->rx.dl->raw = RX_DESC_NR * sizeof(e1k_rdesc_t);
-   e1k->rx.dh->raw = 0;
-   e1k->rx.dt->raw = RX_DESC_NR - 1;
+   e1k->rx.dl->raw  = RX_DESC_NR * sizeof(e1k_rdesc_t);
+   e1k->rx.dh->raw  = 0;
+   e1k->rx.tail.raw = RX_DESC_NR - 1;
+   e1k->rx.dt->raw  = e1k->rx.tail.raw;
 
    debug(E1000, "read RDL/RDH/RDT = 0x%x 0x%x 0x%x\n"
 	 ,e1k->rx.dl->raw, e1k->rx.dh->raw, e1k->rx.dt->raw);
@@ -253,7 +254,8 @@ void e1k_tx_init(e1k_info_t *e1k)
 
    e1k->tx.dl->raw = TX_DESC_NR * sizeof(e1k_tdesc_t);
    e1k->tx.dh->raw = 0;
-   e1k->tx.dt->raw = 0;
+   e1k->tx.tail.raw = 0;
+   e1k->tx.dt->raw = e1k->tx.tail.raw;
 
    debug(E1000, "read TDL/TDH/TDT = 0x%x 0x%x 0x%x\n"
 	 ,e1k->tx.dl->raw, e1k->tx.dh->raw, e1k->tx.dt->raw);
@@ -304,7 +306,8 @@ void e1k_tx_on(net_info_t *net)
 */
 offset_t e1k_tx_get_pktbuf(e1k_info_t *e1k)
 {
-   return e1k->mem.tdesc[e1k->tx.dt->raw].addr;
+   debug(E1000, "--> get TX pktbuf [TDT %d]\n", e1k->tx.tail.raw);
+   return e1k->mem.tdesc[e1k->tx.tail.raw].addr;
 }
 
 void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
@@ -313,16 +316,14 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    volatile e1k_tdesc_t *dsc;
    e1k_tdesc_cmd_t       cmd;
    /* e1k_tdesc_sts_t       sts; */
-   uint32_t              tdt;
 
    e1k = &net->arch;
-   tdt = e1k->tx.dt->raw;
-   dsc = &e1k->mem.tdesc[tdt];
+   dsc = &e1k->mem.tdesc[e1k->tx.tail.raw];
 
    dsc->addr = pkt.linear;
    dsc->len = len;
 
-   debug(E1000, "--> [TDT %d] len %d\n", tdt, dsc->len);
+   debug(E1000, "--> [TDT %d] len %d\n", e1k->tx.tail.raw, dsc->len);
 
    /* { */
    /*    size_t i; */
@@ -351,7 +352,9 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    cmd.eop = 1;
    cmd.rs = 1;
    dsc->cmd.raw = cmd.raw ;
-   e1k->tx.dt->raw = (tdt+1)%TX_DESC_NR;
+
+   e1k->tx.tail.raw = (e1k->tx.tail.raw+1)%TX_DESC_NR;
+   e1k->tx.dt->raw = e1k->tx.tail.raw;
 
    /* debug(E1000, "sending packet ... "); */
    /* do */
@@ -367,11 +370,10 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    e1k_info_t           *e1k;
    volatile e1k_rdesc_t *dsc;
    e1k_rdesc_sts_t       sts;
-   uint32_t              rdt;
 
    e1k = &net->arch;
-   rdt = (e1k->rx.dt->raw+1)%RX_DESC_NR;
-   dsc = &e1k->mem.rdesc[rdt];
+   e1k->rx.tail.raw = (e1k->rx.tail.raw+1)%RX_DESC_NR;
+   dsc = &e1k->mem.rdesc[e1k->rx.tail.raw];
    sts.raw = dsc->sts.raw;
 
    /* e1k_rdesc_err_t err; */
@@ -383,10 +385,10 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
       return 0;
 
    if(!sts.eop)
-      debug(E1000, "[RDT %d] !!! WRN !!! eop == 0\n", rdt);
+      debug(E1000, "[RDT %d] !!! WRN !!! eop == 0\n", e1k->rx.tail.raw);
 
    memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
-   debug(E1000, "<-- [RDT %d] len %d eop %d\n", rdt, dsc->len, sts.eop);
+   debug(E1000, "<-- [RDT %d] len %d eop %d\n", e1k->rx.tail.raw,dsc->len,sts.eop);
 
 /* #ifdef CONFIG_E1000_DBG */
 /*    { */
@@ -412,7 +414,7 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    /* } */
 
    dsc->sts.raw = 0;
-   e1k->rx.dt->raw = rdt;
+   e1k->rx.dt->raw = e1k->rx.tail.raw;
    return dsc->len;
 }
 

@@ -418,6 +418,8 @@ typedef struct e1k_rxtx_registers
    volatile e1k_rxtx_dhead_reg_t *dh;
    volatile e1k_rxtx_dtail_reg_t *dt;
 
+   e1k_rxtx_dtail_reg_t tail;  /* cache cause unreliable */
+
 } __attribute__((packed)) e1k_rxtx_reg_t;
 
 typedef struct e1k_rx_registers
