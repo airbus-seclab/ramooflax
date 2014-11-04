@@ -138,7 +138,7 @@ class Linux26:
 #
 class Windows:
     def __init__(self, settings):
-        self.__setings = dict(settings)
+        self.__settings = dict(settings)
         self.__pname = None
         self.__pcr3 = None
 
@@ -148,9 +148,9 @@ class Windows:
         eprocess = vm.mem.read_dword(kthread+self.__settings["eprocess"])
 
         while eprocess != 0:
-            name = vm.mem.vread(eprocess+self.__settings["name"],32)
+            name = vm.mem.vread(eprocess+self.__settings["name"],16)
             if Utils.info:
-                print "process",name
+                print "process",name[:name.index('\x00')]
             if self.__pname in name:
                 self.__pcr3 = vm.mem.read_dword(eprocess+self.__settings["cr3"])
                 if Utils.info:
@@ -178,13 +178,18 @@ class Windows:
             return self.__find_process(vm)
         return True
 
+    def get_process_cr3(self):
+        if self.__pcr3 != None:
+            return self.__pcr3
+        raise ValueError
+
 class WinXP(Windows):
-    def __init__(self):
-        Windows.__init__(self)
+    def __init__(self, settings):
+        Windows.__init__(self, settings)
 
 class Win7(Windows):
-    def __init__(self):
-        Windows.__init__(self)
+    def __init__(self, settings):
+        Windows.__init__(self, settings)
 
 #
 # Utilities to help analyst and framework
