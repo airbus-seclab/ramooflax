@@ -36,27 +36,36 @@ int __dev_kbd_ctrl(kbd_t *kbd, io_insn_t *io)
 
 int __dev_kbd_data(kbd_t *kbd, io_insn_t *io)
 {
+   raw64_t *rax = &info->vm.cpu.gpr->rax;
+
    if(io->in)
    {
-      info->vm.cpu.gpr->rax.blow = in(io->port);
+      rax->blow = in(io->port);
 
-      if(kbd->last_cmd == KBD_CMD_READ_O_PORT && kbd->output_port.a20)
-	 info->vm.cpu.gpr->rax.blow |= KBD_OUTPUT_PORT_A20;
+      /* Return the value the VM expects to see for the a20 bit */
+      if(kbd->last_cmd == KBD_CMD_READ_O_PORT)
+      {
+         rax->blow &= ~KBD_OUTPUT_PORT_A20;
+	 rax->blow |= (kbd->output_port.a20 ? KBD_OUTPUT_PORT_A20 : 0);
+      }
    }
    else
    {
-      uint8_t al = info->vm.cpu.gpr->rax.blow;
-
       if(kbd->last_cmd == KBD_CMD_WRITE_O_PORT)
       {
-	 kbd->output_port.raw = al;
+	 kbd->output_port.raw = rax->blow;
+
+	 /* if(kbd->output_port.sys_rst) */
+	 /*    panic("keyboard controller system reset"); */
+
 	 dev_a20_set(kbd->output_port.a20);
 
-	 if(kbd->output_port.a20)
-	    al &= ~KBD_OUTPUT_PORT_A20;
+         /* Don't let the VM _actually_ disable the a20 line */
+	 if(!kbd->output_port.a20)
+	    rax->blow |= KBD_OUTPUT_PORT_A20;
       }
 
-      out(al, io->port);
+      out(rax->blow, io->port);
    }
 
    return 1;
