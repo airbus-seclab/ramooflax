@@ -273,6 +273,51 @@ typedef union cpuid_feature_info_ebx
       (d & CPUID_EDX_EXT_PROC_FEAT_P1G)?1:0;	\
    })
 
+
+/*
+** MS Hyper-V leaf
+*/
+#define CPUID_MSHYPERV_RANGE                0x40000000
+#define CPUID_MSHYPERV_ID                   0x40000001
+#define CPUID_MSHYPERV_FEAT                 0x40000003
+
+#define CPUID_MSHYPERV_SIG                  0x31237648
+
+typedef union cpuid_ms_hyperv_feature_info_eax
+{
+   struct
+   {
+      uint32_t  vprt:1;
+      uint32_t  time_ref_cnt:1;
+      uint32_t  synic:1;
+      uint32_t  stimer:1;
+      uint32_t  apic:1;
+      uint32_t  hc:1;
+      uint32_t  vpidx:1;
+      uint32_t  vprst:1;
+      uint32_t  stat:1;
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) mshyperv_feat_eax_t;
+
+typedef union cpuid_ms_hyperv_feature_info_edx
+{
+   struct
+   {
+      uint32_t  mwait:1;
+      uint32_t  gdbg:1;
+      uint32_t  perf:1;
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) mshyperv_feat_edx_t;
+
+
 /*
 ** Functions
 */

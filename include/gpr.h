@@ -161,7 +161,7 @@ typedef union general_purpose_registers_64
 
 /*
 ** GPRs context after "pusha"
-*/ 
+*/
 typedef union general_purpose_registers_context
 {
    struct

@@ -38,9 +38,24 @@ static void __resolve_cpuid_feature()
    /* ctx->rdx.low &= ~CPUID_EDX_FEAT_APIC; */
 }
 
+static void __resolve_cpuid_mshyperv_zero()
+{
+   gpr64_ctx_t *ctx = info->vm.cpu.gpr;
+   ctx->rax.low = ctx->rbx.low = ctx->rcx.low = ctx->rdx.low = 0;
+}
+
 static int __resolve_cpuid()
 {
    uint32_t idx = info->vm.cpu.gpr->rax.low;
+
+   switch(idx)
+   {
+   case CPUID_MSHYPERV_RANGE:
+   case CPUID_MSHYPERV_ID:
+   case CPUID_MSHYPERV_FEAT:
+      __resolve_cpuid_mshyperv_zero();
+      goto __leave;
+   }
 
    __resolve_cpuid_native();
    __resolve_cpuid_arch(idx);
@@ -54,6 +69,7 @@ static int __resolve_cpuid()
       break;
    }
 
+__leave:
    debug(CPUID, "cpuid 0x%x | 0x%x 0x%x 0x%x 0x%x\n"
 	 ,idx
 	 ,info->vm.cpu.gpr->rax.low
