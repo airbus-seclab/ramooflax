@@ -192,59 +192,75 @@ char* vmx_vmexit_string_from_vector_type(uint8_t type,  uint8_t vector)
    return "(unknown)";
 }
 
+static void vmx_vmexit_show_gp_event()
+{
+   int_desc_t *idt;
+   offset_t   paddr;
+
+   if(!vm_exit_info.int_err_code.sl.idt ||_xx_lmode())
+      return;
+
+   idt = (int_desc_t*)(vm_state.idtr.base.raw & 0xffffffff);
+
+   if(!__paging())
+      goto __show_gp;
+   else if(vm_full_walk((offset_t)idt, &paddr))
+   {
+      idt = (int_desc_t*)paddr;
+      goto __show_gp;
+   }
+
+   printf("#GP related to IDT and IDT is no mapped\n");
+   return;
+
+__show_gp:
+   printf("#GP related to IDT entry 0x%x [0x%X]\n"
+	  ,vm_exit_info.int_err_code.sl.idx
+	  ,idt[vm_exit_info.int_err_code.sl.idx].raw);
+}
+
 static void vmx_vmexit_show_event()
 {
-   if(vm_exit_info.int_info.v)
+   char *name;
+
+   if(!vm_exit_info.int_info.v)
+      return;
+
+   name = vmx_vmexit_string_from_vector_type(vm_exit_info.int_info.type,
+					     vm_exit_info.int_info.vector);
+   printf("-\nevent           : %s (%d) vector 0x%x err_code 0x%x\n"
+	  ,name,vm_exit_info.int_info.type
+	  ,vm_exit_info.int_info.vector
+	  ,vm_exit_info.int_info.v_err?vm_exit_info.int_err_code.raw:0);
+
+   if(vm_exit_info.int_info.type != VMCS_INT_INFO_TYPE_HW_EXCP)
+      return;
+
+   switch(vm_exit_info.int_info.vector)
    {
-      char *name = vmx_vmexit_string_from_vector_type(vm_exit_info.int_info.type,
-						      vm_exit_info.int_info.vector);
-      printf("-\nevent           : %s (%d) vector 0x%x err_code 0x%x\n"
-	     ,name,vm_exit_info.int_info.type
-	     ,vm_exit_info.int_info.vector
-	     ,vm_exit_info.int_info.v_err?vm_exit_info.int_err_code.raw:0);
-
-      if(vm_exit_info.int_info.type == VMCS_INT_INFO_TYPE_HW_EXCP)
-      {
-	 switch(vm_exit_info.int_info.vector)
-	 {
-	 case PF_EXCP:
-	 {
-	    offset_t paddr;
-	    vm_full_walk(__cr2.raw, &paddr);
-	    printf("cr2 0x%X -> nested 0x%X\n", __cr2.raw, paddr);
-	    break;
-	 }
-	 case GP_EXCP:
-	 {
-	    if(vm_exit_info.int_err_code.sl.idt && !_xx_lmode())
-	    {
-	       int_desc_t *idt = (int_desc_t*)(vm_state.idtr.base.raw & 0xffffffff);
-	       offset_t    paddr;
-
-	       if(!vm_full_walk((offset_t)idt, &paddr))
-	       {
-		  printf("#GP related to IDT and IDT is no mapped\n");
-		  return;
-	       }
-
-	       idt = (int_desc_t*)paddr;
-	       printf("#GP related to IDT entry 0x%x [0x%X]\n"
-		      ,vm_exit_info.int_err_code.sl.idx
-		      ,idt[vm_exit_info.int_err_code.sl.idx].raw);
-	    }
-	    break;
-	 }
-	 }
-      }
+   case PF_EXCP:
+   {
+      offset_t paddr;
+      vm_full_walk(__cr2.raw, &paddr);
+      printf("cr2 0x%X -> nested 0x%X\n", __cr2.raw, paddr);
+      break;
+   }
+   case GP_EXCP:
+   {
+      vmx_vmexit_show_gp_event();
+      break;
+   }
    }
 }
 
 static void vmx_vmexit_show_deliver()
 {
+   char *name;
+
    if(vm_entry_ctrls.int_info.v)
    {
-      char *name = vmx_vmexit_string_from_vector_type(vm_entry_ctrls.int_info.type,
-						      vm_entry_ctrls.int_info.vector);
+      name = vmx_vmexit_string_from_vector_type(vm_entry_ctrls.int_info.type,
+						vm_entry_ctrls.int_info.vector);
       printf("-\nentry event     : %s (%d) vector 0x%x err_code 0x%x\n"
 	     ,name
 	     ,vm_entry_ctrls.int_info.type
@@ -254,8 +270,8 @@ static void vmx_vmexit_show_deliver()
 
    if(vm_exit_info.idt_info.v)
    {
-      char *name = vmx_vmexit_string_from_vector_type(vm_exit_info.idt_info.type,
-						      vm_exit_info.idt_info.vector);
+      name = vmx_vmexit_string_from_vector_type(vm_exit_info.idt_info.type,
+						vm_exit_info.idt_info.vector);
       printf("-\nidt delivery    : %s (%d) vector 0x%x err_code 0x%x\n"
 	     ,name
 	     ,vm_exit_info.idt_info.type
