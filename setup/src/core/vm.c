@@ -46,7 +46,13 @@ static void vm_dev_init()
 
    /* prevent net card detection */
 #ifdef CONFIG_HAS_NET
-   __deny_io(PCI_CONFIG_ADDR);
+      __deny_io(PCI_CONFIG_ADDR);
+#ifdef CONFIG_HAS_E1000
+      {
+	 e1k_info_t *e1k = &info->hrd.dev.net.arch;
+	 npg_unmap(e1k->base.linear, e1k->base.linear + (128<<10));
+      }
+#endif
 #endif
 }
 
