@@ -26,8 +26,10 @@ extern info_data_t *info;
 
 void dev_a20_set(uint8_t on)
 {
-   if(!__rmode())
-      panic("accessing a20 while in protected mode !");
+   debug(DEV, "setting A20 %d (CR0 0x%x)\n", on, __cr0.raw);
+
+   /* if(!__rmode()) */
+   /*    panic("accessing a20 while in protected mode !"); */
 
    if(on != info->vm.dev.mem.a20)
    {
