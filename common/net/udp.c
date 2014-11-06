@@ -32,16 +32,18 @@ size_t udp_pkt(udp_hdr_t *hdr, uint16_t sport, uint16_t dport, size_t dlen)
 
    debug(UDP, "snd UDP sport %d dport %d len %D\n", sport, dport, len);
 
+#ifdef CONFIG_UDP_DBG
    {
       size_t i;
       loc_t data;
       data.addr = hdr;
       data.linear += sizeof(udp_hdr_t);
-      debug(UDP, "snd UDP data (%D): ", dlen);
+      printf("snd UDP data (%D): ", dlen);
       for(i=0 ; i<dlen ; i++)
-   	 debug(UDP, "%c", data.u8[i]);
-      debug(UDP,"\n");
+	 printf("%c", data.u8[i]);
+      printf("\n");
    }
+#endif
    return len;
 }
 
@@ -63,10 +65,10 @@ int udp_dissect(loc_t pkt, size_t len, buffer_t *rcv)
 #ifdef CONFIG_UDP_DBG
    {
       size_t i;
-      debug(UDP, "rcv UDP data (%d): ", rcv->sz);
+      printf("rcv UDP data (%d): ", rcv->sz);
       for(i=0 ; i<rcv->sz ; i++)
-   	 debug(UDP, "%c", rcv->data.u8[i]);
-      debug(UDP,"\n");
+	 printf("%c", rcv->data.u8[i]);
+      printf("\n");
    }
 #endif
 
