@@ -147,9 +147,9 @@ class GDB:
         return self._recv_pkt(sz, ack=s_ack)
 
     def recv_raw(self, expected):
-        if Utils.debug:
-            print "receiving raw data (expect %d)" % (expected)
         l = len(self.__cache)
+        if Utils.debug:
+            print "receiving raw data (expect %d, cache %d)" % (expected, l)
         while l < expected:
             #data, dl = self.__recv(expected - l)
             data, dl = self.__recv(4096)
