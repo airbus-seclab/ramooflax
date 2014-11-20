@@ -32,6 +32,7 @@ static int __resolve_msr_rd()
       gpr64_ctx_t *ctx = info->vm.cpu.gpr;
       emulate_native();
       __rd_msr(ctx->rax.low, ctx->rcx.low, ctx->rdx.low);
+      rc = VM_DONE;
    }
 
    return rc;
@@ -47,6 +48,7 @@ static int __resolve_msr_wr()
       gpr64_ctx_t *ctx = info->vm.cpu.gpr;
       emulate_native();
       __wr_msr(ctx->rax.low, ctx->rcx.low, ctx->rdx.low);
+      rc = VM_DONE;
    }
 
    return rc;
