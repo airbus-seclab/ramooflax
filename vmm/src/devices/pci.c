@@ -26,7 +26,7 @@ static int __dev_pci_dvd_filter(void *data)
 {
    pci_cfg_dev_vdr_t *dvd = (pci_cfg_dev_vdr_t*)data;
 
-   debug(DEV_PCI, "pci io dvd filter: 0x%x\n", dvd->raw);
+   /* debug(DEV_PCI, "pci io dvd filter: 0x%x\n", dvd->raw); */
 
    if(dvd->vendor != PCI_CFG_VENDOR_INTEL)
       return 0;
@@ -45,15 +45,15 @@ static int __dev_pci_addr_filter(void *data)
    pci_cfg_addr_t *addr = (pci_cfg_addr_t*)data;
    pci_cfg_addr_t *net = &info->hrd.dev.net.pci.addr;
 
-   debug(DEV_PCI, "pci io addr filter: b%d f%d d%d r%d\n"
-	 ,addr->bus, addr->fnc, addr->dev, addr->reg);
+   /* debug(DEV_PCI, "pci io addr filter: b%d f%d d%d r%d\n" */
+   /* 	 ,addr->bus, addr->fnc, addr->dev, addr->reg); */
 
    if(addr->bus == net->bus &&
       addr->fnc == net->fnc &&
       addr->dev == net->dev &&
       addr->reg == PCI_CFG_DEV_VDR_OFFSET)
    {
-      debug(DEV_PCI, "pci io filter: dvd request\n");
+      debug(DEV_PCI, "pci io filter: target netcard, now filter dvd\n");
       __deny_io(PCI_CONFIG_DATA);
       return 1;
    }
