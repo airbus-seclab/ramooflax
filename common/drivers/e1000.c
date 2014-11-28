@@ -332,40 +332,40 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    e1k->tx.tail.raw = (e1k->tx.tail.raw+1)%TX_DESC_NR;
    e1k->tx.dt->raw = e1k->tx.tail.raw;
 
-#ifdef CONFIG_E1000_DBG
-   {
-      e1k_tdesc_sts_t sts;
-      debug(E1000, "sending packet ... ");
-      do
-      {
-	 io_wait(10000);
-	 sts.raw = dsc->sts.raw;
+/* #ifdef CONFIG_E1000_DBG */
+/*    { */
+/*       e1k_tdesc_sts_t sts; */
+/*       debug(E1000, "sending packet ...\n"); */
+/*       do */
+/*       { */
+/* 	 io_wait(10000); */
+/* 	 sts.raw = dsc->sts.raw; */
 
-	 if(e1k->tx.ctl->raw == -1U)
-	 {
-	    int i;
-	    pci_cfg_val_t *pci = &net->pci;
+/* 	 if(e1k->tx.ctl->raw == -1U) */
+/* 	 { */
+/* 	    int i; */
+/* 	    pci_cfg_val_t *pci = &net->pci; */
 
-	    debug(E1000, "CTL 0x%x TCTL 0x%x\n", e1k->ctl->raw, e1k->tx.ctl->raw);
+/* 	    debug(E1000, "CTL 0x%x TCTL 0x%x\n", e1k->ctl->raw, e1k->tx.ctl->raw); */
 
-	    pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
-	    pci_cfg_read(pci);
+/* 	    pci->addr.reg = PCI_CFG_CMD_STS_OFFSET; */
+/* 	    pci_cfg_read(pci); */
 
-	    debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
-		  ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+/* 	    debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n" */
+/* 		  ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master); */
 
-	    for(i=0 ; i<6 ; i++)
-	    {
-	       pci->addr.reg = PCI_CFG_BAR_OFFSET + i*4;
-	       pci_cfg_read(pci);
-	       debug(E1000, "e1k BAR%d 0x%x)", i, pci->br.raw);
-	    }
-	    panic("corrupted e1k config space !");
-	 }
-      } while(!sts.dd);
-      debug(E1000, "done.\n");
-   }
-#endif
+/* 	    for(i=0 ; i<6 ; i++) */
+/* 	    { */
+/* 	       pci->addr.reg = PCI_CFG_BAR_OFFSET + i*4; */
+/* 	       pci_cfg_read(pci); */
+/* 	       debug(E1000, "e1k BAR%d 0x%x)", i, pci->br.raw); */
+/* 	    } */
+/* 	    panic("corrupted e1k config space !"); */
+/* 	 } */
+/*       } while(!sts.dd); */
+/*       debug(E1000, "packet sent\n"); */
+/*    } */
+/* #endif */
 }
 
 size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
@@ -388,26 +388,26 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
    debug(E1000, "<-- [RDT %d] len %d eop %d\n", e1k->rx.tail.raw,dsc->len,sts.eop);
 
-#ifdef CONFIG_E1000_DBG
-   {
-      volatile e1k_rdesc_t *d;
-      e1k_rdesc_sts_t s;
-      size_t i=0;
+/* #ifdef CONFIG_E1000_DBG */
+/*    { */
+/*       volatile e1k_rdesc_t *d; */
+/*       e1k_rdesc_sts_t s; */
+/*       size_t i=0; */
 
-      for(i=0 ; i<dsc->len ; i++)
-	 printf(" %x", data.u8[i]);
-      printf("\n");
+/*       for(i=0 ; i<dsc->len ; i++) */
+/* 	 printf(" %x", data.u8[i]); */
+/*       printf("\n"); */
 
-      debug(E1000, "[deep check] RDT %d RDH %d\n",e1k->rx.dt->raw,e1k->rx.dh->raw);
-      for(i=0 ;i<RX_DESC_NR ; i++)
-      {
-	 d = &e1k->mem.rdesc[i];
-	 s.raw = d->sts.raw;
-	 printf(" %d:%d", i, s.dd);
-      }
-      printf("\n");
-   }
-#endif
+/*       debug(E1000, "[deep check] RDT %d RDH %d\n",e1k->rx.dt->raw,e1k->rx.dh->raw); */
+/*       for(i=0 ;i<RX_DESC_NR ; i++) */
+/*       { */
+/* 	 d = &e1k->mem.rdesc[i]; */
+/* 	 s.raw = d->sts.raw; */
+/* 	 printf(" %d:%d", i, s.dd); */
+/*       } */
+/*       printf("\n"); */
+/*    } */
+/* #endif */
 
    dsc->sts.raw = 0;
    e1k->rx.dt->raw = e1k->rx.tail.raw;
