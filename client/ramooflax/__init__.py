@@ -22,3 +22,4 @@ from vm    import VM
 from cpu   import CPU, CPUFamily, CPUException
 from event import StopReason
 from utils import Utils, OSAffinity
+from addr_space import AddrSpace, Page, Pde, Pte, PageTable, PageDirectory, PgMsk, Mapping
