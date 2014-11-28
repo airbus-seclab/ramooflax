@@ -154,7 +154,7 @@ static void gdb_interrupt_sequence()
 {
    __gdb_reset_buffer();
    gdb_set_ack(1);
-   gdb_preempt(GDB_EXIT_INT);
+   __gdb_preempt(GDB_EXIT_INT);
 }
 
 static size_t gdb_consume_packet(uint8_t *data, size_t len)

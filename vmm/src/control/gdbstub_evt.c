@@ -24,18 +24,21 @@ extern info_data_t *info;
 
 static int gdbstub_evt_cr_rd(arg_t arg)
 {
+   debug(GDBSTUB_EVT, "preempt(rd_cr %d)\n", arg.blow);
    gdb_preempt(GDB_EXIT_R_CR0+(uint8_t)arg.blow);
    return 1;
 }
 
 static int gdbstub_evt_cr_wr(arg_t arg)
 {
+   debug(GDBSTUB_EVT, "preempt(wr_cr %d)\n", arg.blow);
    gdb_preempt(GDB_EXIT_W_CR0+(uint8_t)arg.blow);
    return 1;
 }
 
 static int gdbstub_evt_excp(arg_t arg)
 {
+   debug(GDBSTUB_EVT, "preempt(excp %d)\n", arg.low);
    gdb_preempt(GDB_EXIT_EXCP_DE+(uint8_t)arg.low);
    return 1;
 }

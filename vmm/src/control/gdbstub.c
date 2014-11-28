@@ -48,12 +48,21 @@ void gdb_reset()
    gdb_disable();
 }
 
-int gdb_preempt(uint8_t reason)
+int __gdb_preempt(uint8_t reason)
 {
    gdb_send_stop_reason(reason);
    gdb_set_last_stop_reason(reason);
    gdb_set_lock(1);
    return 1;
+}
+
+int gdb_preempt(uint8_t reason)
+{
+   /* check if we have a request to process first */
+   debug(GDBSTUB, "reading receive buffer before preempt %d\n", reason);
+   gdb_recv_packet();
+
+   return __gdb_preempt(reason);
 }
 
 void gdbstub()

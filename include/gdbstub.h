@@ -24,7 +24,8 @@
 /*
 ** Interactivity
 */
-#define GDB_RATIO            (10UL)
+//#define GDB_RATIO            (10UL)
+#define GDB_RATIO            (1UL)
 
 /*
 ** Stop reasons
@@ -120,6 +121,7 @@ typedef struct gdbstub
 void gdb_enable();
 void gdb_disable();
 void gdb_reset();
+int __gdb_preempt(uint8_t);
 int  gdb_preempt(uint8_t);
 void gdbstub();
 
