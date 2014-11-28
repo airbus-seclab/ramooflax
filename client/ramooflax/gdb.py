@@ -120,11 +120,12 @@ class GDB:
             print "send INTR"
         self._send("\x03")
 
-    def quit(self):
+    def quit(self, quick=False):
         if Utils.debug:
             print "send QUIT"
         self._send("$k#6b")
-        self.recv_pkt(2, s_ack=False)
+        if not quick:
+            self.recv_pkt(2, s_ack=False)
         self.__quit()
 
     def checksum(self, data):
@@ -220,7 +221,7 @@ class GDB:
         rl = len(pkt)
 
         if sh == -1 or rl < el:
-            print "bad packet:", repr(pkt)
+            print "bad packet (%d %d): %r" % (rl, el, repr(pkt))
             self.nak()
             return (rl, None)
 
@@ -232,7 +233,7 @@ class GDB:
             print "pkt",repr(pkt)
 
         if chk != self.checksum(content):
-            print "bad packet:", repr(pkt)
+            print "bad packet checksum:", repr(pkt)
             self.nak()
             return (el,None)
 

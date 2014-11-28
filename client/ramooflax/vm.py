@@ -22,6 +22,8 @@ import cpu
 import memory
 import gdb
 
+from utils import Utils
+
 class VMState:
     waiting     = 0
     working     = 1
@@ -72,11 +74,11 @@ Virtual Machine Controller
         except:
             raise
 
-    def detach(self):
+    def detach(self, quick=False):
         try:
             self.cpu._quit()
             self.mem._quit()
-            self.__gdb.quit()
+            self.__gdb.quit(quick)
         except:
             print "failed to detach properly"
         finally:
@@ -91,6 +93,10 @@ Virtual Machine Controller
     def interact(self, variables):
         self.__variables = variables
         self.__dispatch()
+
+    def interact2(self, variables):
+        self.__variables = variables
+        self.__dispatch2()
 
     def singlestep(self):
         self.__set_state(VMState.working)
@@ -135,12 +141,25 @@ Virtual Machine Controller
         self.__set_state(VMState.ready)
         return can_interact
 
+    # Keep on interacting on each stop reason
+    # for which handler returns True
     def __dispatch(self):
         self.__session = True
         inter = True
         while inter:
             self.__interact()
             inter = self.resume()
+
+    # Usefull when handler should not trigger
+    # interactive mode, but still giving the
+    # opportunity to manually break the VM (ctrl+c)
+    #
+    # similar to  'while True: vm.interact()'
+    def __dispatch2(self):
+        self.__session = True
+        while True:
+            if self.resume():
+                self.__interact()
 
     def __ask_quit(self):
         sys.stdout.write("Really quit (y/n) ?")
@@ -152,7 +171,7 @@ Virtual Machine Controller
     def int_event(self, signum, frame):
         if self.__state == VMState.interactive or not self.__session:
             if self.__ask_quit():
-                self.detach()
+                self.detach(True)
         elif self.__state == VMState.waiting and self.__gdb.waiting():
             self.__process_stop_request()
         else:

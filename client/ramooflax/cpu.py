@@ -20,6 +20,8 @@ import gdb
 import event
 import breakpoints
 
+from utils import Utils
+
 class CPUFamily:
     AMD   = 0
     Intel = 1
@@ -105,19 +107,31 @@ class CPU:
 
     # $TXXmd:YY;04:a..a;05:b..b;[16|08]:c..c;#ZZ
     def __recv_stop(self):
-        p1 = self.__gdb.recv_raw(10)
+        if Utils.debug:
+            print "Waiting to (raw) receive the stop reason"
 
+        p1 = self.__gdb.recv_raw(10)
         self.__last_reason = int(p1[2:4], 16)
+
+        if Utils.debug:
+            print "last stop reason:", str(event.StopReason(self.__last_reason))
+
         mode = int(p1[7:9],16)
         if mode != self.mode:
             self.__update_mode(mode)
 
         ln = 12 + 3*self.sz + 3
+
+        if Utils.debug:
+            print "... still need %d bytes for this reason" % (ln)
+
         p2 = self.__gdb.recv_raw(ln)
 
         for g in p2.split(';')[:-1]:
             n,v = g.split(':')
             self.gpr[int(n)]._update(v)
+            if Utils.debug:
+                print "updated gpr %d" % int(n)
 
     def _recv_stop(self):
         self.__recv_stop()

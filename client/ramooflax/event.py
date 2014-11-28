@@ -55,6 +55,45 @@ class StopReason:
     hard_int   = 50
     soft_int   = 51
 
+    def __init__(self,v):
+        self.__s = {
+            2:"gdb_int",
+            5:"gdb_trap",
+            10:"rd_cr0",
+            12:"rd_cr2",
+            13:"rd_cr3",
+            14:"rd_cr4",
+            20:"wr_cr0",
+            22:"wr_cr2",
+            23:"wr_cr3",
+            24:"wr_cr4",
+            30:"excp_de",
+            31:"excp_db",
+            32:"excp_nmi",
+            33:"excp_bp",
+            34:"excp_of",
+            35:"excp_br",
+            36:"excp_ud",
+            37:"excp_nm",
+            38:"excp_df",
+            39:"excp_mo",
+            40:"excp_ts",
+            41:"excp_np",
+            42:"excp_ss",
+            43:"excp_gp",
+            44:"excp_pf",
+            45:"excp_rsvd",
+            46:"excp_mf",
+            47:"excp_ac",
+            48:"excp_mc",
+            49:"excp_xf",
+            50:"hard_int",
+            51:"soft_int"}
+        self.v = v
+
+    def __str__(self):
+        return self.__s.get(self.v, "Unknown")
+
 class EventFilter:
     def __init__(self, dico=None):
         self.__handlers = {StopReason.every:lambda x: True}
