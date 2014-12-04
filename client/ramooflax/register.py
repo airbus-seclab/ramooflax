@@ -96,7 +96,7 @@ class Register(object):
     nibbles = property(__get_nibbles)
 
 class RegisterSet(object):
-    def __init__(self, rw_ops, lregs, loc_pfx, stk_pfx):
+    def __init__(self, rw_ops, lregs, loc_pfx, stk_pfx, frm_pfx):
         self.__nibbles = 0
         self.__nr = 0
         self.__read, self.__write = rw_ops[1]
@@ -117,6 +117,9 @@ class RegisterSet(object):
                 elif n.find(stk_pfx) != -1:
                     setattr(self.__class__, "stack", property(fget, fset))
                     self.__dico.update({"stack":self.__nr})
+                elif n.find(frm_pfx) != -1:
+                    setattr(self.__class__, "frame", property(fget, fset))
+                    self.__dico.update({"frame":self.__nr})
 
                 setattr(self.__class__, n, property(fget, fset))
                 self.__dico.update({n:self.__nr})
@@ -163,7 +166,7 @@ class RegisterSet(object):
 
 class RegisterSet_x86(RegisterSet):
     def __init__(self, rw_ops, lregs):
-        RegisterSet.__init__(self, rw_ops, lregs, "ip", "sp")
+        RegisterSet.__init__(self, rw_ops, lregs, "ip", "sp", "bp")
 
 ### System Registers on x86 (default to 64 bits)
 class SR_x86(RegisterSet_x86):
