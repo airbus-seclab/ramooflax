@@ -55,7 +55,7 @@ class StopReason:
     hard_int   = 50
     soft_int   = 51
 
-    def __init__(self,v):
+    def __init__(self, r, m=None, d=None):
         self.__s = {
             2:"gdb_int",
             5:"gdb_trap",
@@ -89,10 +89,13 @@ class StopReason:
             49:"excp_xf",
             50:"hard_int",
             51:"soft_int"}
-        self.v = v
+
+        self.reason = r
+        self.mode = m
+        self.msg = d
 
     def __str__(self):
-        return self.__s.get(self.v, "Unknown")
+        return self.__s.get(self.reason, "Unknown")
 
 class EventFilter:
     def __init__(self, dico=None):

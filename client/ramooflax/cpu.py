@@ -105,33 +105,20 @@ class CPU:
             print "Unknown CPU mode: %d" % (self.mode)
             raise ValueError
 
-    # $TXXmd:YY;04:a..a;05:b..b;[16|08]:c..c;#ZZ
     def __recv_stop(self):
         if Utils.debug:
-            print "Waiting to (raw) receive the stop reason"
+            print "waiting stop reason"
 
-        p1 = self.__gdb.recv_raw(10)
-        self.__last_reason = int(p1[2:4], 16)
+        stop = self.__gdb.recv_stop()
+        self.__last_reason = stop.reason
 
-        if Utils.debug:
-            print "last stop reason:", str(event.StopReason(self.__last_reason))
+        if stop.mode != self.mode:
+            self.__update_mode(stop.mode)
 
-        mode = int(p1[7:9],16)
-        if mode != self.mode:
-            self.__update_mode(mode)
-
-        ln = 12 + 3*self.sz + 3
-
-        if Utils.debug:
-            print "... still need %d bytes for this reason" % (ln)
-
-        p2 = self.__gdb.recv_raw(ln)
-
-        for g in p2.split(';')[:-1]:
+        # [ regN:regV, ... ]
+        for g in stop.msg:
             n,v = g.split(':')
             self.gpr[int(n)]._update(v)
-            if Utils.debug:
-                print "updated gpr %d" % int(n)
 
     def _recv_stop(self):
         self.__recv_stop()
@@ -221,5 +208,9 @@ class CPU:
 
     def stack_location(self):
         return self.__segmem_location(self.sr.ss, self.gpr.stack)
+
+    # xxx: modulo segment limit
+    def linear(self, segment, offset):
+        return self.__segmem_location(segment, offset)
 
     last_reason = property(__get_last_reason)
