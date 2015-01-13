@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import event
+from utils import Utils
 
 class BreakPointType:
     x  = 1 # execution
@@ -66,7 +67,12 @@ class BreakPoints:
         return True
 
     def __trap_filter(self, vm):
+        if Utils.debug:
+            print "trap filter: read dr6"
+
         if (vm.cpu.sr.dr6 & (1<<14)) != 0:
+            if Utils.debug:
+                print "dr6.bs = 1"
             return self.__filter_sstep(vm)
 
         tp = None
