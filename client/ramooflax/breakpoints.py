@@ -111,7 +111,7 @@ class BreakPoints:
 
     def __add(self, addr, name=None, filtr=None, kind=None, size=1):
         if self.__list.has_key(name):
-            print "already installed, remove first"
+            print "break point already installed"
             return
 
         if name is None:
