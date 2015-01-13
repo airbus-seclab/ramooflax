@@ -177,7 +177,18 @@ int vmx_vmexit_idt_deliver()
    vmcs_read(vm_exit_info.idt_info);
 
    if(!vm_exit_info.idt_info.v)
+   {
+      vmcs_read(vm_exit_info.int_info);
+
+      if(vm_exit_info.int_info.nmi && vm_exit_info.int_info.vector != DF_EXCP)
+      {
+	 vmcs_read(vm_state.int_state);
+	 vm_state.int_state.nmi = 1;
+	 vmcs_dirty(vm_state.int_state);
+      }
+
       return 1;
+   }
 
    if(__rmode())
       return __vmx_vmexit_idt_deliver_rmode();
