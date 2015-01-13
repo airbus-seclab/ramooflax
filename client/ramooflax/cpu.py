@@ -145,6 +145,9 @@ class CPU:
         self.gpr._flush()
         self.sr._flush()
 
+    def rdtsc(self):
+        return int(self.__gdb.rdtsc(), 16)
+
     def set_active_cr3(self, cr3, remember=False, affinity=None):
         self.__gdb.set_active_cr3("%.16x" % (cr3))
         if remember:

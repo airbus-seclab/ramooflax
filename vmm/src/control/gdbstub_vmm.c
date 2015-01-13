@@ -402,6 +402,14 @@ static void gdb_vmm_clear_excp(uint8_t __unused__ *data, size_t __unused__ len)
    gdb_ok();
 }
 
+static void gdb_vmm_rdtsc(uint8_t __unused__ *data, size_t __unused__ len)
+{
+   size_t  rlen = sizeof(uint64_t)*2;
+
+   gdb_add_number(rdtsc(), rlen, 0);
+   gdb_send_packet();
+}
+
 static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_rd_all_sysregs,
    gdb_vmm_wr_all_sysregs,
@@ -426,6 +434,7 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_keep_active_cr3,
    gdb_vmm_set_affinity,
    gdb_vmm_clear_excp,
+   gdb_vmm_rdtsc,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)

@@ -495,3 +495,7 @@ class GDB:
     def clear_exception(self):
         self.send_vmm_pkt("\x96")
         self.recv_diag()
+
+    def rdtsc(self):
+        self.send_vmm_pkt("\x97")
+        return self.recv_pkt(1*8*2)
