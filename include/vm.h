@@ -24,13 +24,13 @@
 /*
 ** VM-EXIT handling return codes
 */
-#define VM_FAIL              0
-#define VM_FAULT             1
-#define VM_DONE              2
-#define VM_DONE_LET_RIP      3
-#define VM_NATIVE            4
-#define VM_IGNORE            5
-#define VM_INTERN            6
+#define VM_FAIL              (1<<0)
+#define VM_FAULT             (1<<1)
+#define VM_DONE              (1<<2)
+#define VM_DONE_LET_RIP      (1<<3)
+#define VM_NATIVE            (1<<4)
+#define VM_IGNORE            (1<<5)
+#define VM_INTERN            (1<<6)
 
 /*
 ** VM architecture dependant stuff
