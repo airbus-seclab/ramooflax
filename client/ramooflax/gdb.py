@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-import socket, errno
+import socket, errno, sys
 from event import StopReason
 from utils import Utils
 
@@ -177,11 +177,13 @@ class GDB:
         if ack == '-':
             if Utils.debug:
                 print "rcv NAK"
-        else:
-            if Utils.debug:
-                print "rcv ?? ACK/NAK =",ack
-            self.__cache_insert(ack)
-        return False
+            return False
+
+        # de-synchronized, ignore
+        if Utils.debug:
+            print "rcv ?? ACK/NAK =",ack
+        self.__cache_insert(ack)
+        return True
 
     def send_raw(self, data, wack=True):
         while True:
@@ -205,6 +207,9 @@ class GDB:
         ws = 0
         pkt = None
         while pkt is None:
+            while len(self.__cache) < 4:
+                self.__cache_fill()
+
             if Utils.debug:
                 print "rcv pkt: search [%d:] = %r" % (ws,repr(self.__cache[ws:]))
             tag = self.__cache[ws:].find('#')
@@ -226,7 +231,8 @@ class GDB:
         while pkt[0] == '+' or pkt[0] == '-':
             if Utils.debug:
                 print "lost ACK/NAK ... ignore"
-            pkt = pkt[1:]
+            pkt  = pkt[1:]
+            tag -= 1
 
         if pkt[0] != '$':
             if Utils.debug:
@@ -241,7 +247,8 @@ class GDB:
 
         if pchk != vchk:
             if Utils.debug:
-                print "bad pkt checksum: %r | 0x%x" % (repr(pkt),vchk)
+                print "bad pkt checksum: %r | %r = 0x%x" \
+                    % (repr(pkt),repr(msg),vchk)
             if sack:
                 self.nak()
             return None
@@ -483,4 +490,8 @@ class GDB:
 
     def set_affinity(self, data):
         self.send_vmm_pkt("\x95"+data)
+        self.recv_diag()
+
+    def clear_exception(self):
+        self.send_vmm_pkt("\x96")
         self.recv_diag()
