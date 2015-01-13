@@ -29,6 +29,7 @@ static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
       return VM_FAIL;
    }
 
+   bp->sts.st = 0;
    debug(DBG_SOFT, "restored insn @ 0x%X\n", bp->addr);
    return VM_DONE;
 }
@@ -43,13 +44,14 @@ static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp, cr3_reg_t *cr3)
       return VM_FAIL;
    }
 
+   bp->sts.st = 1;
    debug(DBG_SOFT, "restored soft bp @ 0x%X\n", bp->addr);
    return VM_DONE;
 }
 
 static int dbg_soft_restore_insn(dbg_soft_bp_t *bp, void __unused__ *arg)
 {
-   if(!bp->sts.on)
+   if(!bp->sts.on || !bp->sts.st)
       return VM_IGNORE;
 
    return __dbg_soft_restore_insn(bp);
@@ -57,7 +59,7 @@ static int dbg_soft_restore_insn(dbg_soft_bp_t *bp, void __unused__ *arg)
 
 static int dbg_soft_restore_bp(dbg_soft_bp_t *bp, void __unused__ *arg)
 {
-   if(!bp->sts.on)
+   if(!bp->sts.on || bp->sts.st)
       return VM_IGNORE;
 
    if(dbg_soft_resuming() && bp->addr == info->vmm.ctrl.dbg.evt.addr)

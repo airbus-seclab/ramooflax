@@ -31,6 +31,7 @@ typedef union dbg_software_breakpoint_status
    {
       uint8_t  rq:1;  /* requested by */
       uint8_t  on:1;  /* still active */
+      uint8_t  st:1;  /* installed (0xcc) */
 
    } __attribute__((packed));
 

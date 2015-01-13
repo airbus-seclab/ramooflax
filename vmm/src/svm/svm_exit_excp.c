@@ -25,6 +25,18 @@
 
 extern info_data_t *info;
 
+void __svm_clear_event_injection()
+{
+   if(!vm_ctrls.event_injection.v)
+      return;
+
+   if(vm_ctrls.event_injection.type == VMCB_IDT_DELIVERY_TYPE_EXCP &&
+      vm_ctrls.event_injection.vector == PF_EXCP)
+      vm_state_cr2.raw = info->vm.old_cr2.raw;
+
+   vm_ctrls.event_injection.v = 0;
+}
+
 int __svm_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
 {
    __svm_prepare_event_injection(vm_ctrls.event_injection,
@@ -33,6 +45,7 @@ int __svm_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
    switch(vector)
    {
    case PF_EXCP:
+      info->vm.old_cr2.raw = vm_state.cr2.raw;
       vm_state.cr2.raw = cr2;
    case DF_EXCP:
    case TS_EXCP:

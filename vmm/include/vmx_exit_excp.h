@@ -25,6 +25,7 @@
 /*
 ** Functions
 */
+void __vmx_clear_event_injection();
 int __vmx_vmexit_inject_exception(uint32_t, uint32_t, uint64_t);
 int vmx_vmexit_resolve_excp();
 

@@ -281,12 +281,13 @@
 /*
 ** Events
 */
-#define __exit_reason            __exit_info.reason.basic
-#define __vmexit_on_excp()       __vmx_vmexit_on_excp()
-#define __exception_vector	 __exit_info.int_info.vector
-#define __exception_error        __exit_info.int_err_code
-#define __exception_fault       (__exit_info.qualification.raw & 0xffffffffUL)
-#define __injecting_exception() (__entry_ctrls.int_info.v?1:0)
+#define __exit_reason              __exit_info.reason.basic
+#define __vmexit_on_excp()         __vmx_vmexit_on_excp()
+#define __exception_vector	   __exit_info.int_info.vector
+#define __exception_error          __exit_info.int_err_code
+#define __exception_fault         (__exit_info.qualification.raw & 0xffffffffUL)
+#define __injecting_exception()   (__entry_ctrls.int_info.v?1:0)
+#define __clear_event_injection()  __vmx_clear_event_injection()
 
 #define __vmx_prepare_event_injection(_ev, _type, _vector)	\
    ({								\

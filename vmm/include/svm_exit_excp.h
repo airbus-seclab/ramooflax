@@ -24,6 +24,7 @@
 /*
 ** Functions
 */
+void __svm_clear_event_injection();
 int  __svm_vmexit_inject_exception(uint32_t, uint32_t, uint64_t);
 
 #endif

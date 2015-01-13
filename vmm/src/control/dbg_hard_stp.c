@@ -140,15 +140,16 @@ int dbg_hard_stp_event()
    if(dbg_soft_resuming())
       dbg_soft_resume_post(&__hstp_ctx.cr3);
 
-   dbg_hard_set_dr6_dirty(1);
    dbg_hard_stp_disable();
 
    if(dbg_hard_stp_requestor() == DBG_REQ_VMM)
    {
       debug(DBG_HARD_STP, "internal sstep event\n");
+      dbg_hard_dr6_clean();
       return VM_INTERN;
    }
 
+   dbg_hard_set_dr6_dirty(1);
    vm_get_code_addr(&addr, 0, &mode);
 
    evt = &info->vmm.ctrl.dbg.evt;

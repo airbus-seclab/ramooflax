@@ -24,6 +24,19 @@
 
 extern info_data_t *info;
 
+void __vmx_clear_event_injection()
+{
+   if(!vm_entry_ctrls.int_info.v)
+      return;
+
+   if(vm_entry_ctrls.int_info.type == VMCS_IDT_INFO_TYPE_HW_EXCP &&
+      vm_entry_ctrls.int_info.vector == PF_EXCP)
+      vmcs_clear(vm_state.cr2);
+
+   vm_entry_ctrls.int_info.v = 0;
+   vmcs_dirty(vm_entry_ctrls.int_info);
+}
+
 int __vmx_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
 {
    __vmx_prepare_event_injection(vm_entry_ctrls.int_info,

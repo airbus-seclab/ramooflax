@@ -47,6 +47,7 @@ void __vmcs_force_flush(raw64_t*, vmcs_field_enc_t) __regparm__(2);
 #define vmcs_encode(_fld_,_eNc_)	(_fld_##_enc.raw  = _eNc_)
 #define vmcs_is_dirty(_fld_)            (_fld_##_enc.dirty != 0)
 #define vmcs_set_read(_fld_)	        (_fld_##_enc.read = 1)
+#define vmcs_clear(_fld_)	        (_fld_##_enc.dirty = 0)
 
 #define vmcs_dirty(_fld_)		  \
    ({					  \

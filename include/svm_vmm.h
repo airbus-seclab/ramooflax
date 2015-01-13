@@ -51,6 +51,7 @@ typedef struct svm_bazaar
 {
    uint32_t asid_nr;
    raw64_t  dr_shadow[6];
+   raw64_t  old_cr2;      /* used to cancel event injection */
 
 } svm_bazaar_t;
 

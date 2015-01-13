@@ -241,12 +241,13 @@
 /*
 ** Events
 */
-#define __exit_reason            __ctrls.exit_code.low
-#define __vmexit_on_excp()       __svm_vmexit_on_excp()
-#define __exception_vector      (__ctrls.exit_code.low - SVM_VMEXIT_EXCP_START)
-#define __exception_error        __ctrls.exit_info_1.excp
-#define __exception_fault       (__ctrls.exit_info_2.raw & 0xffffffffULL)
-#define __injecting_exception() (__ctrls.event_injection.v?1:0)
+#define __exit_reason              __ctrls.exit_code.low
+#define __vmexit_on_excp()         __svm_vmexit_on_excp()
+#define __exception_vector        (__ctrls.exit_code.low - SVM_VMEXIT_EXCP_START)
+#define __exception_error          __ctrls.exit_info_1.excp
+#define __exception_fault         (__ctrls.exit_info_2.raw & 0xffffffffULL)
+#define __injecting_exception()   (__ctrls.event_injection.v?1:0)
+#define __clear_event_injection() __svm_clear_event_injection()
 
 #define __svm_prepare_event_injection(_ev, _type, _vector)		\
    ({									\

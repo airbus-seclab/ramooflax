@@ -175,6 +175,9 @@ class CPU:
         self.__set_exception_mask(mask)
         self.__filter.unregister(event.StopReason.excp_de+n)
 
+    def clear_exception(self):
+        self.__gdb.clear_exception()
+
     def filter_read_cr(self, n, hdl):
         if n > 8:
             raise ValueError
