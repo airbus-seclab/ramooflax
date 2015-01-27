@@ -57,6 +57,7 @@ class CPU:
         self.manufacturer = manufacturer
         self.sr = register.SR_x86(self.__gdb)
         self.lbr = register.LBR(self.__gdb)
+        self.fault = register.Fault(self.__gdb)
 
         #not defined mode
         self.sz = None
@@ -141,6 +142,7 @@ class CPU:
         return
 
     def _flush(self):
+        self.fault._dirty()
         self.lbr._dirty()
         self.gpr._flush()
         self.sr._flush()
@@ -208,6 +210,12 @@ class CPU:
         mask = self.__get_cr_wr_mask() & ~(1<<n)
         self.__set_cr_wr_mask(mask)
         self.__filter.unregister(event.StopReason.wr_cr0+n)
+
+    def filter_npf(self, hdl):
+        self.__filter.register(event.StopReason.npf, hdl)
+
+    def release_npf(self):
+        self.__filter.unregister(event.StopReason.npf)
 
     def code_location(self):
         return self.__segmem_location(self.sr.cs, self.gpr.pc)

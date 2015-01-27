@@ -54,6 +54,7 @@ class StopReason:
 
     hard_int   = 50
     soft_int   = 51
+    npf        = 52
 
     def __init__(self, r, m=None, d=None):
         self.__s = {
@@ -88,7 +89,9 @@ class StopReason:
             48:"excp_mc",
             49:"excp_xf",
             50:"hard_int",
-            51:"soft_int"}
+            51:"soft_int",
+            52:"npf",
+            }
 
         self.reason = r
         self.mode = m

@@ -87,7 +87,7 @@
 
 #define vmx_vmexit_resolve(x)						\
    ({									\
-      int rc = 0;							\
+      int rc = VM_FAIL;							\
       if(x <= VMX_VMEXIT_LAST_RESOLVER)					\
 	 rc = vmx_vmexit_resolvers[(x)]();				\
       rc;								\

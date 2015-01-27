@@ -62,7 +62,7 @@ typedef union dbg_software_status
 
 } __attribute__((packed)) dbg_soft_sts_t;
 
-#define DBG_SOFT_NR  20
+#define DBG_SOFT_NR  1024
 
 typedef struct dbg_software
 {

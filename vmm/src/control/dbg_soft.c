@@ -182,7 +182,7 @@ int dbg_soft_set(offset_t addr, ctrl_evt_hdl_t hdlr)
    int           stop;
 
    if(info->vmm.ctrl.dbg.soft.cnt == DBG_SOFT_NR)
-      return 0;
+      return VM_FAIL;
 
    stop = VM_DONE|VM_FAIL;
 
@@ -203,7 +203,7 @@ int dbg_soft_del(offset_t addr)
    int stop;
 
    if(info->vmm.ctrl.dbg.soft.cnt == 0)
-      return 0;
+      return VM_FAIL;
 
    stop = VM_DONE|VM_FAIL;
 

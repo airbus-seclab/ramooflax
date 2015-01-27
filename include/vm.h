@@ -102,6 +102,26 @@ typedef enum emulate_status
    EMU_STS_DONE
 } emu_sts_t;
 
+typedef struct fault_context
+{
+   /* Last Exception context */
+   struct
+   {
+      uint32_t   err;
+
+   } __attribute__((packed)) excp;
+
+   /* Last Nested Page Fault context */
+   struct
+   {
+      npg_err_t  err;
+      offset_t   vaddr;
+      offset_t   paddr;
+
+   } __attribute__((packed)) npf;
+
+} __attribute__((packed)) fault_ctx_t;
+
 typedef struct vm_cpu
 {
    vm_pgmem_t     pg[1];     /* virtual paging tables */
@@ -110,7 +130,7 @@ typedef struct vm_cpu
    vm_cpu_skill_t skillz;    /* vm cpu skillz */
    vmc_t          *vmc;      /* hardware virtualization data, strictly aligned */
    gpr64_ctx_t    *gpr;      /* vm GPRs (in vmm stack) */
-
+   fault_ctx_t    fault;     /* last fault context info */
    ud_t           disasm;
    emu_sts_t      emu_sts;
    uint8_t        insn_cache[X86_MAX_INSN_LEN];

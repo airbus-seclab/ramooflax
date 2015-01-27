@@ -40,20 +40,19 @@ int __svm_vmexit_resolve_pf()
 
 int svm_vmexit_resolve_npf()
 {
-#ifdef SVM_NPF_DBG
-   vmcb_exit_info_npf_t error;
-   offset_t             gvaddr, gpaddr;
-
-   error.raw = vm_ctrls.exit_info_1.raw;
-   gpaddr    = vm_ctrls.exit_info_2.raw;
-   gvaddr    = __rip.raw & 0xffffffffUL;
+   info->vm.cpu.fault.npf.err.raw = vm_ctrls.exit_info_1.raw;
+   info->vm.cpu.fault.npf.paddr   = vm_ctrls.exit_info_2.raw;
+   info->vm.cpu.fault.npf.vaddr   = __rip.raw & 0xffffffffUL;
 
    debug(SVM_NPF,
 	 "#NPF gv 0x%X gp 0x%X err 0x%X "
 	 "details (p:%d wr:%d us:%d rsv:%d id:%d final:%d ptb:%d)\n"
-	 ,gvaddr, gpaddr, error.raw, error.p, error.wr, error.us
-	 ,error.rsv, error.id, error.final, error.ptb);
-#endif
+	 ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
+	 ,info->vm.cpu.fault.npf.err.raw, info->vm.cpu.fault.npf.err.p
+	 ,info->vm.cpu.fault.npf.err.wr, info->vm.cpu.fault.npf.err.us
+	 ,info->vm.cpu.fault.npf.err.rsv, info->vm.cpu.fault.npf.err.id
+	 ,info->vm.cpu.fault.npf.err.final, info->vm.cpu.fault.npf.err.ptb);
 
-   return VM_FAIL;
+   ctrl_evt_npf();
+   return VM_DONE;
 }

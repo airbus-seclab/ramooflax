@@ -85,6 +85,17 @@ static int __ctrl_evt_excp_vmm(uint32_t vector)
    return VM_IGNORE;
 }
 
+int ctrl_evt_excp(uint32_t vector)
+{
+   int rc;
+
+   if((rc = __ctrl_evt_excp_vmm(vector)) == VM_IGNORE)
+      if((rc = __ctrl_evt_excp_dbg(vector)) == VM_IGNORE)
+	 rc = __ctrl_evt_excp_user(vector);
+
+   return rc;
+}
+
 int ctrl_evt_cr_rd(uint8_t n)
 {
    if(info->vmm.ctrl.usr.cr_rd & (1<<n))
@@ -111,15 +122,11 @@ int ctrl_evt_cr_wr(uint8_t n)
    return VM_IGNORE;
 }
 
-int ctrl_evt_excp(uint32_t vector)
+int ctrl_evt_npf()
 {
-   int rc;
-
-   if((rc = __ctrl_evt_excp_vmm(vector)) == VM_IGNORE)
-      if((rc = __ctrl_evt_excp_dbg(vector)) == VM_IGNORE)
-	 rc = __ctrl_evt_excp_user(vector);
-
-   return rc;
+   arg_t arg = {.raw = 0};
+   ctrl_evt_setup(CTRL_EVT_TYPE_NPF, 0, arg);
+   return VM_DONE;
 }
 
 int ctrl_evt_setup(uint8_t type, ctrl_evt_hdl_t hdl, arg_t arg)

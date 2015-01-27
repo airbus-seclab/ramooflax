@@ -50,10 +50,18 @@ static int gdbstub_evt_trap(arg_t __unused__ arg)
    return 1;
 }
 
+static int gdbstub_evt_npf(arg_t __unused__ arg)
+{
+   debug(GDBSTUB_EVT, "preempt(npf)\n");
+   gdb_preempt(GDB_EXIT_NPF);
+   return 1;
+}
+
 ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
    gdbstub_evt_cr_rd,
    gdbstub_evt_cr_wr,
    gdbstub_evt_excp,
    gdbstub_evt_trap,
    gdbstub_evt_trap,
+   gdbstub_evt_npf,
 };

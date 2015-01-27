@@ -189,7 +189,7 @@ class GPR_x86(RegisterSet_x86):
 class GPR_x86_32(GPR_x86):
     def __init__(self, gdb):
         gprs = (4,("eax","ecx","edx","ebx","esp","ebp","esi","edi",
-                   "eip","eflags"))
+                   "eip","flags"))
         segs = (2,("cs","ss","ds","es","fs","gs"))
         GPR_x86.__init__(self, gdb, (gprs,segs))
 
@@ -198,9 +198,48 @@ class GPR_x86_64(GPR_x86):
     def __init__(self, gdb):
         gprs = (8,("rax","rcx","rdx","rbx","rsp","rbp","rsi","rdi",
                    "r8","r9","r10","r11","r12","r13","r14","r15",
-                   "rip","rflags"))
+                   "rip","flags"))
         segs = (2,("cs","ss","ds","es","fs","gs"))
         GPR_x86.__init__(self, gdb, (gprs,segs))
+
+### Last Fault Context
+class Fault:
+    def __init__(self, gdb):
+        self.__gdb = gdb
+        self.__dirty = True
+        self.__context = {}
+        for e in ( 'excp_err','npf_err','npf_vaddr','npf_paddr'):
+            self.__context[e] = 0
+
+    def __getattr__(self, k):
+        self.__update()
+        if not self.__context.has_key(k):
+            raise AttributeError
+        return self.__context[k]
+
+    def _dirty(self):
+        self.__dirty = True
+
+    def __update(self):
+        if not self.__dirty:
+            return
+
+        gdbctx = self.__gdb.get_fault()
+        self.__context["excp_err"]  = int(gdbctx[:8],16)
+        self.__context["npf_err"]   = int(gdbctx[8:24],16)
+        self.__context["npf_vaddr"] = int(gdbctx[24:40],16)
+        self.__context["npf_paddr"] = int(gdbctx[40:],16)
+        self.__dirty = False
+
+    def __str__(self):
+        return repr(self)
+
+    def __repr__(self):
+        s = ""
+        self.__update()
+        for k,v in self.__context.items():
+            s += "%-10s = 0x%.16x\n" % (k,v)
+        return s
 
 ### Last Branch Record
 class LBR:
@@ -211,13 +250,15 @@ class LBR:
         self.__values = { "from":0, "to":0, "from_excp":0, "to_excp":0 }
 
     def __update(self):
-        if self.__dirty:
-            gdblbr = self.__gdb.get_lbr()
-            self.__values["from"] = int(gdblbr[:16], 16)
-            self.__values["to"] = int(gdblbr[16:32], 16)
-            self.__values["from_excp"] = int(gdblbr[32:48], 16)
-            self.__values["to_excp"] = int(gdblbr[48:], 16)
-            self.__dirty = False
+        if not self.__dirty:
+            return
+
+        gdblbr = self.__gdb.get_lbr()
+        self.__values["from"] = int(gdblbr[:16], 16)
+        self.__values["to"] = int(gdblbr[16:32], 16)
+        self.__values["from_excp"] = int(gdblbr[32:48], 16)
+        self.__values["to_excp"] = int(gdblbr[48:], 16)
+        self.__dirty = False
 
     def _dirty(self):
         self.__dirty = True

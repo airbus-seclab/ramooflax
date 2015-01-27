@@ -98,6 +98,13 @@ class Memory:
 
     def translate(self, addr):
         self.cr_sync()
-        return int(self.__gdb.translate(self.__encode_addr(addr),self.__cpu.sz),16)
+        paddr = self.__gdb.translate(self.__encode_addr(addr), self.__cpu.sz)
+        return int(paddr, 16)
 
+    def get_npte(self, addr):
+        pte = self.__gdb.npg_get_pte(self.__encode_addr(addr), 8*2)
+        return int(pte, 16)
 
+    def set_npte(self, addr, value):
+        encoded = self.__encode(addr,16)+self.__encode(value,16)
+        self.__gdb.npg_set_pte(encoded)

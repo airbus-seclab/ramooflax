@@ -48,7 +48,6 @@ class GDBError(Exception):
                       GDBError.mem:"memory",
                       GDBError.oom:"out of memory",
                       GDBError.invalid:"invalid",
-                      GDBError.hdr:"unknown header",
                       }
     def __str__(self):
         return self._dico.get(self.value, "unknown")
@@ -291,10 +290,10 @@ class GDB:
             return GDBDiag(GDBDiag.ok)
 
         if sz == 3 and msg[0] == 'E':
-            er = GDBError(int(msg,16))
-            if Utils.debug:
-                print "recv ERR",er
-            return GDBDiag(GDBDiag.er, er)
+            raise GDBError(int(msg[1:],16))
+            # if Utils.debug:
+            #     print "recv ERR",er
+            #return GDBDiag(GDBDiag.er, er)
 
         return GDBDiag(GDBDiag.un, msg)
 
@@ -499,3 +498,15 @@ class GDB:
     def rdtsc(self):
         self.send_vmm_pkt("\x97")
         return self.recv_pkt(1*8*2)
+
+    def npg_get_pte(self, data, sz):
+        self.send_vmm_pkt("\x98"+data)
+        return self.recv_pkt(sz)
+
+    def npg_set_pte(self, data):
+        self.send_vmm_pkt("\x99"+data)
+        self.recv_diag()
+
+    def get_fault(self):
+        self.send_vmm_pkt("\x9a")
+        return self.recv_pkt(1*4*2 + 3*8*2)

@@ -211,28 +211,36 @@ static void gdb_vmm_set_affinity(uint8_t *data, size_t len)
    debug(GDBSTUB, "set affinity to %d\n", val.blow);
 }
 
-static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len, loc_t *addr, size_t *sz)
+static int __gdb_vmm_parse_x2_arg(uint8_t *data, size_t len,
+				  uint64_t *addr, uint64_t *value)
 {
    if(len != sizeof(offset_t)*2*2)
-      goto __nak;
+      return 0;
 
    len /= 2;
 
-   if(!gdb_get_number(data, len, (uint64_t*)addr, 0))
-      goto __nak;
+   if(!gdb_get_number(data, len, addr, 0))
+      return 0;
 
    data += sizeof(offset_t)*2;
 
-   if(!gdb_get_number(data, len, (uint64_t*)sz, 0))
-      goto __nak;
+   if(!gdb_get_number(data, len, value, 0))
+      return 0;
+
+   return 1;
+}
+
+static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len, loc_t *addr, size_t *sz)
+{
+   if(!__gdb_vmm_parse_x2_arg(data, len, &addr->raw, (uint64_t*)sz))
+   {
+      gdb_nak();
+      return 0;
+   }
 
    gdb_ok();
    gdb_wait_ack();
    return 1;
-
-__nak:
-   gdb_nak();
-   return 0;
 }
 
 static void __gdb_vmm_rw_pmem(offset_t addr, size_t sz, uint8_t wr)
@@ -404,9 +412,75 @@ static void gdb_vmm_clear_excp(uint8_t __unused__ *data, size_t __unused__ len)
 
 static void gdb_vmm_rdtsc(uint8_t __unused__ *data, size_t __unused__ len)
 {
-   size_t  rlen = sizeof(uint64_t)*2;
+   gdb_add_number(rdtsc(), sizeof(uint64_t)*2, 0);
+   gdb_send_packet();
+}
 
-   gdb_add_number(rdtsc(), rlen, 0);
+/*
+** Try to get a nested pte for the given addr
+** Directly try to remap VM memory with finest
+** granularity to return a nested pte
+*/
+static void gdb_vmm_npg_get_pte(uint8_t *data, size_t len)
+{
+   loc_t        addr;
+   npg_pte64_t  *pte;
+
+   if(!gdb_get_number(data, len, (uint64_t*)&addr.raw, 0))
+   {
+      gdb_nak();
+      return;
+   }
+
+   pte = _npg_remap_finest_4K(addr.linear);
+   if(!pte)
+   {
+      debug(GDBSTUB_CMD, "no npg pte for 0x%x\n", addr.raw);
+      gdb_err_mem();
+      return;
+   }
+
+   npg_invlpg(addr.linear);
+   gdb_add_number(pte->raw, sizeof(uint64_t)*2, 0);
+   gdb_send_packet();
+}
+
+static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
+{
+   loc_t        addr;
+   npg_pte64_t  npte, *opte;
+
+   debug(GDBSTUB_CMD, "npg_set_pte: parse args\n");
+   if(!__gdb_vmm_parse_x2_arg(data, len, &addr.raw, &npte.raw))
+   {
+      gdb_nak();
+      return;
+   }
+
+   debug(GDBSTUB_CMD, "npg_set_pte: 0x%X 0x%X\n", addr.raw, npte.raw);
+   opte = _npg_get_pte(addr.linear);
+   if(!opte)
+   {
+      debug(GDBSTUB_CMD, "no npg pte for 0x%x\n", addr.raw);
+      gdb_err_mem();
+      return;
+   }
+
+   opte->raw = npte.raw;
+   npg_invlpg(addr.linear);
+
+   debug(GDBSTUB_CMD, "npg_set_pte: fixed npte\n");
+   gdb_ok();
+}
+
+static void gdb_vmm_get_fault(uint8_t __unused__ *data, size_t __unused__ len)
+{
+   fault_ctx_t *fault = &info->vm.cpu.fault;
+
+   gdb_add_number(fault->excp.err,     8, 0);
+   gdb_add_number(fault->npf.err.raw, 16, 0);
+   gdb_add_number(fault->npf.vaddr,   16, 0);
+   gdb_add_number(fault->npf.paddr,   16, 0);
    gdb_send_packet();
 }
 
@@ -435,6 +509,9 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_set_affinity,
    gdb_vmm_clear_excp,
    gdb_vmm_rdtsc,
+   gdb_vmm_npg_get_pte,
+   gdb_vmm_npg_set_pte,
+   gdb_vmm_get_fault,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)

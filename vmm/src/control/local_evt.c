@@ -47,10 +47,16 @@ static int local_evt_stp(arg_t __unused__ arg)
    return 1;
 }
 
+static int local_evt_npf(arg_t __unused__ arg)
+{
+   return 1;
+}
+
 ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
    local_evt_cr_rd,
    local_evt_cr_wr,
    local_evt_excp,
    local_evt_brk,
    local_evt_stp,
+   local_evt_npf,
 };

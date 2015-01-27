@@ -30,32 +30,32 @@ int __vmx_vmexit_resolve_pf()
 
 int vmx_vmexit_resolve_ept_viol()
 {
-#ifdef VMX_EPT_DBG
-   vmcs_exit_info_ept_t error;
-   offset_t             gvaddr, gpaddr;
-
    vmcs_read(vm_exit_info.qualification);
-   error.raw = vm_exit_info.qualification.raw;
+   info->vm.cpu.fault.npf.err.raw = vm_exit_info.qualification.raw;
 
    vmcs_read(vm_exit_info.guest_physical);
-   gpaddr = vm_exit_info.guest_physical.raw;
+   info->vm.cpu.fault.npf.paddr = vm_exit_info.guest_physical.raw;
 
-   if(error.gl)
+   if(info->vm.cpu.fault.npf.err.gl)
    {
       vmcs_read(vm_exit_info.guest_linear);
-      gvaddr = vm_exit_info.guest_linear.raw;
+      info->vm.cpu.fault.npf.vaddr = vm_exit_info.guest_linear.raw;
    }
    else
-      gvaddr = __rip.raw & 0xffffffffUL;
+      info->vm.cpu.fault.npf.vaddr = __rip.raw & 0xffffffffUL;
 
    debug(VMX_EPT,
 	 "#NPF gv 0x%X gp 0x%X err 0x%X "
 	 "details (r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
-	 ,gvaddr, gpaddr, error.raw
-	 ,error.r, error.w, error.x
-	 ,error.gr, error.gw, error.gx
-	 ,error.gl, error.final, error.nmi);
-#endif
+	 ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
+	 ,info->vm.cpu.fault.npf.err.raw
+	 ,info->vm.cpu.fault.npf.err.r, info->vm.cpu.fault.npf.err.w
+	 ,info->vm.cpu.fault.npf.err.x
+	 ,info->vm.cpu.fault.npf.err.gr, info->vm.cpu.fault.npf.err.gw
+	 ,info->vm.cpu.fault.npf.err.gx
+	 ,info->vm.cpu.fault.npf.err.gl, info->vm.cpu.fault.npf.err.final
+	 ,info->vm.cpu.fault.npf.err.nmi);
 
-   return VM_FAIL;
+   ctrl_evt_npf();
+   return VM_DONE;
 }

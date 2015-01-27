@@ -27,6 +27,7 @@ typedef int (*ctrl_evt_hdl_t)(arg_t);
 #define CTRL_EVT_TYPE_EXCP     2
 #define CTRL_EVT_TYPE_BRK      3
 #define CTRL_EVT_TYPE_SSTEP    4
+#define CTRL_EVT_TYPE_NPF      5
 
 typedef struct controller_event
 {
@@ -36,15 +37,17 @@ typedef struct controller_event
 
 } __attribute__((packed)) ctrl_evt_t;
 
+int  __ctrl_evt_excp_dbg(uint32_t);
+
 /*
 ** Functions
 */
-int  ctrl_event();
-int  ctrl_evt_setup(uint8_t, ctrl_evt_hdl_t, arg_t);
 int  ctrl_evt_excp(uint32_t);
 int  ctrl_evt_cr_rd(uint8_t);
 int  ctrl_evt_cr_wr(uint8_t);
+int  ctrl_evt_npf();
 
-int  __ctrl_evt_excp_dbg(uint32_t);
+int  ctrl_evt_setup(uint8_t, ctrl_evt_hdl_t, arg_t);
+int  ctrl_event();
 
 #endif
