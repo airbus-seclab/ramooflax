@@ -121,7 +121,7 @@ void __regparm__(1) svm_vmexit_handler(raw64_t tsc)
 {
    svm_vmexit_pre_hdl();
 
-   if(!svm_vmexit_resolve_dispatcher())
+   if(svm_vmexit_resolve_dispatcher() == VM_FAIL)
       svm_vmexit_failure();
 
    if(!svm_vmexit_idt_deliver())
@@ -146,13 +146,13 @@ int svm_vmexit_resolve_dispatcher()
    if(err == SVM_VMEXIT_NPF)
       return svm_vmexit_resolve_npf();
 
-   return 0;
+   return VM_FAIL;
 }
 
 int svm_vmexit_idt_deliver()
 {
    if(!vm_ctrls.exit_int_info.v)
-      return 1;
+      return VM_DONE;
 
    if(__rmode())
       return __svm_vmexit_idt_deliver_rmode();
@@ -168,7 +168,7 @@ int __svm_vmexit_idt_deliver_rmode()
    /* *\/ */
    /* if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_SOFT || */
    /*    vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
-   /*    return 1; */
+   /*    return VM_DONE; */
 
    /* /\* */
    /* ** cpu was delivering */
@@ -189,7 +189,7 @@ int __svm_vmexit_idt_deliver_rmode()
    /* } */
 
    debug(SVM_IDT, "idt deliver RM: unhandled scenario\n");
-   return 0;
+   return VM_FAIL;
 }
 
 int __svm_vmexit_idt_deliver_pmode()
@@ -233,7 +233,7 @@ int __svm_vmexit_idt_deliver_pmode()
 	 vm_ctrls.int_ctrl.v_irq = 1;
       }
 
-      return 1;
+      return VM_DONE;
    }
 
    debug(SVM_IDT, "already injecting: %d (%d)\n"
@@ -253,7 +253,7 @@ int __svm_vmexit_idt_deliver_pmode()
    /*    if(triple_fault(e1)) */
    /*    { */
    /* 	 debug(SVM_IDT, "triple-fault\n"); */
-   /* 	 return 0; */
+   /* 	 return VM_FAIL; */
    /*    } */
 
    /*    if(double_fault(e1, e2)) */
@@ -268,7 +268,7 @@ int __svm_vmexit_idt_deliver_pmode()
    /* 	     , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
    /* 	); */
 
-   /*    return 1; */
+   /*    return VM_DONE; */
    /* } */
 
    /* debug(SVM_IDT, "un-implemented scenario: delivering(%d:%d)/injecting(%d:%d)\n" */
@@ -277,7 +277,7 @@ int __svm_vmexit_idt_deliver_pmode()
    /*   ); */
 
    debug(SVM_IDT, "idt deliver PM: unhandled scenario\n");
-   return 0;
+   return VM_FAIL;
 }
 
 /* { */

@@ -98,7 +98,7 @@ static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    vmx_vmexit_resolve_preempt,          //PREEMPT
    resolve_default,                     //INVVPID
    resolve_wbinvd,                      //WBINVD
-   resolve_xsetbv,                     //XSETBV
+   resolve_xsetbv,                      //XSETBV
 };
 
 static void vmx_vmexit_tsc_rebase(raw64_t tsc)
@@ -153,7 +153,7 @@ void __regparm__(1) vmx_vmexit_handler(raw64_t tsc)
 {
    vmx_vmexit_pre_hdl();
 
-   if(!vmx_vmexit_resolve_dispatcher())
+   if(vmx_vmexit_resolve_dispatcher() == VM_FAIL)
       vmx_vmexit_failure();
 
    if(!vmx_vmexit_idt_deliver())
@@ -169,7 +169,7 @@ int vmx_vmexit_resolve_dispatcher()
 
 int vmx_vmexit_resolve_preempt()
 {
-   return 0;
+   return VM_FAIL;
 }
 
 int vmx_vmexit_idt_deliver()
@@ -187,7 +187,7 @@ int vmx_vmexit_idt_deliver()
 	 vmcs_dirty(vm_state.int_state);
       }
 
-      return 1;
+      return VM_DONE;
    }
 
    if(__rmode())
@@ -204,7 +204,7 @@ int __vmx_vmexit_idt_deliver_rmode()
    */
    if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT ||
       vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_HW_INT)
-      return 1;
+      return VM_DONE;
 
    /* /\* */
    /* ** cpu was delivering */
@@ -224,7 +224,7 @@ int __vmx_vmexit_idt_deliver_rmode()
    /* } */
 
    debug(VMX_IDT, "idt deliver RM: unhandled scenario\n");
-   return 0;
+   return VM_FAIL;
 }
 
 int __vmx_vmexit_idt_deliver_pmode()
@@ -266,7 +266,7 @@ int __vmx_vmexit_idt_deliver_pmode()
       vm_entry_ctrls.int_info.r = 0; /* take care of reserved bits */
       vmcs_dirty(vm_entry_ctrls.int_info);
 
-      return 1;
+      return VM_DONE;
    }
 
    debug(VMX_IDT, "already injecting: %d (%d)\n"
@@ -286,7 +286,7 @@ int __vmx_vmexit_idt_deliver_pmode()
 /*       if(triple_fault(e1)) */
 /*       { */
 /* 	 debug(VMX, "triple-fault\n"); */
-/* 	 return 0; */
+/* 	 return VM_FAIL; */
 /*       } */
 
 /*       if(double_fault(e1, e2)) */
@@ -299,7 +299,7 @@ int __vmx_vmexit_idt_deliver_pmode()
 /*       debug(VMX_IDT, "handle serially: deliver(%d:%d)/inject(%d:%d)\n" */
 /* 	    , vm_exit_info.idt_info.type, vm_exit_info.idt_info.vector */
 /* 	    , vm_entry_ctrls.int_info.type, vm_entry_ctrls.int_info.vector); */
-/*       return 1; */
+/*       return VM_DONE; */
 /*    } */
 
 /* /\* */
@@ -310,5 +310,5 @@ int __vmx_vmexit_idt_deliver_pmode()
 /* *\/ */
 
    debug(VMX_IDT, "idt deliver PM: unhandled scenario\n");
-   return 0;
+   return VM_FAIL;
 }
