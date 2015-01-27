@@ -32,7 +32,7 @@ void __svm_clear_event_injection()
 
    if(vm_ctrls.event_injection.type == VMCB_IDT_DELIVERY_TYPE_EXCP &&
       vm_ctrls.event_injection.vector == PF_EXCP)
-      vm_state_cr2.raw = info->vm.old_cr2.raw;
+      vm_state.cr2.raw = info->vm.old_cr2.raw;
 
    vm_ctrls.event_injection.v = 0;
 }
