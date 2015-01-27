@@ -49,6 +49,7 @@ Virtual Machine Controller
 
         self.__variables = {}
         self.__session = False
+        self.__detach_filter = None
         self.__state = VMState.working
         self.__stop_request = False
         self.__gdb = gdb.GDB(self.ip, self.port, self.mode)
@@ -74,7 +75,13 @@ Virtual Machine Controller
         except:
             raise
 
+    def filter_detach(self, hdl):
+        self.__detach_filter = hdl
+
     def detach(self, quick=False):
+        if self.__detach_filter is not None:
+            self.__detach_filter(self)
+
         try:
             self.cpu._quit()
             self.mem._quit()
@@ -97,6 +104,9 @@ Virtual Machine Controller
     def interact2(self, variables):
         self.__variables = variables
         self.__dispatch2()
+
+    def interact_noresume(self):
+        self.__interact()
 
     def singlestep(self):
         self.__set_state(VMState.working)
