@@ -26,6 +26,7 @@ class BreakPointType:
 class BreakPoint:
     def __init__(self, name, filtr, addr, knd, sz):
         self.name = name
+        self.count = 1
         self.filter = filtr
         self.addr = addr
         self.type = knd
@@ -41,7 +42,8 @@ class BreakPoint:
         elif self.type == BreakPointType.rw:
             s = "Read/Write"
 
-        return "%s 0x%x %s (%d)" % (self.name, self.addr, s, self.size)
+        return "%s 0x%x %s sz %d cnt %d" % \
+            (self.name, self.addr, s, self.size, self.count)
 
 class BreakPoints:
     def __init__(self, cpu, gdb, filtr):
@@ -99,20 +101,27 @@ class BreakPoints:
         return True
 
     def __remove(self, b):
+        enc = self.__encode(b.addr)
         if b.type is None:
-            self.__gdb.del_mem_break(self.__encode(b.addr))
+            b.count -= 1
+            if b.count > 0:
+                return False
+            self.__gdb.del_mem_break(enc)
         else:
-            self.__gdb.del_hrd_break(self.__encode(b.addr), str(b.type), str(b.size))
+            self.__gdb.del_hrd_break(enc, str(b.type), str(b.size))
+
+        return True
 
     def __clear(self):
         for b in self.__list.values():
-            self.__remove(b)
+            while not self.__remove(b):
+                continue
         self.__list = {}
 
     def __add(self, addr, name=None, filtr=None, kind=None, size=1):
-        if self.__list.has_key(name):
-            print "break point already installed"
-            return
+        if name in self.__list:
+            self.__list[name].count += 1
+            return True
 
         if name is None:
             self.__auto_name += 1
@@ -138,6 +147,7 @@ class BreakPoints:
 
         b = BreakPoint(name, filtr, addr, kind, size)
         self.__list.update({name:b})
+        return True
 
     def add_insn(self, addr, filtr=None, name=None):
         return self.__add(addr, name, filtr)
@@ -160,8 +170,9 @@ class BreakPoints:
             name = str(name)
 
         if self.__list.has_key(name):
-            b = self.__list.pop(name)
-            self.__remove(b)
+            b = self.__list[name]
+            if self.__remove(b):
+                self.__list.pop(name)
 
     def filter(self, name, filtr):
         if name is None:
@@ -187,3 +198,5 @@ class BreakPoints:
             data += repr(b)+"\n"
         return data
 
+    def count(self):
+        return len(self.__list)
