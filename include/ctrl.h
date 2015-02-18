@@ -96,7 +96,7 @@ typedef struct vmm_controller
 /*
 ** Functions
 */
-void controller();
+int  controller();
 void ctrl_active_cr3_enable(cr3_reg_t);
 void ctrl_active_cr3_disable();
 void ctrl_active_cr3_reset();

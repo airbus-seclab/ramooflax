@@ -105,7 +105,8 @@ static void svm_vmexit_pre_hdl()
 static void svm_vmexit_post_hdl(raw64_t tsc)
 {
    db_check_stp();
-   controller();
+   if(controller() & (VM_FAIL|VM_FAULT))
+      svm_vmexit_failure();
 
    vm_state.rax.raw = info->vm.cpu.gpr->rax.raw;
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;

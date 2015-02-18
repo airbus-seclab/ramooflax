@@ -26,35 +26,35 @@ static int gdbstub_evt_cr_rd(arg_t arg)
 {
    debug(GDBSTUB_EVT, "preempt(rd_cr %d)\n", arg.blow);
    gdb_preempt(GDB_EXIT_R_CR0+(uint8_t)arg.blow);
-   return 1;
+   return VM_DONE;
 }
 
 static int gdbstub_evt_cr_wr(arg_t arg)
 {
    debug(GDBSTUB_EVT, "preempt(wr_cr %d)\n", arg.blow);
    gdb_preempt(GDB_EXIT_W_CR0+(uint8_t)arg.blow);
-   return 1;
+   return VM_DONE;
 }
 
 static int gdbstub_evt_excp(arg_t arg)
 {
    debug(GDBSTUB_EVT, "preempt(excp %d)\n", arg.low);
    gdb_preempt(GDB_EXIT_EXCP_DE+(uint8_t)arg.low);
-   return 1;
+   return VM_DONE;
 }
 
 static int gdbstub_evt_trap(arg_t __unused__ arg)
 {
    debug(GDBSTUB_EVT, "preempt(trap)\n");
    gdb_preempt(GDB_EXIT_TRAP);
-   return 1;
+   return VM_DONE;
 }
 
 static int gdbstub_evt_npf(arg_t __unused__ arg)
 {
    debug(GDBSTUB_EVT, "preempt(npf)\n");
    gdb_preempt(GDB_EXIT_NPF);
-   return 1;
+   return VM_DONE;
 }
 
 ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {

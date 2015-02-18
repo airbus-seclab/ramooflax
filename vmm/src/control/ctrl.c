@@ -128,17 +128,23 @@ void ctrl_usr_reset()
    debug(CTRL, "ctrl user filters disabled\n");
 }
 
-void controller()
+int controller()
 {
+   int rc;
+
    if(ctrl_active_cr3_check())
-      ctrl_event();
+      rc = ctrl_event();
 
 #ifdef CONFIG_GDBSTUB
    gdbstub();
 #endif
 
+   if(rc & (VM_FAIL|VM_FAULT))
+      return rc;
+
    if(dbg_hard_dr6_dirty())
       dbg_hard_dr6_clean();
 
    ctrl_traps();
+   return rc;
 }

@@ -24,32 +24,32 @@ extern info_data_t *info;
 
 static int local_evt_cr_rd(arg_t __unused__ arg)
 {
-   return 1;
+   return VM_DONE;
 }
 
 static int local_evt_cr_wr(arg_t __unused__ arg)
 {
-   return 1;
+   return VM_DONE;
 }
 
 static int local_evt_excp(arg_t __unused__ arg)
 {
-   return 1;
+   return VM_DONE;
 }
 
 static int local_evt_brk(arg_t __unused__ arg)
 {
-   return 1;
+   return VM_DONE;
 }
 
 static int local_evt_stp(arg_t __unused__ arg)
 {
-   return 1;
+   return VM_DONE;
 }
 
 static int local_evt_npf(arg_t __unused__ arg)
 {
-   return 1;
+   return VM_FAIL;
 }
 
 ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {

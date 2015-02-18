@@ -155,7 +155,7 @@ int ctrl_event()
    int rc;
 
    if(!info->vmm.ctrl.event.hdl)
-      return 1;
+      return VM_DONE;
 
    debug(CTRL_EVT, "calling ctrl evt handler 0x%X\n", info->vmm.ctrl.event.hdl);
    rc = info->vmm.ctrl.event.hdl(info->vmm.ctrl.event.arg);

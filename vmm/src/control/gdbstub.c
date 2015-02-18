@@ -59,9 +59,7 @@ int __gdb_preempt(uint8_t reason)
 int gdb_preempt(uint8_t reason)
 {
    /* check if we have a request to process first */
-   debug(GDBSTUB, "reading receive buffer before preempt %d\n", reason);
    gdb_recv_packet();
-
    return __gdb_preempt(reason);
 }
 
