@@ -40,9 +40,9 @@ typedef union ia32_efer_msr
    struct
    {
       uint64_t    sce:1;     /* syscall extensions */
-      uint64_t    rsrvd0:7;  /* zero */
+      uint64_t    r0:7;      /* zero */
       uint64_t    lme:1;     /* long mode enable */
-      uint64_t    rsrvd1:1;  /* zero */
+      uint64_t    r1:1;      /* zero */
       uint64_t    lma:1;     /* long mode active */
       uint64_t    nxe:1;     /* no-execute-enable */
 
@@ -79,7 +79,7 @@ typedef union ia32_debug_ctl_msr
    {
       uint64_t    lbr:1;               /* last branch int/excp */
       uint64_t    btf:1;               /* single step on branch */
-      uint64_t    r1:4;                /* reserved (0) */
+      uint64_t    r1:4;
       uint64_t    tr:1;                /* trace msg enable */
       uint64_t    bts:1;               /* branch trace store */
       uint64_t    btint:1;             /* branch trace interrupt */
@@ -89,6 +89,7 @@ typedef union ia32_debug_ctl_msr
       uint64_t    freeze_perf_pmi:1;
       uint64_t    r2:1;
       uint64_t    freeze_smm_en:1;     /* disable perf/dbg while in SMM */
+      uint64_t    r3:49;
 
    } __attribute__((packed));
 
@@ -182,7 +183,7 @@ typedef union vmx_basic_info_msr
       uint64_t     revision_id:32;   /* vmcs revision identifier */
       uint64_t     alloc:13;         /* vmxon, vmcs size */
       uint64_t     r1:3;             /* reserved */
-      uint64_t     phys_width:1;     /* 0 on intel64, 1 on non intel64 */
+      uint64_t     pwidth32:1;       /* 0 on intel64, 1 on non intel64 */
       uint64_t     smm:1;            /* 1 support dual smm */
       uint64_t     mem_type:4;       /* 0 = strong uncacheable, 6 = write-back */
       uint64_t     io_insn:1;        /* 1 ins/outs insn info on vmexit */
@@ -196,130 +197,6 @@ typedef union vmx_basic_info_msr
 } __attribute__((packed)) vmx_basic_info_msr_t;
 
 #define rd_msr_vmx_basic_info(val)  rd_msr64(IA32_VMX_BASIC_MSR,(val).edx,(val).eax)
-
-/*
-** VMX fixed bits settings
-**
-** allow_0 <=> if bit is 1, it is fixed to 1 in destination register (fixed1)
-** allow_1 <=> if bit is 0, it is fixed to 0 in destination register (fixed0)
-**
-** final = (wanted & allow_1) | allow_0
-**
-*/
-#define vmx_set_fixed(_rg,_fx)           ((_rg) = ((_rg) & _fx.allow_1) | _fx.allow_0)
-
-/* XXX: make a macro to create the following
-** vmx_xxx_msr types with fields:
-** - allowed0
-** - allowed1
-** - specific bitfields of subsequent type
-**   from vmx_vmcs.h (pin, proc, proc2, ...)
-*/
-
-/*
-** VMX_PINBASED_CTLS MSR
-*/
-typedef union vmx_pinbased_ctls_msr
-{
-   struct
-   {
-      uint32_t  allow_0;
-      uint32_t  allow_1;
-
-   } __attribute__((packed));
-
-   msr_t;
-
-} __attribute__((packed)) vmx_pin_ctls_msr_t;
-
-#define rd_msr_vmx_pin_ctls(val)      rd_msr64(0x481UL,(val).edx,(val).eax)
-#define rd_msr_vmx_true_pin_ctls(val) rd_msr64(0x48dUL,(val).edx,(val).eax)
-
-/*
-** VMX_PROCBASED_CTLS MSR
-*/
-typedef union vmx_primary_processor_based_ctls_msr
-{
-   struct
-   {
-      uint32_t  allow_0;
-
-      union
-      {
-	 uint32_t allow_1;
-	 vmcs_exec_ctl_proc_based_fields_t;
-
-      } __attribute__((packed));
-
-   } __attribute__((packed));
-
-   msr_t;
-
-} __attribute__((packed)) vmx_proc_ctls_msr_t;
-
-typedef union vmx_secondary_processor_based_ctls_msr
-{
-   struct
-   {
-      uint32_t  allow_0;
-
-      union
-      {
-	 uint32_t allow_1;
-	 vmcs_exec_ctl_proc2_based_fields_t;
-
-      } __attribute__((packed));
-
-   } __attribute__((packed));
-
-   msr_t;
-
-} __attribute__((packed)) vmx_proc2_ctls_msr_t;
-
-
-#define rd_msr_vmx_proc_ctls(val)      rd_msr64(0x482UL,(val).edx,(val).eax)
-#define rd_msr_vmx_proc2_ctls(val)     rd_msr64(0x48bUL,(val).edx,(val).eax)
-#define rd_msr_vmx_true_proc_ctls(val) rd_msr64(0x48eUL,(val).edx,(val).eax)
-
-/*
-** VMX_EXIT_CTLS MSR
-*/
-typedef union vmx_exit_ctls_msr
-{
-   struct
-   {
-      uint32_t  allow_0;
-      uint32_t  allow_1;
-
-   } __attribute__((packed));
-
-   msr_t;
-
-} __attribute__((packed)) vmx_exit_ctls_msr_t;
-
-#define rd_msr_vmx_exit_ctls(val)      rd_msr64(0x483UL,(val).edx,(val).eax)
-#define rd_msr_vmx_true_exit_ctls(val) rd_msr64(0x48fUL,(val).edx,(val).eax)
-
-
-/*
-** VMX_ENTRY_CTLS MSR
-*/
-typedef union vmx_entry_ctls_msr
-{
-   struct
-   {
-      uint32_t  allow_0;
-      uint32_t  allow_1;
-
-   } __attribute__((packed));
-
-   msr_t;
-
-} __attribute__((packed)) vmx_entry_ctls_msr_t;
-
-#define rd_msr_vmx_entry_ctls(val)      rd_msr64(0x484UL,(val).edx,(val).eax)
-#define rd_msr_vmx_true_entry_ctls(val) rd_msr64(0x490UL,(val).edx,(val).eax)
-
 
 /*
 ** VMX_MISC_DATA MSR
@@ -369,37 +246,6 @@ typedef union vmx_vmcs_enum_msr
 #define rd_msr_vmx_vmcs_enum(val)      rd_msr64(0x48aUL,(val).edx,(val).eax)
 
 /*
-** Control registers MSRs fixed bits
-*/
-typedef union vmx_cr_ctls_msr
-{
-   struct
-   {
-      uint32_t  allow_0;
-      uint32_t  allow_1;
-
-   } __attribute__((packed));
-
-   msr_t;
-
-} __attribute__((packed)) vmx_fixed_cr_msr_t;
-
-#define rd_msr_vmx_fixed_cr0(val)	\
-   ({					\
-      rd_msr32(0x486UL,(val).allow_0);	\
-      rd_msr32(0x487UL,(val).allow_1);	\
-   })
-
-#define vmx_allow_cr0_pe_disable(_fx)  (!(_fx.allow_0 & (1<<0)))
-#define vmx_allow_cr0_pg_disable(_fx)  (!(_fx.allow_0 & (1<<31)))
-
-#define rd_msr_vmx_fixed_cr4(val)	\
-   ({					\
-      rd_msr32(0x488UL,(val).allow_0);	\
-      rd_msr32(0x489UL,(val).allow_1);	\
-   })
-
-/*
 ** VPID & EPT capabilities MSRs
 */
 typedef union vmx_ept_vpid_cap_msr
@@ -415,7 +261,7 @@ typedef union vmx_ept_vpid_cap_msr
       uint64_t  wb:1;         /* 14    allow WB for ept structs */
       uint64_t  r4:1;         /* 15    reserved */
       uint64_t  pg_2m:1;      /* 16    allow ept pde to map 2MB pages */
-      uint64_t  pg_1g:1;      /* 17    allow ept pdpte to map 1GB page */
+      uint64_t  pg_1g:1;      /* 17    allow ept pdpte to map 1GB pages */
       uint64_t  r5:2;         /* 18-19 reserved */
       uint64_t  invept:1;     /* 20    invept insn supported */
       uint64_t  dirty:1;      /* 21    access & dirty flag in ept entry */
@@ -439,5 +285,98 @@ typedef union vmx_ept_vpid_cap_msr
 
 #define rd_msr_vmx_ept_cap(val)        rd_msr64(0x48cUL,(val).edx,(val).eax)
 
+/*
+** VMX fixed bits settings:
+**
+** allow_0 <=> if bit is 1, it is fixed to 1 in destination register
+** allow_1 <=> if bit is 0, it is fixed to 0 in destination register
+**
+** consider allow_0 as fixed_1
+**
+** final = (wanted & allow_1) | allow_0
+**
+*/
+#define vmx_set_fixed(_rg,_fx) ((_rg) = ((_rg) & _fx.allow_1.raw) | _fx.allow_0.raw)
+
+/*
+** Convenient macro to build fixed msr types
+**
+** prefer using 'fixed_1' instead of 'allow_0'
+** prefer using 'allow_1' instead of 'fixed_0'
+*/
+#define __build_vmx_fixed_type(_ft, _ftf) \
+   typedef union _ft {			  \
+					  \
+      struct				  \
+	 {				  \
+	    _ftf allow_0;		  \
+	    _ftf allow_1;		  \
+	    				  \
+	 } __attribute__((packed));	  \
+					  \
+      struct				  \
+	 {				  \
+	    _ftf fixed_1;		  \
+	    _ftf fixed_0;		  \
+	    				  \
+	 } __attribute__((packed));	  \
+					  \
+      msr_t;				  \
+					  \
+   } __attribute__((packed)) _ft##_t
+
+/*
+** VMX_PINBASED_CTLS MSR
+*/
+__build_vmx_fixed_type(vmx_pin_ctls_msr, vmcs_exec_ctl_pin_based_t);
+
+#define rd_msr_vmx_pin_ctls(val)      rd_msr64(0x481UL,(val).edx,(val).eax)
+#define rd_msr_vmx_true_pin_ctls(val) rd_msr64(0x48dUL,(val).edx,(val).eax)
+
+/*
+** VMX_PROCBASED_CTLS MSR
+*/
+__build_vmx_fixed_type(vmx_proc_ctls_msr, vmcs_exec_ctl_proc_based_t);
+__build_vmx_fixed_type(vmx_proc2_ctls_msr, vmcs_exec_ctl_proc2_based_t);
+
+#define rd_msr_vmx_proc_ctls(val)      rd_msr64(0x482UL,(val).edx,(val).eax)
+#define rd_msr_vmx_proc2_ctls(val)     rd_msr64(0x48bUL,(val).edx,(val).eax)
+#define rd_msr_vmx_true_proc_ctls(val) rd_msr64(0x48eUL,(val).edx,(val).eax)
+
+/*
+** VMX_EXIT_CTLS MSR
+*/
+__build_vmx_fixed_type(vmx_exit_ctls_msr, vmcs_exit_ctl_vect_t);
+
+#define rd_msr_vmx_exit_ctls(val)      rd_msr64(0x483UL,(val).edx,(val).eax)
+#define rd_msr_vmx_true_exit_ctls(val) rd_msr64(0x48fUL,(val).edx,(val).eax)
+
+/*
+** VMX_ENTRY_CTLS MSR
+*/
+__build_vmx_fixed_type(vmx_entry_ctls_msr, vmcs_entry_ctl_vect_t);
+
+#define rd_msr_vmx_entry_ctls(val)      rd_msr64(0x484UL,(val).edx,(val).eax)
+#define rd_msr_vmx_true_entry_ctls(val) rd_msr64(0x490UL,(val).edx,(val).eax)
+
+/*
+** Control registers MSRs fixed bits
+*/
+__build_vmx_fixed_type(vmx_fixed_cr_msr, raw32_t);
+
+#define rd_msr_vmx_fixed_cr0(val)		\
+   ({						\
+      rd_msr32(0x486UL,(val).allow_0.raw);	\
+      rd_msr32(0x487UL,(val).allow_1.raw);	\
+   })
+
+#define rd_msr_vmx_fixed_cr4(val)		\
+   ({				       		\
+      rd_msr32(0x488UL,(val).allow_0.raw);	\
+      rd_msr32(0x489UL,(val).allow_1.raw);	\
+   })
+
+#define vmx_allow_cr0_pe_disable(_fx)  (!(_fx.fixed_1.raw & (1<<0)))
+#define vmx_allow_cr0_pg_disable(_fx)  (!(_fx.fixed_1.raw & (1<<31)))
 
 #endif

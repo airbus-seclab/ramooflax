@@ -244,6 +244,24 @@ typedef union cpuid_feature_info_ebx
 #define apic_supported()      cpuid_has_d_feat(CPUID_EDX_FEAT_APIC)
 
 /*
+** CPUID Maximum supported extension
+*/
+#define CPUID_MAX_EXT                   0x80000000
+#define cpuid_max_ext()			\
+   ({					\
+      uint32_t eax;			\
+      __cpuid_1(CPUID_MAX_EXT,eax);	\
+      eax;				\
+   })
+
+/*
+** CPUID Maximum physical/linear supported width
+** vmx/svm dependent
+*/
+#define CPUID_MAX_ADDR                  0x80000008
+#define cpuid_max_addr(_x)              __cpuid_1(CPUID_MAX_ADDR, (_x))
+
+/*
 ** CPUID Extended Processor Features
 */
 #define CPUID_EXT_PROC_FEAT                 0x80000001

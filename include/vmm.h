@@ -49,9 +49,6 @@
 #define VMM_IDT_NR_DESC                  256
 #define VMM_IDT_ISR_ALGN                  16
 
-#define vaddr_canon(_addr_)              addr_canon(_addr_,info->vmm.cpu.nr_vbits)
-#define paddr_canon(_addr_)              addr_canon(_addr_,info->vmm.cpu.nr_pbits)
-
 /*
 ** VMM data structures
 */
@@ -76,6 +73,9 @@ typedef union vmm_cpu_skill
    struct
    {
       uint32_t  pg_1G:1;
+      uint32_t  osxsave:1;
+      uint32_t  paddr_sz:8;   /* max physical addr width */
+      uint32_t  vaddr_sz:8;   /* max linear addr width */
 
    } __attribute__((packed));
 
@@ -88,6 +88,8 @@ typedef struct vmm_cpu
    vmm_sgmem_t     *sg;      /* strictly aligned */
    vmm_pgmem_t     pg;
    vmm_cpu_skill_t skillz;
+   uint64_t        max_paddr; /* maximum physical addr supported */
+   uint64_t        max_vaddr; /* maximum linear addr supported */
 
 } __attribute__((packed)) vmm_cpu_t;
 

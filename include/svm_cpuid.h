@@ -59,11 +59,14 @@
    })
 
 /*
-** CPUID Addr Size and Physical Core count
+** CPUID_MAX_ADDR
+**
+** Gives Addr Size and Physical Core count
 */
-#define CPUID_AMD_PHYS_CORE                       0x80000008
+#define CPUID_AMD_PHYS_CORE    CPUID_MAX_ADDR
 
-typedef union amd_physical_core_eax
+/* EAX */
+typedef union amd_max_addr_sz
 {
    struct
    {
@@ -76,9 +79,10 @@ typedef union amd_physical_core_eax
 
    raw32_t;
 
-} __attribute__((packed)) amd_phys_core_eax_t;
+} __attribute__((packed)) amd_max_addr_sz_t;
 
-typedef union amd_physical_core_ecx
+/* ECX */
+typedef union amd_max_core
 {
    struct
    {
@@ -91,7 +95,7 @@ typedef union amd_physical_core_ecx
 
    raw32_t;
 
-} __attribute__((packed)) amd_phys_core_ecx_t;
+} __attribute__((packed)) amd_max_core_t;
 
 /*
 ** AMD CPUID SVM features

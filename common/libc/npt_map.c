@@ -537,7 +537,7 @@ static inline void __npg_fw_op(offset_t start, offset_t end, uint64_t attr,
 static offset_t _npg_bk_op(offset_t start, offset_t end, uint64_t attr, uint8_t act)
 {
    debug(PG, "backward 0x%X 0x%X\n", start, end);
-   return __npg_bk_op(start, end, MAX_VADDR, attr, &npg_512G_op, act);
+   return __npg_bk_op(start, end, info->vm.cpu.max_paddr, attr, &npg_512G_op, act);
 }
 
 static void _npg_fw_op(offset_t start, offset_t end, uint64_t attr, uint8_t act)

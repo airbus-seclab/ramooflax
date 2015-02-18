@@ -58,28 +58,19 @@
    })
 
 /*
-** CPUID_EXT_HIGHEST extended 
+** CPUID_MAX_ADDR
 */
-#define CPUID_EXT_HIGHEST                  0x80000000
-#define cpuid_ext_highest()		\
-   ({					\
-      uint32_t eax;			\
-      __cpuid_1(CPUID_EXT_HIGHEST,eax);	\
-      eax;				\
-   })
+typedef union intel_max_addr_width
+{
+   struct
+   {
+      uint32_t  paddr_sz:8;
+      uint32_t  vaddr_sz:8;
 
-/*
-** If not available then 36 bits physical addr
-*/
-#define CPUID_MAX_ADDR                     0x80000008
-#define cpuid_max_paddr()		\
-   ({					\
-      offset_t max;			\
-      uint32_t eax;			\
-      __cpuid_1(CPUID_MAX_ADDR,eax);	\
-      max = (1ULL<<(eax & 0xff)) - 1;	\
-      max;				\
-   })
+   } __attribute__((packed));
 
+   raw32_t;
+
+} __attribute__((packed)) intel_max_addr_sz_t;
 
 #endif

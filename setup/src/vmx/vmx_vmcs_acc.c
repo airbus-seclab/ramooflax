@@ -179,7 +179,7 @@ void vmx_vmcs_commit()
    vmcs_force_flush(vm_state.ldtr.attributes);
    vmcs_force_flush(vm_state.tr.attributes);
    vmcs_force_flush(vm_state.interrupt);
-   vmcs_force_flush(vm_state.activity_state);
+   vmcs_force_flush(vm_state.activity);
    vmcs_force_flush(vm_state.smbase);
    vmcs_force_flush(vm_state.ia32_sysenter_cs);
    vmcs_force_flush(vm_state.preempt_timer);

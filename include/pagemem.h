@@ -24,8 +24,6 @@
  *************************** Common definitions ***************************
  **************************************************************************/
 
-#define MAX_VADDR       (-1UL)
-
 /*
 ** Paging bits accessing
 */
@@ -184,6 +182,19 @@ typedef union page_table_entry
  ************************* 64 bits long mode paging *********************
  ************************************************************************/
 
+#define valid_pae_pdpe(_p)			\
+   ({						\
+      int x = 1;				\
+      if((_p)->pae.p)				\
+      {						\
+	 if((_p)->pae.r0 || (_p)->pae.r1)	\
+	    x = 0;				\
+	 if((_p)->raw > info->vm.cpu.max_paddr)	\
+	    x = 0;				\
+      }						\
+      x;					\
+   })
+
 typedef union page_map_level_4_entry
 {
    struct
@@ -326,28 +337,6 @@ typedef union page_table_entry_64
    raw64_t;
 
 } __attribute__((packed)) pte64_t;
-
-/*
-** Test if address is in canonical form (msb expanded)
-** For instance, with 48 bits supported (msb is 47)
-** canonical addresses are :
-**   [ 0x0000000000000000 ; 0x00007fffffffffff ]
-**   [ 0xffff800000000000 ; 0xffffffffffffffff ]
-*/
-static inline int addr_canon(uint64_t addr, uint32_t nr_bits)
-{
-   uint64_t msk;
-
-   if(! (addr>>(nr_bits-1)))
-      return 1;
-
-   msk = ~((1ULL<<nr_bits)-1);
-
-   if((addr & msk) == msk)
-      return 1;
-
-   return 0;
-}
 
 /*
 ** 64 bits paging usefull macros

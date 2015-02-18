@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_exit_msr.h>
+#include <vmx_exit_db.h>
 #include <msr.h>
 #include <mtrr.h>
 #include <debug.h>
@@ -161,6 +162,7 @@ static int __vmx_vmexit_resolve_msr_dbgctl(uint8_t wr)
    {
       vm_state.ia32_dbgctl.low  = info->vm.cpu.gpr->rax.low;
       vm_state.ia32_dbgctl.high = info->vm.cpu.gpr->rdx.low;
+      /* check in vmx_check_dbgctl() */
       vmcs_dirty(vm_state.ia32_dbgctl);
    }
    else

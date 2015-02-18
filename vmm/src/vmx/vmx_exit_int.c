@@ -52,7 +52,7 @@ extern info_data_t *info;
 
 /*    ctrls->int_info.raw    = 0; */
 /*    ctrls->int_info.vector = vector; */
-/*    ctrls->int_info.type   = VMCS_IDT_INFORMATION_TYPE_HW_INT; */
+/*    ctrls->int_info.type   = VMCS_EVT_INFORMATION_TYPE_HW_INT; */
 /*    ctrls->int_info.v      = 1; */
 
 /*    vmcs_dirty( ctrls->int_info ); */
@@ -66,13 +66,13 @@ extern info_data_t *info;
 /*       vmcs_dirty( state->rflags ); */
 /*    } */
 
-/*    vmcs_read( state->int_state ); */
+/*    vmcs_read( state->interrupt ); */
 
-/*    if( state->int_state.sti || state->int_state.mss ) */
+/*    if( state->interrupt.sti || state->interrupt.mss ) */
 /*    { */
-/*       state->int_state.sti = 0; */
-/*       state->int_state.mss = 0; */
-/*       vmcs_dirty( state->int_state ); */
+/*       state->interrupt.sti = 0; */
+/*       state->interrupt.mss = 0; */
+/*       vmcs_dirty( state->interrupt ); */
 
 /*       debug( VMX_INT, "inject IRQ forced (interrupt shadow)\n" ); */
 /*    } */

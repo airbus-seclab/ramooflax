@@ -49,12 +49,12 @@
 
 #define __vmx_vmexit_inject_intn(_vector)			\
    __vmx_prepare_event_injection(vm_entry_ctrls.int_info,	\
-				 VMCS_IDT_INFO_TYPE_SW_INT,	\
+				 VMCS_EVT_INFO_TYPE_SW_INT,	\
 				 _vector)
 
 #define __vmx_vmexit_inject_interrupt(_vector)			\
    __vmx_prepare_event_injection(vm_entry_ctrls.int_info,	\
-				 VMCS_IDT_INFO_TYPE_HW_INT,	\
+				 VMCS_EVT_INFO_TYPE_HW_INT,	\
 				 _vector)
 
 #endif

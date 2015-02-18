@@ -19,6 +19,7 @@
 #include <vmx_exit_cr.h>
 #include <vmx_exit_dr.h>
 #include <vmx_exit_dt.h>
+#include <vmx_exit_db.h>
 #include <vmx_exit_msr.h>
 #include <vmx_exit_pf.h>
 #include <vmx_exit_fail.h>
@@ -135,7 +136,8 @@ static void vmx_vmexit_pre_hdl()
 
 static void vmx_vmexit_post_hdl(raw64_t tsc)
 {
-   db_check_stp();
+   vmx_check_pending_db();
+
    if(controller() & (VM_FAIL|VM_FAULT))
       vmx_vmexit_failure();
 
@@ -203,8 +205,8 @@ int __vmx_vmexit_idt_deliver_rmode()
    ** hard/soft int generates #GP while in rmode
    ** we discard resume as we emulate
    */
-   if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT ||
-      vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_HW_INT)
+   if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_SW_INT ||
+      vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_HW_INT)
       return VM_DONE;
 
    /* /\* */
@@ -214,7 +216,7 @@ int __vmx_vmexit_idt_deliver_rmode()
    /* *\/ */
    /* if(!vm_entry_ctrls.int_info.v) */
    /* { */
-   /*    if(vm_exit_info.idt_info.type == VMCS_IDT_INFORMATION_TYPE_HW_INT) */
+   /*    if(vm_exit_info.idt_info.type == VMCS_EVT_INFORMATION_TYPE_HW_INT) */
    /*    { */
    /* 	 debug(VMX_IDT, */
    /* 	       "idt deliver IRQ (rmode): 0x%x\n", */
@@ -244,7 +246,7 @@ int __vmx_vmexit_idt_deliver_pmode()
 	    ,vm_exit_info.idt_info.type
 	    ,info->vm.cpu.gpr->rax.low);
 
-      if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT)
+      if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_SW_INT)
       {
 	 vm_entry_ctrls.insn_len.raw = 2;
 	 vmcs_dirty(vm_entry_ctrls.insn_len);
@@ -278,8 +280,8 @@ int __vmx_vmexit_idt_deliver_pmode()
    ** we have something to inject
    */
 /*    /\* exception (to be injected) while delivering exception *\/ */
-/*    if(vm_exit_info.idt_info.type  == VMCS_IDT_INFO_TYPE_HW_EXCP && */
-/*       vm_entry_ctrls.int_info.type == VMCS_IDT_INFO_TYPE_HW_EXCP) */
+/*    if(vm_exit_info.idt_info.type  == VMCS_EVT_INFO_TYPE_HW_EXCP && */
+/*       vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_EXCP) */
 /*    { */
 /*       uint8_t e1 = vm_exit_info.idt_info.vector; */
 /*       uint8_t e2 = vm_entry_ctrls.int_info.vector; */
@@ -304,8 +306,8 @@ int __vmx_vmexit_idt_deliver_pmode()
 /*    } */
 
 /* /\* */
-/*    if(vm_exit_info.idt_info.type  == VMCS_IDT_INFORMATION_TYPE_HW_INT && */
-/*        vm_entry_ctrls.int_info.type == VMCS_IDT_INFORMATION_TYPE_HW_EXCP) */
+/*    if(vm_exit_info.idt_info.type  == VMCS_EVT_INFORMATION_TYPE_HW_INT && */
+/*        vm_entry_ctrls.int_info.type == VMCS_EVT_INFORMATION_TYPE_HW_EXCP) */
 /*    { */
 /*    } */
 /* *\/ */

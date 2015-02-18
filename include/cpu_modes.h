@@ -37,6 +37,27 @@
 #define __legacy32()      (!_xx_lmode() &&  __pmode32())
 #define __legacy16()      (!_xx_lmode() &&  __pmode16())
 
+/* paging mode: cf. Vol 3A table 4-1 */
 #define __paging()        (__cr0.pg)
+#define __paged32()       (__paging() && !__cr4.pae && !_xx_lmode())
+#define __paged_pae()     (__paging() &&  __cr4.pae && !_xx_lmode())
+#define __paged64()       (__paging() &&  __cr4.pae &&  _xx_lmode())
+
+/*
+** Canonical linear address
+** (cf. Vol. 3A Section 4.1.1, table 4-1)
+**
+** Test linear canonical form (msb expanded)
+** 48 bits linear width supported (msb is 47)
+**
+** [ 0x0000000000000000 ; 0x00007fffffffffff ]
+** [ 0xffff800000000000 ; 0xffffffffffffffff ]
+*/
+#define canonical_linear(_aDdR)						\
+   ({									\
+      uint64_t lmt = (1ULL<<47) - 1;					\
+      bool_t   can = (!__paged64() || ((_aDdR) <= lmt || (_aDdR) >= ~lmt)); \
+      can;							 	\
+   })
 
 #endif

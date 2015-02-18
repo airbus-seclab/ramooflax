@@ -84,7 +84,7 @@ typedef struct vmcs_guest_register_state_area
 
 typedef struct vmcs_guest_non_register_state_area
 {
-   vmcs_t(raw32_t,                         activity_state);
+   vmcs_t(raw32_t,                         activity);
    vmcs_t(vmcs_guest_int_state_t,          interrupt);
    vmcs_t(vmcs_guest_pending_dbg_excp_t,   dbg_excp);
    vmcs_t(raw64_t,                         vmcs_link_ptr);

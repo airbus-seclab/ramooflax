@@ -34,10 +34,10 @@ int vmx_vmexit_resolve_gp()
    if(!vm_exit_info.idt_info.v)
       return 0;
 
-   if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_SW_INT)
+   if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_SW_INT)
       return emulate();
 
-   if(vm_exit_info.idt_info.type == VMCS_IDT_INFO_TYPE_HW_INT)
+   if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_HW_INT)
       return emulate_hard_interrupt(vm_exit_info.idt_info.vector);
 
    return 0;

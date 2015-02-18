@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -15,26 +15,20 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __CPU_H__
-#define __CPU_H__
+#ifndef __SHOW_H__
+#define __SHOW_H__
 
 #include <config.h>
+
+#ifdef CONFIG_ARCH_AMD
+#include <svm_show.h>
+#else
+#include <vmx_show.h>
+#endif
 
 /*
 ** Functions
 */
-#ifdef CONFIG_ARCH_AMD
-void svm_vm_cpu_skillz_init();
-void svm_cpu_max_addr();
-#define vm_cpu_skillz_init()      svm_vm_cpu_skillz_init()
-#define cpu_max_addr()            svm_cpu_max_addr()
-#else
-void vmx_vm_cpu_skillz_init();
-void vmx_cpu_max_addr();
-#define vm_cpu_skillz_init()      vmx_vm_cpu_skillz_init()
-#define cpu_max_addr()            vmx_cpu_max_addr()
-#endif
-
-void cpu_init();
+void show_vmm_mem_map();
 
 #endif

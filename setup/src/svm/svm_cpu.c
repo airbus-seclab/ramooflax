@@ -36,6 +36,28 @@ static void svm_cpu_features()
       panic("svm feature BIOS-locked");
 }
 
+void svm_cpu_max_addr()
+{
+   amd_max_addr_sz_t max;
+   cpuid_max_addr(max.raw);
+
+   info->vmm.cpu.skillz.paddr_sz = max.paddr_sz;
+   info->vmm.cpu.max_paddr = (1ULL<<max.paddr_sz) - 1;
+
+   info->vmm.cpu.skillz.vaddr_sz = max.vaddr_sz;
+   info->vmm.cpu.max_vaddr = (1ULL<<max.vaddr_sz) - 1;
+
+   info->vm.cpu.skillz.vaddr_sz = info->vmm.cpu.skillz.vaddr_sz;
+   info->vm.cpu.max_vaddr = info->vmm.cpu.max_vaddr;
+
+   if(!max.g_paddr_sz)
+      info->vm.cpu.skillz.paddr_sz = max.paddr_sz;
+   else
+      info->vm.cpu.skillz.paddr_sz = max.g_paddr_sz;
+
+   info->vm.cpu.max_paddr = (1ULL<<info->vm.cpu.skillz.paddr_sz) - 1;
+}
+
 static void svm_cpu_skillz()
 {
    info->vm.cpu.skillz.pg_2M = 1;

@@ -27,14 +27,7 @@ extern info_data_t *info;
 static int vmx_ept_pdpe_to_pae_pdpe(pdpe_t *pdpe, pdpe_t *pae_pdpe)
 {
    pae_pdpe->raw = pdpe->raw;
-
-   if(pae_pdpe->pae.r0 || pae_pdpe->pae.r1)
-      return 0;
-
-   if(pae_pdpe->pae.addr & ~info->vm.max_paddr)
-      return 0;
-
-   return 1;
+   return valid_pae_pdpe(pae_pdpe);
 }
 
 int vmx_ept_update_pdpe()
@@ -142,7 +135,7 @@ static void vmx_ept_map_mtrr_variable()
       {
 	 offset_t base = m_base.base<<12;
 	 offset_t mask = m_mask.mask<<12;
-	 size_t   len  = info->vm.max_paddr - mask + 1;
+	 size_t   len  = info->vm.cpu.max_paddr - mask + 1;
 	 uint64_t attr = ept_has_mtrr|(m_base.type<<3)|ept_dft_pvl;
 
 	 debug(VMX_EPT
@@ -156,6 +149,8 @@ static void vmx_ept_map_mtrr_variable()
 
 static void vmx_ept_map_with_mtrr()
 {
+   debug(VMX_EPT, "\n- Map EPT mem with MTRR\n");
+
    npg_map(0, info->hrd.mem.top, npg_dft_attr);
    vmx_ept_map_mtrr_variable();
 

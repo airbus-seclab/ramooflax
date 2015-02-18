@@ -30,6 +30,7 @@
 /*
 ** Functions
 */
-void  db_check_stp();
+void  db_check_pending();
+void  db_check_pending_stp();
 
 #endif

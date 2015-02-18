@@ -24,17 +24,30 @@ extern info_data_t *info;
 
 static void vmm_cpu_skillz_init()
 {
-   info->vmm.cpu.skillz.pg_1G = page_1G_supported();
+   if(cpuid_max_ext() < CPUID_MAX_ADDR)
+      panic("Not enough CPUID extensions supported");
 
-   if(osxsave_supported())
+   cpu_max_addr();
+
+   info->vmm.cpu.skillz.pg_1G   = page_1G_supported();
+   info->vmm.cpu.skillz.osxsave = osxsave_supported();
+
+   if(info->vmm.cpu.skillz.osxsave)
    {
       cr4_reg_t cr4 = { .raw = get_cr4()|CR4_OSXSAVE };
       set_cr4(cr4);
-      debug(CPU, "vmm osxsave enabled for xsetbv()\n");
    }
 
-   debug(CPU, "vmm 1GB pages support: %s\n"
-	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no");
+   debug(CPU,
+	 "\n- vmm cpu features\n"
+	 "1GB pages support   : %s\n"
+	 "osxsave enabled     : %s\n"
+	 "max physical addr   : 0x%X\n"
+	 "max linear addr     : 0x%X\n"
+	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no"
+	 ,info->vmm.cpu.skillz.osxsave?"yes":"no"
+	 ,info->vmm.cpu.max_paddr
+	 ,info->vmm.cpu.max_vaddr);
 }
 
 void cpu_init()

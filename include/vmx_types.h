@@ -51,11 +51,11 @@ typedef union vmcs_guest_interruptibility_state
 {
    struct
    {
-      uint32_t   sti:1;  /* blocking by STI */
-      uint32_t   mss:1;  /* blocking by mov ss */
-      uint32_t   smi:1;  /* blocking by smi */
-      uint32_t   nmi:1;  /* blocking by nmi */
-      uint32_t   r:28;   /* reserved, must be set to 0 on VMentry */
+      uint32_t   sti:1;   /* blocking by STI */
+      uint32_t   mss:1;   /* blocking by mov ss */
+      uint32_t   smi:1;   /* blocking by smi */
+      uint32_t   nmi:1;   /* blocking by nmi */
+      uint32_t   rsv:28;  /* reserved, must be set to 0 on VMentry */
 
    } __attribute__((packed));
 
@@ -83,20 +83,21 @@ typedef union vmcs_guest_pending_debug_exceptions
 
 } __attribute__((packed)) vmcs_guest_pending_dbg_excp_t;
 
+typedef struct vmcs_execution_pin_base_control_fields
+{
+   uint32_t   eint:1;      /* 0 ext intr cause vm exit (1) */
+   uint32_t   r1:2;        /* 1-2 reserved */
+   uint32_t   nmi:1;       /* 3 nmi cause vm exit (1) */
+   uint32_t   r2:1;        /* 4 reserved */
+   uint32_t   vnmi:1;      /* 5 virtual nmi control */
+   uint32_t   preempt:1;   /* 6 enable vmx preemption timer */
+   uint32_t   r3:25;       /* reserved */
+
+} __attribute__((packed)) vmcs_exec_ctl_pin_based_fields_t;
+
 typedef union vmcs_execution_pin_based_control
 {
-   struct
-   {
-      uint32_t   eint:1;      /* 0 ext intr cause vm exit (1) */
-      uint32_t   r1:2;        /* 1-2 reserved */
-      uint32_t   nmi:1;       /* 3 nmi cause vm exit (1) */
-      uint32_t   r2:1;        /* 4 reserved */
-      uint32_t   vnmi:1;      /* 5 virtual nmi control */
-      uint32_t   preempt:1;   /* 6 enable vmx preemption timer */
-      uint32_t   r3:25;       /* reserved */
-
-   } __attribute__((packed));
-
+   vmcs_exec_ctl_pin_based_fields_t;
    raw32_t;
 
 } __attribute__((packed)) vmcs_exec_ctl_pin_based_t;
@@ -151,7 +152,7 @@ typedef struct vmcs_secondary_execution_proc_based_control_fields
    uint32_t   wbinvd:1;     /* 6     exit on wbinvd */
    uint32_t   uguest:1;     /* 7     unrestricted guest */
    uint32_t   vapic_reg:1;  /* 8     apic register virtualization */
-   uint32_t   vintr:1;      /* 9     virtual interrupt delibery */
+   uint32_t   vintr:1;      /* 9     virtual interrupt delivery */
    uint32_t   pause_loop:1; /* 10    pause loop exiting */
    uint32_t   rdrand:1;     /* 11    exit on rdrand */
    uint32_t   invpcid:1;    /* 12    invpcid raises #UD */
@@ -217,12 +218,25 @@ typedef union vmcs_entry_control_vector
 
 } __attribute__((packed)) vmcs_entry_ctl_vect_t;
 
+/*
+** Event information type
+** valid for entry injection, exit interrupt, idt vectoring
+*/
+#define VMCS_EVT_INFO_TYPE_HW_INT    0
+#define VMCS_EVT_INFO_TYPE_RSV       1
+#define VMCS_EVT_INFO_TYPE_NMI       2
+#define VMCS_EVT_INFO_TYPE_HW_EXCP   3 /* not int3 and int0 */
+#define VMCS_EVT_INFO_TYPE_SW_INT    4
+#define VMCS_EVT_INFO_TYPE_PS_EXCP   5
+#define VMCS_EVT_INFO_TYPE_SW_EXCP   6 /* int1, int3, into */
+#define VMCS_EVT_INFO_TYPE_OTHER     7
+
 typedef union vmcs_entry_control_interruption_information
 {
    struct
    {
       uint32_t    vector:8;   /* int/excp vector */
-      uint32_t    type:3;     /* intr type  (cf. idt vectoring) */
+      uint32_t    type:3;     /* intr type */
       uint32_t    dec:1;      /* deliver error code (1) */
       uint32_t    r:19;       /* reserved */
       uint32_t    v:1;        /* valid */
@@ -250,19 +264,6 @@ typedef union vmcs_exit_information_exit_reason
 
 } __attribute__((packed)) vmcs_exit_info_exit_reason_t;
 
-
-/*
-** VMCS VM exit information interrupt information
-*/
-#define VMCS_INT_INFO_TYPE_HW_INT    0
-#define VMCS_INT_INFO_TYPE_RES1      1
-#define VMCS_INT_INFO_TYPE_NMI       2
-#define VMCS_INT_INFO_TYPE_HW_EXCP   3
-#define VMCS_INT_INFO_TYPE_RES2      4
-#define VMCS_INT_INFO_TYPE_RES3      5
-#define VMCS_INT_INFO_TYPE_SW_EXCP   6
-#define VMCS_INT_INFO_TYPE_RES4      7
-
 typedef union vmcs_exit_information_interrupt_information
 {
    struct
@@ -279,20 +280,6 @@ typedef union vmcs_exit_information_interrupt_information
    raw32_t;
 
 } __attribute__((packed)) vmcs_exit_info_int_info_t;
-
-
-
-/*
-** VMCS VM exit information IDT vectoring information
-*/
-#define VMCS_IDT_INFO_TYPE_HW_INT    0
-#define VMCS_IDT_INFO_TYPE_RES1      1
-#define VMCS_IDT_INFO_TYPE_NMI       2
-#define VMCS_IDT_INFO_TYPE_HW_EXCP   3
-#define VMCS_IDT_INFO_TYPE_SW_INT    4
-#define VMCS_IDT_INFO_TYPE_PS_EXCP   5
-#define VMCS_IDT_INFO_TYPE_SW_EXCP   6 /* int1, int3, into */
-#define VMCS_IDT_INFO_TYPE_RES2      7
 
 typedef union vmcs_exit_information_idt_vectoring_information
 {

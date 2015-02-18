@@ -54,7 +54,6 @@ typedef struct vmx_bazaar
    vmcs_region_t        vmcs;
    raw64_t              int_shadow;
    raw64_t              dr_shadow[6];
-   offset_t             max_paddr;
    size_t               lbr_tos;
    uint16_t             idt_limit;
    ia32_mtrr_cap_t      mtrr_cap;
@@ -65,6 +64,7 @@ typedef struct vmx_bazaar
    cr4_reg_t            cr4_dft_mask;
 
    vmx_basic_info_msr_t vmx_info;
+   vmx_misc_data_msr_t  vmx_misc;
    vmx_pin_ctls_msr_t   vmx_fx_pin;
    vmx_proc_ctls_msr_t  vmx_fx_proc;
    vmx_proc2_ctls_msr_t vmx_fx_proc2;

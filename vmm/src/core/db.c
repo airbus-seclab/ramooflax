@@ -22,17 +22,24 @@
 
 extern info_data_t *info;
 
+void db_check_pending()
+{
+   db_check_pending_stp();
+}
+
 /*
 ** Hardware exec traps are checked before
-** insn execution. Hardware data, i/o and
-** single-step traps are checked after.
+** insn execution.
+**
+** Hardware data, i/o and single-step traps
+** are checked after.
 **
 ** If we emulated an insn, we may loose
-** a #db condition, so take care here.
+** a #DB condition, so take care here.
 **
 ** XXX: iret, popf, mov ss ...
 */
-void db_check_stp()
+void db_check_pending_stp()
 {
    if(!__rflags.tf || !__vmexit_on_insn())
       return;

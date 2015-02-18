@@ -21,6 +21,7 @@
 #include <string.h>
 #include <pagemem.h>
 #include <pool.h>
+#include <show.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -255,28 +256,9 @@ void pmem_init(mbi_t *mbi)
    memcpy((void*)info_r, (void*)info, sizeof(info_data_t));
    info = info_r;
 
-   debug(PMEM,
-	 "area start    = 0x%X\n"
-	 "area end      = 0x%X\n"
-	 "area size     = %D B (%D KB)\n"
-	 "vmm stack     = 0x%X\n"
-	 "vmm pool      = 0x%X (%D KB)\n"
-	 "vmm elf       = 0x%X - 0x%X (%D B)\n"
-	 "gdt           = 0x%X\n"
-	 "idt           = 0x%X\n"
-	 "pml4          = 0x%X\n"
-	 "vm vmc        = 0x%X\n"
-	 ,info->area.start
-	 ,info->area.end
-	 ,info->area.size, (info->area.size)>>10
-	 ,info->vmm.stack_bottom
-	 ,info->vmm.pool.addr, (info->vmm.pool.sz)>>10
-	 ,info->vmm.base, info->vmm.base+info->vmm.size, info->vmm.size
-	 ,info->vmm.cpu.sg->gdt
-	 ,info->vmm.cpu.sg->idt
-	 ,info->vmm.cpu.pg.pml4
-	 ,info->vm.cpu.vmc
-      );
+#ifdef CONFIG_PMEM_DBG
+   show_vmm_mem_map();
+#endif
 
    debug_warning();
 /*

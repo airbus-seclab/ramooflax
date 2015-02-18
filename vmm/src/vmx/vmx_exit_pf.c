@@ -46,7 +46,7 @@ int vmx_vmexit_resolve_ept_viol()
 
    debug(VMX_EPT,
 	 "#NPF gv 0x%X gp 0x%X err 0x%X "
-	 "details (r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
+	 "(r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
 	 ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
 	 ,info->vm.cpu.fault.npf.err.raw
 	 ,info->vm.cpu.fault.npf.err.r, info->vm.cpu.fault.npf.err.w

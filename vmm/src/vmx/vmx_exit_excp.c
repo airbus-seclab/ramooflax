@@ -29,7 +29,7 @@ void __vmx_clear_event_injection()
    if(!vm_entry_ctrls.int_info.v)
       return;
 
-   if(vm_entry_ctrls.int_info.type == VMCS_IDT_INFO_TYPE_HW_EXCP &&
+   if(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_EXCP &&
       vm_entry_ctrls.int_info.vector == PF_EXCP)
       vmcs_clear(vm_state.cr2);
 
@@ -40,7 +40,7 @@ void __vmx_clear_event_injection()
 int __vmx_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
 {
    __vmx_prepare_event_injection(vm_entry_ctrls.int_info,
-				 VMCS_IDT_INFO_TYPE_HW_EXCP,
+				 VMCS_EVT_INFO_TYPE_HW_EXCP,
 				 vector);
    switch(vector)
    {

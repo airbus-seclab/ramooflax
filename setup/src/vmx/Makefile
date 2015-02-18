@@ -6,4 +6,5 @@ obj := 	vmx_vmm.o			\
 	vmx_guest.o			\
 	vmx_vmcs.o			\
 	vmx_vmcs_acc.o			\
-	vmx_vmcs_enc.o
+	vmx_vmcs_enc.o			\
+	vmx_show.o

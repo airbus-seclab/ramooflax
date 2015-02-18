@@ -24,8 +24,8 @@ extern info_data_t *info;
 
 static void __svm_vmexit_resolve_cpuid_phys_core()
 {
-   /* gpr64_ctx_t         *ctx = info->vm.cpu.gpr; */
-   /* amd_phys_core_ecx_t *ecx = (amd_phys_core_ecx_t*)&ctx->rcx.low; */
+   /* gpr64_ctx_t    *ctx = info->vm.cpu.gpr; */
+   /* amd_max_core_t *ecx = (amd_max_core_t*)&ctx->rcx.low; */
 
    /* ecx->nc = 0; */
    /* ecx->apic_id_core_id_sz = 0; */

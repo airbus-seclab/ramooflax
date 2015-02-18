@@ -25,14 +25,9 @@ extern info_data_t *info;
 
 static void vmx_vmcs_guest_nonregister_state_init()
 {
-   vmx_misc_data_msr_t misc_data;
-
-   rd_msr_vmx_misc_data(misc_data);
-   misc_data.eax = (misc_data.eax>>6) & 0x3;
-   vm_state.activity_state.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE&misc_data.eax;
-
+   vm_state.activity.raw = VMX_VMCS_GUEST_ACTIVITY_STATE_ACTIVE;
    vm_state.vmcs_link_ptr.raw = -1ULL;
-   //vm_state.preempt_timer.raw = 1;
+   /* vm_state.preempt_timer.raw = 1; */
 }
 
 static void vmx_vmcs_guest_register_state_segments_init()
@@ -64,8 +59,8 @@ static void vmx_vmcs_guest_register_state_segments_init()
 static void vmx_vmcs_guest_register_state_init()
 {
    /* ensure to catch #MC */
-   info->vm.vmx_fx_cr4.allow_0 |= (CR4_MCE);
-   info->vm.vmx_fx_cr4.allow_1 |= (CR4_MCE);
+   info->vm.vmx_fx_cr4.allow_0.raw |= (CR4_MCE);
+   info->vm.vmx_fx_cr4.allow_1.raw |= (CR4_MCE);
 
    rd_msr_ia32_dbg_ctl(vm_state.ia32_dbgctl);
    rd_msr_pat(vm_state.ia32_pat);

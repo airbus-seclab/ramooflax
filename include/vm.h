@@ -67,8 +67,8 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 #define VM_ENTRY_POINT         RM_BASE_IP
 
 #define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0x19cd;
-//#define vm_set_entry()         *(uint32_t*)VM_ENTRY_POINT = 0x19cd16cd;
-//#define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0xfeeb;
+/* #define vm_set_entry()         *(uint32_t*)VM_ENTRY_POINT = 0x19cd16cd; */
+/* #define vm_set_entry()         *(uint16_t*)VM_ENTRY_POINT = 0xfeeb; */
 
 /*
 ** VM data structures
@@ -88,6 +88,8 @@ typedef union vm_cpu_skill
       uint32_t  pg_1G:1;         /* nested mappings only     */
       uint32_t  flush_tlb:3;     /* flush vm tlbs non-global */
       uint32_t  flush_tlb_glb:3; /* flush vm all tlbs        */
+      uint32_t  paddr_sz:8;      /* max physical addr width */
+      uint32_t  vaddr_sz:8;      /* max linear addr width */
 
    } __attribute__((packed));
 
@@ -128,6 +130,8 @@ typedef struct vm_cpu
    uint32_t       dflt_excp; /* default exception mask */
    uint8_t        active_pg; /* which virtual paging to apply */
    vm_cpu_skill_t skillz;    /* vm cpu skillz */
+   uint64_t       max_paddr; /* maximum physical addr supported */
+   uint64_t       max_vaddr; /* maximum linear addr supported */
    vmc_t          *vmc;      /* hardware virtualization data, strictly aligned */
    gpr64_ctx_t    *gpr;      /* vm GPRs (in vmm stack) */
    fault_ctx_t    fault;     /* last fault context info */
