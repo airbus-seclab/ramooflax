@@ -15,223 +15,57 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+import log
 import inspect, struct
 
-class OSAffinity:
-    Unknown = 0
-    Linux26 = 1
-    Win7    = 2
-    WinXP   = 3
+def in_completer():
+    return (inspect.stack()[3][3] == "attr_matches")
 
-#
-# Find process under Linux 2.6 kernel
-#
-# We inspect TSS.esp0, aligned on THREAD_SIZE
-# to get thread_info, then task_struct and mm_struct
-#
-# (1) vm.cpu.sr.cr3 may not be the task one
-#     so we do not rely on it
-#
-# (2) we prefer walking task list because
-#     nothing can guarantee that each cr3
-#     will be scheduled by the kernel
-#
-class Linux26:
-    #kernel info ["thread_size", "comm", "next", "mm", "pgd", "cred", "euid"]
-    def __init__(self, settings):
-        self.__settings = dict(settings)
-        self.__msk = 0xffffffff & ~(settings["thread_size"] - 1)
-        self.__task = None
-        self.__pname = None
-        self.__pcr3 = None
-        self.__peuid = None
+def revert_string_bytes(s):
+    rs = []
+    for i in range(len(s)/2):
+        rs.append(s[-2:])
+        s = s[:-2]
+    return "".join(rs)
 
-    def __next_task(self, vm, task):
-        next = vm.mem.read_dword(task+self.__settings["next"])
-        next -= self.__settings["next"]
-        return next
+def stackdump(vm, n):
+    sz   = vm.cpu.mode/8
+    data = vm.mem.vread(vm.cpu.stack_location(), n*sz)
+    fmt  = "%#0*x"
+    if vm.cpu.mode == 16:
+        sf = "H"
+    elif vm.cpu.mode == 32:
+        sf ="L"
+    else:
+        sf = "Q"
+    msg = ""
+    for x in struct.unpack("<"+sf*n, data):
+        msg += fmt % ((sz*2)+2, x)
+    return msg
 
-    def __walk_process(self, vm, task):
-        head = task
-        while True:
-            mm = vm.mem.read_dword(task+self.__settings["mm"])
-            if mm != 0:
-                comm = task+self.__settings["comm"]
-                name = vm.mem.vread(comm, 15)
-                pgd  = vm.mem.read_dword(mm+self.__settings["pgd"])
-                if Utils.info:
-                    print "task",name
-                if self.__pname in name:
-                    self.__task = task
-                    self.__pcr3 = pgd - 0xc0000000
-                    if Utils.info:
-                        print "cr3 %#x" % (self.__pcr3)
-                    return True
+def backtrace(vm, n=1):
+    sz = vm.cpu.mode/8
+    ft = "<"+{16:"H",32:"L",64:"Q"}[vm.cpu.mode]
+    ip = []
+    if n == 0:
+        sp = vm.cpu.linear(vm.cpu.sr.ss, vm.cpu.gpr.stack)
+        return struct.unpack(ft, vm.mem.vread(sp,sz))[0]
+    bp = vm.cpu.linear(vm.cpu.sr.ss, vm.cpu.gpr.frame)
+    for x in xrange(n):
+        ip.append(struct.unpack(ft, vm.mem.vread(bp+sz, sz))[0])
+        bp = struct.unpack(ft, vm.mem.vread(bp, sz))[0]
+    return ip
 
-            task = self.__next_task(vm, task)
-            if task == head:
-                return False
-
-    def __find_process(self, vm):
-        esp0 = vm.mem.read_dword(vm.cpu.sr.tr+4)
-        thread_info = esp0 & self.__msk
-        task = vm.mem.read_dword(thread_info)
-        if task == 0:
-            return False
-        return self.__walk_process(vm, task)
-
-    def __set_euid(self, vm):
-        cred = vm.mem.read_dword(self.__task + self.__settings["cred"])
-        vm.mem.write_dword(cred + self.__settings["euid"], self.__peuid)
-        return True
-
-    def get_process_cr3(self):
-        if self.__pcr3 != None:
-            return self.__pcr3
-        raise ValueError
-
-    def find_process_filter(self, name):
-        self.__pname = name
-        self.__pcr3 = None
-        return self.__find_process
-
-    #
-    # May return False while interactive
-    # if the vmm gives you control on
-    # task == 0, better to use filter
-    #
-    def find_process(self, name, vm):
-        if self.__pname != name or self.__pcr3 == None:
-            self.__pname = name
-            self.__pcr3 = None
-            self.__peuid = None
-            return self.__find_process(vm)
-        return True
-
-    def _set_euid(self, vm):
-        if self.__find_process(vm):
-            return self.__set_euid(vm)
-        return False
-
-    def set_euid_filter(self, name, euid):
-        self.__pname = name
-        self.__pcr3 = None
-        self.__peuid = euid
-        return self._set_euid
-
-    def set_euid(self, name, euid, vm):
-        if self.find_process(name, vm):
-            if self.__peuid != euid:
-                self.__peuid = euid
-                return self.__set_euid(vm)
-        return False
-
-#
-# Find process under Windows
-#
-# get KPRCB at [fs:"kprcb"]
-# get KTHREAD at [KPRCB+"kthred"]
-# get EPROCESS at [ETHREAD+"eprocess"]
-# get CR3 at [EPROCESS+"cr3"] (as a KPROCESS for XP)
-# get NAME at [EPROCESS+"name"]
-# next EPROCESS at [EPROCESS+"next"] - "next"
-#
-class Windows:
-    def __init__(self, settings):
-        self.__settings = dict(settings)
-        self.__pname = None
-        self.__pcr3 = None
-
-    def __find_process(self, vm):
-        kprcb    = vm.mem.read_dword(vm.cpu.sr.fs+self.__settings["kprcb"])
-        kthread  = vm.mem.read_dword(kprcb+self.__settings["kthread"])
-        eprocess = vm.mem.read_dword(kthread+self.__settings["eprocess"])
-
-        while eprocess != 0:
-            name = vm.mem.vread(eprocess+self.__settings["name"],16)
-            if Utils.info:
-                print "process",name[:name.index('\x00')]
-            if self.__pname in name:
-                self.__pcr3 = vm.mem.read_dword(eprocess+self.__settings["cr3"])
-                if Utils.info:
-                    print "cr3 %#x" % (self.__pcr3)
-                return True
-            elif "Idle" in name:
-                return False
-            eprocess  = vm.mem.read_dword(eprocess+self.__settings["next"])
-            eprocess -= self.__settings["next"]
-        return False
-
-    def find_process_filter(self, name):
-        self.__pname = name
-        self.__pcr3 = None
-        return self.__find_process
-
-    #
-    # May return False while interactive
-    # if the vmm gives you control on Idle
-    #
-    def find_process(self, name, vm):
-        if self.__pname != name or self.__pcr3 == None:
-            self.__pname = name
-            self.__pcr3 = None
-            return self.__find_process(vm)
-        return True
-
-    def get_process_cr3(self):
-        if self.__pcr3 != None:
-            return self.__pcr3
-        raise ValueError
-
-class WinXP(Windows):
-    def __init__(self, settings):
-        Windows.__init__(self, settings)
-
-class Win7(Windows):
-    def __init__(self, settings):
-        Windows.__init__(self, settings)
-
-#
-# Utilities to help analyst and framework
-#
-class Utilities:
-    def __init__(self):
-        self.debug = False
-        self.info = True
-
-    def revert_string_bytes(self, s):
-        rs = []
-        for i in range(len(s)/2):
-            rs.append(s[-2:])
-            s = s[:-2]
-        return "".join(rs)
-
-    def in_completer(self):
-        return (inspect.stack()[3][3] == "attr_matches")
-
-    def stack_dump(self, vm, n):
-        sz   = vm.cpu.mode/8
-        data = vm.mem.vread(vm.cpu.stack_location(), n*sz)
-        fmt  = "%#0*x"
-        if vm.cpu.mode == 16:
-            sf = "H"
-        elif vm.cpu.mode == 32:
-            sf ="L"
-        else:
-            sf = "Q"
-
-        for x in struct.unpack("<"+sf*n, data):
-            print fmt % ((sz*2)+2, x)
-
-    def create_os(self, affinity, settings=None):
-        if affinity == OSAffinity.Linux26:
-            return Linux26(settings)
-        elif affinity == OSAffinity.WinXP:
-            return WinXP(settings)
-        elif affinity == OSAffinity.Win7:
-            return Win7(settings)
-        else:
-            print "Unknown OS affinity"
-            raise ValueError
-
-Utils = Utilities()
+def disassemble(vm, disasm, start, sz=15):
+    end = start + sz
+    dump = vm.mem.vread(start, sz)
+    off = 0
+    msg = ""
+    while start < end:
+        insn = disasm(start, dump[off:off+15])
+        if insn is None:
+            break
+        msg   += "%.8x\t%s\n" % (start, insn)
+        off   += insn.length
+        start += off
+    return msg

@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import event
-from utils import Utils
+import log
 
 class BreakPointType:
     x  = 1 # execution
@@ -61,20 +61,18 @@ class BreakPoints:
         return out[-self.__cpu.sz:]
 
     def __trap_sstep(self, vm):
-        print "Single Step Trap @", hex(vm.cpu.code_location())
+        log.log("brk", "Single Step Trap @", hex(vm.cpu.code_location()))
         return True
 
     def __trap_break(self, vm):
-        print "Breakpoint @", hex(vm.cpu.code_location())
+        log.log("brk", "Breakpoint @", hex(vm.cpu.code_location()))
         return True
 
     def __trap_filter(self, vm):
-        if Utils.debug:
-            print "trap filter: read dr6"
+        log.log("brk", "trap filter: read dr6")
 
         if (vm.cpu.sr.dr6 & (1<<14)) != 0:
-            if Utils.debug:
-                print "dr6.bs = 1"
+            log.log("brk", "dr6.bs = 1")
             return self.__filter_sstep(vm)
 
         tp = None
@@ -97,7 +95,7 @@ class BreakPoints:
                     return b.filter(vm)
                 return self.__trap_break(vm)
 
-        print "Hardware breakpoint not found !"
+        log.log("brk", "Hardware breakpoint not found !")
         return True
 
     def __remove(self, b):
@@ -131,10 +129,10 @@ class BreakPoints:
 
         ssize = str(size)
         if size not in [1,2,4]:
-            print "unsupported breakpoint size",ssize
+            log.log("error", "unsupported breakpoint size %d" % ssize)
             raise ValueError
         elif (size == 2 and addr & 1) or (size == 4 and addr & 3):
-            print "addr should be aligned on",ssize,"boundary"
+            log.log("error", "addr should be aligned on %d boundary" % ssize)
             raise ValueError
 
         if kind is None:
@@ -142,7 +140,7 @@ class BreakPoints:
         elif kind in [BreakPointType.x,BreakPointType.w,BreakPointType.rw]:
             self.__gdb.set_hrd_break(self.__encode(addr), str(kind), ssize)
         else:
-            print "unsupported breakpoint type",str(kind)
+            log.log("error", "unsupported breakpoint type %s" % str(kind))
             raise ValueError
 
         b = BreakPoint(name, filtr, addr, kind, size)

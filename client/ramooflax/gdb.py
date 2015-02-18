@@ -16,25 +16,26 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import socket, errno, sys
-from event import StopReason
-from utils import Utils
+import event
+import log
 
 class GDBDiag():
     ok = 0
     ns = 1
     er = 2
-    un = 3
-    def __init__(self, typ, data=None):
+    def __init__(self, t, d=None):
         self._dico = {GDBDiag.ok:"OK",
                       GDBDiag.ns:"Unsupported",
                       GDBDiag.er:"Error",
-                      GDBDiag.un:"Unknown",
                       }
-        self.data = data
-        self.type = typ
+        self.type = t
+        self.data = d
 
     def __str__(self):
-        return self._dico.get(self.value, None)
+        return self._dico.get(self.type, None)
+
+    def __len__(self):
+        return 2
 
 class GDBError(Exception):
     generic = 0x00
@@ -51,6 +52,9 @@ class GDBError(Exception):
                       }
     def __str__(self):
         return self._dico.get(self.value, "unknown")
+
+    def __len__(self):
+        return 3
 
 class GDB:
     def __init__(self, ip, port, mode):
@@ -74,7 +78,8 @@ class GDB:
         try:
             self.__sk.connect((self.ip,self.port))
         except socket.error as (err, msg):
-            print "connect to \""+str(self.ip),str(self.port)+"\":",msg
+            fmt = "socket.connect(%s:%d) = %s" % (str(self.ip),str(self.port),msg)
+            log.log("error", fmt)
             raise
 
     def waiting(self):
@@ -92,7 +97,7 @@ class GDB:
                 return (data,dl)
             except socket.error as (err, msg):
                 if err != errno.EINTR:
-                    print "recv:",msg
+                    log.log("error", "recv: %s" % msg)
                     raise
 
     def __send(self, data, sz):
@@ -102,10 +107,9 @@ class GDB:
                 sent  = self.__sk.send(data)
                 done += sent
                 data  = data[sent:]
-                if Utils.debug:
-                    print "sent",sent,str(done)+"/"+str(sz)
+                log.log("gdb", "sent %s %d/%d" % (sent, done, sz))
             except socket.error as (err, msg):
-                print "send:",msg
+                log.log("error", "socket.send() = %s" % msg)
                 raise
 
     def __quit(self):
@@ -113,10 +117,10 @@ class GDB:
             self.__sk.shutdown(socket.SHUT_RDWR)
             self.__sk.close()
         except socket.error as (err, msg):
-            print "disconnect:",msg
+            log.log("error", "socket.close() = %s" % msg)
             raise
         else:
-            print "disconnected from remote"
+            log.log("gdb", "disconnected from remote")
 
     def connect(self):
         try:
@@ -134,10 +138,7 @@ class GDB:
     def __cache_fill(self):
         dt, sz = self.__recv(4096)
         self.__cache += dt
-
-        if Utils.debug:
-            print "cache fill %d/%d" % (sz,len(self.__cache))
-
+        log.log("gdb", "cache fill %d/%d" % (sz,len(self.__cache)))
         return sz
 
     def __cache_get(self, n):
@@ -150,45 +151,37 @@ class GDB:
 
     def __cache_insert(self, dt):
         self.__cache = dt+self.__cache
-        if Utils.debug:
-            print "re-insert into cache:",repr(dt)
+        log.log("gdb", "re-insert %s into cache" % repr(dt))
 
     def ack(self):
-        if Utils.debug:
-            print "send ACK"
+        log.log("gdb", "send ACK")
         self.__send("+", 1)
 
     def nak(self):
-        if Utils.debug:
-            print "send NAK"
+        log.log("gdb", "send NAK")
         self.__send("-", 1)
 
     def wait_ack(self):
-        if Utils.debug:
-            print "wait ACK/NAK"
+        log.log("gdb", "wait ACK/NAK")
 
         ack = self.__cache_get(1)
         if ack == '+':
-            if Utils.debug:
-                print "rcv ACK"
+            log.log("gdb", "recv ACK")
             return True
 
         if ack == '-':
-            if Utils.debug:
-                print "rcv NAK"
+            log.log("gdb", "recv NAK")
             return False
 
         # de-synchronized, ignore
-        if Utils.debug:
-            print "rcv ?? ACK/NAK =",ack
+        log.log("gdb", "recv %s" % repr(ack))
         self.__cache_insert(ack)
         return True
 
     def send_raw(self, data, wack=True):
         while True:
             self.__send(data, len(data))
-            if Utils.debug:
-                print "sent",repr(data)
+            log.log("gdb", "sent %s" % repr(data))
             if not wack or self.wait_ack():
                 break
 
@@ -209,8 +202,9 @@ class GDB:
             while len(self.__cache) < 4:
                 self.__cache_fill()
 
-            if Utils.debug:
-                print "rcv pkt: search [%d:] = %r" % (ws,repr(self.__cache[ws:]))
+            log_msg = "recv pkt: search [%d:] = %r" % (ws,repr(self.__cache[ws:]))
+            log.log("gdb", log_msg)
+
             tag = self.__cache[ws:].find('#')
             if tag == -1:
                 ws = len(self.__cache)
@@ -228,14 +222,12 @@ class GDB:
     def __parse_pkt(self, pkt, tag, sack=True):
         #XXX: prevent
         while pkt[0] == '+' or pkt[0] == '-':
-            if Utils.debug:
-                print "lost ACK/NAK ... ignore"
+            log.log("gdb", "lost ACK/NAK ... ignore")
             pkt  = pkt[1:]
             tag -= 1
 
         if pkt[0] != '$':
-            if Utils.debug:
-                print "rcv unknown pkt:", repr(pkt)
+            log.log("gdb", "recv unknown pkt: %s" % repr(pkt))
             if sack:
                 self.nak()
             return None
@@ -245,9 +237,8 @@ class GDB:
         vchk = self.checksum(msg)
 
         if pchk != vchk:
-            if Utils.debug:
-                print "bad pkt checksum: %r | %r = 0x%x" \
-                    % (repr(pkt),repr(msg),vchk)
+            log_msg = "bad pkt checksum: %r | %r = 0x%x" % (repr(pkt),repr(msg),vchk)
+            log.log("gdb", log_msg)
             if sack:
                 self.nak()
             return None
@@ -257,7 +248,9 @@ class GDB:
 
         sz = len(msg)
         if sz < 4:
-            return self.__parse_diag(msg, sz)
+            diag = self.__parse_diag(msg, sz)
+            if diag is not None:
+                return diag
 
         if msg[0] == 'T':
             return self.__parse_stop(msg, sz)
@@ -271,31 +264,27 @@ class GDB:
 
         rson = int(hdr[:2], 16)
         mode = int(hdr[5:], 16)
-        stop = StopReason(rson, mode, msg)
+        stop = event.StopReason(rson, mode, msg)
 
-        if Utils.debug:
-            print "rcv stop reason", stop
-
+        log.log("gdb", "recv stop reason %s" % stop)
         return stop
 
     def __parse_diag(self, msg, sz):
         if sz == 0:
-            if Utils.debug:
-                print "rcv Unsupported"
+            log.log("gdb", "diag = Unsupported")
             return GDBDiag(GDBDiag.ns)
 
         if sz == 2 and msg == "OK":
-            if Utils.debug:
-                print "rcv OK"
+            log.log("gdb", "diag = OK")
             return GDBDiag(GDBDiag.ok)
 
         if sz == 3 and msg[0] == 'E':
             raise GDBError(int(msg[1:],16))
-            # if Utils.debug:
-            #     print "recv ERR",er
+            #log.log("error", "diag = ERR %s" % er)
             #return GDBDiag(GDBDiag.er, er)
 
-        return GDBDiag(GDBDiag.un, msg)
+        # short message (1 byte) not a diag
+        return None
 
     def __pool_get(self, key, sz, sack):
         pool = self.__pool[key]
@@ -308,7 +297,7 @@ class GDB:
 
             if isinstance(pkt, GDBDiag):
                 self.__pool["diag"][0].append(pkt)
-            elif isinstance(pkt, StopReason):
+            elif isinstance(pkt, event.StopReason):
                 self.__pool["stop"][0].append(pkt)
             else:
                 if not self.__pool["data"].has_key(len(pkt)):
@@ -328,28 +317,23 @@ class GDB:
         return self.__pool_get("data", sz, sack)
 
     def intr(self):
-        if Utils.debug:
-            print "send intr"
+        log.log("gdb", "send intr")
         self.send_raw("\x03", False)
 
     def stop_reason(self):
-        if Utils.debug:
-            print "send ?"
+        log.log("gdb", "send ?")
         self.send_raw("$?#3f", False)
 
     def resume(self, addr=None):
-        if Utils.debug:
-            print "send c"
+        log.log("gdb", "send c")
         self.send_raw("$c#63")
 
     def singlestep(self, addr=None):
-        if Utils.debug:
-            print "send s"
+        log.log("gdb", "send s")
         self.send_raw("$s#73")
 
     def quit(self, quick=False):
-        if Utils.debug:
-            print "send quit"
+        log.log("gdb", "send quit")
         self.send_raw("$k#6b")
         if not quick:
             self.recv_diag(sack=False)
@@ -360,8 +344,7 @@ class GDB:
         return self.recv_pkt(sz)
 
     def write_all_gpr(self, data):
-        #XXX
-        print "NOT IMPLEMENTED"
+        log.log("error", "gdb write_all_gpr() not implemented")
         # self.send_pkt("G"+data)
         # self.recv_pkt(2)
 
@@ -402,8 +385,7 @@ class GDB:
         return self.recv_pkt(sz)
 
     def write_all_sr(self, data):
-        #XXX
-        print "NOT IMPLEMENTED"
+        log.log("error", "gdb write_all_sr not implemented")
         # self.send_vmm_pkt("\x81"+data)
         # self.recv_diag()
 
@@ -491,7 +473,7 @@ class GDB:
         self.send_vmm_pkt("\x95"+data)
         self.recv_diag()
 
-    def clear_exception(self):
+    def clear_idt_event(self):
         self.send_vmm_pkt("\x96")
         self.recv_diag()
 
@@ -510,3 +492,12 @@ class GDB:
     def get_fault(self):
         self.send_vmm_pkt("\x9a")
         return self.recv_pkt(1*4*2 + 3*8*2)
+
+    def get_idt_event(self):
+        self.send_vmm_pkt("\x9b")
+        return self.recv_pkt(1*8*2)
+
+    def can_cli(self):
+        self.send_vmm_pkt("\x9c")
+        pkt = self.recv_pkt(1*1*2)
+        return pkt

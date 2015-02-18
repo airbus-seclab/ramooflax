@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from utils import Utils
+import utils
 
 class Memory:
     def __init__(self, cpu, gdb):
@@ -31,10 +31,10 @@ class Memory:
         return self.__encode(addr, self.__cpu.sz)
 
     def __encode_val(self, val, n):
-        return Utils.revert_string_bytes(self.__encode(val, n*2))
+        return utils.revert_string_bytes(self.__encode(val, n*2))
 
     def __decode_val(self, val):
-        return int(Utils.revert_string_bytes(val), 16)
+        return int(utils.revert_string_bytes(val), 16)
 
     def _flush(self):
         return

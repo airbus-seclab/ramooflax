@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ramooflax import VM, CPUFamily, Utils, OSAffinity
+from ramooflax import VM, CPUFamily
 
 #
 # Main

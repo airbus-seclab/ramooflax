@@ -15,7 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from utils import Utils
+import log
+import utils
 
 class Register(object):
     def __init__(self, idx, name, size, rw_ops):
@@ -61,10 +62,10 @@ class Register(object):
 
     def __encode(self):
         s = self.__get_fmt() % (self.__value)
-        return Utils.revert_string_bytes(s)
+        return utils.revert_string_bytes(s)
 
     def __decode(self, s):
-        return int(Utils.revert_string_bytes(s), 16)
+        return int(utils.revert_string_bytes(s), 16)
 
     def _update(self, gdbreg):
         self.__read_update(self.__decode(gdbreg))
@@ -129,7 +130,7 @@ class RegisterSet(object):
                 self.__nr += 1
 
     def __read_reg(self, who):
-        if Utils.in_completer():
+        if utils.in_completer():
             return
         return self.__list[who].value
 
@@ -287,8 +288,8 @@ class LBR:
                 self.__update()
                 return self.__values[k]
             else:
-                print "Enable LBR first"
+                log.log("error", "Enable LBR first")
                 raise ValueError
         except:
-            print "invalid LBR key"
+            log.log("error", "invalid LBR key")
             raise

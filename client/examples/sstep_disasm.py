@@ -9,30 +9,29 @@
 #
 # This script uses amoco engine (https://github.com/bdcht/amoco)
 #
-from ramooflax import VM, Utils, CPUFamily
+from ramooflax import VM, CPUFamily, log, disassemble
 from amoco.arch.x86 import cpu_x86 as am
 
-Utils.debug = True
+# create logging for this script
+log.setup(info=True, fail=True)
+
+def disasm_wrapper(addr, data):
+    return am.disassemble(data, address=addr)
 
 def sstep_disasm(vm):
-    code_loc = vm.cpu.code_location()
-    code_bytes = vm.mem.vread(code_loc, 15)
-    print "(%dbit) pc = %#x | %s" % (vm.cpu.mode,code_loc,code_bytes.encode('hex'))
-
-    print am.disassemble(code_bytes, address=code_loc)
+    insns = disassemble(vm, disasm_wrapper, vm.cpu.code_location())
+    print insns.split('\n')[0]
     return True
 
 #
 # Main
 #
-#peer = "192.168.254.254:1234"
-peer = "172.16.131.128:1337"
-vm = VM(CPUFamily.Intel, peer)
+vm = VM(CPUFamily.Intel, "172.16.131.128:1337")
 
 vm.attach()
 vm.stop()
 vm.cpu.breakpoints.filter(None, sstep_disasm)
 
-print "\n####\n#### type: vm.singlestep()\n####\n"
+log("info", "\n####\n#### type: vm.singlestep()\n####\n")
 vm.interact(dict(globals(), **locals()))
 vm.detach()

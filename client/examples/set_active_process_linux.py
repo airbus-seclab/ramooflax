@@ -5,11 +5,14 @@
 # We install the Linux26.find_process_filter on cr3 writes
 # The framework will call our filter Before each write
 #
-from ramooflax import VM, CPUFamily, Utils, OSAffinity
+from ramooflax import VM, CPUFamily, OSFactory, OSAffinity, log
 import sys
 
+# create logging for this script
+log.setup(info=True, fail=True)
+
 if len(sys.argv) < 2:
-    print "gimme prog name"
+    log("fail", "gimme prog name")
     sys.exit(-1)
 
 # Target process
@@ -17,7 +20,7 @@ process_name = sys.argv[1]
 
 # Some offsets for debian 2.6.32-5-486 kernel
 settings = {"thread_size":8192, "comm":540, "next":240, "mm":268, "pgd":36}
-os = Utils.create_os(OSAffinity.Linux26, settings)
+os = OSFactory(OSAffinity.Linux26, settings)
 hook = os.find_process_filter(process_name)
 
 #
@@ -34,5 +37,5 @@ while not vm.resume():
 
 vm.cpu.release_write_cr(3)
 vm.cpu.set_active_cr3(os.get_process_cr3(), True, OSAffinity.Linux26)
-print "active cr3 installed for: %#x" % (os.get_process_cr3())
+log("info", "active cr3 installed for %#x" % os.get_process_cr3())
 vm.detach()

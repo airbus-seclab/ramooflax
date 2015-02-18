@@ -2,15 +2,15 @@
 #
 # We are looking for "break" running under debian
 #
-from ramooflax import VM, Utils, CPUFamily, OSAffinity
+from ramooflax import VM, CPUFamily, OSFactory, OSAffinity, log
 
 # Some offsets for debian 2.6.32-5-486 kernel
 settings = {"thread_size":8192, "comm":540, "next":240, "mm":268, "pgd":36}
-os = Utils.create_os(OSAffinity.Linux26, settings)
+os = OSFactory(OSAffinity.Linux26, settings)
 hook = os.find_process_filter("break")
 
-Utils.info  = True
-#Utils.debug = True
+# create logging for this script
+log.setup(info=True, fail=True)
 
 #
 # Main
@@ -26,7 +26,7 @@ while not vm.resume():
 
 vm.cpu.breakpoints.remove(1)
 vm.cpu.set_active_cr3(os.get_process_cr3(), affinity=OSAffinity.Linux26)
-print "found break process"
+log("foo", "found break process")
 
 #
 # Breakpoints handling
@@ -39,10 +39,10 @@ vm.cpu.breakpoints.add_insn(0x804846b, lambda x:False)
 while vm.resume():
     continue
 if vm.cpu.gpr.pc != 0x804846b:
-    print "failure 1"
+    log("fail", "failure 1")
     vm.detach()
 
-print "done 1"
+log("info", "done 1")
 
 #2
 vm.cpu.breakpoints.remove()
@@ -50,10 +50,10 @@ vm.cpu.breakpoints.add_insn(0x8048483)
 vm.resume()
 vm.singlestep()
 if vm.cpu.gpr.pc != 0x8048485:
-    print "failure 2"
+    log("fail", "failure 2")
     vm.detach()
 
-print "done 2"
+log("info", "done 2")
 
 #3
 vm.cpu.breakpoints.remove()
@@ -61,10 +61,10 @@ vm.cpu.breakpoints.add_hw_insn(0x804849e)
 vm.resume()
 vm.singlestep()
 if vm.cpu.gpr.pc != 0x80484a1:
-    print "failure 3"
+    log("fail", "failure 3")
     vm.detach()
 
-print "done 3"
+log("info", "done 3")
 
 #4
 vm.cpu.breakpoints.remove()
@@ -78,10 +78,10 @@ vm.singlestep()
 vm.singlestep()
 vm.resume()
 if vm.cpu.gpr.pc != 0x80484e7:
-    print "failure 4"
+    log("fail", "failure 4")
     vm.detach()
 
-print "done 4"
+log("info", "done 4")
 
 #5
 vm.cpu.breakpoints.remove()
@@ -99,10 +99,10 @@ vm.cpu.breakpoints.remove(2)
 vm.resume()
 
 if vm.cpu.gpr.pc != 0x8048530:
-    print "failure 5"
+    log("fail", "failure 5")
     vm.detach()
 
-print "done 5"
+log("info", "done 5")
 
 #6
 vm.cpu.breakpoints.remove()
@@ -115,15 +115,15 @@ vm.cpu.breakpoints.add_hw_insn(0x804855b, name="insn")
 vm.resume()
 
 if vm.cpu.gpr.pc != 0x804855b:
-    print "failure 6"
+    log("fail", "failure 6")
     vm.detach()
 
 vm.cpu.breakpoints.remove()
 
-print "done 6"
+log("info", "done 6")
 
 #
 # Finished
 #
 vm.detach()
-print "success"
+log("info", "success")

@@ -6,11 +6,14 @@
 # On each write, the vmm gives us control
 # before the write operation
 #
-from ramooflax import VM, CPUFamily, Utils, OSAffinity
+from ramooflax import VM, CPUFamily, OSFactory, OSAffinity, log
 import sys
 
+# create logging for this script
+log.setup(info=True, fail=True)
+
 if len(sys.argv) < 2:
-    print "gimme prog name"
+    log("fail", "gimme prog name")
     sys.exit(-1)
 
 # Target process
@@ -21,13 +24,14 @@ settings = {"kprcb":0x20, "kthread":4,
             "eprocess":0x150, "name":0x16c,
             "cr3":0x18, "next":0xb8}
 
-os = Utils.create_os(OSAffinity.Win7, settings)
+os = OSFactory(OSAffinity.Win7, settings)
 hook = os.find_process_filter(process_name)
 
 #
 # Main
 #
-vm = VM(CPUFamily.AMD, "192.168.254.254:1234")
+#vm = VM(CPUFamily.AMD, "192.168.254.254:1234")
+vm = VM(CPUFamily.AMD, "172.16.131.128:1337")
 
 vm.attach()
 vm.stop()
@@ -37,5 +41,5 @@ while not vm.resume():
     continue
 
 vm.cpu.release_write_cr(3)
-print "success: %#x" % (os.get_process_cr3())
+log("info", "success: %#x" % os.get_process_cr3())
 vm.detach()

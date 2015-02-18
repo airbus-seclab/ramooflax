@@ -16,10 +16,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#__all__ = ['vm','cpu','event','utils']
 
 from vm    import VM
 from cpu   import CPU, CPUFamily, CPUException
-from event import StopReason
-from utils import Utils, OSAffinity
+from event import StopReason, IdtEvent
+from log   import Log, log
+from os    import OSFactory, OSAffinity
 from addr_space import AddrSpace, Page, Pde, Pte, PageTable, PageDirectory, PgMsk, Mapping
+from utils import in_completer, revert_string_bytes, stackdump, backtrace, disassemble

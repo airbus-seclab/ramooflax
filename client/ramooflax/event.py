@@ -15,6 +15,35 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+class IdtEvent:
+    HW_INT  = 0
+    NMI     = 2
+    HW_EXCP = 3
+    SW_INT  = 4
+
+    def __init__(self, raw):
+        self.vector   =  raw & 0xff
+        self.type     = (raw>>8)  & 7
+        self.has_err  = (raw>>11) & 1
+        self.v        = (raw>>31) & 1
+        self.err      = (raw>>32) & 0xffffffff
+
+    def __str__(self):
+        return repr(self)
+
+    def __repr__(self):
+        hdr = "IDT Event : "
+        if not self.v:
+            return hdr+"None"
+
+        if self.has_err:
+            errs = hex(self.err)
+        else:
+            errs = "None"
+
+        return hdr+"- vector  : %d\n- type    : %d\n- err     : %s\n" % \
+            (self.vector, self.type, err_s)
+
 class StopReason:
     every      =  0 # any stop reason
 
@@ -99,6 +128,9 @@ class StopReason:
 
     def __str__(self):
         return self.__s.get(self.reason, "Unknown")
+
+    def __len__(self):
+        return len(self.msg)
 
 class EventFilter:
     def __init__(self, dico=None):

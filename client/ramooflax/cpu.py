@@ -19,8 +19,7 @@ import register
 import gdb
 import event
 import breakpoints
-
-from utils import Utils
+import log
 
 class CPUFamily:
     AMD   = 0
@@ -103,12 +102,11 @@ class CPU:
             self.gpr = register.GPR_x86_64(self.__gdb)
             self.sz = 16
         else:
-            print "Unknown CPU mode: %d" % (self.mode)
+            log.log("error", "Unknown CPU mode: %d" % (self.mode))
             raise ValueError
 
     def __recv_stop(self):
-        if Utils.debug:
-            print "waiting stop reason"
+        log.log("cpu", "waiting stop reason")
 
         stop = self.__gdb.recv_stop()
         self.__last_reason = stop.reason
@@ -150,6 +148,9 @@ class CPU:
     def rdtsc(self):
         return int(self.__gdb.rdtsc(), 16)
 
+    def can_cli(self):
+        return (int(self.__gdb.can_cli(), 16) == 1)
+
     def set_active_cr3(self, cr3, remember=False, affinity=None):
         self.__gdb.set_active_cr3("%.16x" % (cr3))
         if remember:
@@ -180,8 +181,11 @@ class CPU:
         self.__set_exception_mask(mask)
         self.__filter.unregister(event.StopReason.excp_de+n)
 
-    def clear_exception(self):
-        self.__gdb.clear_exception()
+    def clear_idt_event(self):
+        self.__gdb.clear_idt_event()
+
+    def get_idt_event(self):
+        return event.IdtEvent(int(self.__gdb.get_idt_event(), 16))
 
     def filter_read_cr(self, n, hdl):
         if n > 8:

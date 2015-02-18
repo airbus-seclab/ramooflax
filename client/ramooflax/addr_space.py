@@ -15,8 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from utils import Utils
 import struct
+import log
 
 class PgMsk(object):
     present = 1<<0
@@ -59,8 +59,8 @@ class PteBase(object):
         self.u = val & PgMsk.user
         self.addr = val & PgMsk.addr
 
-        if Utils.debug:
-            print "Pde/Pte: p %d w %d u %d addr 0x%x" % (self.p, self.w, self.u, self.addr)
+        msg = "Pde/Pte: p %d w %d u %d addr 0x%x" % (self.p,self.w,self.u,self.addr)
+        log.log("ads", msg)
 
 class Pte(PteBase):
     def __init__(self, vaddr, val):
@@ -72,8 +72,7 @@ class PageTable(object):
     def __init__(self, vm, vaddr, paddr):
         self.addr = paddr
 
-        if Utils.debug:
-            print "PageTable reading physical page @ 0x%x" % paddr
+        log.log("ads", "PageTable reading physical page @ 0x%x" % paddr)
 
         self.raw = struct.unpack("<1024L", vm.mem.pread(paddr, 4<<10))
         self.pte = []
@@ -102,8 +101,7 @@ class PageDirectory(object):
     def __init__(self, vm, cr3):
         self.addr = cr3 & PgMsk.addr
 
-        if Utils.debug:
-            print "PageDirectory reading physical page @ 0x%x" % self.addr
+        log.log("ads", "PageDirectory reading physical page @ 0x%x" % self.addr)
 
         self.raw = struct.unpack("<1024L", vm.mem.pread(self.addr, 4<<10))
         self.pde = []

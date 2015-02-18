@@ -21,8 +21,7 @@ import sys, signal
 import cpu
 import memory
 import gdb
-
-from utils import Utils
+import log
 
 class VMState:
     waiting     = 0
@@ -44,7 +43,7 @@ Virtual Machine Controller
             self.port = int(self.port)
             self.mode = mode
         except ValueError:
-            print "give \"ip:port\" string"
+            log.log("error", "give \"ip:port\" string")
             raise
 
         self.__variables = {}
@@ -87,7 +86,7 @@ Virtual Machine Controller
             self.mem._quit()
             self.__gdb.quit(quick)
         except:
-            print "failed to detach properly"
+            log.log("error", "failed to detach properly")
         finally:
             sys.exit(0)
 
@@ -179,6 +178,8 @@ Virtual Machine Controller
         return False
 
     def int_event(self, signum, frame):
+        self.__setup_sig(signum, self.int_event)
+        log.log("vm", "interrupting (vm.state = %d) ..." % self.__state)
         if self.__state == VMState.interactive or not self.__session:
             if self.__ask_quit():
                 self.detach(True)
@@ -186,5 +187,3 @@ Virtual Machine Controller
             self.__process_stop_request()
         else:
             self.__stop_request = True
-
-        self.__setup_sig(signum, self.int_event)

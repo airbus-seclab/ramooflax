@@ -50,20 +50,21 @@
 # where the #PF has been triggered
 # With the LBR, we can see that we come from "from"
 #
-from ramooflax import VM, Utils, CPUFamily, OSAffinity, CPUException
+from ramooflax import VM, CPUFamily, OSFactory, OSAffinity, CPUException, log
+
+# create logging for this script
+log.setup(info=True, fail=True)
 
 # Some offsets for debian 2.6.32-5-486 kernel
 settings = {"thread_size":8192, "comm":540, "next":240, "mm":268, "pgd":36}
-os = Utils.create_os(OSAffinity.Linux26, settings)
+os = OSFactory(OSAffinity.Linux26, settings)
 hook = os.find_process_filter("prog")
-
-Utils.info = True
 
 #
 # Print eip on raised page fault
 #
 def pf_hook(vm):
-    print "Page Fault @ %#x" % (vm.cpu.gpr.pc)
+    log("info", "Page Fault @ %#x" % vm.cpu.gpr.pc)
     return True
 
 #
@@ -86,7 +87,7 @@ vm.cpu.lbr.enable()
 
 vm.resume()
 
-print vm.cpu.gpr
-print vm.cpu.lbr
+log("info", vm.cpu.gpr)
+log("info", vm.cpu.lbr)
 
 vm.detach()
