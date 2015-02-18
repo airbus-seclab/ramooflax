@@ -23,6 +23,7 @@
 #include <intr.h>
 #include <vmm.h>
 #include <vm.h>
+#include <debug.h>
 #include <info_data.h>
 
 static info_data_t __info;
@@ -37,4 +38,8 @@ void __regparm__(1) init(mbi_t *mbi)
    intr_init();
    vmm_init();
    vm_init();
+
+   debug(VM,
+	 "\n---=oO0Oo=--- starting vm cpu (vmm rel 0x%X) ---=oO0Oo=---\n\n"
+	 , info->vmm.base);
 }
