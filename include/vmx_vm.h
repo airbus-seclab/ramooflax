@@ -286,8 +286,17 @@
 #define __exception_vector	   __exit_info.int_info.vector
 #define __exception_error          __exit_info.int_err_code
 #define __exception_fault         (__exit_info.qualification.raw & 0xffffffffUL)
-#define __injecting_exception()   (__entry_ctrls.int_info.v?1:0)
+
 #define __clear_event_injection()  __vmx_clear_event_injection()
+#define __injecting_event()       (__entry_ctrls.int_info.v?1:0)
+#define __injected_event_type      __entry_ctrls.int_info.type
+#define __injected_event()			\
+   ({						\
+      raw64_t _ev;				\
+      _ev.low  = __entry_ctrls.int_info.raw;	\
+      _ev.high = __entry_ctrls.err_code.raw;	\
+      _ev.raw;					\
+   })
 
 #define __vmx_prepare_event_injection(_ev, _type, _vector)	\
    ({								\
@@ -307,8 +316,8 @@
 
 #define __interrupt_shadow					\
    ({								\
-      vmcs_read(__state.int_state);				\
-      (__state.int_state.sti || __state.int_state.mss);		\
+      vmcs_read(__state.interrupt);				\
+      (__state.interrupt.sti || __state.interrupt.mss);		\
    })
 #define __interrupts_on()           __rflags.IF
 #define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
