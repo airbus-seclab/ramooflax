@@ -51,6 +51,8 @@ static void vm_dev_init()
       {
 	 e1k_info_t *e1k = &info->hrd.dev.net.arch;
 	 npg_unmap(e1k->base.linear, e1k->base.linear + (128<<10));
+	 debug(E1000, "protect e1000 mmio space [0x%X - 0x%X]\n"
+	       ,e1k->base.linear, e1k->base.linear + (128<<10));
       }
 #endif
 #endif
