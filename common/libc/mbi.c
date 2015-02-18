@@ -104,7 +104,7 @@ int mbi_get_opt(mbi_t *mbi, module_t *mod, char *opt, mbi_opt_hdl_t hdl, void *r
    int  rc;
    char *str = (char*)((offset_t)mod->cmdline);
 
-   debug(MBI, "mbi getopt %s on %s\n", opt, str);
+   debug(MBI, "mbi getopt \"%s\" on %s\n", opt, str);
 
    /* GRUB 1 keeps module name */
    if(mbi->flags & MBI_FLAG_VER)
