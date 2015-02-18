@@ -45,14 +45,14 @@ typedef union raw_msr_entry
 /*
 ** Read/Write standard MSR (ecx=index, edx,eax=value)
 */
-#define rd_msr32(index,val)       asm volatile("rdmsr":"=a"((val)):"c"((index)):"edx")
-#define wr_msr32(index,val)       asm volatile("wrmsr"::"c"((index)),"a"((val)))
+#define rd_msr32(iNdex,vAl)    asm volatile("rdmsr":"=a"((vAl)):"c"((iNdex)):"edx")
+#define wr_msr32(iNdex,vAl)    asm volatile("wrmsr"::"c"((iNdex)),"a"((vAl)))
 
-#define rd_msr64(index,high,low)				\
-   asm volatile("rdmsr" :"=d"((high)),"=a"((low)):"c"((index)))
+#define rd_msr64(iNdex,hiGh,loW)				\
+   asm volatile("rdmsr" :"=d"((hiGh)),"=a"((loW)):"c"((iNdex)))
 
-#define wr_msr64(index,high,low)				\
-     asm volatile("wrmsr" ::"d"((high)),"a"((low)),"c"((index)))
+#define wr_msr64(iNdex,hiGh,loW)					\
+     asm volatile("wrmsr" ::"d"((hiGh)),"a"((loW)),"c"((iNdex)))
 
 #define __rd_msr(eax,ecx,edx)            rd_msr64(ecx,edx,eax)
 #define __wr_msr(eax,ecx,edx)            wr_msr64(ecx,edx,eax)
