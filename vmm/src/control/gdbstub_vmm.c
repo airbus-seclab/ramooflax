@@ -208,7 +208,7 @@ static void gdb_vmm_set_affinity(uint8_t *data, size_t len)
 
    ctrl_set_affinity(val.blow);
    gdb_ok();
-   debug(GDBSTUB, "set affinity to %d\n", val.blow);
+   debug(GDBSTUB_CMD, "set affinity to %d\n", val.blow);
 }
 
 static int __gdb_vmm_parse_x2_arg(uint8_t *data, size_t len,
@@ -230,7 +230,8 @@ static int __gdb_vmm_parse_x2_arg(uint8_t *data, size_t len,
    return 1;
 }
 
-static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len, loc_t *addr, size_t *sz)
+static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len,
+				  loc_t *addr, size_t *sz)
 {
    if(!__gdb_vmm_parse_x2_arg(data, len, &addr->raw, (uint64_t*)sz))
    {
@@ -402,17 +403,36 @@ static void gdb_vmm_wr_cr_wr_mask(uint8_t *data, size_t len)
    gdb_ok();
 }
 
-static void gdb_vmm_clear_excp(uint8_t __unused__ *data, size_t __unused__ len)
+static void gdb_vmm_clear_idt_event(uint8_t __unused__ *data, size_t __unused__ len)
 {
-   if(__injecting_exception())
+   if(__injecting_event())
       __clear_event_injection();
 
    gdb_ok();
 }
 
+static void gdb_vmm_get_idt_event(uint8_t __unused__ *data, size_t __unused__ len)
+{
+   gdb_add_number(__injected_event(), sizeof(uint64_t)*2, 0);
+   gdb_send_packet();
+}
+
 static void gdb_vmm_rdtsc(uint8_t __unused__ *data, size_t __unused__ len)
 {
    gdb_add_number(rdtsc(), sizeof(uint64_t)*2, 0);
+   gdb_send_packet();
+}
+
+static void gdb_vmm_can_cli(uint8_t __unused__ *data, size_t __unused__ len)
+{
+   bool_t can;
+
+   if(__interrupt_shadow || (__injecting_event() && __injected_event_type == 0))
+      can = 0;
+   else
+      can = 1;
+
+   gdb_add_number(can, sizeof(uint8_t)*2, 0);
    gdb_send_packet();
 }
 
@@ -450,14 +470,12 @@ static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
    loc_t        addr;
    npg_pte64_t  npte, *opte;
 
-   debug(GDBSTUB_CMD, "npg_set_pte: parse args\n");
    if(!__gdb_vmm_parse_x2_arg(data, len, &addr.raw, &npte.raw))
    {
       gdb_nak();
       return;
    }
 
-   debug(GDBSTUB_CMD, "npg_set_pte: 0x%X 0x%X\n", addr.raw, npte.raw);
    opte = _npg_get_pte(addr.linear);
    if(!opte)
    {
@@ -468,8 +486,6 @@ static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
 
    opte->raw = npte.raw;
    npg_invlpg(addr.linear);
-
-   debug(GDBSTUB_CMD, "npg_set_pte: fixed npte\n");
    gdb_ok();
 }
 
@@ -507,11 +523,13 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_wr_cr_wr_mask,
    gdb_vmm_keep_active_cr3,
    gdb_vmm_set_affinity,
-   gdb_vmm_clear_excp,
+   gdb_vmm_clear_idt_event,
    gdb_vmm_rdtsc,
    gdb_vmm_npg_get_pte,
    gdb_vmm_npg_set_pte,
    gdb_vmm_get_fault,
+   gdb_vmm_get_idt_event,
+   gdb_vmm_can_cli,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)
