@@ -180,7 +180,7 @@ void vmx_vmcs_commit()
    vmcs_flush(vm_state.gs.attributes);
    vmcs_flush(vm_state.ldtr.attributes);
    vmcs_flush(vm_state.tr.attributes);
-   vmcs_flush(vm_state.int_state);
+   vmcs_flush(vm_state.interrupt);
    vmcs_flush(vm_state.activity_state);
    vmcs_flush(vm_state.smbase);
    vmcs_flush(vm_state.ia32_sysenter_cs);
@@ -351,7 +351,7 @@ void vmx_vmcs_collect()
    vmcs_read(vm_state.gs.attributes);
    vmcs_read(vm_state.ldtr.attributes);
    vmcs_read(vm_state.tr.attributes);
-   vmcs_read(vm_state.int_state);
+   vmcs_read(vm_state.interrupt);
    vmcs_read(vm_state.activity_state);
    vmcs_read(vm_state.smbase);
    vmcs_read(vm_state.ia32_sysenter_cs);

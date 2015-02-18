@@ -183,9 +183,9 @@ int vmx_vmexit_idt_deliver()
 
       if(vm_exit_info.int_info.nmi && vm_exit_info.int_info.vector != DF_EXCP)
       {
-	 vmcs_read(vm_state.int_state);
-	 vm_state.int_state.nmi = 1;
-	 vmcs_dirty(vm_state.int_state);
+	 vmcs_read(vm_state.interrupt);
+	 vm_state.interrupt.nmi = 1;
+	 vmcs_dirty(vm_state.interrupt);
       }
 
       return VM_DONE;

@@ -118,7 +118,7 @@ void vmx_vmcs_encode()
    vmcs_encode(vm_state.gs.attributes, VMCS_FIELD_ENC_GUEST_STATE_GS_ACCESS_RIGHTS);
    vmcs_encode(vm_state.ldtr.attributes, VMCS_FIELD_ENC_GUEST_STATE_LDTR_ACCESS_RIGHTS);
    vmcs_encode(vm_state.tr.attributes, VMCS_FIELD_ENC_GUEST_STATE_TR_ACCESS_RIGHTS);
-   vmcs_encode(vm_state.int_state, VMCS_FIELD_ENC_GUEST_STATE_INT_STATE);
+   vmcs_encode(vm_state.interrupt, VMCS_FIELD_ENC_GUEST_STATE_INT_STATE);
    vmcs_encode(vm_state.activity_state, VMCS_FIELD_ENC_GUEST_STATE_ACTIVITY_STATE);
    vmcs_encode(vm_state.smbase, VMCS_FIELD_ENC_GUEST_STATE_SMBASE);
    vmcs_encode(vm_state.ia32_sysenter_cs, VMCS_FIELD_ENC_GUEST_STATE_IA32_SYSENTER_CS);
