@@ -45,9 +45,10 @@ void db_check_stp()
       __rflags.tf = 0;
       __post_access(__rflags);
 
-      if(__injecting_exception())
+      /* XXX: priority, pending #DB ??? */
+      if(__injecting_event())
       {
-	 dbg_hard_set_dr6_dirty(1); /* XXX: ??? */
+	 dbg_hard_set_dr6_dirty(1);
 	 return;
       }
 
