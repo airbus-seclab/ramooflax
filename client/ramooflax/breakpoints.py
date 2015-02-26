@@ -61,11 +61,11 @@ class BreakPoints:
         return out[-self.__cpu.sz:]
 
     def __trap_sstep(self, vm):
-        log.log("brk", "Single Step Trap @", hex(vm.cpu.code_location()))
+        log.log("brk", "Single Step Trap @ %s" % hex(vm.cpu.code_location()))
         return True
 
     def __trap_break(self, vm):
-        log.log("brk", "Breakpoint @", hex(vm.cpu.code_location()))
+        log.log("brk", "Breakpoint @ %s" % hex(vm.cpu.code_location()))
         return True
 
     def __trap_filter(self, vm):
