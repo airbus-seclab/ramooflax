@@ -179,7 +179,10 @@ Virtual Machine Controller
 
     def int_event(self, signum, frame):
         self.__setup_sig(signum, self.int_event)
+
         log.log("vm", "interrupting (vm.state = %d) ..." % self.__state)
+        log.log("vm", "gdb pkt pools:\n%s" % self.__gdb.dump_pool())
+
         if self.__state == VMState.interactive or not self.__session:
             if self.__ask_quit():
                 self.detach(True)
