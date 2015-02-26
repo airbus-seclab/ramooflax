@@ -100,21 +100,21 @@ static void vmx_ept_map_mtrr_fixed()
    size_t   n;
 
    rd_msr64(IA32_MTRR_FIX64K_00000, msr.edx, msr.eax);
-   debug(VMX_EPT, "mtrr fixed 64K [0x%x] = 0x%X\n", IA32_MTRR_FIX64K_00000, msr.raw);
+   debug(VMX_EPT, "mtrr fixed 64K [0x%x] = 0x%X\n", IA32_MTRR_FIX64K_00000,msr.raw);
    base = vmx_ept_map_mtrr_fixed_unit(0, 64*1024, msr);
 
    rd_msr64(IA32_MTRR_FIX16K_80000, msr.edx, msr.eax);
-   debug(VMX_EPT, "mtrr fixed 16K [0x%x] = 0x%X\n", IA32_MTRR_FIX16K_80000, msr.raw);
+   debug(VMX_EPT, "mtrr fixed 16K [0x%x] = 0x%X\n", IA32_MTRR_FIX16K_80000,msr.raw);
    base = vmx_ept_map_mtrr_fixed_unit(base, 16*1024, msr);
 
    rd_msr64(IA32_MTRR_FIX16K_a0000, msr.edx, msr.eax);
-   debug(VMX_EPT, "mtrr fixed 16K [0x%x] = 0x%X\n", IA32_MTRR_FIX16K_a0000, msr.raw);
+   debug(VMX_EPT, "mtrr fixed 16K [0x%x] = 0x%X\n", IA32_MTRR_FIX16K_a0000,msr.raw);
    base = vmx_ept_map_mtrr_fixed_unit(base, 16*1024, msr);
 
    for(n=IA32_MTRR_FIX4K_c0000 ; n<=IA32_MTRR_FIX4K_f8000 ; n++)
    {
       rd_msr64(n, msr.edx, msr.eax);
-      debug(VMX_EPT, "mtrr fixed  4K [0x%x] = 0x%X\n", n, msr.raw);
+      debug(VMX_EPT, "mtrr fixed  4K [0x%x] = 0x%X\n", n,msr.raw);
       base = vmx_ept_map_mtrr_fixed_unit(base, 4*1024, msr);
    }
 }
