@@ -145,6 +145,12 @@ class CPU:
         self.gpr._flush()
         self.sr._flush()
 
+    def nested_fault_is_final(self):
+        if self.manufacturer == CPUFamily.Intel:
+            return (self.fault.npf_err & 1<<8)
+        else:
+            return (self.fault.npf_err & 1<<32)
+
     def rdtsc(self):
         return int(self.__gdb.rdtsc(), 16)
 
