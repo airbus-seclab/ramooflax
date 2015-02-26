@@ -108,3 +108,7 @@ class Memory:
     def set_npte(self, addr, value):
         encoded = self.__encode(addr,16)+self.__encode(value,16)
         self.__gdb.npg_set_pte(encoded)
+
+    def nested_translate(self, addr):
+        saddr = self.__gdb.npg_translate(self.__encode_addr(addr), 16)
+        return int(saddr, 16)

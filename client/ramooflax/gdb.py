@@ -316,6 +316,9 @@ class GDB:
     def recv_pkt(self, sz, sack=True):
         return self.__pool_get("data", sz, sack)
 
+    def dump_pool(self):
+        repr(self.__pool)
+
     def intr(self):
         log.log("gdb", "send intr")
         self.send_raw("\x03", False)
@@ -501,3 +504,7 @@ class GDB:
         self.send_vmm_pkt("\x9c")
         pkt = self.recv_pkt(1*1*2)
         return pkt
+
+    def npg_translate(self, data, sz):
+        self.send_vmm_pkt("\x9d"+data)
+        return self.recv_pkt(sz)
