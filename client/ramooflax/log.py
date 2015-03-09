@@ -16,29 +16,51 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 class Log(object):
-    def __init__(self):
-        self.__d = dict.fromkeys(('vm','cpu','mem',
-                                  'brk','reg','ads',
-                                  'evt','gdb', 'os'),
-                                 False)
-        self.__d["error"] = True
+    reset   = "\033[0m"
+    black   = "\033[30m"
+    red     = "\033[31m"
+    green   = "\033[32m"
+    yellow  = "\033[33m"
+    blue    = "\033[34m"
+    magenta = "\033[35m"
+    cyan    = "\033[36m"
+    white   = "\033[37m"
 
-    # ie: vm=True, all=False, evt=False, ...
+    def __init__(self):
+        keys = ('vm','cpu','mem',
+                'brk','reg','ads',
+                'evt','gdb', 'os')
+
+        self.__tag = dict.fromkeys(keys, False)
+        self.__col = dict.fromkeys(keys, Log.reset)
+        self.__xset("error", True, Log.reset)
+
+    def __xset(self, k, on, cl):
+        self.__tag[k] = on
+        self.__col[k] = cl
+
+    def __set(self, k, v):
+        if type(v) is tuple:
+            self.__xset(k, v[0], v[1])
+        else:
+            self.__xset(k, v, Log.reset)
+
+    # ie: vm=True, all=False, evt=(False,Log.blue), ...
     def setup(self, **kwargs):
         if kwargs is None:
             return
+
         for k,v in kwargs.iteritems():
             if k == 'all':
-                for n in self.__d:
-                    self.__d[n] = v
-            # create/modify
-            else:
-                self.__d[k] = v
+                for n in self.__tag:
+                    self._set(k,v)
+            else: # create/modify
+                self.__set(k,v)
 
     def __call__(self, k, string):
-        if not k in self.__d or not self.__d[k]:
+        if not k in self.__tag or not self.__tag[k]:
             return
-        print string
+        print self.__col[k]+string+Log.reset
 
 # usable object
 log = Log()

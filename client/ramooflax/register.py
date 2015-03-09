@@ -183,7 +183,7 @@ class SR_x86(RegisterSet_x86):
 ### General Purpose Registers on x86
 class GPR_x86(RegisterSet_x86):
     def __init__(self, gdb, regs):
-        rw_ops = ((gdb.read_gpr,gdb.write_gpr), (gdb.read_all_gpr,gdb.write_all_gpr))
+        rw_ops = ((gdb.read_gpr,gdb.write_gpr),(gdb.read_all_gpr,gdb.write_all_gpr))
         RegisterSet_x86.__init__(self, rw_ops, regs)
 
 ### General Purpose Registers on x86 32 bits
