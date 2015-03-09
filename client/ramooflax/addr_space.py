@@ -59,8 +59,11 @@ class PteBase(object):
         self.u = val & PgMsk.user
         self.addr = val & PgMsk.addr
 
-        msg = "Pde/Pte: p %d w %d u %d addr 0x%x" % (self.p,self.w,self.u,self.addr)
-        log.log("ads", msg)
+        log.log("ads", str(self))
+
+    def __str__(self):
+        return "p %d w %d u %d addr 0x%x" % (self.p,self.w,self.u,self.addr)
+
 
 class Pte(PteBase):
     def __init__(self, vaddr, val):
