@@ -67,5 +67,5 @@ def disassemble(vm, disasm, start, sz=15):
             break
         msg   += "%.8x\t%s\n" % (start, insn)
         off   += insn.length
-        start += off
+        start += insn.length
     return msg
