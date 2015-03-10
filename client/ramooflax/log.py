@@ -53,7 +53,7 @@ class Log(object):
         for k,v in kwargs.iteritems():
             if k == 'all':
                 for n in self.__tag:
-                    self._set(k,v)
+                    self.__set(n,v)
             else: # create/modify
                 self.__set(k,v)
 
