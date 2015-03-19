@@ -13,7 +13,7 @@ desc   debug, select debug info
 data   gen_dbg, vmx_dbg, svm_dbg
 
 choice cpu
-title  Choose the manufacturer on which the vmm will run
+title  Choose the cpu manufacturer
 desc   cpu, select manufacturer
 data   CONFIG_ARCH, intel, amd
 
@@ -42,10 +42,20 @@ title  Choose the network driver
 desc   network, select network driver
 data   CONFIG_NET_DRV, e1000:Intel 82545 EM, none:No network driver
 
-toggle opt
+menu   opt
 title  Toggle various options
-desc   options, select various options
+desc   options, select vmm options/features
+data   gen_opt, vmx_opt
+
+toggle gen_opt
+title  Toggle VMM options
+desc   generic, select vmm options
 data   CONFIG_MSR_PROXY:vm operations on msrs are proxyfied, CONFIG_EHCI_FULL:force full EHCI controller init, CONFIG_EHCI_2ND:use 2nd EHCI controller if available, CONFIG_GDBSTUB:enable GDB server stub
+
+toggle vmx_opt
+title  Toggle Intel VMX features
+desc   vmx, select vmx features
+data   CONFIG_VMX_FEAT_VPID:vpid/invvpid support, CONFIG_VMX_FEAT_EXIT_EXT_IO:extended i/o information, CONFIG_VMX_FEAT_EXIT_DT:descriptor table exiting, CONFIG_VMX_FEAT_VMCS_EXEC_PTR:executive vmcs pointer field, CONFIG_VMX_FEAT_VMCS_SMBASE:smbase vmcs field
 
 toggle gen_dbg
 title  Toggle generic debug info

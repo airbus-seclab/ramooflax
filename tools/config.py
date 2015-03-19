@@ -479,6 +479,13 @@ class ToggleNode(Node):
             v = "x"
         else:
             v = " "
+
+        cfg = cfg.replace("CONFIG_", "")
+        cfg = cfg.replace("VMX_FEAT_", "")
+        cfg = cfg.replace("SVM_FEAT_", "")
+        if cfg.endswith("_DBG"):
+            cfg = cfg[:-4]
+
         self.pad.addstr(i, 0, "["+v+"] "+cfg, col)
         self.pad.addstr(i,25, hlp, col)
 
