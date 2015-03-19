@@ -47,6 +47,7 @@ void db_check_pending_stp()
    __pre_access(__dr6);
    __dr6.bs = 1;
 
+   /* #DB to the VM */
    if(__ctrl_evt_excp_dbg(DB_EXCP) == VM_IGNORE)
    {
       __rflags.tf = 0;

@@ -141,6 +141,8 @@ static void vmx_vmexit_post_hdl(raw64_t tsc)
    if(controller() & (VM_FAIL|VM_FAULT))
       vmx_vmexit_failure();
 
+   vmx_check_dbgctl();
+
    vm_state.rsp.raw = info->vm.cpu.gpr->rsp.raw;
    vmcs_dirty(vm_state.rsp);
 

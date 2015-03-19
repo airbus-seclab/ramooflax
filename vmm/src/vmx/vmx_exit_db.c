@@ -35,9 +35,6 @@ void vmx_check_pending_db()
    ** in case of gdbstub wanted #DB
    */
    db_check_pending();
-
-   /* prevent invalid guest state */
-   vmx_check_dbgctl();
 }
 
 /*
@@ -46,13 +43,14 @@ void vmx_check_pending_db()
 void vmx_check_dbgctl()
 {
    vmcs_read(vm_state.activity);
-   vmcs_read(vm_state.dbg_excp);
    vmcs_read(vm_state.interrupt);
-   vmcs_read(vm_state.ia32_dbgctl);
 
    if(!vm_state.interrupt.sti && !vm_state.interrupt.mss &&
       vm_state.activity.raw != VMX_VMCS_GUEST_ACTIVITY_STATE_HALT)
       return;
+
+   vmcs_read(vm_state.ia32_dbgctl);
+   vmcs_read(vm_state.dbg_excp);
 
    if(vm_state.rflags.tf && !vm_state.ia32_dbgctl.btf)
    {
