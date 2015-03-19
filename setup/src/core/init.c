@@ -40,6 +40,6 @@ void __regparm__(1) init(mbi_t *mbi)
    vm_init();
 
    debug(VM,
-	 "\n---=oO0Oo=--- starting vm cpu (vmm rel 0x%X) ---=oO0Oo=---\n\n"
+	 "\n---=oO0Oo=--- starting vm cpu (vmm base 0x%X) ---=oO0Oo=---\n\n"
 	 , info->vmm.base);
 }
