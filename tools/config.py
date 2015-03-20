@@ -12,20 +12,25 @@ class Ordict:
         self.dico = {}
         self.list = []
 
-    def __getitem__(self, key):
-        if type(key) == int:
-            key = self.list[key]
-        return self.dico[key]
-
-    def __setitem__(self, key, val):
+    def _add_item(self, key, val, update):
         if type(key) == int:
             if key >= len(self.list):
                 raise ValueError
             key = self.list[key]
         else:
             if not key in self.list:
+                if update:
+                    return
                 self.list.append(key)
         self.dico[key] = val
+
+    def __getitem__(self, key):
+        if type(key) == int:
+            key = self.list[key]
+        return self.dico[key]
+
+    def __setitem__(self, key, val):
+        self._add_item(key, val, False)
 
     def get(self, k, dft=None):
         return self.dico.get(k,dft)
@@ -63,27 +68,34 @@ class Ordict:
 class Config(Ordict):
     def __init__(self, fname):
         Ordict.__init__(self)
-        self.files = {"default":"tools/config.default",
-                      "header":"include/config.h",
-                      "debug":"include/config_debug.h"}
-        self.read(fname)
+        self.files = {"config" : fname,
+                      "default": "tools/config.default",
+                      "header" : "include/config.h",
+                      "debug"  : "include/config_debug.h"}
 
-    def read(self, fname):
+        self.read("default")
+        self.update("config")
+        self.__resolve_items()
+
+    def read(self, tag):
+        self.__read(tag, False)
+
+    def update(self, tag):
+        self.__read(tag, True)
+
+    def __read(self, tag, update):
         try:
-            self.files["config"] = fname
-            fd = open(fname)
+            fd = open(self.files[tag])
         except:
-            try:
-                fd = open(self.files["default"])
-            except:
-                print "failed to open config"
-                sys.exit(1)
+            print "failed to open config", self.files[tag]
+            sys.exit(1)
 
         for l in (ln.strip() for ln in fd):
             if l != '':
                 k,v=l.split('=')
-                self.__setitem__(k,v)
+                self._add_item(k,v,update)
 
+    def __resolve_items(self):
         self._opt = []
         self._dbg = []
         self.gen_dbg = []
