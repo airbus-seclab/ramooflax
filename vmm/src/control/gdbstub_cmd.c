@@ -80,14 +80,13 @@ static void gdb_cmd_rd_gpr()
 {
    size_t flen, vlen, ngpr, i;
 
-   if(__lmode64())
+   if(cpu_addr_sz() == 64)
    {
       ngpr = 16;
       vlen = sizeof(uint64_t)*2;
    }
-   else
+   else /* XXX: gdb seems to wait for 32 bits regs at least */
    {
-      /* XXX: gdb seems to wait for 32 bits regs at least */
       ngpr = 8;
       vlen = sizeof(uint32_t)*2;
    }

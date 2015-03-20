@@ -100,7 +100,9 @@ void vmx_vmcs_commit()
    vmcs_force_flush(vm_exit_ctrls.msr_store_addr);
    vmcs_force_flush(vm_exit_ctrls.msr_load_addr);
    vmcs_force_flush(vm_entry_ctrls.msr_load_addr);
+#ifdef CONFIG_VMX_FEAT_VMCS_EXEC_PTR
    vmcs_force_flush(vm_exec_ctrls.executive_vmcs_ptr);
+#endif
    vmcs_force_flush(vm_exec_ctrls.tsc_offset);
    vmcs_force_flush(vm_exec_ctrls.vapic_addr);
    vmcs_force_flush(vm_exec_ctrls.apic_addr);
@@ -180,7 +182,9 @@ void vmx_vmcs_commit()
    vmcs_force_flush(vm_state.tr.attributes);
    vmcs_force_flush(vm_state.interrupt);
    vmcs_force_flush(vm_state.activity);
+#ifdef CONFIG_VMX_FEAT_VMCS_SMBASE
    vmcs_force_flush(vm_state.smbase);
+#endif
    vmcs_force_flush(vm_state.ia32_sysenter_cs);
    vmcs_force_flush(vm_state.preempt_timer);
 

@@ -104,7 +104,9 @@ void vmx_vmcs_commit()
    vmcs_flush(vm_exit_ctrls.msr_store_addr);
    vmcs_flush(vm_exit_ctrls.msr_load_addr);
    vmcs_flush(vm_entry_ctrls.msr_load_addr);
+#ifdef CONFIG_VMX_FEAT_VMCS_EXEC_PTR
    vmcs_flush(vm_exec_ctrls.executive_vmcs_ptr);
+#endif
    vmcs_flush(vm_exec_ctrls.tsc_offset);
    vmcs_flush(vm_exec_ctrls.vapic_addr);
    vmcs_flush(vm_exec_ctrls.apic_addr);
@@ -182,7 +184,9 @@ void vmx_vmcs_commit()
    vmcs_flush(vm_state.tr.attributes);
    vmcs_flush(vm_state.interrupt);
    vmcs_flush(vm_state.activity);
+#ifdef CONFIG_VMX_FEAT_VMCS_SMBASE
    vmcs_flush(vm_state.smbase);
+#endif
    vmcs_flush(vm_state.ia32_sysenter_cs);
    vmcs_flush(vm_state.preempt_timer);
 
@@ -275,7 +279,9 @@ void vmx_vmcs_collect()
    vmcs_read(vm_exit_ctrls.msr_store_addr);
    vmcs_read(vm_exit_ctrls.msr_load_addr);
    vmcs_read(vm_entry_ctrls.msr_load_addr);
+#ifdef CONFIG_VMX_FEAT_VMCS_EXEC_PTR
    vmcs_read(vm_exec_ctrls.executive_vmcs_ptr);
+#endif
    vmcs_read(vm_exec_ctrls.tsc_offset);
    vmcs_read(vm_exec_ctrls.vapic_addr);
    vmcs_read(vm_exec_ctrls.apic_addr);
@@ -353,7 +359,9 @@ void vmx_vmcs_collect()
    vmcs_read(vm_state.tr.attributes);
    vmcs_read(vm_state.interrupt);
    vmcs_read(vm_state.activity);
+#ifdef CONFIG_VMX_FEAT_VMCS_SMBASE
    vmcs_read(vm_state.smbase);
+#endif
    vmcs_read(vm_state.ia32_sysenter_cs);
    vmcs_read(vm_state.preempt_timer);
 

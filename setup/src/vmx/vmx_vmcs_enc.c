@@ -49,7 +49,9 @@ void vmx_vmcs_encode()
    vmcs_encode(vm_exit_ctrls.msr_store_addr, VMCS_FIELD_ENC_EXIT_CTRL_MSR_STORE_ADDR);
    vmcs_encode(vm_exit_ctrls.msr_load_addr, VMCS_FIELD_ENC_EXIT_CTRL_MSR_LOAD_ADDR);
    vmcs_encode(vm_entry_ctrls.msr_load_addr, VMCS_FIELD_ENC_ENTRY_CTRL_MSR_LOAD_ADDR);
+#ifdef CONFIG_VMX_FEAT_VMCS_EXEC_PTR
    vmcs_encode(vm_exec_ctrls.executive_vmcs_ptr, VMCS_FIELD_ENC_EXEC_CTRL_VMCS_PTR);
+#endif
    vmcs_encode(vm_exec_ctrls.tsc_offset, VMCS_FIELD_ENC_EXEC_CTRL_TSC_OFFSET);
    vmcs_encode(vm_exec_ctrls.vapic_addr, VMCS_FIELD_ENC_EXEC_CTRL_VAPIC_PAGE_ADDR);
    vmcs_encode(vm_exec_ctrls.apic_addr, VMCS_FIELD_ENC_EXEC_CTRL_APIC_PAGE_ADDR);
@@ -120,7 +122,9 @@ void vmx_vmcs_encode()
    vmcs_encode(vm_state.tr.attributes, VMCS_FIELD_ENC_GUEST_STATE_TR_ACCESS_RIGHTS);
    vmcs_encode(vm_state.interrupt, VMCS_FIELD_ENC_GUEST_STATE_INT_STATE);
    vmcs_encode(vm_state.activity, VMCS_FIELD_ENC_GUEST_STATE_ACTIVITY_STATE);
+#ifdef CONFIG_VMX_FEAT_VMCS_SMBASE
    vmcs_encode(vm_state.smbase, VMCS_FIELD_ENC_GUEST_STATE_SMBASE);
+#endif
    vmcs_encode(vm_state.ia32_sysenter_cs, VMCS_FIELD_ENC_GUEST_STATE_IA32_SYSENTER_CS);
    vmcs_encode(vm_state.preempt_timer, VMCS_FIELD_ENC_GUEST_STATE_PREEMPT_TIMER);
 

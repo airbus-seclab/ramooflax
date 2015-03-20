@@ -124,8 +124,8 @@ static void vmx_vmcs_exec_controls_io_init()
 
 static void vmx_vmcs_exec_controls_init()
 {
-   //vm_exec_ctrls.pin.preempt = 1;
-   //vm_exec_ctrls.pin.nmi     = 1;
+   /* vm_exec_ctrls.pin.preempt = 1; */
+   /* vm_exec_ctrls.pin.nmi     = 1; */
 
    vm_exec_ctrls.proc.tsc   = 1;
    vm_exec_ctrls.proc.cr3l  = 1;
@@ -133,16 +133,18 @@ static void vmx_vmcs_exec_controls_init()
    vm_exec_ctrls.proc.mon   = 0;
    vm_exec_ctrls.proc.proc2 = 1;
 
-   vm_exec_ctrls.proc2.ept    = 1;
-   vm_exec_ctrls.proc2.vpid   = 1;
    vm_exec_ctrls.proc2.uguest = 1;
    vm_exec_ctrls.proc2.rdtscp = 1;
+   vm_exec_ctrls.proc2.ept    = 1;
 
    vm_exec_ctrls.eptp.cache = VMX_EPT_MEM_TYPE_WB;
    vm_exec_ctrls.eptp.pwl   = 3;
    vm_exec_ctrls.eptp.addr  = page_nr(info->vm.cpu.pg[0].pml4);
 
+#ifdef CONFIG_VMX_FEAT_VPID
+   vm_exec_ctrls.proc2.vpid = 1;
    vm_exec_ctrls.vpid.raw   = 1;
+#endif
 
    vm_exec_ctrls.excp_bitmap.raw = info->vm.cpu.dflt_excp;
    vm_exec_ctrls.pagefault_err_code_mask.raw = 0;

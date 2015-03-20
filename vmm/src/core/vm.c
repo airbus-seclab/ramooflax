@@ -26,35 +26,27 @@
 extern info_data_t *info;
 
 /*
-** Take care of lmode/compatmode/legacymode differences
-** cf. table-2.6 (page 39) of amd manual
-** cf. table 14-4 (page 358) of amd manual
+** Get default addr size
+** take care of long/compat/legacy mode
 **
-** notice that instruction prefix can change these defaults
-** addr/operand sizes
+** notice that instruction addr prefix (\x67)
+** can change default size
 */
 static void __vm_resolve_seg_offset(offset_t *vaddr, offset_t base, offset_t offset,
 				    offset_t addend, int *mode)
 {
-   if(__lmode64())
-   {
-      *mode = 64;
+   *mode = cpu_addr_sz();
+
+   if(*mode == 64)
       *vaddr = offset + addend;
-   }
    else
    {
       *vaddr = (base & 0xffffffff);
 
-      if(__pmode32())
-      {
-	 *mode = 32;
+      if(*mode == 32)
 	 *vaddr += (offset & 0xffffffff) + (addend & 0xffffffff);
-      }
       else
-      {
-	 *mode = 16;
 	 *vaddr += (offset & 0xffff) + (addend & 0xffff);
-      }
    }
 }
 
@@ -71,9 +63,10 @@ void vm_get_stack_addr(offset_t *vaddr, offset_t addend, int *mode)
 
 void vm_update_rip(offset_t offset)
 {
-   if(__lmode64())
+   int mode = cpu_addr_sz();
+   if(mode == 64)
       __rip.raw += (uint64_t)offset;
-   else if(__pmode32())
+   else if(mode == 32)
       __rip.low += (uint32_t)offset;
    else
       __rip.wlow += (uint16_t)offset;
@@ -83,9 +76,10 @@ void vm_update_rip(offset_t offset)
 
 void vm_rewind_rip(offset_t offset)
 {
-   if(__lmode64())
+   int mode = cpu_addr_sz();
+   if(mode == 64)
       __rip.raw -= (uint64_t)offset;
-   else if(__pmode32())
+   else if(mode == 32)
       __rip.low -= (uint32_t)offset;
    else
       __rip.wlow -= (uint16_t)offset;

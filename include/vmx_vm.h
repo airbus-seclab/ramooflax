@@ -120,10 +120,22 @@
 #define npg_pd64_t                     ept_pd64_t
 #define npg_pt64_t                     ept_pt64_t
 
-#define npg_invlpg(_va)          invept(VMCS_EPT_INV_ALL)
+#ifdef CONFIG_VMX_FEAT_VPID
 #define __flush_asid_tlbs(_t)    invvpid(_t)
+#define npg_set_asid(_x)			\
+   ({						\
+      __exec_ctrls.vpid.raw = (_x);		\
+      vmcs_dirty(__exec_ctrls.vpid);		\
+   })
+#else
+#define __flush_asid_tlbs(_t)    ({})
+#define npg_set_asid(_x)	 ({})
+#endif
+
+#define npg_invlpg(_va)          invept(VMCS_EPT_INV_ALL)
 #define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
+
 #define __update_npg_cache(_x)	 ({})
 #define __update_npg_pdpe()	 vmx_ept_update_pdpe()
 
@@ -138,12 +150,6 @@
    ({						\
       vmcs_read(__exec_ctrls.vpid);		\
       __exec_ctrls.vpid.raw;			\
-   })
-
-#define npg_set_asid(_x)			\
-   ({						\
-      __exec_ctrls.vpid.raw = (_x);		\
-      vmcs_dirty(__exec_ctrls.vpid);		\
    })
 
 #define npg_err_t                               vmcs_exit_info_ept_t
@@ -239,6 +245,7 @@
 #define __allow_iret()           (XXX)
 #define __deny_iret()            (XXX)
 
+#ifdef CONFIG_VMX_FEAT_EXIT_DT
 #define __allow_dt_access()		\
    ({					\
       vmcs_read(vm_exec_ctrls.proc2);	\
@@ -252,6 +259,13 @@
       vm_exec_ctrls.proc2.dt = 1;	\
       vmcs_dirty(vm_exec_ctrls.proc2);	\
    })
+#else
+/*
+** XXX: ept map/unmap descriptor table page(s)
+*/
+#define __allow_dt_access()		debug_warning()
+#define __deny_dt_access()		debug_warning()
+#endif
 
 #define __allow_gdt_access()     ({ __allow_dt_access(); })
 #define __deny_gdt_access()      ({ __deny_dt_access(); })

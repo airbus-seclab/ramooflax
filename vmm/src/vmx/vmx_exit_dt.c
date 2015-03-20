@@ -82,7 +82,7 @@ int vmx_vmexit_resolve_dt()
    dt_reg_t                  dt_reg;
    raw64_t                   disp;
    uint64_t                  addr_msk, op_msk;
-   int                       rc, sz;
+   int                       rc, sz, mode;
 
    if(!__rmode())
    {
@@ -145,8 +145,9 @@ int vmx_vmexit_resolve_dt()
    }
 
    dt_addr += (disp.sraw & addr_msk);
+   mode = cpu_addr_sz();
 
-   if(__lmode64())
+   if(mode == 64)
    {
       op_msk = -1ULL;
       sz = 10;

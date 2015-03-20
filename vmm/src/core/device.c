@@ -42,7 +42,8 @@ int dev_access()
 {
    io_insn_t io;
 
-   __io_init(&io);
+   if(!__io_init(&io))
+      return 0;
 
 #ifdef CONFIG_HAS_NET
    if(io.port == PCI_CONFIG_ADDR || io.port == PCI_CONFIG_DATA)

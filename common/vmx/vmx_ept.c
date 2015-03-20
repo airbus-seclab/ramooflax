@@ -178,7 +178,9 @@ void vmx_ept_unmap()
 {
    wbinvd();
    invept(VMCS_EPT_INV_ALL);
+#ifdef CONFIG_VMX_FEAT_VPID
    invvpid(VMCS_VPID_INV_ALL);
+#endif
    npg_unmap(0, info->hrd.mem.top);
 }
 

@@ -276,7 +276,7 @@ int __gdb_setup_reg(uint64_t idx, raw64_t **reg,
       goto __sys;
    }
 
-   if(__lmode64())
+   if(cpu_addr_sz() == 64)
    {
       *size = sizeof(uint64_t);
       if(idx < 16)
@@ -502,22 +502,15 @@ void gdb_send_stop_reason(uint8_t reason)
 {
    size_t   rlen;
    uint32_t s_rip;
-   uint64_t mode;
+   uint64_t mode = (uint64_t)cpu_addr_sz();
 
-   if(__lmode64())
+   if(mode == 64)
    {
-      mode = 64;
       s_rip = 0x3a36313b;
       rlen = sizeof(uint64_t)*2;
    }
-   else
+   else /* XXX: gdb seems to wait for 32 bits regs at least */
    {
-      if(__pmode32())
-	 mode = 32;
-      else
-	 mode = 16;
-
-      /* XXX: gdb seems to wait for 32 bits regs at least */
       s_rip = 0x3a38303b;
       rlen = sizeof(uint32_t)*2;
    }

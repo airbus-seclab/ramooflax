@@ -40,8 +40,10 @@ static void vmx_cpu_ept_feat()
    if(!info->vm.vmx_ept_cap.pwl4)
       panic("unsupported page walk length");
 
+#ifdef CONFIG_VMX_FEAT_VPID
    if(!info->vm.vmx_ept_cap.invvpid)
       panic("vmx missing invvpid\n");
+#endif
 
    if(!info->vm.vmx_ept_cap.invept)
       panic("vmx missing invept\n");
@@ -58,11 +60,15 @@ static void vmx_cpu_proc2_feat()
    if(!info->vm.vmx_fx_proc2.allow_1.uguest)
       panic("vmx missing unrestricted guest\n");
 
+#ifdef CONFIG_VMX_FEAT_EXIT_DT
    if(!info->vm.vmx_fx_proc2.allow_1.dt)
       panic("vmx desc table exiting not supported");
+#endif
 
+#ifdef CONFIG_VMX_FEAT_VPID
    if(!info->vm.vmx_fx_proc2.allow_1.vpid)
       panic("vmx vpid not supported");
+#endif
 
    if(!info->vm.vmx_fx_proc2.allow_1.ept)
       panic("vmx ept not supported");
@@ -111,8 +117,10 @@ static void vmx_cpu_basic_info()
    if(!info->vm.vmx_misc.lma)
       panic("vmx misc ia32e/lma missing");
 
+#ifdef CONFIG_VMX_FEAT_EXIT_EXT_IO
    if(!info->vm.vmx_info.io_insn)
       panic("vmx ins/outs info not given on VM-exit");
+#endif
 }
 
 static void vmx_cpu_features()
@@ -177,6 +185,7 @@ static void vmx_cpu_skillz()
    info->vm.cpu.skillz.pg_2M = info->vm.vmx_ept_cap.pg_2m;
    info->vm.cpu.skillz.pg_1G = info->vm.vmx_ept_cap.pg_1g;
 
+#ifdef CONFIG_VMX_FEAT_VPID
    if(info->vm.vmx_ept_cap.invvpid_s && info->vm.vmx_ept_cap.invvpid_r)
    {
       info->vm.cpu.skillz.flush_tlb     = VMCS_VPID_INV_SINGLE;
@@ -189,6 +198,7 @@ static void vmx_cpu_skillz()
    }
    else
       panic("no valid invvpid type found");
+#endif
 
    debug(VMX_CPU,
 	 "\n- vm cpu features\n"

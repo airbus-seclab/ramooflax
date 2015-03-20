@@ -34,8 +34,7 @@ int vmx_vmexit_resolve_io()
 
 int __vmx_io_init(io_insn_t *io)
 {
-   vmcs_exit_info_io_t      *vmx_io;
-   vmcs_exit_info_insn_io_t *vmx_io_s;
+   vmcs_exit_info_io_t *vmx_io;
 
    vmcs_read(vm_exit_info.qualification);
    vmx_io = &vm_exit_info.qualification.io;
@@ -48,11 +47,43 @@ int __vmx_io_init(io_insn_t *io)
    if(!io->s)
       return 1;
 
-   vmcs_read(vm_exit_info.insn_info);
    vmcs_read(vm_exit_info.guest_linear);
-   vmx_io_s = &vm_exit_info.insn_info.io;
 
+#ifdef CONFIG_VMX_FEAT_EXIT_EXT_IO
+   vmcs_exit_info_insn_io_t *vmx_io_s;
+
+   vmcs_read(vm_exit_info.insn_info);
+   vmx_io_s = &vm_exit_info.insn_info.io;
    io->addr = 1<<vmx_io_s->addr;
+#else
+   ud_t *insn = &info->vm.cpu.disasm;
+
+   if(!disassemble(insn))
+      return 0;
+
+   if(insn->dis_mode == 64)
+   {
+      if(insn->pfx_adr)
+	 io->addr = 2;
+      else
+	 io->addr = 4;
+   }
+   else if(insn->dis_mode == 32)
+   {
+      if(insn->pfx_adr)
+	 io->addr = 1;
+      else
+	 io->addr = 2;
+   }
+   else
+   {
+      if(insn->pfx_adr)
+	 io->addr = 2;
+      else
+	 io->addr = 1;
+   }
+#endif
+
    io->back = vm_state.rflags.df;
    io->rep  = vmx_io->rep;
    io->msk  = (1ULL<<(16*io->addr)) - 1;

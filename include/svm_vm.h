@@ -114,10 +114,10 @@
 	 __ctrls.tlb_ctrl.tlb_control = VMCB_TLB_CTL_NONE;	\
    })
 
-#define npg_invlpg(_va)          invlpga((offset_t)_va)
-#define __flush_asid_tlbs(_t)    (__ctrls.tlb_ctrl.tlb_control = _t)
-#define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
-#define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
+#define npg_invlpg(_va)         invlpga((offset_t)_va)
+#define __flush_asid_tlbs(_t)   (__ctrls.tlb_ctrl.tlb_control = _t)
+#define __flush_tlb()           __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
+#define __flush_tlb_glb()       __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
 
 #define __update_npg_cache(gcr3)	\
    ({					\

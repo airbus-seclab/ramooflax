@@ -341,10 +341,9 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
 
    debug(GDBSTUB_CMD, "sending 0x%X\n", paddr);
 
-   if(__lmode64())
+   if(cpu_addr_sz() == 64)
       sz = sizeof(uint64_t)*2;
-   else
-      /* XXX: gdb seems to wait for 32 bits regs at least */
+   else /* XXX: gdb seems to wait for 32 bits regs at least */
       sz = sizeof(uint32_t)*2;
 
    gdb_add_number(paddr, sz, 0);
