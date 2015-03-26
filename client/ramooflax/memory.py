@@ -109,6 +109,16 @@ class Memory:
         encoded = self.__encode(addr,16)+self.__encode(value,16)
         self.__gdb.npg_set_pte(encoded)
 
+    def nested_map(self, start, end, value):
+        encoded = self.__encode(start,16)+\
+            self.__encode(end,16)+\
+            self.__encode(value,16)
+        self.__gdb.npg_map(encoded)
+
+    def nested_unmap(self, start, end):
+        encoded = self.__encode(start,16)+self.__encode(end,16)
+        self.__gdb.npg_unmap(encoded)
+
     def nested_translate(self, addr):
         saddr = self.__gdb.npg_translate(self.__encode_addr(addr), 16)
         return int(saddr, 16)

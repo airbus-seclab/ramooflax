@@ -508,3 +508,11 @@ class GDB:
     def npg_translate(self, data, sz):
         self.send_vmm_pkt("\x9d"+data)
         return self.recv_pkt(sz)
+
+    def npg_map(self, data):
+        self.send_vmm_pkt("\x9e"+data)
+        self.recv_diag()
+
+    def npg_unmap(self, data):
+        self.send_vmm_pkt("\x9f"+data)
+        self.recv_diag()

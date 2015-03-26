@@ -211,21 +211,16 @@ static void gdb_vmm_set_affinity(uint8_t *data, size_t len)
    debug(GDBSTUB_CMD, "set affinity to %d\n", val.blow);
 }
 
-static int __gdb_vmm_parse_x2_arg(uint8_t *data, size_t len,
-				  uint64_t *addr, uint64_t *value)
+static int __gdb_vmm_parse_args(uint8_t *data, size_t len, uint64_t *args, size_t n)
 {
-   if(len != sizeof(offset_t)*2*2)
+   size_t i, sz = sizeof(offset_t)*2;
+
+   if(len != n*sz)
       return 0;
 
-   len /= 2;
-
-   if(!gdb_get_number(data, len, addr, 0))
-      return 0;
-
-   data += sizeof(offset_t)*2;
-
-   if(!gdb_get_number(data, len, value, 0))
-      return 0;
+   for(i=0 ; i<n ; i++, data += sz)
+      if(!gdb_get_number(data, sz, &args[i], 0))
+	 return 0;
 
    return 1;
 }
@@ -233,11 +228,16 @@ static int __gdb_vmm_parse_x2_arg(uint8_t *data, size_t len,
 static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len,
 				  loc_t *addr, size_t *sz)
 {
-   if(!__gdb_vmm_parse_x2_arg(data, len, &addr->raw, (uint64_t*)sz))
+   uint64_t args[2];
+
+   if(!__gdb_vmm_parse_args(data, len, args, 2))
    {
       gdb_nak();
       return 0;
    }
+
+   addr->raw = args[0];
+   *sz = (size_t)args[1];
 
    gdb_ok();
    gdb_wait_ack();
@@ -466,15 +466,17 @@ static void gdb_vmm_npg_get_pte(uint8_t *data, size_t len)
 
 static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
 {
+   uint64_t     args[2];
    loc_t        addr;
    npg_pte64_t  npte, *opte;
 
-   if(!__gdb_vmm_parse_x2_arg(data, len, &addr.raw, &npte.raw))
+   if(!__gdb_vmm_parse_args(data, len, args, 2))
    {
       gdb_nak();
       return;
    }
 
+   addr.raw = args[0];
    opte = _npg_get_pte(addr.linear);
    if(!opte)
    {
@@ -483,6 +485,7 @@ static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
       return;
    }
 
+   npte.raw = args[1];
    opte->raw = npte.raw;
    npg_invlpg(addr.linear);
    gdb_ok();
@@ -511,6 +514,34 @@ static void gdb_vmm_npg_translate(uint8_t *data, size_t len)
 
    gdb_add_number(saddr, sizeof(uint64_t)*2, 0);
    gdb_send_packet();
+}
+
+static void gdb_vmm_npg_map(uint8_t *data, size_t len)
+{
+   uint64_t args[3];
+
+   if(!__gdb_vmm_parse_args(data, len, args, 3))
+   {
+      gdb_nak();
+      return;
+   }
+
+   npg_map((offset_t)args[0], (offset_t)args[1], args[2]);
+   gdb_ok();
+}
+
+static void gdb_vmm_npg_unmap(uint8_t *data, size_t len)
+{
+   uint64_t args[2];
+
+   if(!__gdb_vmm_parse_args(data, len, args, 2))
+   {
+      gdb_nak();
+      return;
+   }
+
+   npg_unmap((offset_t)args[0], (offset_t)args[1]);
+   gdb_ok();
 }
 
 static void gdb_vmm_get_fault(uint8_t __unused__ *data, size_t __unused__ len)
@@ -555,6 +586,8 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_get_idt_event,
    gdb_vmm_can_cli,
    gdb_vmm_npg_translate,
+   gdb_vmm_npg_map,
+   gdb_vmm_npg_unmap,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)
