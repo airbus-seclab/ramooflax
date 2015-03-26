@@ -53,7 +53,8 @@ void pci_cfg_e1k(net_info_t *net)
    }
 
    pci_cfg_read(pci);
-   debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
+   debug(PCI_E1000, "e1k CMD/STS 0x%x 0x%x | CMD io %d mm %d dma %d\n"
+	 ,pci->cs.cmd.raw, pci->cs.sts.raw
 	 ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
 
    /* BAR regs */

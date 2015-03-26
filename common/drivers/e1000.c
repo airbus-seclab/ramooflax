@@ -310,11 +310,90 @@ offset_t e1k_tx_get_pktbuf(e1k_info_t *e1k)
    return e1k->mem.tdesc[e1k->tx.tail.raw].addr;
 }
 
+static void e1k_dbg_pci_status(pci_cfg_val_t *pci)
+{
+   pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
+   pci_cfg_read(pci);
+   debug(PCI_E1000, "e1k CMD/STS 0x%x 0x%x\n"
+	 ,pci->cs.cmd.raw, pci->cs.sts.raw);
+   debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
+	 ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+
+   if(!pci->cs.cmd.mm || !pci->cs.cmd.bus_master)
+   {
+      debug(PCI_E1000, "e1k mm/dma changed !\n");
+
+      pci->cs.cmd.mm = 1;
+      pci->cs.cmd.bus_master = 1;
+      pci_cfg_write(pci);
+
+      pci_cfg_read(pci);
+      debug(PCI_E1000, "e1k CMD/STS 0x%x 0x%x\n"
+	    ,pci->cs.cmd.raw, pci->cs.sts.raw);
+      debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
+	    ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+   }
+
+   pci->addr.reg = PCI_CFG_BAR_OFFSET;
+   pci_cfg_read(pci);
+   debug(PCI_E1000, "e1k pci bar L: io %d type %d raw 0x%x\n"
+	 ,pci->br.io, pci->br.type, pci->br.raw);
+
+   if(pci->br.type == PCI_CFG_MEM_BAR_64)
+   {
+      pci->addr.reg = PCI_CFG_BAR_OFFSET + 4;
+      pci_cfg_read(pci);
+      debug(PCI_E1000, "e1k pci bar H: raw 0x%x\n", pci->br.raw);
+   }
+}
+
+static void e1k_dbg_tx_pkt(e1k_info_t *e1k,
+			   volatile e1k_tdesc_t *dsc, pci_cfg_val_t *pci)
+{
+   e1k_tdesc_sts_t sts;
+
+   debug(E1000, "sending packet ...\n");
+   do
+   {
+      /* Debug TX status */
+
+      io_wait(10000);
+      sts.raw = dsc->sts.raw;
+
+      if(e1k->tx.ctl->raw == -1U)
+      {
+	 int i;
+
+	 debug(E1000, "CTL 0x%x TCTL 0x%x\n", e1k->ctl->raw, e1k->tx.ctl->raw);
+
+	 pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
+	 pci_cfg_read(pci);
+
+	 debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
+	       ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+
+	 for(i=0 ; i<6 ; i++)
+	 {
+	    pci->addr.reg = PCI_CFG_BAR_OFFSET + i*4;
+	    pci_cfg_read(pci);
+	    debug(E1000, "e1k BAR%d 0x%x)", i, pci->br.raw);
+	 }
+	 panic("corrupted e1k config space !");
+      }
+   } while(!sts.dd);
+
+   debug(E1000, "packet sent\n");
+}
+
 void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
 {
    e1k_info_t           *e1k;
    volatile e1k_tdesc_t *dsc;
    e1k_tdesc_cmd_t       cmd;
+
+/* #ifdef CONFIG_E1000_DBG */
+/*    e1k_dbg_pci_status(&net->pci); */
+/* #endif */
 
    e1k = &net->arch;
    dsc = &e1k->mem.tdesc[e1k->tx.tail.raw];
@@ -333,46 +412,55 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    e1k->tx.dt->raw = e1k->tx.tail.raw;
 
 /* #ifdef CONFIG_E1000_DBG */
-/*    { */
-/*       e1k_tdesc_sts_t sts; */
-/*       debug(E1000, "sending packet ...\n"); */
-/*       do */
-/*       { */
-/* 	 io_wait(10000); */
-/* 	 sts.raw = dsc->sts.raw; */
-
-/* 	 if(e1k->tx.ctl->raw == -1U) */
-/* 	 { */
-/* 	    int i; */
-/* 	    pci_cfg_val_t *pci = &net->pci; */
-
-/* 	    debug(E1000, "CTL 0x%x TCTL 0x%x\n", e1k->ctl->raw, e1k->tx.ctl->raw); */
-
-/* 	    pci->addr.reg = PCI_CFG_CMD_STS_OFFSET; */
-/* 	    pci_cfg_read(pci); */
-
-/* 	    debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n" */
-/* 		  ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master); */
-
-/* 	    for(i=0 ; i<6 ; i++) */
-/* 	    { */
-/* 	       pci->addr.reg = PCI_CFG_BAR_OFFSET + i*4; */
-/* 	       pci_cfg_read(pci); */
-/* 	       debug(E1000, "e1k BAR%d 0x%x)", i, pci->br.raw); */
-/* 	    } */
-/* 	    panic("corrupted e1k config space !"); */
-/* 	 } */
-/*       } while(!sts.dd); */
-/*       debug(E1000, "packet sent\n"); */
-/*    } */
+/*    e1k_dbg_tx_pkt(e1k, dsc, &net->pci); */
 /* #endif */
 }
+
+/* static void e1k_recv_status(net_info_t *net) */
+/* { */
+/*    e1k_info_t      *e1k = &net->arch; */
+/*    e1k_sts_reg_t   sts; */
+/*    e1k_ic_reg_t    icr; */
+
+/*    loc_t rdfh  = {.linear = e1k->base.linear + 0x2410}; */
+/*    loc_t rdft  = {.linear = e1k->base.linear + 0x2418}; */
+/*    loc_t rdfhs = {.linear = e1k->base.linear + 0x2420}; */
+/*    loc_t rdfts = {.linear = e1k->base.linear + 0x2428}; */
+/*    loc_t rdfpc = {.linear = e1k->base.linear + 0x2430}; */
+
+/*    sts.raw = e1k->sts->raw; */
+/*    icr.raw = e1k->icr->raw; */
+
+/*    debug(E1000, */
+/* 	 "e1k status:" */
+/* 	 " fd %d lu %d fid %d txoff %d speed %d tbi %d" */
+/* 	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n" */
+/* 	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode */
+/* 	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd */
+/*       ); */
+
+/*    debug(E1000, */
+/* 	 "e1k icr:" */
+/* 	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d" */
+/* 	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d" */
+/* 	 " gpi %d:%d txdlow %d srpd %d\n" */
+/* 	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0 */
+/* 	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint */
+/* 	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd */
+/*       ); */
+
+/*    debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n" */
+/* 	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32); */
+/* } */
 
 size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
 {
    e1k_info_t           *e1k;
    volatile e1k_rdesc_t *dsc;
    e1k_rdesc_sts_t       sts;
+
+   /* debug(E1000, "e1k_recv_pkt()\n"); */
+   /* e1k_recv_status(net); */
 
    e1k = &net->arch;
    e1k->rx.tail.raw = (e1k->rx.tail.raw+1)%RX_DESC_NR;
@@ -413,40 +501,3 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    e1k->rx.dt->raw = e1k->rx.tail.raw;
    return dsc->len;
 }
-
-/* static void e1k_recv_status(net_info_t *net) */
-/* { */
-/*    e1k_info_t      *e1k = &net->arch; */
-/*    e1k_sts_reg_t   sts; */
-/*    e1k_ic_reg_t    icr; */
-
-/*    loc_t rdfh  = {.linear = e1k->base.linear + 0x2410}; */
-/*    loc_t rdft  = {.linear = e1k->base.linear + 0x2418}; */
-/*    loc_t rdfhs = {.linear = e1k->base.linear + 0x2420}; */
-/*    loc_t rdfts = {.linear = e1k->base.linear + 0x2428}; */
-/*    loc_t rdfpc = {.linear = e1k->base.linear + 0x2430}; */
-
-/*    sts.raw = e1k->sts->raw; */
-/*    icr.raw = e1k->icr->raw; */
-
-/*    debug(E1000, */
-/* 	 "e1k status:" */
-/* 	 " fd %d lu %d fid %d txoff %d speed %d tbi %d" */
-/* 	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n" */
-/* 	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode */
-/* 	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd */
-/*       ); */
-
-/*    debug(E1000, */
-/* 	 "e1k icr:" */
-/* 	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d" */
-/* 	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d" */
-/* 	 " gpi %d:%d txdlow %d srpd %d\n" */
-/* 	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0 */
-/* 	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint */
-/* 	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd */
-/*       ); */
-
-/*    debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n" */
-/* 	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32); */
-/* } */

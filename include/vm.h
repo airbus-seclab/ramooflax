@@ -150,11 +150,13 @@ typedef struct vm_memory
 
 typedef struct vm_device
 {
-   vm_mem_t    mem;       /* vm memory definitions */
-   ps2_t       ps2;       /* vm virtual ps2 sys ctrl */
-   kbd_t       kbd;       /* vm virtual kbd ctrl */
-   uart_t      uart;      /* vm com1 proxy */
-   uint8_t     pic1_icw2; /* irq rebase */
+   vm_mem_t       mem;         /* vm memory definitions */
+   ps2_t          ps2;         /* vm virtual ps2 sys ctrl */
+   kbd_t          kbd;         /* vm virtual kbd ctrl */
+   uart_t         uart;        /* vm com1 proxy */
+   uint8_t        pic1_icw2;   /* irq rebase */
+   pci_cfg_addr_t pci_addr;    /* last filtered pci addr */
+   io_flt_hdl_t   pci_filter;  /* pci data filter handler */
 
 } __attribute__((packed)) vm_dev_t;
 
