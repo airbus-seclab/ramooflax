@@ -23,13 +23,17 @@ INSTOOL    := tools/installer.sh
 
 CFLG_WRN   := -Wall -W
 CFLG_KRN   := -pipe -nostdlib -nostdinc -ffreestanding -fms-extensions
-CFLG_FP    := -mno-sse -mno-mmx -mno-sse2 -mno-3dnow
+CFLG_FP    := -mno-mmx -mno-sse -mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4.1 \
+              -mno-sse4.2 -mno-sse4 -mno-avx -mno-avx2 -mno-aes -mno-pclmul \
+              -mno-fsgsbase -mno-rdrnd -mno-f16c -mno-fma -mno-sse4a \
+              -mno-fma4 -mno-xop -mno-lwp -mno-3dnow -mno-popcnt \
+              -mno-abm -mno-bmi -mno-bmi2 -mno-lzcnt -mno-tbm
 
 CFLG_32    := -m32
 CCLIB_32   := $(shell $(CC) -m32 -print-libgcc-file-name)
 LDFLG_32   := -melf_i386
 
-CFLG_64    := -m64 -mno-red-zone -mcmodel=$(CC_MODEL) -D__X86_64__
+CFLG_64    := -m64 -mno-red-zone -mcmodel=$(CC_MODEL) -D__X86_64__ $(CFLG_FP)
 CCLIB_64   := $(shell $(CC) -m64 -print-libgcc-file-name)
 LDFLG_64   := -melf_x86_64
 
