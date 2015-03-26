@@ -310,6 +310,44 @@ offset_t e1k_tx_get_pktbuf(e1k_info_t *e1k)
    return e1k->mem.tdesc[e1k->tx.tail.raw].addr;
 }
 
+#ifdef CONFIG_E1000_VERBOSE_DBG
+static void e1k_dbg_rx_status(net_info_t *net)
+{
+   e1k_info_t      *e1k = &net->arch;
+   e1k_sts_reg_t   sts;
+   e1k_ic_reg_t    icr;
+
+   loc_t rdfh  = {.linear = e1k->base.linear + 0x2410};
+   loc_t rdft  = {.linear = e1k->base.linear + 0x2418};
+   loc_t rdfhs = {.linear = e1k->base.linear + 0x2420};
+   loc_t rdfts = {.linear = e1k->base.linear + 0x2428};
+   loc_t rdfpc = {.linear = e1k->base.linear + 0x2430};
+
+   sts.raw = e1k->sts->raw;
+   icr.raw = e1k->icr->raw;
+
+   debug(E1000,
+	 "e1k status:"
+	 " fd %d lu %d fid %d txoff %d speed %d tbi %d"
+	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n"
+	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode
+	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd
+      );
+
+   debug(E1000,
+	 "e1k icr:"
+	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d"
+	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d"
+	 " gpi %d:%d txdlow %d srpd %d\n"
+	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0
+	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint
+	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd
+      );
+
+   debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n"
+	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32);
+}
+
 static void e1k_dbg_pci_status(pci_cfg_val_t *pci)
 {
    pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
@@ -356,7 +394,6 @@ static void e1k_dbg_tx_pkt(e1k_info_t *e1k,
    do
    {
       /* Debug TX status */
-
       io_wait(10000);
       sts.raw = dsc->sts.raw;
 
@@ -385,15 +422,36 @@ static void e1k_dbg_tx_pkt(e1k_info_t *e1k,
    debug(E1000, "packet sent\n");
 }
 
+static void e1k_dbg_rx_pkt(e1k_info_t *e1k, volatile e1k_rdesc_t *dsc, loc_t data)
+{
+   volatile e1k_rdesc_t *d;
+   e1k_rdesc_sts_t       s;
+   size_t                i;
+
+   for(i=0 ; i<dsc->len ; i++)
+      printf(" %x", data.u8[i]);
+   printf("\n");
+
+   debug(E1000, "[deep check] RDT %d RDH %d\n",e1k->rx.dt->raw,e1k->rx.dh->raw);
+   for(i=0 ;i<RX_DESC_NR ; i++)
+   {
+      d = &e1k->mem.rdesc[i];
+      s.raw = d->sts.raw;
+      printf(" %d:%d", i, s.dd);
+   }
+   printf("\n");
+}
+#endif
+
 void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
 {
    e1k_info_t           *e1k;
    volatile e1k_tdesc_t *dsc;
    e1k_tdesc_cmd_t       cmd;
 
-/* #ifdef CONFIG_E1000_DBG */
-/*    e1k_dbg_pci_status(&net->pci); */
-/* #endif */
+#ifdef CONFIG_E1000_VERBOSE_DBG
+   e1k_dbg_pci_status(&net->pci);
+#endif
 
    e1k = &net->arch;
    dsc = &e1k->mem.tdesc[e1k->tx.tail.raw];
@@ -411,47 +469,10 @@ void e1k_send_pkt(net_info_t *net, loc_t pkt, size_t len)
    e1k->tx.tail.raw = (e1k->tx.tail.raw+1)%TX_DESC_NR;
    e1k->tx.dt->raw = e1k->tx.tail.raw;
 
-/* #ifdef CONFIG_E1000_DBG */
-/*    e1k_dbg_tx_pkt(e1k, dsc, &net->pci); */
-/* #endif */
+#ifdef CONFIG_E1000_VERBOSE_DBG
+   e1k_dbg_tx_pkt(e1k, dsc, &net->pci);
+#endif
 }
-
-/* static void e1k_recv_status(net_info_t *net) */
-/* { */
-/*    e1k_info_t      *e1k = &net->arch; */
-/*    e1k_sts_reg_t   sts; */
-/*    e1k_ic_reg_t    icr; */
-
-/*    loc_t rdfh  = {.linear = e1k->base.linear + 0x2410}; */
-/*    loc_t rdft  = {.linear = e1k->base.linear + 0x2418}; */
-/*    loc_t rdfhs = {.linear = e1k->base.linear + 0x2420}; */
-/*    loc_t rdfts = {.linear = e1k->base.linear + 0x2428}; */
-/*    loc_t rdfpc = {.linear = e1k->base.linear + 0x2430}; */
-
-/*    sts.raw = e1k->sts->raw; */
-/*    icr.raw = e1k->icr->raw; */
-
-/*    debug(E1000, */
-/* 	 "e1k status:" */
-/* 	 " fd %d lu %d fid %d txoff %d speed %d tbi %d" */
-/* 	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n" */
-/* 	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode */
-/* 	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd */
-/*       ); */
-
-/*    debug(E1000, */
-/* 	 "e1k icr:" */
-/* 	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d" */
-/* 	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d" */
-/* 	 " gpi %d:%d txdlow %d srpd %d\n" */
-/* 	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0 */
-/* 	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint */
-/* 	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd */
-/*       ); */
-
-/*    debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n" */
-/* 	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32); */
-/* } */
 
 size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
 {
@@ -459,8 +480,10 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    volatile e1k_rdesc_t *dsc;
    e1k_rdesc_sts_t       sts;
 
-   /* debug(E1000, "e1k_recv_pkt()\n"); */
-   /* e1k_recv_status(net); */
+#ifdef CONFIG_E1000_VERBOSE_DBG
+   debug(E1000, "e1k_recv_pkt()\n");
+   e1k_dbg_rx_status(net);
+#endif
 
    e1k = &net->arch;
    e1k->rx.tail.raw = (e1k->rx.tail.raw+1)%RX_DESC_NR;
@@ -476,26 +499,9 @@ size_t e1k_recv_pkt(net_info_t *net, loc_t data, size_t len)
    memcpy(data.addr, (void*)dsc->addr, min(dsc->len, len));
    debug(E1000, "<-- [RDT %d] len %d eop %d\n", e1k->rx.tail.raw,dsc->len,sts.eop);
 
-/* #ifdef CONFIG_E1000_DBG */
-/*    { */
-/*       volatile e1k_rdesc_t *d; */
-/*       e1k_rdesc_sts_t s; */
-/*       size_t i=0; */
-
-/*       for(i=0 ; i<dsc->len ; i++) */
-/* 	 printf(" %x", data.u8[i]); */
-/*       printf("\n"); */
-
-/*       debug(E1000, "[deep check] RDT %d RDH %d\n",e1k->rx.dt->raw,e1k->rx.dh->raw); */
-/*       for(i=0 ;i<RX_DESC_NR ; i++) */
-/*       { */
-/* 	 d = &e1k->mem.rdesc[i]; */
-/* 	 s.raw = d->sts.raw; */
-/* 	 printf(" %d:%d", i, s.dd); */
-/*       } */
-/*       printf("\n"); */
-/*    } */
-/* #endif */
+#ifdef CONFIG_E1000_VERBOSE_DBG
+   e1k_dbg_rx_pkt(e1k, dsc, data);
+#endif
 
    dsc->sts.raw = 0;
    e1k->rx.dt->raw = e1k->rx.tail.raw;
