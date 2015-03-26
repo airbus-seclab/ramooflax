@@ -39,12 +39,11 @@ void smap_parse(mbi_t *mbi, smap_t *smap, offset_t *area, offset_t *acme)
       mme = (memory_map_t*)mmap.addr;
       sme = (smap_e_t*)&mme->addr;
 
+      debug(SMAP,"smap entry: base 0x%X | len 0x%X | type %d\n",
+	    sme->base, sme->len, sme->type );
+
       if(mme->size > sizeof(smap_e_t))
-      {
-	 debug(SMAP,"smap entry: base 0x%X | len 0x%X | type %d\n",
-	       sme->base, sme->len, sme->type );
 	 panic("smap entry too big");
-      }
 
       top = sme->base + sme->len;
 
