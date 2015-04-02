@@ -64,7 +64,6 @@ class PteBase(object):
     def __str__(self):
         return "p %d w %d u %d addr 0x%x" % (self.p,self.w,self.u,self.addr)
 
-
 class Pte(PteBase):
     def __init__(self, vaddr, val):
         PteBase.__init__(self, val)
@@ -172,6 +171,23 @@ class AddrSpace(object):
     def __init__(self, vm, cr3):
         self.pgd = PageDirectory(vm, cr3)
         self.map = Mapping(self.pgd)
+
+    def is_mapped(self, vaddr):
+        ptb = self.pgd[vaddr>>22]
+        if ptb is None:
+            return False
+        if isinstance(ptb, Page):
+            return True
+        pg =  ptb[(vaddr>>12)&0x3ff]
+        return pg is not None
+
+    def page(self, vaddr):
+        ptb = self.pgd[vaddr>>22]
+        if ptb is None:
+            return None
+        if isinstance(ptb, Page):
+            return ptb
+        return ptb[(vaddr>>12)&0x3ff]
 
     def __str__(self):
         s = "Address space has %d entries\n" % len(self.map)
