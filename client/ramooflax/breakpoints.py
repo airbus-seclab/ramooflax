@@ -69,10 +69,8 @@ class BreakPoints:
         return True
 
     def __trap_filter(self, vm):
-        log.log("brk", "trap filter: read dr6")
-
+        log.log("brk", "trap filter")
         if (vm.cpu.sr.dr6 & (1<<14)) != 0:
-            log.log("brk", "dr6.bs = 1")
             return self.__filter_sstep(vm)
 
         tp = None
