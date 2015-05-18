@@ -15,6 +15,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+import log
+
 class IdtEvent:
     HW_INT  = 0
     NMI     = 2
@@ -85,7 +87,7 @@ class StopReason:
     soft_int   = 51
     npf        = 52
 
-    def __init__(self, r, m=None, d=None):
+    def __init__(self, r=2, m=None, d=None):
         self.__s = {
             2:"gdb_int",
             5:"gdb_trap",
@@ -132,6 +134,9 @@ class StopReason:
     def __len__(self):
         return len(self.msg)
 
+    def __eq__(self, r):
+        return r == self.reason
+
 class EventFilter:
     def __init__(self, dico=None):
         self.__handlers = {StopReason.every:lambda x: True}
@@ -141,8 +146,12 @@ class EventFilter:
     def __call__(self, reason, vm):
         self.__handlers[StopReason.every](vm)
         if self.__handlers.has_key(reason):
+            log.log("evt", "call handler[%s]" % StopReason(reason))
             return self.__handlers[reason](vm)
-        return True #default can interact
+
+        # default can interact
+        log.log("evt", "default handler[%s]" % StopReason(reason))
+        return True
 
     def register(self, reason, handler):
         self.__handlers.update({reason:handler})

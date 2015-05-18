@@ -316,8 +316,11 @@ class GDB:
     def recv_pkt(self, sz, sack=True):
         return self.__pool_get("data", sz, sack)
 
-    def dump_pool(self):
+    def pool_dump(self):
         repr(self.__pool)
+
+    def stop_pool_empty(self):
+        return len(self.__pool["stop"][0]) == 0
 
     def intr(self):
         log.log("gdb", "send intr")

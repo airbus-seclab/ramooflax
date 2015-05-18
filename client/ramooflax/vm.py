@@ -21,6 +21,7 @@ import sys, signal
 import cpu
 import memory
 import gdb
+import event
 import log
 
 class VMState:
@@ -28,6 +29,27 @@ class VMState:
     working     = 1
     interactive = 2
     ready       = 3
+
+    def __init__(self, s):
+        self.__state = s
+        self.__p_state = VMState.ready
+        self.__str = {self.waiting:"waiting",
+                      self.working:"working",
+                      self.interactive:"interactive",
+                      self.ready:"ready"}
+
+    def update(self, s):
+        self.__p_state = self.__state
+        self.__state = s
+
+    def restore(self):
+        self.__state = self.__p_state
+
+    def __str__(self):
+        return self.__str.get(self.__state, "unknown")
+
+    def __eq__(self, s):
+        return self.__state == s
 
 class VM:
     """
@@ -38,6 +60,8 @@ Virtual Machine Controller
  - you can access 'cpu' and 'mem' attributes (help(vm.cpu) ...)
     """
     def __init__(self, manufacturer, loc, mode="udp"):
+        self.__state = VMState(VMState.working)
+
         try:
             self.ip, self.port = loc.split(':')
             self.port = int(self.port)
@@ -49,24 +73,18 @@ Virtual Machine Controller
         self.__variables = {}
         self.__session = False
         self.__detach_filter = None
-        self.__state = VMState.working
+        self.__intr_filter = None
         self.__stop_request = False
         self.__gdb = gdb.GDB(self.ip, self.port, self.mode)
 
         self.cpu = cpu.CPU(manufacturer, self.__gdb)
         self.mem = memory.Memory(self.cpu, self.__gdb)
-
         self.__setup_sig(signal.SIGINT, self.int_event)
+
+        self.__state.update(VMState.ready)
 
     def __setup_sig(self, signum, handler):
         signal.signal(signum, handler)
-
-    def __set_state(self, new_state):
-        self.__state = new_state
-
-    def __process_stop_request(self):
-        self.__stop_request = False
-        self.cpu._stop()
 
     def attach(self):
         try:
@@ -76,6 +94,9 @@ Virtual Machine Controller
 
     def filter_detach(self, hdl):
         self.__detach_filter = hdl
+
+    def filter_intr(self, hdl):
+        self.__intr_filter = hdl
 
     def detach(self, quick=False):
         if self.__detach_filter is not None:
@@ -107,48 +128,66 @@ Virtual Machine Controller
     def interact_noresume(self):
         self.__interact()
 
-    def singlestep(self):
-        self.__set_state(VMState.working)
-        self.cpu._singlestep()
-        self.__set_state(VMState.ready)
-        return self.answer()
+    def answer(self, what=event.StopReason.every):
+        inter = False # on 1st True
+        while True:
+            self.__wait()
+            if self.__process() and not inter:
+                inter = True
 
-    def answer(self):
-        self.__wait()
-        return self.__process()
+            if what == event.StopReason.every and not self.cpu.has_pending_reason():
+                return inter
+
+            if what == self.cpu.last_reason:
+                if what != event.StopReason.gdb_trap or \
+                        (self.cpu.sr.dr6 & (1<<14)) != 0:
+                    return inter
 
     def stop(self):
-        self.__set_state(VMState.working)
-        self.cpu._stop()
-        self.__set_state(VMState.ready)
-        return self.answer()
+        self.__stop()
+        return self.answer(event.StopReason.gdb_int)
 
     def resume(self):
-        self.__set_state(VMState.working)
         if self.__stop_request:
-            self.__process_stop_request()
-        else:
-            self.mem._resume()
-            self.cpu._resume()
-        self.__set_state(VMState.ready)
+            return self.stop()
+
+        self.__resume()
         return self.answer()
 
-    def __interact(self):
-        self.__set_state(VMState.interactive)
-        readline.parse_and_bind("tab: complete")
-        code.interact("", local=self.__variables)
-        self.__set_state(VMState.ready)
+    def singlestep(self):
+        self.__resume(True)
+        return self.answer(event.StopReason.gdb_trap)
+
+    def __stop(self):
+        if self.__stop_request:
+            self.__stop_request = False
+        self.__state.update(VMState.working)
+        log.log("vm", "send stop request")
+        self.cpu._stop()
+        self.__state.restore()
+
+    def __resume(self, sstep=False):
+        self.__state.update(VMState.working)
+        self.mem._resume()
+        self.cpu._resume(sstep=sstep)
+        self.__state.restore()
 
     def __wait(self):
-        self.__set_state(VMState.waiting)
+        self.__state.update(VMState.waiting)
         self.cpu._recv_stop()
-        self.__set_state(VMState.ready)
+        self.__state.restore()
 
     def __process(self):
-        self.__set_state(VMState.working)
+        self.__state.update(VMState.working)
         can_interact = self.cpu._process_stop(self)
-        self.__set_state(VMState.ready)
+        self.__state.restore()
         return can_interact
+
+    def __interact(self):
+        self.__state.update(VMState.interactive)
+        readline.parse_and_bind("tab: complete")
+        code.interact("", local=self.__variables)
+        self.__state.restore()
 
     # Keep on interacting on each stop reason
     # for which handler returns True
@@ -180,13 +219,16 @@ Virtual Machine Controller
     def int_event(self, signum, frame):
         self.__setup_sig(signum, self.int_event)
 
-        log.log("vm", "interrupting (vm.state = %d) ..." % self.__state)
-        log.log("vm", "gdb pkt pools:\n%s" % self.__gdb.dump_pool())
+        log.log("vm", "interrupting (vm.state = %s) ..." % self.__state)
+        log.log("vm", "gdb pkt pools:\n%s" % self.__gdb.pool_dump())
+
+        if self.__intr_filter is not None:
+            self.__intr_filter(self)
 
         if self.__state == VMState.interactive or not self.__session:
             if self.__ask_quit():
                 self.detach(True)
         elif self.__state == VMState.waiting and self.__gdb.waiting():
-            self.__process_stop_request()
+            self.__stop()
         else:
             self.__stop_request = True

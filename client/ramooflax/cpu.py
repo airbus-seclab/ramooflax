@@ -51,7 +51,7 @@ class CPU:
     def __init__(self, manufacturer, gdb):
         self.__gdb = gdb
         self.__filter = event.EventFilter()
-        self.__last_reason = event.StopReason.gdb_int
+        self.__last_reason = event.StopReason()
 
         self.manufacturer = manufacturer
         self.sr = register.SR_x86(self.__gdb)
@@ -105,11 +105,14 @@ class CPU:
             log.log("error", "Unknown CPU mode: %d" % (self.mode))
             raise ValueError
 
+    def has_pending_reason(self):
+        return not self.__gdb.stop_pool_empty()
+
     def __recv_stop(self):
         log.log("cpu", "waiting stop reason")
 
         stop = self.__gdb.recv_stop()
-        self.__last_reason = stop.reason
+        self.__last_reason = stop
 
         if stop.mode != self.mode:
             self.__update_mode(stop.mode)
@@ -123,18 +126,17 @@ class CPU:
         self.__recv_stop()
 
     def _process_stop(self, vm):
-        return self.__filter(self.__last_reason, vm)
+        return self.__filter(self.__last_reason.reason, vm)
 
     def _stop(self):
         self.__gdb.intr()
 
-    def _resume(self, addr=None):
+    def _resume(self, addr=None, sstep=False):
         self._flush()
-        self.__gdb.resume(addr)
-
-    def _singlestep(self, addr=None):
-        self._flush()
-        self.__gdb.singlestep(addr)
+        if sstep:
+            self.__gdb.singlestep(addr)
+        else:
+            self.__gdb.resume(addr)
 
     def _quit(self):
         return
