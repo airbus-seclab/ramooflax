@@ -78,7 +78,10 @@ static int __resolve_exception(uint32_t vector, uint32_t error, uint64_t fault)
    info->vm.cpu.fault.excp.err = error;
 
    if((rc=ctrl_evt_excp(vector)) == VM_IGNORE)
+   {
+      debug(EXCP, "ignored excp, injecting\n");
       __inject_exception(vector, error, fault);
+   }
 
    return rc;
 }

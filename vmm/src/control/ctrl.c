@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <ctrl.h>
+#include <db.h>
 #include <insn.h>
 #include <excp.h>
 #include <debug.h>
@@ -26,7 +27,8 @@ extern info_data_t *info;
 
 static void ctrl_traps_enable()
 {
-   debug(CTRL, "ctrl traps enable\n");
+   debug(CTRL, "ctrl traps enable (%d|%d)\n"
+	 ,ctrl_traps_enabled(), ctrl_traps_updated());
 
    if(dbg_hard_stp_enabled())
       dbg_hard_stp_setup_context();
@@ -42,7 +44,8 @@ static void ctrl_traps_enable()
 
 static void ctrl_traps_disable()
 {
-   debug(CTRL, "ctrl traps disable\n");
+   debug(CTRL, "ctrl traps disable (%d|%d)\n"
+	 ,ctrl_traps_enabled(), ctrl_traps_updated());
 
    if(dbg_hard_stp_enabled())
       dbg_hard_stp_restore_context();
@@ -90,6 +93,9 @@ int __ctrl_active_cr3_check(int rpl)
 
 void ctrl_active_cr3_enable(cr3_reg_t cr3)
 {
+   if(ctrl_cr3_enabled())
+      ctrl_active_cr3_disable();
+
    info->vmm.ctrl.stored_cr3.raw = cr3.raw;
    info->vmm.ctrl.active_cr3 = &info->vmm.ctrl.stored_cr3;
    ctrl_traps_set_update(1);
@@ -103,6 +109,8 @@ void ctrl_active_cr3_enable(cr3_reg_t cr3)
 
 void ctrl_active_cr3_disable()
 {
+   dbg_soft_reset();
+
    info->vmm.ctrl.active_cr3 = &__cr3;
    ctrl_traps_set_update(1);
    ctrl_set_cr3_keep(0);
@@ -130,7 +138,7 @@ void ctrl_usr_reset()
 
 int controller()
 {
-   int rc;
+   int rc = VM_IGNORE;
 
    if(ctrl_active_cr3_check())
       rc = ctrl_event();
@@ -146,5 +154,6 @@ int controller()
       dbg_hard_dr6_clean();
 
    ctrl_traps();
+
    return rc;
 }

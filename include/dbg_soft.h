@@ -45,6 +45,7 @@ typedef struct dbg_software_breakpoint
    offset_t           addr; /* brk location */
    ctrl_evt_hdl_t     hdlr; /* specific handler */
    uint8_t            byte; /* saved insn byte */
+   cr3_reg_t          cr3;  /* cr3 when bp was set */
 
 } __attribute__((packed)) dbg_soft_bp_t;
 
@@ -94,7 +95,7 @@ int  dbg_soft_set(offset_t, ctrl_evt_hdl_t);
 int  dbg_soft_del(offset_t);
 int  dbg_soft_event(ctrl_evt_hdl_t*);
 int  dbg_soft_resume();
-int  dbg_soft_resume_post(cr3_reg_t*);
+int  dbg_soft_resume_post();
 int  dbg_soft_disarm();
 int  dbg_soft_rearm();
 

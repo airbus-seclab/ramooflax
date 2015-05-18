@@ -25,21 +25,20 @@ extern info_data_t *info;
 
 static void dbg_hard_stp_save_context()
 {
-   __hstp_ctx.cr3.raw = __cr3.raw;
    __pre_access(__sysenter_cs);
    __hstp_ctx.sysenter_cs.raw = __sysenter_cs.raw;
 }
 
 void dbg_hard_stp_setup_context()
 {
-   debug(DBG_HARD_STP, "stp install sysenter\n");
+   debug(DBG_HARD_STP, "sstep install\n");
    __sysenter_cs.raw = 0;
    __post_access(__sysenter_cs);
 }
 
 void dbg_hard_stp_restore_context()
 {
-   debug(DBG_HARD_STP, "stp restored sysenter\n");
+   debug(DBG_HARD_STP, "sstep restore\n");
    __sysenter_cs.raw = __hstp_ctx.sysenter_cs.raw;
    __post_access(__sysenter_cs);
 }
@@ -49,8 +48,7 @@ static void dbg_hard_stp_protect()
    if(!dbg_hard_stp_enabled())
       return;
 
-   debug(DBG_HARD_STP, "hard stp protect\n");
-
+   debug(DBG_HARD_STP, "sstep protect\n");
    dbg_hard_stp_save_context();
 
    dbg_hard_stp_save_tf(__rflags.tf);
@@ -61,6 +59,7 @@ static void dbg_hard_stp_protect()
    /* __protect_rflags(); */
 
    info->vmm.ctrl.dbg.excp |= 1<<GP_EXCP;
+   ctrl_traps_set_update(1);
    dbg_hard_protect();
 }
 
@@ -69,8 +68,7 @@ static void dbg_hard_stp_release()
    if(dbg_hard_stp_enabled())
       return;
 
-   debug(DBG_HARD_STP, "hard stp release\n");
-
+   debug(DBG_HARD_STP, "sstep release\n");
    dbg_hard_stp_restore_context();
 
    __rflags.tf = dbg_hard_stp_saved_tf();
@@ -81,6 +79,7 @@ static void dbg_hard_stp_release()
    /*    __release_rflags(); */
 
    info->vmm.ctrl.dbg.excp &= ~(1<<GP_EXCP);
+   ctrl_traps_set_update(1);
    dbg_hard_release();
 }
 
@@ -135,16 +134,16 @@ int dbg_hard_stp_event()
    if(!dbg_hard_stp_enabled())
       return VM_IGNORE;
 
-   debug(DBG_HARD_STP, "sstep event\n");
+   debug(DBG_HARD_STP, "sstep event [req %s]\n"
+	 ,dbg_hard_stp_requestor()?"vmm":"usr");
 
    if(dbg_soft_resuming())
-      dbg_soft_resume_post(&__hstp_ctx.cr3);
+      dbg_soft_resume_post();
 
    dbg_hard_stp_disable();
 
    if(dbg_hard_stp_requestor() == DBG_REQ_VMM)
    {
-      debug(DBG_HARD_STP, "internal sstep event\n");
       dbg_hard_dr6_clean();
       return VM_INTERN;
    }
@@ -165,7 +164,7 @@ void dbg_hard_stp_enable(uint8_t req)
    if(dbg_hard_stp_enabled())
       return;
 
-   debug(DBG_HARD_STP, "hard stp enable\n");
+   debug(DBG_HARD_STP, "sstep enable\n");
 
    dbg_hard_stp_set_enable(1);
    dbg_hard_stp_set_req(req);
@@ -177,7 +176,7 @@ void dbg_hard_stp_disable()
    if(!dbg_hard_stp_enabled())
       return;
 
-   debug(DBG_HARD_STP, "hard stp disable\n");
+   debug(DBG_HARD_STP, "sstep disable\n");
 
    dbg_hard_stp_set_enable(0);
    dbg_hard_stp_release();

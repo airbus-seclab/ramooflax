@@ -22,45 +22,45 @@
 
 extern info_data_t *info;
 
-void db_check_pending()
+static int db_check_pending_stp()
 {
-   db_check_pending_stp();
+   if(!__rflags.tf)
+      return VM_IGNORE;
+
+   __rflags.tf = 0;
+   __post_access(__rflags);
+
+   __pre_access(__dr6);
+   __dr6.bs = 1;
+
+   /* XXX: priority, pending #DB ??? */
+   if(__injecting_event())
+   {
+      debug(DB, "already injecting event, missing #DB.sstep\n");
+      dbg_hard_set_dr6_dirty(1);
+      return VM_DONE;
+   }
+
+   __inject_exception(DB_EXCP, 0, 0);
+   __post_access(__dr6);
+   return VM_DONE;
 }
 
 /*
 ** Hardware exec traps are checked before
-** insn execution.
-**
-** Hardware data, i/o and single-step traps
-** are checked after.
+** insn execution. But hardware data, i/o
+** and single-step traps are checked after.
 **
 ** If we emulated an insn, we may loose
 ** a #DB condition, so take care here.
 **
 ** XXX: iret, popf, mov ss ...
 */
-void db_check_pending_stp()
+void db_check_pending()
 {
-   if(!__rflags.tf || !__vmexit_on_insn())
+   if(!__vmexit_on_insn())
       return;
 
-   __pre_access(__dr6);
-   __dr6.bs = 1;
-
-   /* #DB to the VM */
-   if(__ctrl_evt_excp_dbg(DB_EXCP) == VM_IGNORE)
-   {
-      __rflags.tf = 0;
-      __post_access(__rflags);
-
-      /* XXX: priority, pending #DB ??? */
-      if(__injecting_event())
-      {
-	 dbg_hard_set_dr6_dirty(1);
-	 return;
-      }
-
-      __inject_exception(DB_EXCP, 0, 0);
-      __post_access(__dr6);
-   }
+   /* XXX: missing data/io */
+   db_check_pending_stp();
 }

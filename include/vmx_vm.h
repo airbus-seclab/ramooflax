@@ -337,6 +337,8 @@
 #define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
 #define __iwe_on()                  __exec_ctrls.proc.iwe
 
+#define __db_check_pending()       vmx_db_check_pending()
+
 /*
 ** MSRs and IOs
 */

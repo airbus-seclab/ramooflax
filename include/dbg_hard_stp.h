@@ -39,7 +39,6 @@ typedef union dbg_hardware_singlestep_status
 
 typedef struct dbg_hardware_singlestep_context
 {
-   cr3_reg_t cr3;
    msr_t     sysenter_cs;
    /* XXX: need syscall/sysret support too */
 

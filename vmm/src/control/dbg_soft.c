@@ -23,7 +23,7 @@ extern info_data_t *info;
 
 static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
 {
-   if(!ctrl_mem_write(bp->addr, &bp->byte, 1))
+   if(!ctrl_mem_write_with(&bp->cr3, bp->addr, &bp->byte, 1))
    {
       debug(DBG_SOFT, "restore insn @ 0x%X failed\n", bp->addr);
       return VM_FAIL;
@@ -34,11 +34,11 @@ static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
    return VM_DONE;
 }
 
-static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp, cr3_reg_t *cr3)
+static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp)
 {
    uint8_t brk_insn = BREAKPOINT_INSN;
 
-   if(!ctrl_mem_write_with(cr3, bp->addr, &brk_insn, 1))
+   if(!ctrl_mem_write_with(&bp->cr3, bp->addr, &brk_insn, 1))
    {
       debug(DBG_SOFT, "restore soft bp @ 0x%X failed\n", bp->addr);
       return VM_FAIL;
@@ -65,7 +65,7 @@ static int dbg_soft_restore_bp(dbg_soft_bp_t *bp, void __unused__ *arg)
    if(dbg_soft_resuming() && bp->addr == info->vmm.ctrl.dbg.evt.addr)
       return VM_IGNORE;
 
-   return __dbg_soft_restore_bp(bp, info->vmm.ctrl.active_cr3);
+   return __dbg_soft_restore_bp(bp);
 }
 
 static int __dbg_soft_del_bp(dbg_soft_bp_t *bp, void __unused__ *arg)
@@ -91,10 +91,11 @@ static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
 
    if(!bp->sts.on)
    {
-      bp->addr   = addr;
-      bp->sts.on = 1;
+      bp->addr    = addr;
+      bp->sts.on  = 1;
+      bp->cr3.raw = info->vmm.ctrl.active_cr3->raw;
 
-      if(!ctrl_mem_read(addr, &bp->byte, 1))
+      if(!ctrl_mem_read_with(&bp->cr3, addr, &bp->byte, 1))
       {
 	 debug(DBG_SOFT, "set soft bp @ 0x%X failed\n", addr);
 	 return VM_FAIL;
@@ -246,9 +247,9 @@ int dbg_soft_resume()
    return 0;
 }
 
-int dbg_soft_resume_post(cr3_reg_t *cr3)
+int dbg_soft_resume_post()
 {
-   if(__dbg_soft_restore_bp(info->vmm.ctrl.dbg.evt.soft, cr3) == VM_DONE)
+   if(__dbg_soft_restore_bp(info->vmm.ctrl.dbg.evt.soft) == VM_DONE)
    {
       dbg_soft_set_resume(0);
       return 1;

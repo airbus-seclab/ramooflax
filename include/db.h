@@ -24,13 +24,13 @@
 #include <svm_exit.h>
 #else
 #include <vmx_exit.h>
+#include <vmx_exit_db.h>
 #endif
 #endif
 
 /*
 ** Functions
 */
-void  db_check_pending();
-void  db_check_pending_stp();
+void db_check_pending();
 
 #endif

@@ -23,7 +23,7 @@
 /*
 ** Functions
 */
-void  vmx_check_pending_db();
-void  vmx_check_dbgctl();
+void vmx_db_check_pending();
+void vmx_check_dbgctl();
 
 #endif

@@ -32,6 +32,8 @@ int __ctrl_evt_excp_dbg(uint32_t vector)
    if(!(info->vmm.ctrl.dbg.excp & (1<<vector)))
       return VM_IGNORE;
 
+   debug(CTRL_EVT, "ctrl dbg excp\n");
+
    switch(vector)
    {
    case DB_EXCP: return dbg_evt_hard();
@@ -52,6 +54,7 @@ static int __ctrl_evt_excp_user(uint32_t vector)
       arg_t arg;
       arg.low = vector;
       ctrl_evt_setup(CTRL_EVT_TYPE_EXCP, 0, arg);
+      debug(CTRL_EVT, "ctrl usr excp\n");
    }
 
    /* force vmm to inject exception */
@@ -74,6 +77,8 @@ static int __ctrl_evt_excp_vmm(uint32_t vector)
 {
    if(!(info->vm.cpu.dflt_excp & (1<<vector)))
       return VM_IGNORE;
+
+   debug(CTRL_EVT, "ctrl vmm excp\n");
 
    switch(vector)
    {

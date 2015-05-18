@@ -106,11 +106,13 @@ int  __ctrl_active_cr3_check(int);
 
 #define ctrl_active_cr3_check()   __ctrl_active_cr3_check(3)
 
-#define ctrl_mem_read(_a,_d,_l)   __vm_read_mem(info->vmm.ctrl.active_cr3, _a, _d, _l)
-#define ctrl_mem_write(_a,_d,_l)  __vm_write_mem(info->vmm.ctrl.active_cr3, _a, _d, _l)
-#define ctrl_mem_write_with(_c,_a,_d,_l)  __vm_write_mem(_c, _a, _d, _l)
+#define ctrl_mem_read(_a,_d,_l)   __vm_read_mem(info->vmm.ctrl.active_cr3,_a,_d,_l)
+#define ctrl_mem_write(_a,_d,_l)  __vm_write_mem(info->vmm.ctrl.active_cr3,_a,_d,_l)
 
-#define ctrl_mem_send(_a,_l)      __vm_send_mem(info->vmm.ctrl.active_cr3, _a, _l)
-#define ctrl_mem_recv(_a,_l)      __vm_recv_mem(info->vmm.ctrl.active_cr3, _a, _l)
+#define ctrl_mem_read_with(_c,_a,_d,_l)   __vm_read_mem(_c,_a,_d,_l)
+#define ctrl_mem_write_with(_c,_a,_d,_l)  __vm_write_mem(_c,_a,_d,_l)
+
+#define ctrl_mem_send(_a,_l)      __vm_send_mem(info->vmm.ctrl.active_cr3,_a,_l)
+#define ctrl_mem_recv(_a,_l)      __vm_recv_mem(info->vmm.ctrl.active_cr3,_a,_l)
 
 #endif

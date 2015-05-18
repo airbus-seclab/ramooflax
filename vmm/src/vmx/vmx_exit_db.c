@@ -24,17 +24,91 @@
 
 extern info_data_t *info;
 
-void vmx_check_pending_db()
+/* Vol 3C Sections 26.6.3, 32.2, 25.5.2, 26.5.2
+**
+** no pending DB delivered after vm entry if:
+** - vm entry is vectoring external int, nmi, hard excp, soft pvl excp
+** - no mov ss and vectoring soft int or soft excp
+** - vm entry is not vectoring, activity == shutdown or wait sipi
+*/
+static int vmx_db_pending_discarded()
 {
-   /*
-   ** XXX: cf. Vol 3C. 26.6.3, 32.2, 25.5.2, 26.5.2
-   ** - pending #DB
-   ** - pending MTF
-   **
-   ** we should not exactly follow manual
-   ** in case of gdbstub wanted #DB
-   */
-   db_check_pending();
+   if(!vm_entry_ctrls.int_info.v)
+   {
+      vmcs_read(vm_state.activity);
+      if(vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SHUTDOWN ||
+	 vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SIPI)
+	 return 1;
+   }
+   else
+   {
+      switch(vm_entry_ctrls.int_info.type)
+      {
+      case VMCS_EVT_INFO_TYPE_NMI:
+      case VMCS_EVT_INFO_TYPE_HW_INT:
+      case VMCS_EVT_INFO_TYPE_HW_EXCP:
+      case VMCS_EVT_INFO_TYPE_PS_EXCP:
+	 return 1;
+
+      case VMCS_EVT_INFO_TYPE_SW_INT:
+      case VMCS_EVT_INFO_TYPE_SW_EXCP:
+	 vmcs_read(vm_state.interrupt);
+	 if(!vm_state.interrupt.mss)
+	    return 1;
+      }
+   }
+
+   return 0;
+}
+
+/*
+** if we filter #DB, vmx_exit_excp() will update dr6
+** if we don't, the cpu will do it as normal
+*/
+static int vmx_db_check_pending_stp()
+{
+   if(!vm_state.rflags.tf)
+      return VM_IGNORE;
+
+   __rflags.tf = 0;
+   __post_access(__rflags);
+
+   return VM_DONE;
+}
+
+/*
+** Hardware exec traps are checked before
+** insn execution. But hardware data, i/o
+** and single-step traps are checked after.
+**
+** If we emulated an insn, we may loose
+** a #DB condition, so take care here.
+**
+** We do not inject #DB, we use pending db
+*/
+static int vmx_db_check_pending_any()
+{
+   if(!__vmexit_on_insn())
+      return VM_IGNORE;
+
+   /* XXX: missing data/io */
+   if(vmx_db_check_pending_stp() == VM_DONE)
+   {
+      vm_state.dbg_excp.bs = 1;
+      vmcs_dirty(vm_state.dbg_excp);
+   }
+
+   return VM_DONE;
+}
+
+void vmx_db_check_pending()
+{
+   vmcs_read(vm_state.dbg_excp);
+
+   vmx_db_check_pending_any();
+
+   if((vm_state.dbg_excp.be || vm_state.dbg_excp.bs) && vmx_db_pending_discarded())
+      debug(VMX_DB, "lost pending #DB\n");
 }
 
 /*

@@ -136,7 +136,7 @@ static void vmx_vmexit_pre_hdl()
 
 static void vmx_vmexit_post_hdl(raw64_t tsc)
 {
-   vmx_check_pending_db();
+   vmx_db_check_pending();
 
    if(controller() & (VM_FAIL|VM_FAULT))
       vmx_vmexit_failure();

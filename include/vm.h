@@ -60,6 +60,7 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 #include <dev_pic.h>
 #include <dev_uart.h>
 #include <disasm.h>
+#include <pci.h>
 
 /*
 ** General VM settings
