@@ -23,4 +23,4 @@ from event import StopReason, IdtEvent
 from log   import Log, log
 from os    import OSFactory, OSAffinity
 from addr_space import AddrSpace, Page, Pde, Pte, PageTable, PageDirectory, PgMsk, Mapping
-from utils import in_completer, revert_string_bytes, stackdump, backtrace, disassemble
+from utils import in_completer, revert_string_bytes, stackdump, backtrace, disassemble, pytrace

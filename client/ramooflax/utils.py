@@ -21,6 +21,16 @@ import inspect, struct
 def in_completer():
     return (inspect.stack()[3][3] == "attr_matches")
 
+def pytrace():
+    trace = []
+    for stk in inspect.stack()[::-1][1:-2]:
+        fil = stk[1].split('/')[-1]
+        lin = stk[2]
+        fct = stk[3]
+        cod = stk[4][0][:-1].strip()
+        trace.append("from %s:%s: in %s(): %s" % (fil,lin,fct,cod))
+    return trace
+
 def revert_string_bytes(s):
     rs = []
     for i in range(len(s)/2):
