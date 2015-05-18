@@ -58,8 +58,6 @@ int __gdb_preempt(uint8_t reason)
 
 int gdb_preempt(uint8_t reason)
 {
-   /* check if we have a request to process first */
-   gdb_recv_packet();
    return __gdb_preempt(reason);
 }
 
