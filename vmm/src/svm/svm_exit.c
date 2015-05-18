@@ -30,8 +30,8 @@
 #include <insn.h>
 #include <paging.h>
 #include <emulate.h>
-#include <db.h>
 #include <ctrl.h>
+#include <db.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -96,6 +96,7 @@ static void svm_vmexit_tsc_rebase(raw64_t tsc)
 static void svm_vmexit_pre_hdl()
 {
    svm_vmsave(&info->vm.cpu.vmc->vm_vmcb);
+
    info->vm.cpu.gpr->rax.raw = vm_state.rax.raw;
    info->vm.cpu.gpr->rsp.raw = vm_state.rsp.raw;
 
@@ -104,7 +105,8 @@ static void svm_vmexit_pre_hdl()
 
 static void svm_vmexit_post_hdl(raw64_t tsc)
 {
-   db_check_stp();
+   db_check_pending();
+
    if(controller() & (VM_FAIL|VM_FAULT))
       svm_vmexit_failure();
 

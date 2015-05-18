@@ -267,10 +267,12 @@
 #define __inject_exception(a,b,c)   __svm_vmexit_inject_exception(a,b,c)
 #define __inject_intr(a)            __svm_vmexit_inject_interrupt(a)
 
-#define __interrupt_shadow         (__ctrls.int_shadow)
+#define __interrupt_shadow         (__ctrls.int_shadow.raw)
 #define __interrupts_on()          (__rflags.IF)
-#define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow.low)
+#define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
 #define __iwe_on()                 (__ctrls.int_ctrl.v_irq)
+
+#define __db_check_pending()       db_check_pending()
 
 /*
 ** MSRs and IOs
