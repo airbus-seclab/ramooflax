@@ -31,6 +31,8 @@ class Page(object):
         self.vaddr = vaddr
         self.paddr = paddr
         self.size  = size
+        self.u = u
+        self.w = w
 
         if size == (4<<10):
             self.ssize = "4KB"
@@ -48,7 +50,7 @@ class Page(object):
             self.mode = "kernel"
 
     def __str__(self):
-        return "vaddr 0x%.8x paddr 0x%.8x %s %s (%s)\n" % \
+        return "vaddr 0x%.8x paddr 0x%.8x %s %s (%s)" % \
             (self.vaddr, self.paddr, self.right, self.mode, self.ssize)
 
 class PteBase(object):
@@ -88,6 +90,11 @@ class PageTable(object):
             return None
         return self.pte[i].page
 
+    def dump(self):
+        for p in self:
+            if p is not None:
+                print p
+
 class Pde(PteBase):
     def __init__(self, vm, vaddr, val):
         PteBase.__init__(self, val)
@@ -119,6 +126,15 @@ class PageDirectory(object):
         if self.pde[i].large:
             return self.pde[i].page
         return self.pde[i].ptb
+
+    def dump(self):
+        for p in self:
+            if p is None:
+                continue
+            if isinstance(p, Page):
+                print p
+            else:
+                p.dump()
 
 class MemRange(object):
     def __init__(self, pg):
@@ -194,3 +210,22 @@ class AddrSpace(object):
         for m in self.map:
             s += str(m)
         return s
+
+    def dump(self):
+        self.pgd.dump()
+
+    def search_paddr(self, paddr):
+        plist = []
+        def add(p):
+            if p.paddr <= paddr and p.paddr+p.size > paddr:
+                plist.append(p)
+        for p in self.pgd:
+            if p is None:
+                continue
+            if isinstance(p,Page):
+                add(p)
+            else:
+                for pg in p:
+                    if pg is not None:
+                        add(pg)
+        return plist
