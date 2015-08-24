@@ -31,8 +31,8 @@ class Page(object):
         self.vaddr = vaddr
         self.paddr = paddr
         self.size  = size
-        self.u = u
-        self.w = w
+        self.__u = u
+        self.__w = w
 
         if size == (4<<10):
             self.ssize = "4KB"
@@ -47,7 +47,13 @@ class Page(object):
         if u:
             self.mode = "user"
         else:
-            self.mode = "kernel"
+            self.mode = "krnl"
+
+    def user(self):
+        return self.__u != 0
+
+    def rw(self):
+        return self.__w != 0
 
     def __str__(self):
         return "vaddr 0x%.8x paddr 0x%.8x %s %s (%s)" % \
@@ -214,11 +220,17 @@ class AddrSpace(object):
     def dump(self):
         self.pgd.dump()
 
-    def search_paddr(self, paddr):
+    # search with criterion ie. user=(None,True,False)
+    def search_paddr(self, paddr, user=None, rw=None):
         plist = []
         def add(p):
             if p.paddr <= paddr and p.paddr+p.size > paddr:
+                if user is not None and user != p.user():
+                    return
+                if rw is not None and rw != p.rw():
+                    return
                 plist.append(p)
+
         for p in self.pgd:
             if p is None:
                 continue
