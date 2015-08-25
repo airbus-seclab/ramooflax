@@ -220,24 +220,39 @@ class AddrSpace(object):
     def dump(self):
         self.pgd.dump()
 
-    # search with criterion ie. user=(None,True,False)
-    def search_paddr(self, paddr, user=None, rw=None):
-        plist = []
-        def add(p):
-            if p.paddr <= paddr and p.paddr+p.size > paddr:
-                if user is not None and user != p.user():
-                    return
-                if rw is not None and rw != p.rw():
-                    return
-                plist.append(p)
+    # all page tables
+    def iter_pagetables(self):
+        for p in self.pgd:
+            if isinstance(p,PageTable):
+                yield p
+
+    # all pages, with constraints
+    # - user = None, True, False
+    # - rw   = None, True, False
+    # - addr = None, physical address covered by a page
+    # - size = None, 4<<12, 4<<20
+    def iter_pages(self, addr=None, user=None, rw=None, size=None):
+        def __valid(p):
+            if p is None:
+                return False
+            if addr is not None and not (p.paddr <= addr < p.paddr + p.size):
+                return False
+            if user is not None and user != p.user():
+                return False
+            if rw is not None and rw != p.rw():
+                return False
+            if size is not None and size != p.size:
+                return False
+            return True
 
         for p in self.pgd:
-            if p is None:
-                continue
-            if isinstance(p,Page):
-                add(p)
-            else:
+            if isinstance(p,PageTable):
                 for pg in p:
-                    if pg is not None:
-                        add(pg)
-        return plist
+                    if __valid(pg):
+                        yield pg
+            elif __valid(p):
+                yield p
+
+    # search with criterion ie. user=(None,True,False)
+    def search_paddr(self, paddr, user=None, rw=None):
+        return list(self.iter_pages(paddr,user,rw))
