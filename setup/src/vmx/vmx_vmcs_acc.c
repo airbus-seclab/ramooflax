@@ -191,7 +191,9 @@ void vmx_vmcs_commit()
    vmcs_force_flush(vm_state.smbase);
 #endif
    vmcs_force_flush(vm_state.ia32_sysenter_cs);
-   vmcs_force_flush(vm_state.preempt_timer);
+
+   if(info->vm.vmx_fx_pin.allow_1.preempt)
+      vmcs_force_flush(vm_state.preempt_timer);
 
    vmcs_force_flush(vm_host_state.ia32_sysenter_cs);
 
