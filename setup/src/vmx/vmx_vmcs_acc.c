@@ -104,8 +104,13 @@ void vmx_vmcs_commit()
    vmcs_force_flush(vm_exec_ctrls.executive_vmcs_ptr);
 #endif
    vmcs_force_flush(vm_exec_ctrls.tsc_offset);
-   vmcs_force_flush(vm_exec_ctrls.vapic_addr);
-   vmcs_force_flush(vm_exec_ctrls.apic_addr);
+
+   if(info->vm.vmx_fx_proc.allow_1.tprs)
+      vmcs_force_flush(vm_exec_ctrls.vapic_addr);
+
+   if(info->vm.vmx_fx_proc2.allow_1.vapic)
+      vmcs_force_flush(vm_exec_ctrls.apic_addr);
+
    vmcs_force_flush(vm_exec_ctrls.eptp);
 
    vmcs_force_flush(vm_state.vmcs_link_ptr);
