@@ -57,6 +57,13 @@ static int gdbstub_evt_npf(arg_t __unused__ arg)
    return VM_DONE;
 }
 
+static int gdbstub_evt_hyp(arg_t __unused__ arg)
+{
+   debug(GDBSTUB_EVT, "preempt(hyp)\n");
+   gdb_preempt(GDB_EXIT_HYP);
+   return VM_DONE;
+}
+
 ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
    gdbstub_evt_cr_rd,
    gdbstub_evt_cr_wr,
@@ -64,4 +71,5 @@ ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
    gdbstub_evt_trap,
    gdbstub_evt_trap,
    gdbstub_evt_npf,
+   gdbstub_evt_hyp,
 };

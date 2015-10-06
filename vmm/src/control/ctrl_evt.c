@@ -134,6 +134,13 @@ int ctrl_evt_npf()
    return VM_DONE;
 }
 
+int ctrl_evt_hypercall()
+{
+   arg_t arg = {.raw = 0};
+   ctrl_evt_setup(CTRL_EVT_TYPE_HYP, 0, arg);
+   return VM_DONE;
+}
+
 int ctrl_evt_setup(uint8_t type, ctrl_evt_hdl_t hdl, arg_t arg)
 {
    info->vmm.ctrl.event.type = type;

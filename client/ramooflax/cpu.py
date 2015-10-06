@@ -229,6 +229,12 @@ class CPU:
     def release_npf(self):
         self.__filter.unregister(event.StopReason.npf)
 
+    def filter_hypercall(self, hdl):
+        self.__filter.register(event.StopReason.hyp, hdl)
+
+    def release_hypercall(self):
+        self.__filter.unregister(event.StopReason.hyp)
+
     def code_location(self):
         return self.__segmem_location(self.sr.cs, self.gpr.pc)
 

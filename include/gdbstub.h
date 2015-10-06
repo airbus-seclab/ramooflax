@@ -68,6 +68,7 @@
 #define GDB_EXIT_HARD_INT   50
 #define GDB_EXIT_SOFT_INT   51
 #define GDB_EXIT_NPF        52
+#define GDB_EXIT_HYP        53
 
 /*
 ** GDB stub Data structures

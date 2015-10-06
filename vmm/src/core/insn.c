@@ -20,6 +20,7 @@
 #include <emulate.h>
 #include <emulate_int.h>
 #include <intr.h>
+#include <ctrl.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -27,7 +28,8 @@ extern info_data_t *info;
 
 int resolve_hypercall()
 {
-   return VM_FAIL;
+   ctrl_evt_hypercall();
+   return emulate_done(VM_DONE, max(__insn_sz(), HYPERCALL_INSN_SZ));
 }
 
 int resolve_invd()
