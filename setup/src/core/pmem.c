@@ -81,37 +81,42 @@ static inline offset_t pmem_vm_pg_alloc(vm_t *vm, offset_t area, pg_cnt_t *pg)
    return area;
 }
 
-/*
-** vmm uses 1GB/2MB pages if possible
-** vm uses fine-grain paging
-*/
 static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
 {
-   vmm->pdp = pdp_nr(info->hrd.mem.top - 1) + 1;
-   vm->pdp  = vmm->pdp;
+   size_t max_pdp, max_pd, max_pt;
+
+   max_pdp = pdp_nr(info->hrd.mem.top  - 1) + 1;
+   max_pd  = pd64_nr(info->hrd.mem.top - 1) + 1;
+   max_pt  = pt64_nr(info->hrd.mem.top - 1) + 1;
+
+   /* VMM uses 1GB/2MB pages if possible */
+   vmm->pdp = max_pdp;
 
    if(info->vmm.cpu.skillz.pg_1G)
       vmm->pd = 0;
    else
-      vmm->pd = pd64_nr(info->hrd.mem.top - 1) + 1;
+      vmm->pd = max_pd;
+
+   vmm->pt = 0;
+
+   /* VM uses fine-grain paging */
+   vm->pdp = max_pdp;
 
    if(info->vm.cpu.skillz.pg_1G)
       vm->pd = 2;
    else
-      vm->pd = vmm->pd;
-
-   vmm->pt = 0;
+      vm->pd = max_pd;
 
    if(info->vm.cpu.skillz.pg_2M)
       vm->pt = 2;
    else
-      vm->pt = pt64_nr(info->hrd.mem.top - 1) + 1;
+      vm->pt = max_pt;
 
    debug(PMEM,
-	 "vmm needs %d pd and %d pt\n"
-	 "vm  needs %d pd and %d pt\n"
-	 , vmm->pd, vmm->pt
-	 , vm->pd, vm->pt);
+	 "vmm needs %D pd and %D pt\n"
+	 "vm  needs %D pd and %D pt\n"
+	 ,vmm->pd, vmm->pt
+	 ,vm->pd, vm->pt);
 }
 
 static int pmem_pool_opt_hdl(char *str, void *arg)
