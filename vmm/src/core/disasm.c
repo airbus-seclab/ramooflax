@@ -25,15 +25,35 @@ extern info_data_t *info;
 
 static int __get_insn(offset_t *vaddr, int *mode)
 {
+   size_t insn_sz = sizeof(info->vm.cpu.insn_cache);
+
    vm_get_code_addr(vaddr, 0, mode);
 
-   if(!vm_read_mem(*vaddr, info->vm.cpu.insn_cache, sizeof(info->vm.cpu.insn_cache)))
+   /*
+   ** vm_read_mem() may fail if next page is not mapped:
+   **
+   ** 1 - the insn is big and located between 2 pages.
+   ** This is an error because the OS should have mapped the necessary
+   ** pages. However, the disasm engine should tell us (next step) it failed
+   ** disassembling such an insn (partial bytes)
+   **
+   ** 2 - the insn is short and located at the end of a page
+   ** (less than 15 bytes from page end) so that we can't read 15 bytes.
+   ** This is not an error and vm_read_mem() may have successfully read
+   ** bytes in the current page (VM_PARTIAL). Which will be enough to
+   ** correctly disasm the insn.
+   **
+   ** In any case, the disasm engine will raise the error if any.
+   */
+   if(vm_read_mem(*vaddr
+		  ,info->vm.cpu.insn_cache
+		  ,sizeof(info->vm.cpu.insn_cache)) == VM_FAIL)
    {
       debug(DIS, "cannot retrieve insn !\n");
-      return 0;
+      return VM_FAIL;
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 int disassemble(ud_t *disasm)

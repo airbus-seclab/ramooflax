@@ -25,7 +25,7 @@ extern info_data_t *info;
 
 static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 {
-   if(!vm_write_mem(io->dst.linear, io->src.u8, sz->miss))
+   if(vm_write_mem(io->dst.linear, io->src.u8, sz->miss) != VM_DONE)
    {
       debug(DEV_IO, "io fwd ins: vm_write_mem() fail\n");
       return 0;
@@ -39,7 +39,7 @@ static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 
 static int __io_insn_string_out_fwd(io_insn_t *io, io_size_t *sz)
 {
-   if(!vm_read_mem(io->src.linear, io->dst.u8, sz->miss))
+   if(vm_read_mem(io->src.linear, io->dst.u8, sz->miss) != VM_DONE)
    {
       debug(DEV_IO, "io fwd outs: vm_read_mem() fail\n");
       return 0;

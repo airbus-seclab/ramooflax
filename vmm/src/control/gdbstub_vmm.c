@@ -252,7 +252,7 @@ static void __gdb_vmm_rw_pmem(offset_t addr, size_t sz, uint8_t wr)
    access.len  = sz;
    access.wr   = wr;
 
-   if(!__vm_remote_access_pmem(&access))
+   if(__vm_remote_access_pmem(&access) == VM_FAIL)
    {
       debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
@@ -503,7 +503,7 @@ static void gdb_vmm_npg_translate(uint8_t *data, size_t len)
 
    debug(GDBSTUB_CMD, "(nested) translating 0x%X\n", paddr);
 
-   if(!npg_walk(paddr, &saddr))
+   if(npg_walk(paddr, &saddr) != VM_DONE)
    {
       debug(GDBSTUB, "(nested) memory translation failure\n");
       gdb_err_mem();

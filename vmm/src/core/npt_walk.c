@@ -44,7 +44,7 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pml4e))
    {
       debug(PG_W, "pml4e not present\n");
-      return 0;
+      return VM_FAIL;
    }
 
    pdpe = &pg->pdp[pml4_idx(vaddr)][pdp_idx(vaddr)];
@@ -53,7 +53,7 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pdpe))
    {
       debug(PG_W, "pdpe not present\n");
-      return 0;
+      return VM_FAIL;
    }
 
    if(info->vm.cpu.skillz.pg_1G && npg_large(pdpe))
@@ -69,7 +69,7 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pde))
    {
       debug(PG_W, "pde not present\n");
-      return 0;
+      return VM_FAIL;
    }
 
    if(info->vm.cpu.skillz.pg_2M && npg_large(pde))
@@ -85,12 +85,12 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pte))
    {
       debug(PG_W, "pte not present\n");
-      return 0;
+      return VM_FAIL;
    }
 
    *paddr = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
 
 __success:
    debug(PG_W, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, *paddr);
-   return 1;
+   return VM_DONE;
 }

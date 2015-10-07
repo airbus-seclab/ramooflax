@@ -95,7 +95,7 @@ int __vm_local_resolve_pmem(vm_access_t __unused__ *access)
    ** - segment valid
    ** - align check
    */
-   return 1;
+   return VM_DONE;
 }
 
 int __vm_local_access_pmem(vm_access_t *access)
@@ -103,10 +103,10 @@ int __vm_local_access_pmem(vm_access_t *access)
    loc_t src, dst;
 
    if(vmm_area_range(access->addr, access->len))
-      return 0;
+      return VM_FAIL;
 
-   if(!__vm_local_resolve_pmem(access))
-      return 0;
+   if(__vm_local_resolve_pmem(access) != VM_DONE)
+      return VM_FAIL;
 
    if(access->wr)
    {
@@ -120,7 +120,7 @@ int __vm_local_access_pmem(vm_access_t *access)
    }
 
    memcpy(dst.addr, src.addr, access->len);
-   return 1;
+   return VM_DONE;
 }
 
 int __vm_remote_access_pmem(vm_access_t *access)
@@ -129,17 +129,17 @@ int __vm_remote_access_pmem(vm_access_t *access)
    size_t done, len;
 
    if(vmm_area_range(access->addr, access->len))
-      return 0;
+      return VM_FAIL;
 
-   if(!__vm_local_resolve_pmem(access))
-      return 0;
+   if(__vm_local_resolve_pmem(access) != VM_DONE)
+      return VM_FAIL;
 
    loc.linear = access->addr;
 
    if(access->wr)
    {
       ctrl_io_write(loc.u8, access->len);
-      return 1;
+      return VM_DONE;
    }
 
    len = access->len;
@@ -150,42 +150,48 @@ int __vm_remote_access_pmem(vm_access_t *access)
       len -= done;
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 int __vm_access_mem(vm_access_t *access)
 {
    offset_t vaddr, nxt;
-   size_t   psz, len;
+   size_t   psz, len, olen;
 
    if(!access->len)
-      return 1;
+      return VM_DONE;
 
    if(!__paging())
       return access->operator(access);
 
    vaddr = access->addr;
-   len   = access->len;
+   olen = len = access->len;
 
    while(len)
    {
       if(!__pg_walk(access->cr3, vaddr, &access->addr, &psz, 1))
       {
 	 debug(VM_ACCESS, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
-	 return 0;
+	 goto __vm_access_error;
       }
 
       nxt = __align_next(vaddr, psz);
       access->len = min(len, (nxt - vaddr));
 
       if(!access->operator(access))
-	 return 0;
+	 goto __vm_access_error;
 
       len  -= access->len;
       vaddr = nxt;
    }
 
-   return 1;
+   return VM_DONE;
+
+__vm_access_error:
+   if(len != olen)
+      return VM_PARTIAL;
+
+   return VM_FAIL;
 }
 
 int __vm_recv_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
@@ -280,7 +286,7 @@ int vm_enter_pmode()
    __allow_soft_int();
    __allow_io_range(KBD_START_PORT, KBD_END_PORT);
 
-   return 1;
+   return VM_DONE;
 }
 
 int vm_enter_rmode()
@@ -291,7 +297,7 @@ int vm_enter_rmode()
    __deny_soft_int();
    __deny_io_range(KBD_START_PORT, KBD_END_PORT);
 
-   return 1;
+   return VM_DONE;
 }
 
 void vm_setup_npg(int who)
@@ -308,10 +314,10 @@ int vm_pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
    if(!__paging())
    {
       debug(VM, "walk while paging disabled !\n");
-      return 0;
+      return VM_FAIL;
    }
 
-   return __pg_walk(&__cr3, vaddr, paddr, psz, 1);
+   return (__pg_walk(&__cr3, vaddr, paddr, psz, 1) ? VM_DONE : VM_FAIL);
 }
 
 /*
@@ -322,8 +328,8 @@ int vm_full_walk(offset_t vaddr, offset_t *paddr)
    size_t   sz;
    offset_t gp;
 
-   if(vm_pg_walk(vaddr, &gp, &sz))
+   if(vm_pg_walk(vaddr, &gp, &sz) == VM_DONE)
       return npg_walk(gp, paddr);
 
-   return 0;
+   return VM_FAIL;
 }

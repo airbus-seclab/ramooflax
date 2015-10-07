@@ -31,6 +31,7 @@
 #define VM_NATIVE            (1<<4)
 #define VM_IGNORE            (1<<5)
 #define VM_INTERN            (1<<6)
+#define VM_PARTIAL           (1<<7)
 
 /*
 ** VM architecture dependant stuff

@@ -173,7 +173,7 @@ int vmx_vmexit_resolve_dt()
 	 rc = __vmx_vmexit_sidt(&dt_reg);
 
       dt_reg.base.raw &= op_msk;
-      if(!vm_write_mem(dt_addr, (uint8_t*)&dt_reg, sz))
+      if(vm_write_mem(dt_addr, (uint8_t*)&dt_reg, sz) != VM_DONE)
       {
 	 debug(VMX_DT, "could not write vm mem @0x%X\n", dt_addr);
 	 return VM_FAIL;
@@ -181,7 +181,7 @@ int vmx_vmexit_resolve_dt()
    }
    else
    {
-      if(!vm_read_mem(dt_addr, (uint8_t*)&dt_reg, sz))
+      if(vm_read_mem(dt_addr, (uint8_t*)&dt_reg, sz) != VM_DONE)
       {
 	 debug(VMX_DT, "could not read vm mem @0x%X\n", dt_addr);
 	 return VM_FAIL;
