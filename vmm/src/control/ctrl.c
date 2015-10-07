@@ -64,6 +64,10 @@ static void ctrl_traps_disable()
 
 static void ctrl_traps()
 {
+#ifdef CONFIG_CTRL_DBG
+   int up=ctrl_traps_updated();
+#endif
+
    if(__ctrl_active_cr3_check(0))
    {
       if(!ctrl_traps_enabled() || ctrl_traps_updated())
@@ -71,6 +75,14 @@ static void ctrl_traps()
    }
    else if(ctrl_traps_enabled() || ctrl_traps_updated())
       ctrl_traps_disable();
+
+#ifdef CONFIG_CTRL_DBG
+   if(up)
+      debug(CTRL, "ctrl traps state: en:%d hw:%d stp:%d soft:%d\n"
+	    ,ctrl_traps_enabled()
+	    ,!dbg_hard_brk_disarmed(), dbg_hard_stp_enabled()
+	    ,!dbg_soft_disarmed());
+#endif
 }
 
 int __ctrl_active_cr3_check(int rpl)
