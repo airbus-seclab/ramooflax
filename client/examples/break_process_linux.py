@@ -2,20 +2,25 @@
 #
 # We are looking for "break" running under debian
 #
-from ramooflax import VM, CPUFamily, OSFactory, OSAffinity, log
+from ramooflax import VM, CPUFamily, OSFactory, OSAffinity, log, Log
 
 # Some offsets for debian 2.6.32-5-486 kernel
-settings = {"thread_size":8192, "comm":540, "next":240, "mm":268, "pgd":36}
+#settings = {"thread_size":8192, "comm":540, "next":240, "mm":268, "pgd":36}
+
+# Some offsets for kernel 3.4.1
+settings = {"thread_size":8192, "comm":0x1cc, "next":0xc0, "mm":0xc8, "pgd":0x24}
+
 os = OSFactory(OSAffinity.Linux26, settings)
 hook = os.find_process_filter("break")
 
 # create logging for this script
-log.setup(info=True, fail=True)
+log.setup(info=(True,Log.blue), fail=(True,Log.red),
+          brk=True, gdb=True, vm=True, evt=True)
 
 #
 # Main
 #
-vm = VM(CPUFamily.AMD, "192.168.254.254:1234")
+vm = VM(CPUFamily.Intel, "172.16.131.128:1337")
 
 vm.attach()
 vm.stop()
@@ -26,7 +31,7 @@ while not vm.resume():
 
 vm.cpu.breakpoints.remove(1)
 vm.cpu.set_active_cr3(os.get_process_cr3(), affinity=OSAffinity.Linux26)
-log("foo", "found break process")
+log("info", "found break process")
 
 #
 # Breakpoints handling
