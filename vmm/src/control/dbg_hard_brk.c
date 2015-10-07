@@ -140,12 +140,16 @@ int dbg_hard_brk_resume()
 
 void dbg_hard_brk_disarm()
 {
+   dbg_hard_brk_set_disarm(1);
+
    __dr7.low &= 0x100;
    __post_access(__dr7);
 }
 
 void dbg_hard_brk_rearm()
 {
+   dbg_hard_brk_set_disarm(0);
+
    __dr7.low = info->vmm.ctrl.dbg.hard.brk.dr7.low;
    __post_access(__dr7);
 }

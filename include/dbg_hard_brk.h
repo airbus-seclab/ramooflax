@@ -29,8 +29,9 @@ typedef union dbg_hardware_breakpoints_status
 {
    struct
    {
-      uint8_t    on:1;      /*      hard breakpoints installed */
       uint8_t    insn:1;    /* insn hard breakpoints installed */
+      uint8_t    on:1;      /*      hard breakpoints installed */
+      uint8_t    dis:1;     /*      hard breakpoints disarmed  */
       uint8_t    rf:1;      /* saved vm rflags.rf */
 
    } __attribute__((packed));
@@ -84,8 +85,10 @@ typedef struct dbg_hardware_breakpoints
 #define dbg_hard_brk_enabled()             (___hbrk.sts.on)
 #define dbg_hard_brk_insn_enabled()        (___hbrk.sts.insn)
 #define dbg_hard_brk_saved_rf()            (___hbrk.sts.rf)
+#define dbg_hard_brk_disarmed()            (___hbrk.sts.dis)
 
 #define dbg_hard_brk_set_enable(_x)        (___hbrk.sts.on=(_x))
+#define dbg_hard_brk_set_disarm(_x)        (___hbrk.sts.dis=(_x))
 #define dbg_hard_brk_insn_set_enable(_x)   (___hbrk.sts.insn=(_x))
 #define dbg_hard_brk_save_rf(_x)           (___hbrk.sts.rf=(_x))
 #define dbg_hard_brk_set_hdlr(_n,_h)       (___hbrk.hdlr[(_n)]=(_h))
