@@ -50,7 +50,7 @@
 	 CPUID_EDX_EXT_PROC_FEAT_LM;					\
       cpuid_ext_proc_feat(c,d);						\
       if((d & efeat) != efeat)						\
-	 panic("cpu not skilled enough: pse %d pae %d pat %d lm %d",	\
+	 panic("AMD cpu not skilled enough: pse %d pae %d pat %d lm %d", \
 	       (d&CPUID_EDX_EXT_PROC_FEAT_PSE)?1:0,			\
 	       (d&CPUID_EDX_EXT_PROC_FEAT_PAE)?1:0,			\
 	       (d&CPUID_EDX_EXT_PROC_FEAT_PAT)?1:0,			\
