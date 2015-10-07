@@ -91,12 +91,14 @@ static int vmx_db_check_pending_any()
    if(!__vmexit_on_insn())
       return VM_IGNORE;
 
-   /* XXX: missing data/io */
    if(vmx_db_check_pending_stp() == VM_DONE)
    {
+      debug(VMX_DB, "pending #DB: set stp\n");
       vm_state.dbg_excp.bs = 1;
       vmcs_dirty(vm_state.dbg_excp);
    }
+
+   /* XXX: missing data/io */
 
    return VM_DONE;
 }
@@ -108,7 +110,7 @@ void vmx_db_check_pending()
    vmx_db_check_pending_any();
 
    if((vm_state.dbg_excp.be || vm_state.dbg_excp.bs) && vmx_db_pending_discarded())
-      debug(VMX_DB, "lost pending #DB\n");
+      debug(VMX_DB, "pending #DB: lost one\n");
 }
 
 /*
@@ -119,6 +121,15 @@ void vmx_check_dbgctl()
    vmcs_read(vm_state.activity);
    vmcs_read(vm_state.interrupt);
 
+#ifdef CONFIG_VMX_DB_DBG
+   vmcs_read(vm_state.dbg_excp);
+
+   if(vm_state.dbg_excp.be || vm_state.dbg_excp.bs)
+      debug(VMX_DB, "pending #DB: be:%d bs:%d 0x%X\n"
+	    ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
+	    ,vm_state.dbg_excp.raw);
+#endif
+
    if(!vm_state.interrupt.sti && !vm_state.interrupt.mss &&
       vm_state.activity.raw != VMX_VMCS_GUEST_ACTIVITY_STATE_HALT)
       return;
@@ -128,12 +139,14 @@ void vmx_check_dbgctl()
 
    if(vm_state.rflags.tf && !vm_state.ia32_dbgctl.btf)
    {
-      debug(VMX_DB, "setting pending #DB for sstep\n");
+      debug(VMX_DB, "pending #DB (sti/mss/hlt): set sstep\n");
       vm_state.dbg_excp.bs = 1;
    }
-
-   if(!vm_state.rflags.tf || vm_state.ia32_dbgctl.btf)
+   else if(vm_state.dbg_excp.bs)
+   {
+      debug(VMX_DB, "pending #DB (sti/mss/hlt): clr sstep\n");
       vm_state.dbg_excp.bs = 0;
+   }
 
    vmcs_dirty(vm_state.dbg_excp);
 }
