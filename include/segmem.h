@@ -413,17 +413,28 @@ typedef struct task_state_segment_64
 #ifndef __X86_64__
 #define set_cs(_cs)               asm volatile ("ljmp  %0, $1f ; 1:"::"i"(_cs))
 #else
-#define set_cs(_cs)					\
-   ({							\
-      fptr32_t addr;					\
-      addr.segment = _cs;				\
-      asm volatile (					\
-	 "movl  $1f, %0 \n"				\
-	 "ljmp  *%0     \n"				\
-	 "1:            \n"				\
-	 ::"m"(addr.offset):"memory");			\
+#define set_cs(_cs)						\
+   ({								\
+      fptr64_t addr;						\
+      addr.segment = _cs;					\
+      asm volatile (						\
+	 "leaq  1f(%%rip), %%rax  \n"				\
+	 "movq  %%rax, %0         \n"				\
+	 "rex.w ljmp  *%0         \n"				\
+	 "1:"							\
+	 :"=m"(addr.offset)::"rax","memory");			\
    })
 #endif
+/* #define set_cs(_cs)					\ */
+/*    ({						\ */
+/*       fptr32_t addr;					\ */
+/*       addr.segment = _cs;				\ */
+/*       asm volatile (					\ */
+/* 	 "movl  $1f, %0 \n"				\ */
+/* 	 "ljmp  *%0     \n"				\ */
+/* 	 "1:            \n"				\ */
+/* 	 ::"m"(addr.offset):"memory");			\ */
+/*    }) */
 
 #define segmem_reload(_cs,_ds)			\
    ({						\
