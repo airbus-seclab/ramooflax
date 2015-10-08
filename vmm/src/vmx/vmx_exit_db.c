@@ -134,6 +134,12 @@ void vmx_check_dbgctl()
       vm_state.activity.raw != VMX_VMCS_GUEST_ACTIVITY_STATE_HALT)
       return;
 
+#ifdef CONFIG_VMX_DB_DBG
+   debug(VMX_DB, "pending #DB: sti:%d mss:%d activity:0x%x\n"
+	 ,vm_state.interrupt.sti, vm_state.interrupt.mss
+	 ,vm_state.activity.raw);
+#endif
+
    vmcs_read(vm_state.ia32_dbgctl);
    vmcs_read(vm_state.dbg_excp);
 
