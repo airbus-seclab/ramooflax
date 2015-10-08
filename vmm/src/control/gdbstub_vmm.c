@@ -292,7 +292,7 @@ static void gdb_vmm_rd_vmem(uint8_t *data, size_t len)
       return;
 
    debug(GDBSTUB_CMD, "reading virtual memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(!gdb_mem_send(addr.linear, sz))
+   if(gdb_mem_send(addr.linear, sz) != VM_DONE)
    {
       debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
@@ -309,7 +309,7 @@ static void gdb_vmm_wr_vmem(uint8_t *data, size_t len)
       return;
 
    debug(GDBSTUB_CMD, "writing virtual memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(!gdb_mem_recv(addr.linear, sz))
+   if(gdb_mem_recv(addr.linear, sz) != VM_DONE)
    {
       debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();

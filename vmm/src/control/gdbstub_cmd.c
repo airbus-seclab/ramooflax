@@ -140,7 +140,7 @@ static void gdb_cmd_rd_mem(uint8_t *data, size_t len)
    {
       need = min(size, sizeof(store));
 
-      if(!gdb_mem_read(addr, store, need))
+      if(gdb_mem_read(addr, store, need) != VM_DONE)
       {
 	 debug(GDBSTUB_CMD, "access failure\n");
 	 gdb_err_mem();
@@ -189,7 +189,7 @@ static void gdb_cmd_wr_mem(uint8_t *data, size_t len)
 	 }
       }
 
-      if(!gdb_mem_write(addr, store, can))
+      if(gdb_mem_write(addr, store, can) != VM_DONE)
       {
 	 debug(GDBSTUB_CMD, "access failure\n");
 	 gdb_err_mem();
