@@ -89,7 +89,21 @@ static int vmx_db_check_pending_stp()
 static int vmx_db_check_pending_any()
 {
    if(!__vmexit_on_insn())
+   {
+#ifdef CONFIG_VMX_DB_DBG
+      if(vm_state.rflags.tf)
+      {
+	 vmcs_read(vm_state.activity);
+	 vmcs_read(vm_state.interrupt);
+	 debug(VMX_DB,
+	       "TF is set, pending #DB: be:%d bs:%d sti:%d mss:%d activity:0x%x\n"
+	       ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
+	       ,vm_state.interrupt.sti, vm_state.interrupt.mss
+	       ,vm_state.activity.raw);
+      }
+#endif
       return VM_IGNORE;
+   }
 
    if(vmx_db_check_pending_stp() == VM_DONE)
    {
