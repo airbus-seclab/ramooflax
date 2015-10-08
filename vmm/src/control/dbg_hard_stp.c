@@ -92,6 +92,7 @@ static int dbg_hard_stp_event_fast_syscall(int tf)
 
    sz = ud_insn_len(&info->vm.cpu.disasm);
    rc = emulate_done(emulate_insn(&info->vm.cpu.disasm), sz);
+   info->vm.cpu.emu_sts = EMU_STS_AVL; /* stealth for db_pending() */
 
    dbg_hard_stp_setup_context();
 
