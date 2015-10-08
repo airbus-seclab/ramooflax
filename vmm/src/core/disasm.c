@@ -25,8 +25,6 @@ extern info_data_t *info;
 
 static int __get_insn(offset_t *vaddr, int *mode)
 {
-   size_t insn_sz = sizeof(info->vm.cpu.insn_cache);
-
    vm_get_code_addr(vaddr, 0, mode);
 
    /*
