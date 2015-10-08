@@ -17,6 +17,7 @@
 */
 #include <dbg_hard_stp.h>
 #include <disasm.h>
+#include <emulate.h>
 #include <emulate_insn.h>
 #include <debug.h>
 #include <info_data.h>
