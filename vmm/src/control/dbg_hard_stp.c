@@ -85,10 +85,14 @@ static void dbg_hard_stp_release()
 
 static int dbg_hard_stp_event_fast_syscall(int tf)
 {
-   int rc;
+   int    rc;
+   size_t sz;
 
    dbg_hard_stp_restore_context();
-   rc = emulate_insn(&info->vm.cpu.disasm);
+
+   sz = ud_insn_len(&info->vm.cpu.disasm);
+   rc = emulate_done(emulate_insn(&info->vm.cpu.disasm), sz);
+
    dbg_hard_stp_setup_context();
 
    if(rc == VM_DONE_LET_RIP)

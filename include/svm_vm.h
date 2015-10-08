@@ -268,6 +268,7 @@
 #define __inject_intr(a)            __svm_vmexit_inject_interrupt(a)
 
 #define __interrupt_shadow         (__ctrls.int_shadow.raw)
+#define __clear_interrupt_shadow() (__ctrls.int_shadow.raw = 0)
 #define __interrupts_on()          (__rflags.IF)
 #define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
 #define __iwe_on()                 (__ctrls.int_ctrl.v_irq)

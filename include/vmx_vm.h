@@ -333,6 +333,15 @@
       vmcs_read(__state.interrupt);				\
       (__state.interrupt.sti || __state.interrupt.mss);		\
    })
+
+#define __clear_interrupt_shadow()				\
+   ({								\
+      vmcs_read(__state.interrupt);				\
+      __state.interrupt.sti = 0;				\
+      __state.interrupt.mss = 0;				\
+      vmcs_dirty(__state.interrupt);				\
+   })
+
 #define __interrupts_on()           __rflags.IF
 #define __safe_interrupts_on()     (__interrupts_on() && !__interrupt_shadow)
 #define __iwe_on()                  __exec_ctrls.proc.iwe
