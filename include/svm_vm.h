@@ -274,6 +274,7 @@
 #define __iwe_on()                 (__ctrls.int_ctrl.v_irq)
 
 #define __db_check_pending()       db_check_pending()
+#define __db_show_pending()        ({})
 
 /*
 ** MSRs and IOs

@@ -170,3 +170,21 @@ void vmx_check_dbgctl()
 
    vmcs_dirty(vm_state.dbg_excp);
 }
+
+void vmx_db_show_pending()
+{
+#ifdef CONFIG_VMX_DB_DBG
+   vmcs_read(vm_state.activity);
+   vmcs_read(vm_state.interrupt);
+   vmcs_read(vm_state.ia32_dbgctl);
+   vmcs_read(vm_state.dbg_excp);
+
+   debug(VMX_DB,
+	 "pending #DB: be:%d bs:%d raw:0x%X sti:%d mss:%d activity:0x%x btf:%d\n"
+	 ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
+	 ,vm_state.dbg_excp.raw
+	 ,vm_state.interrupt.sti, vm_state.interrupt.mss
+	 ,vm_state.activity.raw
+	 ,vm_state.ia32_dbgctl.btf);
+#endif
+}

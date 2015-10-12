@@ -118,6 +118,8 @@ int dbg_hard_stp_event_gp()
 
    debug(DBG_HARD_STP, "sstep #GP event\n");
 
+   __db_show_pending();
+
    if(!disassemble(&info->vm.cpu.disasm))
       return VM_FAIL;
 

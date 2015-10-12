@@ -347,6 +347,7 @@
 #define __iwe_on()                  __exec_ctrls.proc.iwe
 
 #define __db_check_pending()       vmx_db_check_pending()
+#define __db_show_pending()        vmx_db_show_pending()
 
 /*
 ** MSRs and IOs
