@@ -20,6 +20,8 @@
 
 #include <types.h>
 
+#define __cused__               __unused__
+
 #define __state                 info->vm.cpu.vmc->vm_vmcb.state_area
 #define __ctrls                 info->vm.cpu.vmc->vm_vmcb.ctrls_area
 

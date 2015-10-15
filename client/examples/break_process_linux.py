@@ -24,7 +24,7 @@ vm = VM(CPUFamily.Intel, "172.16.131.128:1337")
 
 vm.attach()
 vm.stop()
-vm.cpu.breakpoints.add_data_w(vm.cpu.sr.tr+4, 4, hook)
+vm.cpu.breakpoints.add_data_w(vm.cpu.sr.tr_base+4, 4, hook)
 
 while not vm.resume():
     continue
@@ -45,7 +45,7 @@ while vm.resume():
     continue
 if vm.cpu.gpr.pc != 0x804846b:
     log("fail", "failure 1")
-    vm.detach()
+    vm.detach(leave=True)
 
 log("info", "done 1")
 
@@ -56,7 +56,7 @@ vm.resume()
 vm.singlestep()
 if vm.cpu.gpr.pc != 0x8048485:
     log("fail", "failure 2")
-    vm.detach()
+    vm.detach(leave=True)
 
 log("info", "done 2")
 
@@ -67,7 +67,7 @@ vm.resume()
 vm.singlestep()
 if vm.cpu.gpr.pc != 0x80484a1:
     log("fail", "failure 3")
-    vm.detach()
+    vm.detach(leave=True)
 
 log("info", "done 3")
 
@@ -84,7 +84,7 @@ vm.singlestep()
 vm.resume()
 if vm.cpu.gpr.pc != 0x80484e7:
     log("fail", "failure 4")
-    vm.detach()
+    vm.detach(leave=True)
 
 log("info", "done 4")
 
@@ -105,7 +105,7 @@ vm.resume()
 
 if vm.cpu.gpr.pc != 0x8048530:
     log("fail", "failure 5")
-    vm.detach()
+    vm.detach(leave=True)
 
 log("info", "done 5")
 
@@ -121,7 +121,7 @@ vm.resume()
 
 if vm.cpu.gpr.pc != 0x804855b:
     log("fail", "failure 6")
-    vm.detach()
+    vm.detach(leave=True)
 
 vm.cpu.breakpoints.remove()
 

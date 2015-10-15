@@ -146,18 +146,25 @@ class RegisterSet(object):
         for r in self.__list:
             r._flush()
 
+    # XXX: might not work due to some GDB compat issue
+    # Segment registers are 2 bytes long
+    # but vmm read_all() implementation will send 4 bytes
+    # as well as for eflags asking for 8 bytes in 64bits
+    # but vmm will send 4 bytes
     def _read(self):
-        gdball = self.__read(self.__nibbles)
-        for r in self.__list:
-            gdbreg = gdball[:r.nibbles]
-            gdball = gdball[r.nibbles:]
-            r._update(gdbreg)
+        pass
+        # gdball = self.__read(self.__nibbles)
+        # for r in self.__list:
+        #     gdbreg = gdball[:r.nibbles]
+        #     gdball = gdball[r.nibbles:]
+        #     r._update(gdbreg)
 
     def _write(self):
-        data = ""
-        for r in self.__list:
-            data += r._commit()
-        self.__write(data)
+        pass
+        # data = ""
+        # for r in self.__list:
+        #     data += r._commit()
+        # self.__write(data)
 
     def __repr__(self):
         data = ""
@@ -173,12 +180,25 @@ class RegisterSet_x86(RegisterSet):
 class SR_x86(RegisterSet_x86):
     def __init__(self, gdb):
         rw_ops = ((gdb.read_sr,gdb.write_sr), (gdb.read_all_sr,gdb.write_all_sr))
-        sys = (8,("cr0","cr2","cr3","cr4",
+        cdr = (8,("cr0","cr2","cr3","cr4",
                   "dr0","dr1","dr2","dr3",
-                  "dr6","dr7","dbgctl","efer",
-                  "cs", "ss", "ds", "es","fs","gs",
-                  "gdtr","idtr","ldtr","tr"))
-        RegisterSet_x86.__init__(self, rw_ops, (sys,))
+                  "dr6","dr7","dbgctl","efer"))
+
+        base = (8, ("cs_base","ss_base","ds_base",
+                    "es_base","fs_base","gs_base",
+                    "gdtr_base","idtr_base",
+                    "ldtr_base","tr_base"))
+
+        limit = (4, ("cs_limit","ss_limit","ds_limit",
+                     "es_limit","fs_limit","gs_limit",
+                     "gdtr_limit","idtr_limit",
+                     "ldtr_limit","tr_limit"))
+
+        attr = (2, ("cs_attr","ss_attr","ds_attr",
+                    "es_attr","fs_attr","gs_attr",
+                    "ldtr_attr","tr_attr"))
+
+        RegisterSet_x86.__init__(self, rw_ops, (cdr,base,limit,attr))
 
 ### General Purpose Registers on x86
 class GPR_x86(RegisterSet_x86):
@@ -189,10 +209,9 @@ class GPR_x86(RegisterSet_x86):
 ### General Purpose Registers on x86 32 bits
 class GPR_x86_32(GPR_x86):
     def __init__(self, gdb):
-        gprs = (4,("eax","ecx","edx","ebx","esp","ebp","esi","edi",
-                   "eip","flags"))
-        segs = (2,("cs","ss","ds","es","fs","gs"))
-        GPR_x86.__init__(self, gdb, (gprs,segs))
+        gpr = (4,("eax","ecx","edx","ebx","esp","ebp","esi","edi","eip","flags"))
+        sel = (2,("cs","ss","ds","es","fs","gs"))
+        GPR_x86.__init__(self, gdb, (gpr,sel))
 
 ### General Purpose Registers on x86 64 bits
 class GPR_x86_64(GPR_x86):

@@ -27,28 +27,91 @@ static void gdb_vmm_rd_all_sysregs(uint8_t __unused__ *data, size_t __unused__ l
 {
    size_t rlen = sizeof(uint64_t)*2;
 
-                              gdb_add_number(__cr0.raw,       rlen, 1);
-   __pre_access(__cr2);       gdb_add_number(__cr2.raw,       rlen, 1);
-                              gdb_add_number(__cr3.raw,       rlen, 1);
-   __pre_access(__cr4);       gdb_add_number(__cr4.raw,       rlen, 1);
-                              gdb_add_number(get_dr0(),       rlen, 1);
-                              gdb_add_number(get_dr1(),       rlen, 1);
-                              gdb_add_number(get_dr2(),       rlen, 1);
-                              gdb_add_number(get_dr3(),       rlen, 1);
-   __pre_access(__dr6);       gdb_add_number(__dr6.raw,       rlen, 1);
-   __pre_access(__dr7);       gdb_add_number(__dr7.raw,       rlen, 1);
-   __pre_access(__dbgctl);    gdb_add_number(__dbgctl.raw,    rlen, 1);
-                              gdb_add_number(__efer.raw,      rlen, 1);
-                              gdb_add_number(__cs.base.raw,   rlen, 1);
-                              gdb_add_number(__ss.base.raw,   rlen, 1);
-   __pre_access(__ds.base);   gdb_add_number(__ds.base.raw,   rlen, 1);
-   __pre_access(__es.base);   gdb_add_number(__es.base.raw,   rlen, 1);
-   __pre_access(__fs.base);   gdb_add_number(__fs.base.raw,   rlen, 1);
-   __pre_access(__gs.base);   gdb_add_number(__gs.base.raw,   rlen, 1);
-   __pre_access(__gdtr.base); gdb_add_number(__gdtr.base.raw, rlen, 1);
-   __pre_access(__idtr.base); gdb_add_number(__idtr.base.raw, rlen, 1);
-   __pre_access(__ldtr.base); gdb_add_number(__ldtr.base.raw, rlen, 1);
-   __pre_access(__tr.base);   gdb_add_number(__tr.base.raw,   rlen, 1);
+   __pre_access(__cr0);
+   __pre_access(__cr2);
+   __pre_access(__cr3);
+   __pre_access(__cr4);
+
+   gdb_add_number(__cr0.raw, rlen, 1);
+   gdb_add_number(__cr2.raw, rlen, 1);
+   gdb_add_number(__cr3.raw, rlen, 1);
+   gdb_add_number(__cr4.raw, rlen, 1);
+
+   __pre_access(__dr6);
+   __pre_access(__dr7);
+   __pre_access(__dbgctl);
+
+   gdb_add_number(get_dr0(), rlen, 1);
+   gdb_add_number(get_dr1(), rlen, 1);
+   gdb_add_number(get_dr2(), rlen, 1);
+   gdb_add_number(get_dr3(), rlen, 1);
+
+   gdb_add_number(__dr6.raw,    rlen, 1);
+   gdb_add_number(__dr7.raw,    rlen, 1);
+   gdb_add_number(__dbgctl.raw, rlen, 1);
+   gdb_add_number(__efer.raw,   rlen, 1);
+
+   __pre_access(__cs.base);
+   __pre_access(__ss.base);
+   __pre_access(__ds.base);
+   __pre_access(__es.base);
+   __pre_access(__fs.base);
+   __pre_access(__gs.base);
+   __pre_access(__gdtr.base);
+   __pre_access(__idtr.base);
+   __pre_access(__ldtr.base);
+   __pre_access(__tr.base);
+
+   gdb_add_number(__cs.base.raw,   rlen, 1);
+   gdb_add_number(__ss.base.raw,   rlen, 1);
+   gdb_add_number(__ds.base.raw,   rlen, 1);
+   gdb_add_number(__es.base.raw,   rlen, 1);
+   gdb_add_number(__fs.base.raw,   rlen, 1);
+   gdb_add_number(__gs.base.raw,   rlen, 1);
+   gdb_add_number(__gdtr.base.raw, rlen, 1);
+   gdb_add_number(__idtr.base.raw, rlen, 1);
+   gdb_add_number(__ldtr.base.raw, rlen, 1);
+   gdb_add_number(__tr.base.raw,   rlen, 1);
+
+   __pre_access(__cs.limit);
+   __pre_access(__ss.limit);
+   __pre_access(__ds.limit);
+   __pre_access(__es.limit);
+   __pre_access(__fs.limit);
+   __pre_access(__gs.limit);
+   __pre_access(__gdtr.limit);
+   __pre_access(__idtr.limit);
+   __pre_access(__ldtr.limit);
+   __pre_access(__tr.limit);
+
+   gdb_add_number(__cs.limit.raw,   rlen, 1);
+   gdb_add_number(__ss.limit.raw,   rlen, 1);
+   gdb_add_number(__ds.limit.raw,   rlen, 1);
+   gdb_add_number(__es.limit.raw,   rlen, 1);
+   gdb_add_number(__fs.limit.raw,   rlen, 1);
+   gdb_add_number(__gs.limit.raw,   rlen, 1);
+   gdb_add_number(__gdtr.limit.raw, rlen, 1);
+   gdb_add_number(__idtr.limit.raw, rlen, 1);
+   gdb_add_number(__ldtr.limit.raw, rlen, 1);
+   gdb_add_number(__tr.limit.raw,   rlen, 1);
+
+   __pre_access(__cs.attributes);
+   __pre_access(__ss.attributes);
+   __pre_access(__ds.attributes);
+   __pre_access(__es.attributes);
+   __pre_access(__fs.attributes);
+   __pre_access(__gs.attributes);
+   __pre_access(__ldtr.attributes);
+   __pre_access(__tr.attributes);
+
+   gdb_add_number(__cs.attributes.raw,   rlen, 1);
+   gdb_add_number(__ss.attributes.raw,   rlen, 1);
+   gdb_add_number(__ds.attributes.raw,   rlen, 1);
+   gdb_add_number(__es.attributes.raw,   rlen, 1);
+   gdb_add_number(__fs.attributes.raw,   rlen, 1);
+   gdb_add_number(__gs.attributes.raw,   rlen, 1);
+   gdb_add_number(__ldtr.attributes.raw, rlen, 1);
+   gdb_add_number(__tr.attributes.raw,   rlen, 1);
 
    gdb_send_packet();
 }
@@ -88,11 +151,14 @@ static void gdb_vmm_wr_sysreg(uint8_t *data, size_t len)
       return;
    }
 
-   if(reg == (raw64_t*)&__cr0 && __resolve_cr0_wr((cr0_reg_t*)&value) == VM_FAIL)
+   if(reg == (raw64_t*)&__cr0 &&
+      __resolve_cr0_wr((cr0_reg_t*)&value) == VM_FAIL)
       goto __err;
-   else if(reg == (raw64_t*)&__cr3 && __resolve_cr3_wr((cr3_reg_t*)&value) == VM_FAIL)
+   else if(reg == (raw64_t*)&__cr3 &&
+	   __resolve_cr3_wr((cr3_reg_t*)&value) == VM_FAIL)
       goto __err;
-   else if(reg == (raw64_t*)&__cr4 && __resolve_cr4_wr((cr4_reg_t*)&value) == VM_FAIL)
+   else if(reg == (raw64_t*)&__cr4 &&
+	   __resolve_cr4_wr((cr4_reg_t*)&value) == VM_FAIL)
       goto __err;
    else
       reg->raw = value.raw;

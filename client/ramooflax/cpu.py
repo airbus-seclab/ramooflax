@@ -236,10 +236,10 @@ class CPU:
         self.__filter.unregister(event.StopReason.hyp)
 
     def code_location(self):
-        return self.__segmem_location(self.sr.cs, self.gpr.pc)
+        return self.__segmem_location(self.sr.cs_base, self.gpr.pc)
 
     def stack_location(self):
-        return self.__segmem_location(self.sr.ss, self.gpr.stack)
+        return self.__segmem_location(self.sr.ss_base, self.gpr.stack)
 
     # xxx: modulo segment limit
     def linear(self, segment, offset):

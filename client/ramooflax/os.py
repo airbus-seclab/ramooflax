@@ -82,7 +82,7 @@ class Linux26:
                 return False
 
     def __find_process(self, vm):
-        esp0 = vm.mem.read_dword(vm.cpu.sr.tr+4)
+        esp0 = vm.mem.read_dword(vm.cpu.sr.tr_base+4)
         thread_info = esp0 & self.__msk
         task = vm.mem.read_dword(thread_info)
         if task == 0:
@@ -152,7 +152,7 @@ class Windows:
         self.__pcr3 = None
 
     def __find_process(self, vm):
-        kprcb    = vm.mem.read_dword(vm.cpu.sr.fs+self.__settings["kprcb"])
+        kprcb    = vm.mem.read_dword(vm.cpu.sr.fs_base+self.__settings["kprcb"])
         kthread  = vm.mem.read_dword(kprcb+self.__settings["kthread"])
         eprocess = vm.mem.read_dword(kthread+self.__settings["eprocess"])
 

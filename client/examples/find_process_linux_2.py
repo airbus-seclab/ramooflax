@@ -36,7 +36,7 @@ vm = VM(CPUFamily.AMD, "192.168.254.254:1234")
 vm.attach()
 vm.stop()
 
-vm.cpu.breakpoints.add_data_w(vm.cpu.sr.tr+4, 4, hook)
+vm.cpu.breakpoints.add_data_w(vm.cpu.sr.tr_base+4, 4, hook)
 
 while not vm.resume():
     continue

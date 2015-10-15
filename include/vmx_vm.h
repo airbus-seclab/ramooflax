@@ -20,6 +20,8 @@
 
 #include <types.h>
 
+#define __cused__
+
 /*
 ** System registers
 */

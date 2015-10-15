@@ -98,7 +98,11 @@ Virtual Machine Controller
     def filter_intr(self, hdl):
         self.__intr_filter = hdl
 
-    def detach(self, quick=False):
+    # Quit properly
+    # - if interactive (session) exit program
+    # - can force exit (leave=True)
+    # - can prevent waiting gdb 'kill' answer (quick=True)
+    def detach(self, quick=False, leave=False):
         if self.__detach_filter is not None:
             self.__detach_filter(self)
 
@@ -109,7 +113,8 @@ Virtual Machine Controller
         except:
             log.log("error", "failed to detach properly")
         finally:
-            sys.exit(0)
+            if self.__session or leave:
+                sys.exit(0)
 
     def run(self, variables):
         self.__variables = variables
@@ -197,6 +202,7 @@ Virtual Machine Controller
         while inter:
             self.__interact()
             inter = self.resume()
+        self.__session = False
 
     # Usefull when handler should not trigger
     # interactive mode, but still giving the
@@ -227,7 +233,7 @@ Virtual Machine Controller
 
         if self.__state == VMState.interactive or not self.__session:
             if self.__ask_quit():
-                self.detach(True)
+                self.detach(quick=True)
         elif self.__state == VMState.waiting and self.__gdb.waiting():
             self.__stop()
         else:

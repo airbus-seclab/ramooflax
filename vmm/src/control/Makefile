@@ -10,6 +10,7 @@ obj :=	ctrl.o		\
 ifeq ($(CONFIG_GDBSTUB),yes)
 obj +=	gdbstub.o	\
 	gdbstub_pkt.o	\
+	gdbstub_reg.o	\
 	gdbstub_cmd.o	\
 	gdbstub_vmm.o	\
 	gdbstub_evt.o

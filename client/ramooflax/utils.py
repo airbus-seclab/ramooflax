@@ -58,9 +58,9 @@ def backtrace(vm, n=1):
     ft = "<"+{16:"H",32:"L",64:"Q"}[vm.cpu.mode]
     ip = []
     if n == 0:
-        sp = vm.cpu.linear(vm.cpu.sr.ss, vm.cpu.gpr.stack)
+        sp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.stack)
         return struct.unpack(ft, vm.mem.vread(sp,sz))[0]
-    bp = vm.cpu.linear(vm.cpu.sr.ss, vm.cpu.gpr.frame)
+    bp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.frame)
     for x in xrange(n):
         ip.append(struct.unpack(ft, vm.mem.vread(bp+sz, sz))[0])
         bp = struct.unpack(ft, vm.mem.vread(bp, sz))[0]

@@ -17,9 +17,8 @@
 */
 #include <gdbstub.h>
 #include <gdbstub_pkt.h>
+#include <gdbstub_reg.h>
 #include <gdbstub_cmd.h>
-#include <dr.h>
-#include <insn.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -254,109 +253,6 @@ int gdb_get_number(uint8_t *data, size_t len, uint64_t *store, uint8_t endian)
    return hex_to_uint64(data, len, store);
 }
 
-int __gdb_setup_reg(uint64_t idx, raw64_t **reg,
-		    size_t *size, uint8_t sys,
-		    uint8_t
-#ifdef CONFIG_ARCH_AMD
-		    __unused__
-#endif
-		    wr)
-{
-   loc_t    loc;
-   offset_t *cache;
-
-   if(sys)
-   {
-      debug(GDBSTUB_PKT, "reg_sys_op\n");
-      *size = sizeof(uint64_t);
-      if(idx >= 22)
-	 goto __fail;
-
-      cache = (offset_t*)info->vm.cpu.insn_cache;
-      goto __sys;
-   }
-
-   if(cpu_addr_sz() == 64)
-   {
-      *size = sizeof(uint64_t);
-      if(idx < 16)
-	 goto __gpr;
-      else if(idx < 24)
-	 idx -= 8;
-      else
-	 goto __fail;
-   }
-   else
-   {
-      /* XXX: gdb seems to wait for 32 bits regs at least */
-      *size = sizeof(uint32_t);
-
-      if(idx < 8)
-	 goto __gpr;
-      else if(idx >= 16)
-	 goto __fail;
-   }
-
-   switch(idx)
-   {
-   case  8: loc.u64 = &__rip.raw;        __cond_access(wr,__rip);         goto __win;
-   case  9: loc.u64 = &__rflags.raw;     __cond_access(wr,__rflags);      goto __win;
-
-   case 10: loc.u16 = &__cs.selector.raw;__cond_access(wr,__cs.selector); goto __win16;
-   case 11: loc.u16 = &__ss.selector.raw;__cond_access(wr,__ss.selector); goto __win16;
-   case 12: loc.u16 = &__ds.selector.raw;__cond_access(wr,__ds.selector); goto __win16;
-   case 13: loc.u16 = &__es.selector.raw;__cond_access(wr,__es.selector); goto __win16;
-   case 14: loc.u16 = &__fs.selector.raw;__cond_access(wr,__fs.selector); goto __win16;
-   case 15: loc.u16 = &__gs.selector.raw;__cond_access(wr,__gs.selector); goto __win16;
-   }
-
-__sys:
-   switch(idx)
-   {
-   case  0: loc.u64 = &__cr0.raw; __cond_access(wr,__cr0); goto __win;
-   case  1: loc.u64 = &__cr2.raw; __cond_access(wr,__cr2); goto __win;
-   case  2: loc.u64 = &__cr3.raw; __cond_access(wr,__cr3); goto __win;
-   case  3: loc.u64 = &__cr4.raw; __cond_access(wr,__cr4); goto __win;
-
-   case  4: *cache = get_dr0(); loc.addr = (void*)cache; goto __win;
-   case  5: *cache = get_dr1(); loc.addr = (void*)cache; goto __win;
-   case  6: *cache = get_dr2(); loc.addr = (void*)cache; goto __win;
-   case  7: *cache = get_dr3(); loc.addr = (void*)cache; goto __win;
-
-   case  8: loc.u64 = &__dr6.raw;       __cond_access(wr,__dr6);       goto __win;
-   case  9: loc.u64 = &__dr7.raw;       __cond_access(wr,__dr7);       goto __win;
-   case 10: loc.u64 = &__dbgctl.raw;    __cond_access(wr,__dbgctl);    goto __win;
-   case 11: loc.u64 = &__efer.raw;      /*__cond_access(wr,__efer);*/  goto __win;
-   case 12: loc.u64 = &__cs.base.raw;   __cond_access(wr,__cs.base);   goto __win;
-   case 13: loc.u64 = &__ss.base.raw;   __cond_access(wr,__ss.base);   goto __win;
-   case 14: loc.u64 = &__ds.base.raw;   __cond_access(wr,__ds.base);   goto __win;
-   case 15: loc.u64 = &__es.base.raw;   __cond_access(wr,__es.base);   goto __win;
-   case 16: loc.u64 = &__fs.base.raw;   __cond_access(wr,__fs.base);   goto __win;
-   case 17: loc.u64 = &__gs.base.raw;   __cond_access(wr,__gs.base);   goto __win;
-   case 18: loc.u64 = &__gdtr.base.raw; __cond_access(wr,__gdtr.base); goto __win;
-   case 19: loc.u64 = &__idtr.base.raw; __cond_access(wr,__idtr.base); goto __win;
-   case 20: loc.u64 = &__ldtr.base.raw; __cond_access(wr,__ldtr.base); goto __win;
-   case 21: loc.u64 = &__tr.base.raw;   __cond_access(wr,__tr.base);   goto __win;
-   }
-
-__gpr:
-   loc.u64 = &info->vm.cpu.gpr->raw[GPR64_RAX - idx].raw;
-   goto __win;
-
-__win16:
-   *size = sizeof(uint16_t);
-
-__win:
-   debug(GDBSTUB_PKT, "reg_op win on %d\n", idx);
-   *reg = (raw64_t*)loc.u64;
-   return 1;
-
-__fail:
-   debug(GDBSTUB_PKT, "reg_op failed on %d\n", idx);
-   gdb_unsupported();
-   return 0;
-}
-
 int __gdb_setup_reg_op(uint8_t *data, size_t len,
 		       raw64_t **reg, size_t *size,
 		       raw64_t *value, uint8_t wr, uint8_t sys)
@@ -394,7 +290,13 @@ int __gdb_setup_reg_op(uint8_t *data, size_t len,
       goto __nak;
    }
 
-   return __gdb_setup_reg(idx, reg, size, sys, wr);
+   if(!__gdb_setup_reg(idx, reg, size, sys, wr))
+   {
+      gdb_unsupported();
+      return 0;
+   }
+
+   return 1;
 
 __nak:
    gdb_nak();
