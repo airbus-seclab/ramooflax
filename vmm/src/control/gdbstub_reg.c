@@ -84,7 +84,7 @@ static void __gdb_reg_access_gpr(
       loc_t *loc, size_t *size, uint8_t __unused__ idx, uint8_t __unused__ wr) \
    {									\
       __gdb_register_cache = get_##_rEg_();				\
-      loc->addr = (void*)__gdb_register_cache;				\
+      loc->addr = (void*)&__gdb_register_cache;				\
       *size = sizeof(uint##_sZ_##_t);					\
    }
 
