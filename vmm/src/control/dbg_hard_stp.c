@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <dbg_hard_stp.h>
+#include <db.h>
 #include <disasm.h>
 #include <emulate.h>
 #include <emulate_insn.h>
