@@ -47,10 +47,30 @@ title  Toggle various options
 desc   options, select vmm options/features
 data   gen_opt, vmx_opt
 
-toggle gen_opt
+menu   gen_opt
 title  Toggle VMM options
 desc   generic, select vmm options
-data   CONFIG_MSR_PROXY:vm operations on msrs are proxyfied, CONFIG_EHCI_FULL:force full EHCI controller init, CONFIG_EHCI_2ND:use 2nd EHCI controller if available, CONFIG_GDBSTUB:enable GDB server stub
+data   msr_opt, ehci_opt, gdb_opt, qemu_opt
+
+toggle msr_opt
+title  Toggle MSR options
+desc   msr, select msr options
+data   CONFIG_MSR_PROXY:vm operations on msrs are proxyfied
+
+toggle ehci_opt
+title  Toggle EHCI options
+desc   ehci, select ehci options
+data   CONFIG_EHCI_FULL:force full EHCI controller init, CONFIG_EHCI_2ND:use 2nd EHCI controller if available
+
+toggle gdb_opt
+title  Toggle GDB options
+desc   gdb, select gdb options
+data   CONFIG_GDBSTUB:enable GDB server stub
+
+choice qemu_opt
+title  Enable Qemu CPUID branding/vendor/serial
+desc   qemu, toggle qemu cpuid version
+data   CONFIG_CPUID_QEMU, none:Disabled, user:Active at CPL=3, all:Active at any CPL
 
 toggle vmx_opt
 title  Toggle Intel VMX features

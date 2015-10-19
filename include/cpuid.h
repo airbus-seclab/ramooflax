@@ -255,6 +255,15 @@ typedef union cpuid_feature_info_ebx
    })
 
 /*
+** Various CPUID
+*/
+#define CPUID_BASIC_INFO               0
+#define CPUID_PROC_SERIAL              3
+#define CPUID_BRAND_STR1               0x80000002
+#define CPUID_BRAND_STR2               0x80000003
+#define CPUID_BRAND_STR3               0x80000004
+
+/*
 ** CPUID Maximum physical/linear supported width
 ** vmx/svm dependent
 */
@@ -334,7 +343,6 @@ typedef union cpuid_ms_hyperv_feature_info_edx
    raw32_t;
 
 } __attribute__((packed)) mshyperv_feat_edx_t;
-
 
 /*
 ** Functions
