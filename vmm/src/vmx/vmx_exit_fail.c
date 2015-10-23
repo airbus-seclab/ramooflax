@@ -416,10 +416,13 @@ static int vmx_vmexit_show_exit()
 
    printf("\n         <------------------- VM-EXIT ------------------->\n"
 	  "reason          : %s (%d)\n"
+	  "vm-exit-count   : 0x%X\n"
 	  "vm-entry fail   : %s\n"
 	  "vmx-root        : %s\n"
 	  "pending MTF     : %s\n"
-	  ,name, vm_exit_info.reason.basic
+	  ,name
+	  ,vm_exit_info.reason.basic
+	  ,info->vmm.ctrl.vmexit_cnt.raw
 	  ,vm_exit_info.reason.entry?"yes":"no"
 	  ,vm_exit_info.reason.root?"yes":"no"
 	  ,vm_exit_info.reason.mtf?"yes":"no");
