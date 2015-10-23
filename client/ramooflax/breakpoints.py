@@ -56,9 +56,9 @@ class BreakPoints:
         self.__filter_sstep = self.__trap_sstep
 
     def __encode(self, val):
-        fmt = "%."+str(self.__cpu.sz)+"x"
+        fmt = "%."+str(self.__cpu.mode.nibbles)+"x"
         out = fmt % (val)
-        return out[-self.__cpu.sz:]
+        return out[-self.__cpu.mode.nibbles:]
 
     def __trap_sstep(self, vm):
         log.log("brk", "Single Step Trap @ %s" % hex(vm.cpu.code_location()))

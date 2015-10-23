@@ -28,7 +28,7 @@ class Memory:
         return out[-n:]
 
     def __encode_addr(self, addr):
-        return self.__encode(addr, self.__cpu.sz)
+        return self.__encode(addr, self.__cpu.mode.nibbles)
 
     def __encode_val(self, val, n):
         return utils.revert_string_bytes(self.__encode(val, n*2))
@@ -98,7 +98,8 @@ class Memory:
 
     def translate(self, addr):
         self.cr_sync()
-        paddr = self.__gdb.translate(self.__encode_addr(addr), self.__cpu.sz)
+        nib = self.__cpu.mode.nibbles
+        paddr = self.__gdb.translate(self.__encode_addr(addr), nib)
         return int(paddr, 16)
 
     def get_npte(self, addr):

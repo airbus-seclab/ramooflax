@@ -519,3 +519,7 @@ class GDB:
     def npg_unmap(self, data):
         self.send_vmm_pkt("\x9f"+data)
         self.recv_diag()
+
+    def get_cpu_mode(self):
+        self.send_vmm_pkt("\xa0")
+        return self.recv_pkt(1*4*2)

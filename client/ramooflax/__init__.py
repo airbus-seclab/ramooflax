@@ -18,7 +18,7 @@
 #
 
 from vm    import VM
-from cpu   import CPU, CPUFamily, CPUException
+from cpu   import CPU, CPUFamily, CPUException, CPUMode
 from event import StopReason, IdtEvent
 from log   import Log, log
 from os    import OSFactory, OSAffinity

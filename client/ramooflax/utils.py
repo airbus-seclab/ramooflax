@@ -39,23 +39,18 @@ def revert_string_bytes(s):
     return "".join(rs)
 
 def stackdump(vm, n):
-    sz   = vm.cpu.mode/8
+    sz   = vm.cpu.mode.addr_sz/8
     data = vm.mem.vread(vm.cpu.stack_location(), n*sz)
     fmt  = "%#0*x"
-    if vm.cpu.mode == 16:
-        sf = "H"
-    elif vm.cpu.mode == 32:
-        sf ="L"
-    else:
-        sf = "Q"
+    sf = {16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
     msg = ""
     for x in struct.unpack("<"+sf*n, data):
         msg += fmt % ((sz*2)+2, x)
     return msg
 
 def backtrace(vm, n=1):
-    sz = vm.cpu.mode/8
-    ft = "<"+{16:"H",32:"L",64:"Q"}[vm.cpu.mode]
+    sz = vm.cpu.mode.addr_sz/8
+    ft = "<"+{16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
     ip = []
     if n == 0:
         sp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.stack)

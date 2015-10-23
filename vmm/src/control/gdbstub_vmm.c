@@ -621,6 +621,40 @@ static void gdb_vmm_get_fault(uint8_t __unused__ *data, size_t __unused__ len)
    gdb_send_packet();
 }
 
+static void gdb_vmm_cpu_mode(uint8_t __unused__ *data, size_t __unused__ len)
+{
+   raw64_t val = {.raw = 0};
+   size_t  rlen;
+
+   rlen = sizeof(uint32_t)*2;
+   val._low._whigh.blow = cpu_addr_sz();
+
+   if(__legacy32())
+      val._low._wlow.blow  = 4;
+   else if(__lmode64())
+      val._low._wlow.blow  = 7;
+   else if(__rmode())
+      val._low._wlow.blow  = 1;
+   else if(__v86mode())
+      val._low._wlow.blow  = 2;
+   else if(__legacy16())
+      val._low._wlow.blow  = 3;
+   else if(__lmode16())
+      val._low._wlow.blow  = 5;
+   else if(__lmode32())
+      val._low._wlow.blow  = 6;
+
+   if(__paged32())
+      val._low._wlow.bhigh = 1;
+   else if(__paged_pae())
+      val._low._wlow.bhigh = 2;
+   else if(__paged64())
+      val._low._wlow.bhigh = 3;
+
+   gdb_add_number(val.raw, rlen, 0);
+   gdb_send_packet();
+}
+
 static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_rd_all_sysregs,
    gdb_vmm_wr_all_sysregs,
@@ -654,6 +688,7 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_npg_translate,
    gdb_vmm_npg_map,
    gdb_vmm_npg_unmap,
+   gdb_vmm_cpu_mode,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)

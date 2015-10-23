@@ -47,6 +47,46 @@ class CPUException:
     machine_check      = 18
     simd               = 19
 
+class CPUMode:
+    rmode   = 1
+    v80086  = 2
+    pmode16 = 3
+    pmode32 = 4
+    lmode16 = 5
+    lmode32 = 6
+    lmode64 = 7
+
+    pg32 = 1
+    pae  = 2
+    pg64 = 3
+
+    def __init__(self, mode):
+        self._exe_str = {0:"(unknown)",
+                         CPUMode.rmode:"real mode 16",
+                         CPUMode.v80086:"virtual 8086 16",
+                         CPUMode.pmode16:"protected (legacy) 16",
+                         CPUMode.pmode32:"protected (legacy) 32",
+                         CPUMode.lmode16:"long mode 16",
+                         CPUMode.lmode32:"long mode 32",
+                         CPUMode.lmode64:"long mode 64",
+                         }
+
+        self._pg_str = {0:"disabled",
+                        CPUMode.pg32:"32",
+                        CPUMode.pae:"PAE",
+                        CPUMode.pg64:"64",
+                        }
+
+        self.exe     = mode & 0xff
+        self.pg      = (mode >> 8) & 0xff
+        self.addr_sz = (mode >> 16) & 0xff
+        self.nibbles = self.addr_sz/4
+
+    def __str__(self):
+        x_s = self._exe_str.get(self.exe, "(unknown)")
+        p_s = self._pg_str.get(self.pg, "(unknown)")
+        return "%s bits / paging %s / addr %d" % (x_s,p_s, self.addr_sz)
+
 class CPU:
     def __init__(self, manufacturer, gdb):
         self.__gdb = gdb
@@ -59,7 +99,6 @@ class CPU:
         self.fault = register.Fault(self.__gdb)
 
         #not defined mode
-        self.sz = None
         self.mode = None
         self.gpr = None
         self.breakpoints = breakpoints.BreakPoints(self, gdb, self.__filter)
@@ -73,6 +112,9 @@ class CPU:
     def __get_exception_mask(self):
         return int(self.__gdb.read_exception_mask(), 16)
 
+    def __get_cpu_mode(self):
+        return int(self.__gdb.get_cpu_mode(), 16)
+
     def __set_cr_rd_mask(self, mask):
         self.__gdb.write_cr_read_mask("%.4x" % (mask))
 
@@ -85,25 +127,26 @@ class CPU:
     def __get_cr_wr_mask(self):
         return int(self.__gdb.read_cr_write_mask(), 16)
 
-    def __segmem_location(self, seg, reg):
-        if self.mode == 16:
-            return (seg + (reg & 0xffff))
-        elif self.mode == 32:
-            return (seg + (reg & 0xffffffff))
+    def __segmem_location(self, base, reg):
+        if self.mode.addr_sz == 16:
+            return (base + (reg & 0xffff))
+        elif self.mode.addr_sz == 32:
+            return (base + (reg & 0xffffffff))
         return reg
 
-    def __update_mode(self, new_mode):
-        self.mode = new_mode
-        #XXX: gdb seems to need 4 bytes
-        if self.mode == 32 or self.mode == 16:
-            self.gpr = register.GPR_x86_32(self.__gdb)
-            self.sz = 8
-        elif self.mode == 64:
-            self.gpr = register.GPR_x86_64(self.__gdb)
-            self.sz = 16
-        else:
-            log.log("error", "Unknown CPU mode: %d" % (self.mode))
-            raise ValueError
+    def __update_mode(self):
+        mode = CPUMode(self.__get_cpu_mode())
+
+        if self.mode is None or self.mode.addr_sz != mode.addr_sz:
+            if mode.addr_sz == 32 or mode.addr_sz == 16:
+                self.gpr = register.GPR_x86_32(self.__gdb)
+            elif mode.addr_sz == 64:
+                self.gpr = register.GPR_x86_64(self.__gdb)
+            else:
+                log.log("error", "Unknown CPU mode: %s" % (mode))
+                raise ValueError
+
+        self.mode = mode
 
     def has_pending_reason(self):
         return not self.__gdb.stop_pool_empty()
@@ -113,9 +156,7 @@ class CPU:
 
         stop = self.__gdb.recv_stop()
         self.__last_reason = stop
-
-        if stop.mode != self.mode:
-            self.__update_mode(stop.mode)
+        self.__update_mode()
 
         # [ regN:regV, ... ]
         for g in stop.msg:
@@ -242,7 +283,7 @@ class CPU:
         return self.__segmem_location(self.sr.ss_base, self.gpr.stack)
 
     # xxx: modulo segment limit
-    def linear(self, segment, offset):
-        return self.__segmem_location(segment, offset)
+    def linear(self, base, offset):
+        return self.__segmem_location(base, offset)
 
     last_reason = property(__get_last_reason)

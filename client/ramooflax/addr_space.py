@@ -17,6 +17,7 @@
 #
 import struct
 import log
+import cpu
 
 class PgMsk(object):
     present = 1<<0
@@ -191,6 +192,10 @@ class Mapping(object):
 
 class AddrSpace(object):
     def __init__(self, vm, cr3):
+        if vm.cpu.mode.pg != cpu.CPUMode.pg32:
+            log.log("error", "paging mode not supported: %s" % vm.cpu.mode)
+            raise ValueError
+
         self.pgd = PageDirectory(vm, cr3)
         self.map = Mapping(self.pgd)
 
