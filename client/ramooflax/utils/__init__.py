@@ -16,3 +16,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+
+from stack   import stackdump
+from disasm  import disassemble
+from segment import SegmentDescriptorType, SegmentDescriptor, InterruptDescriptor
+from os      import OSFactory, OSAffinity
+from paging  import AddrSpace, Page, Pde, Pte, PageTable, PageDirectory, PgMsk, Mapping
+from symbols import SymTab, SymParser, Symbol

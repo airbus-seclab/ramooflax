@@ -16,8 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 import struct
-import log
-import cpu
+
+from ramooflax.core import CPUMode, log
 
 class PgMsk(object):
     present = 1<<0
@@ -68,7 +68,7 @@ class PteBase(object):
         self.u = val & PgMsk.user
         self.addr = val & PgMsk.addr
 
-        log.log("ads", str(self))
+        log("paging", str(self))
 
     def __str__(self):
         return "p %d w %d u %d addr 0x%x" % (self.p,self.w,self.u,self.addr)
@@ -83,7 +83,7 @@ class PageTable(object):
     def __init__(self, vm, vaddr, paddr):
         self.addr = paddr
 
-        log.log("ads", "PageTable reading physical page @ 0x%x" % paddr)
+        log("paging", "PageTable reading physical page @ 0x%x" % paddr)
 
         self.raw = struct.unpack("<1024L", vm.mem.pread(paddr, 4<<10))
         self.pte = []
@@ -117,7 +117,7 @@ class PageDirectory(object):
     def __init__(self, vm, cr3):
         self.addr = cr3 & PgMsk.addr
 
-        log.log("ads", "PageDirectory reading physical page @ 0x%x" % self.addr)
+        log("paging", "PageDirectory reading physical page @ 0x%x" % self.addr)
 
         self.raw = struct.unpack("<1024L", vm.mem.pread(self.addr, 4<<10))
         self.pde = []
@@ -192,8 +192,8 @@ class Mapping(object):
 
 class AddrSpace(object):
     def __init__(self, vm, cr3):
-        if vm.cpu.mode.pg != cpu.CPUMode.pg32:
-            log.log("error", "paging mode not supported: %s" % vm.cpu.mode)
+        if vm.cpu.mode.pg != CPUMode.pg32:
+            log("error", "paging mode not supported: %s" % vm.cpu.mode)
             raise ValueError
 
         self.pgd = PageDirectory(vm, cr3)

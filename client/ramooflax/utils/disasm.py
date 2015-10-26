@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 #
 # Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 #
@@ -16,3 +15,17 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+
+def disassemble(vm, wrapper, start, sz=15):
+    end = start + sz
+    dump = vm.mem.vread(start, sz)
+    off = 0
+    msg = ""
+    while start < end:
+        insn = wrapper(start, dump[off:off+15])
+        if insn is None:
+            break
+        msg   += "%.8x\t%s\n" % (start, insn)
+        off   += insn.length
+        start += insn.length
+    return msg

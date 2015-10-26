@@ -16,3 +16,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+
+from vm    import VM
+from cpu   import CPU, CPUFamily, CPUException, CPUMode
+from event import StopReason, IdtEvent
+from log   import Log, log
+from utils import in_completer, revert_string_bytes, pytrace
+from gdb   import GDBError

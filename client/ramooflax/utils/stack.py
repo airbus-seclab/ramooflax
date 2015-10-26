@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 #
 # Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 #
@@ -16,3 +15,27 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+import struct
+
+def stackdump(vm, n):
+    sz   = vm.cpu.mode.addr_sz/8
+    data = vm.mem.vread(vm.cpu.stack_location(), n*sz)
+    fmt  = "%#0*x"
+    sf = {16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
+    msg = ""
+    for x in struct.unpack("<"+sf*n, data):
+        msg += fmt % ((sz*2)+2, x)
+    return msg
+
+def backtrace(vm, n=1):
+    sz = vm.cpu.mode.addr_sz/8
+    ft = "<"+{16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
+    ip = []
+    if n == 0:
+        sp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.stack)
+        return struct.unpack(ft, vm.mem.vread(sp,sz))[0]
+    bp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.frame)
+    for x in xrange(n):
+        ip.append(struct.unpack(ft, vm.mem.vread(bp+sz, sz))[0])
+        bp = struct.unpack(ft, vm.mem.vread(bp, sz))[0]
+    return ip

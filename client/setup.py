@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+# Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,19 +16,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-from distutils.core import setup
+from setuptools import setup
 
 setup(
-    name = 'Ramooflax',
+    name = 'ramooflax',
     version = '0.1',
     packages=['ramooflax'],
-    #scripts = ["bin"],
-    # Metadata
     author = 'Stephane Duverger',
     author_email = 'stephane.duverger@gmail.com',
-    description = 'Ramooflax pre-boot hypervisor python API',
+    description = 'Ramooflax hypervisor python API',
     license = 'GPLv2',
-    # keywords = '',
-    # url = '',
 )
-

@@ -27,9 +27,7 @@ class Log(object):
     white   = "\033[37m"
 
     def __init__(self):
-        keys = ('vm','cpu','mem',
-                'brk','reg','ads',
-                'evt','gdb', 'os')
+        keys = ('vm','cpu','mem','brk','reg','gdb','evt')
 
         self.__tag = dict.fromkeys(keys, False)
         self.__col = dict.fromkeys(keys, Log.reset)

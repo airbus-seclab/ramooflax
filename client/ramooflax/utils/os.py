@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-import log
+from ramooflax.core import log
 
 class OSAffinity:
     Unknown = 0
@@ -31,7 +31,7 @@ def OSFactory(affinity, settings=None):
     elif affinity == OSAffinity.Win7:
         return Win7(settings)
 
-    log.log("error", "Unknown OS affinity")
+    log("error", "Unknown OS affinity")
     raise ValueError
 
 #
@@ -70,11 +70,11 @@ class Linux26:
                 comm = task+self.__settings["comm"]
                 name = vm.mem.vread(comm, 15)
                 pgd  = vm.mem.read_dword(mm+self.__settings["pgd"])
-                log.log("os", "task %s" % name)
+                log("os", "task %s" % name)
                 if self.__pname in name:
                     self.__task = task
                     self.__pcr3 = pgd - 0xc0000000
-                    log.log("os", "cr3 %#x" % self.__pcr3)
+                    log("os", "cr3 %#x" % self.__pcr3)
                     return True
 
             task = self.__next_task(vm, task)
@@ -158,10 +158,10 @@ class Windows:
 
         while eprocess != 0:
             name = vm.mem.vread(eprocess+self.__settings["name"],16)
-            log.log("os", "process %s" % name[:name.index('\x00')])
+            log("os", "process %s" % name[:name.index('\x00')])
             if self.__pname in name:
                 self.__pcr3 = vm.mem.read_dword(eprocess+self.__settings["cr3"])
-                log.log("os", "cr3 %#x" % self.__pcr3)
+                log("os", "cr3 %#x" % self.__pcr3)
                 return True
             elif "Idle" in name:
                 return False

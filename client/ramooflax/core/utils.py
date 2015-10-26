@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+# Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,40 +37,3 @@ def revert_string_bytes(s):
         rs.append(s[-2:])
         s = s[:-2]
     return "".join(rs)
-
-def stackdump(vm, n):
-    sz   = vm.cpu.mode.addr_sz/8
-    data = vm.mem.vread(vm.cpu.stack_location(), n*sz)
-    fmt  = "%#0*x"
-    sf = {16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
-    msg = ""
-    for x in struct.unpack("<"+sf*n, data):
-        msg += fmt % ((sz*2)+2, x)
-    return msg
-
-def backtrace(vm, n=1):
-    sz = vm.cpu.mode.addr_sz/8
-    ft = "<"+{16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
-    ip = []
-    if n == 0:
-        sp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.stack)
-        return struct.unpack(ft, vm.mem.vread(sp,sz))[0]
-    bp = vm.cpu.linear(vm.cpu.sr.ss_base, vm.cpu.gpr.frame)
-    for x in xrange(n):
-        ip.append(struct.unpack(ft, vm.mem.vread(bp+sz, sz))[0])
-        bp = struct.unpack(ft, vm.mem.vread(bp, sz))[0]
-    return ip
-
-def disassemble(vm, disasm, start, sz=15):
-    end = start + sz
-    dump = vm.mem.vread(start, sz)
-    off = 0
-    msg = ""
-    while start < end:
-        insn = disasm(start, dump[off:off+15])
-        if insn is None:
-            break
-        msg   += "%.8x\t%s\n" % (start, insn)
-        off   += insn.length
-        start += insn.length
-    return msg
