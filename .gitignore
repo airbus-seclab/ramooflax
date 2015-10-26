@@ -8,6 +8,7 @@
 *.pyc
 *.config
 *.patch
+*.egg-info
 config*
 gdb*
 client/build
