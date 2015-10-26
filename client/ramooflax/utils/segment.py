@@ -125,13 +125,14 @@ class SegmentDescriptor(Descriptor32):
         hdr = fmt % ("Index","Offset","Base","Limit","Size","Type","DPL","P","L","D","G")
         return self.bar()+hdr+self.bar()
 
-    def __str__(self):
-        return self.hdr()+"(none) | (none)"+repr(self)+self.bar()
-
-    def __repr__(self):
+    def body(self):
         fmt = " | 0x%.8x | 0x%.5x | 0x%.8x | %-13s |  %d  | %d | %d | %d | %d\n"
         return fmt % (self.base,self.limit,self.size,self.type,
                       self.dpl,self.p,self.l,self.d,self.g)
+
+    def __str__(self):
+        return self.hdr()+"(none) | (none)"+self.body()+self.bar()
+
 
 class InterruptDescriptor(Descriptor32):
     def __init__(self, raw):
@@ -154,9 +155,9 @@ class InterruptDescriptor(Descriptor32):
         hdr = fmt % ("Index","Offset","Select","Offset","Type","DPL","P")
         return self.bar()+hdr+self.bar()
 
-    def __str__(self):
-        return self.hdr()+"(none) | (none)"+repr(self)+self.bar()
-
-    def __repr__(self):
+    def body(self):
         fmt = " | 0x%.4x | 0x%.8x | %-13s |  %d  | %d\n"
         return fmt % (self.selector,self.offset,self.type,self.dpl,self.p)
+
+    def __str__(self):
+        return self.hdr()+"(none) | (none)"+self.body()+self.bar()
