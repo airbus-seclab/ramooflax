@@ -57,6 +57,11 @@ static int local_evt_hyp(arg_t __unused__ arg)
    return VM_DONE;
 }
 
+static int local_evt_cpuid(arg_t __unused__ arg)
+{
+   return VM_DONE;
+}
+
 ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
    local_evt_cr_rd,
    local_evt_cr_wr,
@@ -65,4 +70,5 @@ ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
    local_evt_stp,
    local_evt_npf,
    local_evt_hyp,
+   local_evt_cpuid,
 };

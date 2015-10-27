@@ -47,11 +47,16 @@ typedef union controller_status
 #define ctrl_set_traps(_x)         (info->vmm.ctrl.status.traps=(_x))
 #define ctrl_traps_set_update(_x)  (info->vmm.ctrl.status.utraps=(_x))
 
+#define CTRL_FILTER_NPF     (1<<0)
+#define CTRL_FILTER_HYP     (1<<1)
+#define CTRL_FILTER_CPUID   (1<<2)
+
 typedef struct controller_user
 {
    uint32_t    excp;   /* user requested excp     intercepts */
    uint32_t    cr_rd;  /* user requested read  CR intercepts */
    uint32_t    cr_wr;  /* user requested write CR intercepts */
+   uint64_t    filter; /* user requester various  intercepts */
 
 } __attribute__((packed)) ctrl_usr_t;
 

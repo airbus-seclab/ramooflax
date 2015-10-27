@@ -655,6 +655,25 @@ static void gdb_vmm_cpu_mode(uint8_t __unused__ *data, size_t __unused__ len)
    gdb_send_packet();
 }
 
+static void gdb_vmm_rd_filter_mask(uint8_t __unused__ *data, size_t __unused__ len)
+{
+   size_t rlen = sizeof(uint64_t)*2;
+
+   gdb_add_number(info->vmm.ctrl.usr.filter, rlen, 0);
+   gdb_send_packet();
+}
+
+static void gdb_vmm_wr_filter_mask(uint8_t *data, size_t len)
+{
+   if(!gdb_get_number(data, len, (uint64_t*)&info->vmm.ctrl.usr.filter, 0))
+   {
+      gdb_nak();
+      return;
+   }
+
+   gdb_ok();
+}
+
 static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_rd_all_sysregs,
    gdb_vmm_wr_all_sysregs,
@@ -689,6 +708,8 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_npg_map,
    gdb_vmm_npg_unmap,
    gdb_vmm_cpu_mode,
+   gdb_vmm_rd_filter_mask,
+   gdb_vmm_wr_filter_mask,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)

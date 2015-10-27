@@ -47,6 +47,11 @@ class CPUException:
     machine_check      = 18
     simd               = 19
 
+class CPUFilter:
+    npf   = (1<<0)
+    hyp   = (1<<1)
+    cpuid = (1<<2)
+
 class CPUMode:
     rmode   = 1
     v80086  = 2
@@ -106,19 +111,18 @@ class CPU:
     def __get_last_reason(self):
         return self.__last_reason
 
+    # exceptions filtering
     def __set_exception_mask(self, mask):
         self.__gdb.write_exception_mask("%.8x" % (mask))
 
     def __get_exception_mask(self):
         return int(self.__gdb.read_exception_mask(), 16)
 
-    def __get_cpu_mode(self):
-        return int(self.__gdb.get_cpu_mode(), 16)
-
+    # control registers filtering
     def __set_cr_rd_mask(self, mask):
         self.__gdb.write_cr_read_mask("%.4x" % (mask))
 
-    def __get_cr_rd__mask(self):
+    def __get_cr_rd_mask(self):
         return int(self.__gdb.read_cr_read_mask(), 16)
 
     def __set_cr_wr_mask(self, mask):
@@ -126,6 +130,25 @@ class CPU:
 
     def __get_cr_wr_mask(self):
         return int(self.__gdb.read_cr_write_mask(), 16)
+
+    # cpu mode
+    def __get_cpu_mode(self):
+        return int(self.__gdb.get_cpu_mode(), 16)
+
+    # various filters
+    def __set_filter_mask(self, mask):
+        self.__gdb.write_filter_mask("%.16x" % (mask))
+
+    def __get_filter_mask(self):
+        return int(self.__gdb.read_filter_mask(), 16)
+
+    def __filter_mask_add(self, v):
+        mask = self.__get_filter_mask() | v
+        self.__set_filter_mask(mask)
+
+    def __filter_mask_del(self, v):
+        mask = self.__get_filter_mask() & ~(v)
+        self.__set_filter_mask(mask)
 
     def __segmem_location(self, base, reg):
         if self.mode.addr_sz == 16:
@@ -180,6 +203,10 @@ class CPU:
             self.__gdb.resume(addr)
 
     def _quit(self):
+        self.__set_exception_mask(0)
+        self.__set_filter_mask(0)
+        self.__set_cr_rd_mask(0)
+        self.__set_cr_wr_mask(0)
         return
 
     def _flush(self):
@@ -265,16 +292,28 @@ class CPU:
         self.__filter.unregister(event.StopReason.wr_cr0+n)
 
     def filter_npf(self, hdl):
+        self.__filter_mask_add(CPUFilter.npf)
         self.__filter.register(event.StopReason.npf, hdl)
 
     def release_npf(self):
+        self.__filter_mask_del(CPUFilter.npf)
         self.__filter.unregister(event.StopReason.npf)
 
     def filter_hypercall(self, hdl):
+        self.__filter_mask_add(CPUFilter.hyp)
         self.__filter.register(event.StopReason.hyp, hdl)
 
     def release_hypercall(self):
+        self.__filter_mask_del(CPUFilter.hyp)
         self.__filter.unregister(event.StopReason.hyp)
+
+    def filter_cpuid(self, hdl):
+        self.__filter_mask_add(CPUFilter.cpuid)
+        self.__filter.register(event.StopReason.cpuid, hdl)
+
+    def release_cpuid(self):
+        self.__filter_mask_del(CPUFilter.cpuid)
+        self.__filter.unregister(event.StopReason.cpuid)
 
     def code_location(self):
         return self.__segmem_location(self.sr.cs_base, self.gpr.pc)

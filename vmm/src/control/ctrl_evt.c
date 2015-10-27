@@ -129,6 +129,9 @@ int ctrl_evt_cr_wr(uint8_t n)
 
 int ctrl_evt_npf()
 {
+   if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_NPF))
+      return VM_IGNORE;
+
    arg_t arg = {.raw = 0};
    ctrl_evt_setup(CTRL_EVT_TYPE_NPF, 0, arg);
    return VM_DONE;
@@ -136,8 +139,21 @@ int ctrl_evt_npf()
 
 int ctrl_evt_hypercall()
 {
+   if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_HYP))
+      return VM_IGNORE;
+
    arg_t arg = {.raw = 0};
    ctrl_evt_setup(CTRL_EVT_TYPE_HYP, 0, arg);
+   return VM_DONE;
+}
+
+int ctrl_evt_cpuid()
+{
+   if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_CPUID))
+      return VM_IGNORE;
+
+   arg_t arg = {.raw = 0};
+   ctrl_evt_setup(CTRL_EVT_TYPE_CPUID, 0, arg);
    return VM_DONE;
 }
 

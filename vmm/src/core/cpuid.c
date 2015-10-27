@@ -18,6 +18,7 @@
 #include <cpuid.h>
 #include <vmm.h>
 #include <emulate.h>
+#include <ctrl.h>
 #include <info_data.h>
 #include <debug.h>
 
@@ -188,6 +189,7 @@ static int __resolve_cpuid()
    }
 
 __leave:
+   ctrl_evt_cpuid();
    debug(CPUID, "cpuid 0x%x | 0x%x 0x%x 0x%x 0x%x\n"
 	 ,idx
 	 ,info->vm.cpu.gpr->rax.low
