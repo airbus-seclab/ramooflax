@@ -535,3 +535,7 @@ class GDB:
     def read_msr(self, data):
         self.send_vmm_pkt("\xa3"+data)
         return self.recv_pkt(2*4*2)
+
+    def filter_cpuid(self, data):
+        self.send_vmm_pkt("\xa4"+data)
+        self.recv_diag()

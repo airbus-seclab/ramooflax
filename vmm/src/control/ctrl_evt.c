@@ -147,9 +147,13 @@ int ctrl_evt_hypercall()
    return VM_DONE;
 }
 
-int ctrl_evt_cpuid()
+int ctrl_evt_cpuid(uint32_t index)
 {
    if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_CPUID))
+      return VM_IGNORE;
+
+   if(info->vmm.ctrl.usr.cpuid != index &&
+      info->vmm.ctrl.usr.cpuid != CTRL_CPUID_ALL)
       return VM_IGNORE;
 
    arg_t arg = {.raw = 0};

@@ -718,6 +718,21 @@ __rd_msr_fail:
 /* { */
 /* } */
 
+static void gdb_vmm_filter_cpuid(uint8_t *data, size_t len)
+{
+   raw64_t val;
+
+   if(!gdb_get_number(data, len, (uint64_t*)&val.raw, 0))
+   {
+      gdb_nak();
+      return;
+   }
+
+   /* XXX: check on invalid cpuid index ? */
+   info->vmm.ctrl.usr.cpuid = val.low;
+   gdb_ok();
+}
+
 static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_rd_all_sysregs,
    gdb_vmm_wr_all_sysregs,
@@ -755,6 +770,7 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_rd_filter_mask,
    gdb_vmm_wr_filter_mask,
    gdb_vmm_rd_msr,
+   gdb_vmm_filter_cpuid,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)

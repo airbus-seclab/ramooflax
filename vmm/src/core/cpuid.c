@@ -189,7 +189,6 @@ static int __resolve_cpuid()
    }
 
 __leave:
-   ctrl_evt_cpuid();
    debug(CPUID, "cpuid 0x%x | 0x%x 0x%x 0x%x 0x%x\n"
 	 ,idx
 	 ,info->vm.cpu.gpr->rax.low
@@ -197,6 +196,8 @@ __leave:
 	 ,info->vm.cpu.gpr->rcx.low
 	 ,info->vm.cpu.gpr->rdx.low
       );
+
+   ctrl_evt_cpuid(idx);
    return VM_DONE;
 }
 

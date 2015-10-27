@@ -51,12 +51,15 @@ typedef union controller_status
 #define CTRL_FILTER_HYP     (1<<1)
 #define CTRL_FILTER_CPUID   (1<<2)
 
+#define CTRL_CPUID_ALL      (-1U)
+
 typedef struct controller_user
 {
    uint32_t    excp;   /* user requested excp     intercepts */
    uint32_t    cr_rd;  /* user requested read  CR intercepts */
    uint32_t    cr_wr;  /* user requested write CR intercepts */
-   uint64_t    filter; /* user requester various  intercepts */
+   uint64_t    filter; /* user requested various  intercepts */
+   uint32_t    cpuid;  /* user cpuid index to filter on */
 
 } __attribute__((packed)) ctrl_usr_t;
 

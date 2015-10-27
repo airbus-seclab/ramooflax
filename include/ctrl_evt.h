@@ -49,7 +49,7 @@ int  ctrl_evt_cr_rd(uint8_t);
 int  ctrl_evt_cr_wr(uint8_t);
 int  ctrl_evt_npf();
 int  ctrl_evt_hypercall();
-int  ctrl_evt_cpuid();
+int  ctrl_evt_cpuid(uint32_t);
 
 int  ctrl_evt_setup(uint8_t, ctrl_evt_hdl_t, arg_t);
 int  ctrl_event();

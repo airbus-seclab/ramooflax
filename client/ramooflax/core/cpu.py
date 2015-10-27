@@ -52,6 +52,8 @@ class CPUFilter:
     hyp   = (1<<1)
     cpuid = (1<<2)
 
+    cpuid_all = 0xffffffff # special index value
+
 class CPUMode:
     rmode   = 1
     v80086  = 2
@@ -135,6 +137,10 @@ class CPU:
     # cpu mode
     def __get_cpu_mode(self):
         return int(self.__gdb.get_cpu_mode(), 16)
+
+    # cpuid index filter
+    def __filter_cpuid(self, index):
+        self.__gdb.filter_cpuid("%.8x" % (index))
 
     # various filters
     def __set_filter_mask(self, mask):
@@ -308,8 +314,9 @@ class CPU:
         self.__filter_mask_del(CPUFilter.hyp)
         self.__filter.unregister(event.StopReason.hyp)
 
-    def filter_cpuid(self, hdl):
+    def filter_cpuid(self, hdl, index=CPUFilter.cpuid_all):
         self.__filter_mask_add(CPUFilter.cpuid)
+        self.__filter_cpuid(index)
         self.__filter.register(event.StopReason.cpuid, hdl)
 
     def release_cpuid(self):
