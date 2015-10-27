@@ -10,7 +10,7 @@
 *.patch
 *.egg-info
 config*
-gdb*
+./gdb*
 client/build
 include/config.h
 include/config_debug.h
