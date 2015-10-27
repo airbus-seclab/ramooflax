@@ -193,7 +193,8 @@ typedef union pat_register
 #include <vmx_exit_msr.h>
 #endif
 
-int   resolve_msr(uint8_t);
+int  __resolve_msr_rd();
+int  resolve_msr(uint8_t);
 
 #endif
 

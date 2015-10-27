@@ -23,7 +23,7 @@
 
 extern info_data_t *info;
 
-static int __resolve_msr_rd()
+int __resolve_msr_rd()
 {
    int rc = __resolve_msr_arch(0);
 

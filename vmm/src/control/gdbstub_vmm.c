@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <ctrl.h>
+#include <msr.h>
 #include <gdbstub_pkt.h>
 #include <gdbstub_vmm.h>
 #include <debug.h>
@@ -674,6 +675,49 @@ static void gdb_vmm_wr_filter_mask(uint8_t *data, size_t len)
    gdb_ok();
 }
 
+static void gdb_vmm_rd_msr(uint8_t *data, size_t len)
+{
+   int          rc;
+   raw64_t      srax, srcx, srdx, index, rax, rdx;
+   gpr64_ctx_t *ctx = info->vm.cpu.gpr;
+
+   if(!gdb_get_number(data, len, (uint64_t*)&index.raw, 0))
+      goto __rd_msr_fail;
+
+   srax = ctx->rax;
+   srcx = ctx->rcx;
+   srdx = ctx->rdx;
+
+   ctx->rcx.raw = index.raw;
+   rc = __resolve_msr_rd();
+
+   rax = ctx->rax;
+   rdx = ctx->rdx;
+
+   ctx->rax = srax;
+   ctx->rcx = srcx;
+   ctx->rdx = srdx;
+
+   if(rc & (VM_FAIL|VM_FAULT))
+      goto __rd_msr_fail;
+
+   gdb_add_number(rax.raw, 8, 0);
+   gdb_add_number(rdx.raw, 8, 0);
+   gdb_send_packet();
+   return;
+
+__rd_msr_fail:
+   gdb_nak();
+}
+
+/* XXX: write msr
+** Take care on side effect if calling __resolve_msr_wr()
+** ie. disable MTRR, ...
+*/
+/* static void gdb_vmm_wr_msr(uint8_t *data, size_t len) */
+/* { */
+/* } */
+
 static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_rd_all_sysregs,
    gdb_vmm_wr_all_sysregs,
@@ -710,6 +754,7 @@ static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
    gdb_vmm_cpu_mode,
    gdb_vmm_rd_filter_mask,
    gdb_vmm_wr_filter_mask,
+   gdb_vmm_rd_msr,
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)

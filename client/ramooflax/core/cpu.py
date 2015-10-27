@@ -102,6 +102,7 @@ class CPU:
         self.sr = register.SR_x86(self.__gdb)
         self.lbr = register.LBR(self.__gdb)
         self.fault = register.Fault(self.__gdb)
+        self.msr = register.MSR(self.__gdb)
 
         #not defined mode
         self.mode = None

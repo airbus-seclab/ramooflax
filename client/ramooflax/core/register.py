@@ -312,3 +312,25 @@ class LBR:
         except:
             log.log("error", "invalid LBR key")
             raise
+
+### Model Specific Register
+class MSR:
+    def __init__(self, gdb):
+        self.__gdb = gdb
+        self.index = 0
+        self.eax = 0
+        self.edx = 0
+
+    def __read(self):
+        gdbmsr = self.__gdb.read_msr("%.8x" % self.index)
+        self.eax = int(gdbmsr[:8],16)
+        self.edx = int(gdbmsr[8:],16)
+
+    def read(self, index):
+        self.index = index
+        self.__read()
+        return self
+
+    def __str__(self):
+        fmt = "MSR 0x%.8x\neax 0x%.8x\nedx 0x%.8x"
+        return fmt % (self.index, self.eax, self.edx)

@@ -531,3 +531,7 @@ class GDB:
     def write_filter_mask(self, data):
         self.send_vmm_pkt("\xa2"+data)
         self.recv_diag()
+
+    def read_msr(self, data):
+        self.send_vmm_pkt("\xa3"+data)
+        return self.recv_pkt(2*4*2)
