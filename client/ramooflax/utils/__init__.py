@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-from stack   import stackdump
+from stack   import stackdump, backtrace
 from disasm  import disassemble
 from segment import SegmentDescriptorType, SegmentDescriptor, InterruptDescriptor
 from os      import OSFactory, OSAffinity
