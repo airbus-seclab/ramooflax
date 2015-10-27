@@ -279,7 +279,7 @@ static void vmx_vmexit_show_event()
 
    name = vmx_vmexit_string_from_vector_type(vm_exit_info.int_info.type,
 					     vm_exit_info.int_info.vector);
-   printf("\n- event : %s (%d) vector 0x%x err_code 0x%x\n"
+   printf("\n- event : %s (type %d) vector 0x%x err_code 0x%x\n"
 	  ,name,vm_exit_info.int_info.type
 	  ,vm_exit_info.int_info.vector
 	  ,vm_exit_info.int_info.v_err?vm_exit_info.int_err_code.raw:0);
@@ -312,7 +312,7 @@ static void vmx_vmexit_show_deliver()
    {
       name = vmx_vmexit_string_from_vector_type(vm_entry_ctrls.int_info.type,
 						vm_entry_ctrls.int_info.vector);
-      printf("\n- entry event : %s (%d) vector 0x%x err_code 0x%x\n"
+      printf("\n- entry event : %s (type %d) vector 0x%x err_code 0x%x\n"
 	     ,name
 	     ,vm_entry_ctrls.int_info.type
 	     ,vm_entry_ctrls.int_info.vector
@@ -323,7 +323,7 @@ static void vmx_vmexit_show_deliver()
    {
       name = vmx_vmexit_string_from_vector_type(vm_exit_info.idt_info.type,
 						vm_exit_info.idt_info.vector);
-      printf("\n- idt delivery : %s (%d) vector 0x%x err_code 0x%x\n"
+      printf("\n- idt delivery : %s (type %d) vector 0x%x err_code 0x%x\n"
 	     ,name
 	     ,vm_exit_info.idt_info.type
 	     ,vm_exit_info.idt_info.vector
