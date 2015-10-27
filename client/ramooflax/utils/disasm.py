@@ -25,7 +25,8 @@ def disassemble(vm, wrapper, start, sz=15):
         insn = wrapper(start, dump[off:off+15])
         if insn is None:
             break
-        msg   += "%.8x\t%s\n" % (start, insn)
+        byte   = dump[off:off+insn.length].encode("hex")
+        msg   += "%.8x\t%-16s\t%s\n" % (start, byte, insn)
         off   += insn.length
         start += insn.length
     return msg
