@@ -290,8 +290,13 @@ void vmx_vmcs_collect()
    vmcs_read(vm_exec_ctrls.executive_vmcs_ptr);
 #endif
    vmcs_read(vm_exec_ctrls.tsc_offset);
-   vmcs_read(vm_exec_ctrls.vapic_addr);
-   vmcs_read(vm_exec_ctrls.apic_addr);
+
+   if(info->vm.vmx_fx_proc.allow_1.tprs)
+      vmcs_read(vm_exec_ctrls.vapic_addr);
+
+   if(info->vm.vmx_fx_proc2.allow_1.vapic)
+      vmcs_read(vm_exec_ctrls.apic_addr);
+
    vmcs_read(vm_exec_ctrls.eptp);
    vmcs_read(vm_exit_info.guest_physical);
    vmcs_read(vm_state.vmcs_link_ptr);
@@ -370,7 +375,9 @@ void vmx_vmcs_collect()
    vmcs_read(vm_state.smbase);
 #endif
    vmcs_read(vm_state.ia32_sysenter_cs);
-   vmcs_read(vm_state.preempt_timer);
+
+   if(info->vm.vmx_fx_pin.allow_1.preempt)
+      vmcs_read(vm_state.preempt_timer);
 
    /* vmcs_read(vm_host_state.ia32_sysenter_cs); */
 
