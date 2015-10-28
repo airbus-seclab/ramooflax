@@ -87,7 +87,9 @@ class CPUMode:
         self.exe     = mode & 0xff
         self.pg      = (mode >> 8) & 0xff
         self.addr_sz = (mode >> 16) & 0xff
-        self.nibbles = self.addr_sz/4
+
+        #GDB waits for 32 bits regs even in 16 bits
+        self.gdb_nibbles = max(self.addr_sz/4, 8)
 
     def __str__(self):
         x_s = self._exe_str.get(self.exe, "(unknown)")
@@ -168,6 +170,7 @@ class CPU:
         mode = CPUMode(self.__get_cpu_mode())
 
         if self.mode is None or self.mode.addr_sz != mode.addr_sz:
+            #GDB seems to wait for 32 bits regs even in 16bits
             if mode.addr_sz == 32 or mode.addr_sz == 16:
                 self.gpr = register.GPR_x86_32(self.__gdb)
             elif mode.addr_sz == 64:
