@@ -29,7 +29,7 @@ class SegmentDescriptorType:
     tss_busy     = 0x0b
     call_gate    = 0x0c
     intr_gate    = 0x0e
-    trap_gate    = 0x0f                 
+    trap_gate    = 0x0f
     data_r       = 0x10
     data_ra      = 0x11
     data_rw      = 0x12
