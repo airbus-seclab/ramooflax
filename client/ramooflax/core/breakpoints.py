@@ -113,6 +113,7 @@ class BreakPoints:
             while not self.__remove(b):
                 continue
         self.__list = {}
+        self.__auto_name = 0
 
     def __add(self, addr, name=None, filtr=None, kind=None, size=1):
         if name in self.__list:
