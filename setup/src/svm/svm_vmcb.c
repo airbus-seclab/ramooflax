@@ -31,6 +31,7 @@ void svm_vmcb_msr_controls_init()
    svm_deny_msr_rw(info->vm.cpu.vmc, AMD_EFER_MSR);
 #endif
 
+   vm_ctrls.sys_insn_bitmap.intn = 1;
    vm_ctrls.sys_insn_bitmap.msr_insn = 1;
    vm_ctrls.msr_bitmap_addr.raw = (offset_t)info->vm.cpu.vmc->msr_bitmap;
 }
