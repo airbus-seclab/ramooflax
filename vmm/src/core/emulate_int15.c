@@ -140,7 +140,7 @@ static int emulate_int15_get_ext_mem()
 
    if(x.raw == 0)
    {
-      debug(EMU_RMODE, "no extended memory found\n");
+      debug(EMU_RMODE_INT15, "no extended memory found\n");
       return VM_FAIL;
    }
 
@@ -262,29 +262,29 @@ int emulate_int15()
 
    case BIOS_GET_EXT_MEM_32:
    case BIOS_GET_EXT_MEM:
-      debug(EMU_RMODE, "get ext mem\n");
+      debug(EMU_RMODE_INT15, "get ext mem\n");
       return emulate_int15_get_ext_mem();
    case BIOS_DISABLE_A20:
-      debug(EMU_RMODE, "disable a20\n");
+      debug(EMU_RMODE_INT15, "disable a20\n");
       return emulate_int15_a20_disable();
    case BIOS_ENABLE_A20:
-      debug(EMU_RMODE, "enable a20\n");
+      debug(EMU_RMODE_INT15, "enable a20\n");
       return emulate_int15_a20_enable();
    case BIOS_STATUS_A20:
-      debug(EMU_RMODE, "status a20\n");
+      debug(EMU_RMODE_INT15, "status a20\n");
       return emulate_int15_a20_status();
    case BIOS_SUPPORT_A20:
-      debug(EMU_RMODE, "support a20\n");
+      debug(EMU_RMODE_INT15, "support a20\n");
       return emulate_int15_a20_support();
    }
 
    switch(rax->bhigh)
    {
    case BIOS_OLD_GET_EXT_MEM:
-      debug(EMU_RMODE, "get old ext mem\n");
+      debug(EMU_RMODE_INT15, "get old ext mem\n");
       return emulate_int15_old_get_ext_mem();
    case BIOS_GET_BIG_MEM:
-      debug(EMU_RMODE, "Get big mem !\n");
+      debug(EMU_RMODE_INT15, "get big mem !\n");
       return VM_FAIL;
    }
 

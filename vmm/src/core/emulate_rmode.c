@@ -54,7 +54,7 @@ static void emulate_rmode_far_jump(fptr_t *fptr)
    /* on op16, eip high is cleared */
    __rip.low = fptr->offset.raw;
 
-   debug(EMU_RMODE, "far jump to 0x%x:0x%x\n",
+   debug(EMU_RMODE_FAR, "far jump to 0x%x:0x%x\n",
    	 __cs.selector.raw, __rip.wlow);
 
    __post_access(__cs.selector);
@@ -67,7 +67,7 @@ static void emulate_rmode_far_call(fptr_t *fptr, uint16_t insn_sz)
    emulate_rmode_push(__cs.selector.raw);
    emulate_rmode_push(__rip.wlow+insn_sz);
 
-   debug(EMU_RMODE,
+   debug(EMU_RMODE_FAR,
 	 "far call saved frame 0x%x:0x%x\n",
    	 __cs.selector.raw, __rip.wlow+insn_sz);
 
@@ -80,7 +80,7 @@ static void emulate_rmode_far_ret(uint16_t add_sp)
    __cs.selector.raw = emulate_rmode_pop();
    __cs.base.low     = (__cs.selector.raw)<<4;
 
-   debug(EMU_RMODE, "far ret to 0x%x:0x%x\n", __cs.selector.raw, __rip.wlow);
+   debug(EMU_RMODE_FAR, "far ret to 0x%x:0x%x\n", __cs.selector.raw, __rip.wlow);
 
    if(add_sp)
       info->vm.cpu.gpr->rsp.wlow += add_sp;
@@ -96,7 +96,7 @@ int emulate_rmode_iret()
    __rflags.wlow = emulate_rmode_pop();
    __post_access(__rflags);
 
-   debug(EMU_RMODE, "iret\n");
+   debug(EMU_RMODE_IRET, "iret\n");
    return VM_DONE_LET_RIP;
 }
 
@@ -105,7 +105,8 @@ int emulate_rmode_interrupt(uint8_t vector, uint16_t insn_sz)
    ivt_e_t *ivt;
    fptr_t  fptr;
 
-   debug(EMU_RMODE, "int 0x%x\n", vector);
+   debug(EMU_RMODE_INT, "int 0x%x (ax 0x%x)\n"
+	 , vector, info->vm.cpu.gpr->rax.wlow);
 
    if(vector == BIOS_MISC_INTERRUPT)
    {
