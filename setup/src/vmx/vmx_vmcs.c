@@ -134,6 +134,7 @@ static void vmx_vmcs_exec_controls_init()
    vm_exec_ctrls.proc.proc2 = 1;
 
    vm_exec_ctrls.proc2.uguest = 1;
+   vm_exec_ctrls.proc2.dt     = 1;
    vm_exec_ctrls.proc2.rdtscp = 1;
    vm_exec_ctrls.proc2.ept    = 1;
 
