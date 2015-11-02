@@ -17,7 +17,6 @@
 */
 #include <vmx_guest.h>
 #include <vmx_msr.h>
-#include <intr.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -32,7 +31,7 @@ static void vmx_vmcs_guest_nonregister_state_init()
 
 static void vmx_vmcs_guest_register_state_segments_init()
 {
-   vm_state.idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;
+   vm_state.idtr.limit.wlow = info->vm.idt_limit_rmode;
 
    vm_state.ss.selector.raw = RM_BASE_SS;
    vm_state.ss.base.low = (vm_state.ss.selector.raw)<<4;

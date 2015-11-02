@@ -275,7 +275,7 @@
 #define __allow_soft_int()						\
    ({									\
       __allow_dt_access();						\
-      __idtr.limit.wlow = info->vm.idt_limit;				\
+      __idtr.limit.wlow = info->vm.idt_limit_saved;			\
       vmcs_dirty(__idtr.limit);						\
    })
 
@@ -283,8 +283,8 @@
    ({									\
       __deny_dt_access();						\
       vmcs_read(__idtr.limit);						\
-      info->vm.idt_limit = __idtr.limit.wlow;				\
-      __idtr.limit.wlow = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;	\
+      info->vm.idt_limit_saved = __idtr.limit.wlow;			\
+      __idtr.limit.wlow = info->vm.idt_limit_rmode;			\
       vmcs_dirty(__idtr.limit);						\
    })
 

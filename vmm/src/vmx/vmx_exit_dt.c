@@ -44,8 +44,8 @@ static int __vmx_vmexit_lidt(dt_reg_t *dt_reg)
 
    debug(VMX_DT, "lidt 0x%X:0x%x\n", dt_reg->base.raw, dt_reg->limit);
 
-   if(info->vm.idt_limit != dt_reg->limit)
-      info->vm.idt_limit = dt_reg->limit;
+   if(info->vm.idt_limit_saved != dt_reg->limit)
+      info->vm.idt_limit_saved = dt_reg->limit;
 
    vm_state.idtr.base.raw = dt_reg->base.raw;
    vmcs_dirty(vm_state.idtr.base);
@@ -69,7 +69,7 @@ static int __vmx_vmexit_sidt(dt_reg_t *dt_reg)
    vmcs_read(vm_state.idtr.base);
 
    dt_reg->base.raw = vm_state.idtr.base.raw;
-   dt_reg->limit = info->vm.idt_limit;
+   dt_reg->limit = info->vm.idt_limit_saved;
 
    debug(VMX_DT, "sidt\n");
    return VM_DONE;

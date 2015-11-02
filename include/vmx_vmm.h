@@ -26,6 +26,8 @@
 
 #define VM_RMODE_EXCP_BITMAP   (1<<GP_EXCP|1<<MC_EXCP)
 #define VM_PMODE_EXCP_BITMAP   (1<<MC_EXCP)
+//#define VM_PMODE_EXCP_BITMAP   (1<<MC_EXCP|1<<DF_EXCP)
+//#define VM_PMODE_EXCP_BITMAP   (-1U)
 
 /*
 ** Require strict alignment
@@ -55,7 +57,8 @@ typedef struct vmx_bazaar
    raw64_t              int_shadow;
    raw64_t              dr_shadow[6];
    size_t               lbr_tos;
-   uint16_t             idt_limit;
+   uint16_t             idt_limit_saved;
+   uint16_t             idt_limit_rmode;
    ia32_mtrr_cap_t      mtrr_cap;
    ia32_mtrr_def_t      mtrr_def;
    ia32_efer_msr_t      efer;
