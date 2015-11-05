@@ -113,12 +113,6 @@ static int __io_insn_string_out(io_insn_t *io, io_size_t *sz)
 
 static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
 {
-   if(io->sz != 1)
-   {
-      debug(DEV_IO, "string io size != 1 not supported\n");
-      return 0;
-   }
-
    if(io->rep)
       sz->miss *= (info->vm.cpu.gpr->rcx.raw & io->msk);
 
@@ -141,9 +135,8 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
 
    if(io->rep)
    {
-      info->vm.cpu.gpr->rcx.raw &= ~io->msk;
-      info->vm.cpu.gpr->rcx.raw |=
-	 (info->vm.cpu.gpr->rcx.raw & io->msk) - ((sz->done/io->sz) & io->msk);
+      info->vm.cpu.gpr->rcx.raw =
+	 (info->vm.cpu.gpr->rcx.raw & ~io->msk) | ((sz->miss/io->sz) & io->msk);
    }
 
    if(sz->miss)
@@ -208,27 +201,27 @@ static int __io_string_native(io_insn_t *io, void *device)
 {
    raw32_t *data = (raw32_t*)device;
 
-   if(io->rep)
+   if(io->back)
    {
-      debug(DEV_IO, "native io string rep prefix not supported\n");
+      debug(DEV_IO, "native io bwd string: not implemented !\n");
       return 0;
    }
-
-   if(io->sz != 1)
-   {
-      debug(DEV_IO, "native io string size != 1 not supported\n");
-      return 0;
-   }
-
-   /* backward not checked as we only allow sz = 1 and no rep */
 
    if(io->in)
-      insb(data, io->port);
+      switch(io->sz)
+      {
+      case 1: rep_insb(data, io->port, io->cnt); break;
+      case 2: rep_insw(data, io->port, io->cnt); break;
+      case 4: rep_insl(data, io->port, io->cnt); break;
+      }
    else
-   {
-      __io_pic_detect(io, data->blow);
-      outsb(data, io->port);
-   }
+      switch(io->sz)
+      {
+      case 1: __io_pic_detect(io, data->blow);
+	      rep_outsb(data, io->port, io->cnt); break;
+      case 2: rep_outsw(data, io->port, io->cnt); break;
+      case 4: rep_outsl(data, io->port, io->cnt); break;
+      }
 
    return 1;
 }
@@ -280,29 +273,65 @@ int dev_io_insn(io_insn_t *io, void *device, io_size_t *sz)
 
 int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
 {
-   raw32_t   data;
-   io_size_t sz = { .available = sizeof(raw32_t) };
+   uint64_t  space;
+   loc_t     device;
+   io_size_t sz;
+   int       rc;
+
+   sz.available = io->sz * io->cnt;
+
+   if(sz.available <= sizeof(uint64_t))
+      device.u64 = &space;
+   else if(sz.available <= PAGE_SIZE)
+   {
+      device.linear = pool_pop_page();
+      if(!device.linear)
+      {
+	 debug(DEV_IO, "proxy io memory no more page\n");
+	 return 0;
+      }
+   }
+   else
+   {
+      debug(DEV_IO, "proxy io memory need %D\n", sz.available);
+      return 0;
+   }
 
    if(io->in)
    {
-      dev_io_native(io, &data);
-      debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, data.raw);
+      if(!dev_io_native(io, device.addr))
+      {
+	 rc = 0;
+	 goto __release;
+      }
+
+      debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, *device.u32);
 
       if(filter)
-	 filter(&data);
+	 filter(device.addr);
 
-      return dev_io_insn(io, &data, &sz);
+      rc = dev_io_insn(io, device.addr, &sz);
+      goto __release;
    }
 
-   if(!dev_io_insn(io, &data, &sz))
-      return 0;
+   if(!dev_io_insn(io, device.addr, &sz))
+   {
+      rc = 0;
+      goto __release;
+   }
 
    if(filter)
-      filter(&data);
+      filter(device.addr);
 
-   debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, data.raw);
-   dev_io_native(io, &data);
-   return 1;
+   debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, *device.u32);
+   dev_io_native(io, device.addr);
+   rc = 1;
+
+__release:
+   if(device.u64 != &space)
+      pool_push_page(device.linear);
+
+   return rc;
 }
 
 int dev_io_proxify(io_insn_t *io)

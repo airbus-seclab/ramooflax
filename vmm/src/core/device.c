@@ -59,7 +59,8 @@ int dev_access()
    if(range(io.port, COM1_START_PORT, COM1_END_PORT))
       return dev_uart(&info->vm.dev.uart, &io);
 
+   if(range(io.port, ATA1_START_PORT, ATA1_END_PORT))
+      return dev_ata(&info->vm.dev.ata[0], &io);
+
    return dev_io_proxify(&io);
 }
-
-

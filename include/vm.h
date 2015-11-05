@@ -60,6 +60,7 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 #include <dev_kbd.h>
 #include <dev_pic.h>
 #include <dev_uart.h>
+#include <dev_ata.h>
 #include <disasm.h>
 #include <pci.h>
 
@@ -159,6 +160,7 @@ typedef struct vm_device
    uint8_t        pic1_icw2;   /* irq rebase */
    pci_cfg_addr_t pci_addr;    /* last filtered pci addr */
    io_flt_hdl_t   pci_filter;  /* pci data filter handler */
+   ata_t          ata[1];      /* vm filtered ata ctrl */
 
 } __attribute__((packed)) vm_dev_t;
 
