@@ -42,18 +42,23 @@ int __svm_io_init(io_insn_t *io)
    io->port = svm->port;
 
    if(!io->s)
+   {
+      io->cnt = 1;
       return 1;
-
-   io->addr = (svm->low>>7) & 7;
-   io->back = vm_state.rflags.df;
-   io->rep  = svm->rep;
-   io->msk  = (1ULL<<(16*io->addr)) - 1;
+   }
 
    if(svm->seg > 5)
    {
       debug(SVM_IO, "invalid io seg pfx %d\n", svm->seg);
       return 0;
    }
+
+   io->seg  = svm->seg;
+   io->addr = (svm->low>>7) & 7;
+   io->back = vm_state.rflags.df;
+   io->msk  = (1ULL<<(16*io->addr)) - 1;
+   io->rep  = svm->rep;
+   io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 
    return 1;
 }

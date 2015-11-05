@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,6 +30,13 @@
 #endif
 #endif
 
+#define IO_S_PFX_ES 0
+#define IO_S_PFX_CS 1
+#define IO_S_PFX_SS 2
+#define IO_S_PFX_DS 3
+#define IO_S_PFX_FS 4
+#define IO_S_PFX_GS 5
+
 /*
 ** I/O instruction format
 */
@@ -42,8 +49,13 @@ typedef struct io_insn
 	 uint16_t in:1;   /* in or out */
 	 uint16_t s:1;    /* string operation */
 	 uint16_t sz:3;   /* operand size 1/2/4 (1,2,4) */
-	 uint16_t addr:3; /* addr size 16/32/64 (1,2,4) */
-	                  /* only for ins/outs SI/ESI/RSI, CX,ECX,RCX */
+	 uint16_t addr:3; /* addr size 16/32/64 (1,2,4)
+			  ** only for ins/outs
+			  ** SI/ESI/RSI, DI/EDI/RDI, CX,ECX,RCX
+			  */
+	 uint16_t seg:3;  /* segment prefix 0-5 (ES,CS,SS,DS,FS,GS)
+			  ** not used for 'ins' (ES can't be overriden)
+			  */
 	 uint16_t back:1; /* backward string op */
 	 uint16_t rep:1;  /* rep prefix */
 
@@ -57,6 +69,7 @@ typedef struct io_insn
    size_t   msk;
    loc_t    src;
    loc_t    dst;
+   size_t   cnt; /* cx/ecx/rcx or 1 if no rep */
 
 } __attribute__((packed)) io_insn_t;
 

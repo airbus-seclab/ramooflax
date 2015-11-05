@@ -45,7 +45,10 @@ int __vmx_io_init(io_insn_t *io)
    io->port = vmx_io->port;
 
    if(!io->s)
+   {
+      io->cnt = 1;
       return 1;
+   }
 
    vmcs_read(vm_exit_info.guest_linear);
 
@@ -54,6 +57,8 @@ int __vmx_io_init(io_insn_t *io)
 
    vmcs_read(vm_exit_info.insn_info);
    vmx_io_s = &vm_exit_info.insn_info.io;
+
+   io->seg  = vmx_io_s->seg;
    io->addr = 1<<vmx_io_s->addr;
 #else
    ud_t *insn = &info->vm.cpu.disasm;
@@ -82,11 +87,25 @@ int __vmx_io_init(io_insn_t *io)
       else
 	 io->addr = 1;
    }
+
+   if(insn->pfx_seg)
+      io->seg = insn->pfx_seg - UD_R_ES;
+   else if(io->in)
+      io->seg = IO_S_PFX_ES;
+   else
+      io->seg = IO_S_PFX_DS;
 #endif
 
+   if(io->seg > 5)
+   {
+      debug(VMX_IO, "invalid io seg pfx %d\n", io->seg);
+      return 0;
+   }
+
    io->back = vm_state.rflags.df;
-   io->rep  = vmx_io->rep;
    io->msk  = (1ULL<<(16*io->addr)) - 1;
+   io->rep  = vmx_io->rep;
+   io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 
    return 1;
 }
