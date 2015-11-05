@@ -84,11 +84,8 @@
    })
 
 /*
-** read/write to io ports
+** Simple I/O operations
 */
-#define insb(_d_,_p_)   asm volatile ("insb"::"D"(_d_),"d"(_p_))
-#define outsb(_d_,_p_)  asm volatile ("outsb"::"S"(_d_),"d"(_p_))
-
 #define outb(_d_,_p_)   asm volatile ("outb %%al,  %%dx"::"a"(_d_),"d"(_p_))
 #define outw(_d_,_p_)   asm volatile ("outw %%ax,  %%dx"::"a"(_d_),"d"(_p_))
 #define outl(_d_,_p_)   asm volatile ("outl %%eax, %%dx"::"a"(_d_),"d"(_p_))
@@ -116,6 +113,26 @@
 
 #define out(_d,_p)  outb(_d,_p)
 #define in(_p)      inb(_p)
+
+/*
+** String I/O operations
+*/
+#define insb(_d_,_p_)   asm volatile ("insb"::"D"(_d_),"d"(_p_))
+#define insw(_d_,_p_)   asm volatile ("insw"::"D"(_d_),"d"(_p_))
+#define insl(_d_,_p_)   asm volatile ("insl"::"D"(_d_),"d"(_p_))
+
+#define outsb(_d_,_p_)  asm volatile ("outsb"::"S"(_d_),"d"(_p_))
+#define outsw(_d_,_p_)  asm volatile ("outsw"::"S"(_d_),"d"(_p_))
+#define outsl(_d_,_p_)  asm volatile ("outsl"::"S"(_d_),"d"(_p_))
+
+#define rep_insb(_d,_p,_c)   asm volatile ("rep insb"::"D"(_d),"d"(_p),"c"(_c))
+#define rep_insw(_d,_p,_c)   asm volatile ("rep insw"::"D"(_d),"d"(_p),"c"(_c))
+#define rep_insl(_d,_p,_c)   asm volatile ("rep insl"::"D"(_d),"d"(_p),"c"(_c))
+
+#define rep_outsb(_d,_p,_c)  asm volatile ("rep outsb"::"S"(_d),"d"(_p),"c"(_c))
+#define rep_outsw(_d,_p,_c)  asm volatile ("rep outsw"::"S"(_d),"d"(_p),"c"(_c))
+#define rep_outsl(_d,_p,_c)  asm volatile ("rep outsl"::"S"(_d),"d"(_p),"c"(_c))
+
 
 /*
 ** Barbarian halt
