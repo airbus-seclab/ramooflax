@@ -207,7 +207,7 @@ int __dev_pic_ocw3(pic_t *pic, uint8_t data)
    debug(DEV_PIC, "@0x%x ocw3 0x%x\n", __rip.low, data);
 
    if(pic->ocw3.smm == PIC_OCW3_SPECIAL_MASK_MODE_ENABLED)
-   { 
+   {
       debug(DEV_PIC, "special mask mode not supported !\n");
       return 0;
    }
