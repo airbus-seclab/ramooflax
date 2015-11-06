@@ -32,6 +32,7 @@ static void vm_dev_init()
 
    dev_kbd_init(&info->vm.dev.kbd);
    dev_uart_init(&info->vm.dev.uart, SERIAL_COM1);
+   dev_ata_init(&info->vm.dev.ata[0], ATA1_START_PORT);
 
    /* proxify to detect rebase for uart irq injection */
    info->vm.dev.pic1_icw2 = DFLT_PIC1_ICW2;
@@ -43,6 +44,10 @@ static void vm_dev_init()
    /* monitor reboot and A20 */
    __deny_io_range(KBD_START_PORT, KBD_END_PORT);
    __deny_io(PS2_SYS_CTRL_PORT_A);
+
+   /* ata filtering */
+   __deny_io(ATA1_CTRL_PORT);
+   __deny_io_range(ATA1_START_PORT, ATA1_END_PORT);
 
    /* prevent net card detection */
 /* #ifdef CONFIG_HAS_NET */
@@ -56,10 +61,6 @@ static void vm_dev_init()
 /*    } */
 /* #endif */
 /* #endif */
-
-   /* ata filtering */
-   dev_ata_init(info->vm.dev.ata);
-   __deny_io_range(ATA1_START_PORT, ATA1_END_PORT);
 }
 
 static void vm_cpu_init()

@@ -40,7 +40,7 @@
 #define ATA_LBA_LOW_REG(BASE)     ((BASE)+3)   /* R/W */
 #define ATA_LBA_MID_REG(BASE)     ((BASE)+4)   /* R/W */
 #define ATA_LBA_HIGH_REG(BASE)    ((BASE)+5)   /* R/W */
-#define ATA_DRIVE_HEAD_REG(BASE)  ((BASE)+6)   /* R/W */
+#define ATA_DEVICE_REG(BASE)      ((BASE)+6)   /* R/W */
 
 /*
 ** Command/Status Register
@@ -54,14 +54,17 @@
 /*
 ** ATA COMMANDS
 */
-#define ATA_READ_SECTOR_CMD         0x20
-#define ATA_WRITE_SECTOR_CMD        0x30
-#define ATA_IDENTIFY_DEVICE_CMD     0xec
-#define ATA_INIT_DEV_PARAMS_CMD     0x91
-#define ATA_RECALIBRATE_CMD         0x10
-
-#define ATA_DEVICE_RESET_CMD        0x08
-
+#define ATA_READ_SECTOR_CMD             0x20
+#define ATA_WRITE_SECTOR_CMD            0x30
+#define ATA_IDENT_DEV_CMD               0xec
+#define ATA_IDENT_PKT_DEV_CMD           0xa1
+#define ATA_INIT_DEV_PARAMS_CMD         0x91
+#define ATA_RECALIBRATE_CMD             0x10
+#define ATA_DEVICE_RESET_CMD            0x08
+#define ATA_READ_DMA_CMD                0xc8
+#define ATA_WRITE_DMA_CMD               0xca
+#define ATA_SET_FEAT_CMD                0xef
+#define ATA_SET_MULTI_MODE_CMD          0xc6
 
 /*
 ** Status Register
@@ -95,7 +98,7 @@ typedef union ata_device_register
       uint8_t  gen:4;   /* depend on command */
       uint8_t  dev:1;   /* device select */
       uint8_t  obs:1;   /* obsolete */
-      uint8_t  gen2:1;  /* depend on command */
+      uint8_t  gen2:1;  /* depend on command (ie. LBA for read/write sector) */
       uint8_t  obs2:1;  /* obsolete */
 
    } __attribute__((packed));
@@ -136,7 +139,6 @@ typedef union ata_error_register
 #define ATA_ALT_STATUS_REG(BASE)  ((BASE)+0x206) /* R */
 #define ATA_DEV_CTRL_REG(BASE)    ((BASE)+0x206) /* W */
 
-
 /*
 ** Alternate Status
 **
@@ -171,8 +173,8 @@ typedef union ata_device_control_register
 */
 typedef struct ata_device
 {
-   uint16_t sect_cnt; /* instead of uint8_t, easy to set 0 == 256 sectors */
-   uint8_t  lba[3];
+   uint8_t  cnt;
+   uint8_t  lba[4];
 
 } __attribute__((packed)) ata_dev_t;
 
@@ -182,15 +184,17 @@ typedef struct ata_device
 */
 typedef struct ata_controller
 {
+   uint16_t          base;
+   ata_dev_reg_t     dev;
+   ata_dev_t         devices[2];
 
 } __attribute__((packed)) ata_t;
-
 
 /*
 ** Functions
 */
 #ifdef __INIT__
-void dev_ata_init(ata_t*);
+void dev_ata_init(ata_t*, uint16_t);
 #else
 int  dev_ata(ata_t*, io_insn_t*);
 #endif

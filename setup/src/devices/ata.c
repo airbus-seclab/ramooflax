@@ -17,6 +17,7 @@
 */
 #include <dev_ata.h>
 
-void dev_ata_init(ata_t *ata)
+void dev_ata_init(ata_t *ata, uint16_t base)
 {
+   ata->base = base;
 }

@@ -207,6 +207,9 @@ static int __io_string_native(io_insn_t *io, void *device)
       return 0;
    }
 
+   debug(DEV_IO, "native io string: %D bytes (cnt %D, sz %d)\n"
+	 ,io->cnt*io->sz, io->cnt, io->sz);
+
    if(io->in)
       switch(io->sz)
       {
@@ -305,7 +308,7 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
 	 goto __release;
       }
 
-      debug(DEV_IO, "proxy io in 0x%x data 0x%x\n", io->port, *device.u32);
+      debug(DEV_IO, "proxy io in 0x%x = 0x%x\n", io->port, *device.u8);
 
       if(filter)
 	 filter(device.addr);
@@ -323,7 +326,7 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
    if(filter)
       filter(device.addr);
 
-   debug(DEV_IO, "proxy io out 0x%x data 0x%x\n", io->port, *device.u32);
+   debug(DEV_IO, "proxy io out 0x%x = 0x%x\n", io->port, *device.u8);
    dev_io_native(io, device.addr);
    rc = 1;
 
