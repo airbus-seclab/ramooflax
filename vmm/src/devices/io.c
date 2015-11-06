@@ -274,7 +274,7 @@ int dev_io_insn(io_insn_t *io, void *device, io_size_t *sz)
    return __io_insn_simple(io, device, sz);
 }
 
-int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
+int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
 {
    uint64_t  space;
    loc_t     device;
@@ -311,7 +311,7 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
       debug(DEV_IO, "proxy io in 0x%x = 0x%x\n", io->port, *device.u8);
 
       if(filter)
-	 filter(device.addr);
+	 filter(device.addr, arg);
 
       rc = dev_io_insn(io, device.addr, &sz);
       goto __release;
@@ -324,7 +324,7 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter)
    }
 
    if(filter)
-      filter(device.addr);
+      filter(device.addr, arg);
 
    debug(DEV_IO, "proxy io out 0x%x = 0x%x\n", io->port, *device.u8);
    dev_io_native(io, device.addr);
@@ -339,5 +339,5 @@ __release:
 
 int dev_io_proxify(io_insn_t *io)
 {
-   return dev_io_proxify_filter(io, NULL);
+   return dev_io_proxify_filter(io, NULL, NULL);
 }

@@ -24,103 +24,131 @@ extern info_data_t *info;
 
 int __dev_ata_device(ata_t *ata, io_insn_t *io)
 {
-   /* if(!io->in) */
-   /* { */
-   /*    debug(DEV_ATA, "ata device [%s]\n" */
-   /* 	    ,(info->vm.cpu.gpr->rax.low & (1<<4))?"SLAVE":"MASTER" ); */
+   ata_dev_reg_t dev;
+   io_size_t     sz = {.available = sizeof(ata_dev_reg_t)};
 
-   /*    /\* XXX: should check if kernel is not trying to */
-   /*    ** do a string io or simple io with size > 1byte */
-   /*    ** we assume here it is a simple outb */
-   /*    *\/ */
-   /*    ata_dev_reg_t dev; */
-   /*    io_size_t     sz = {.available = sizeof(ata_dev_reg_t)}; */
+   if(io->in)
+      return dev_io_proxify(io);
+   else
+   {
+      /* check crazy io (should not happen) */
+      if((io->sz * io->cnt) > sizeof(ata_dev_reg_t))
+      {
+	 debug(DEV_ATA, "unsupported ata dev access\n");
+	 return 0;
+      }
 
-   /*    if(!dev_io_insn(io, (void*)&dev.raw, &sz)) */
-   /* 	 return 0; */
+      if(!dev_io_insn(io, (void*)&dev.raw, &sz))
+   	 return 0;
 
-   /*    ata->dev_reg = dev; */
+      ata->dev_head = dev;
+      debug(DEV_ATA, "ata device [%s]\n", dev.dev ? "SLAVE":"MASTER");
+      return dev_io_native(io, &dev.raw);
+   }
+}
 
-   /*    /\* Guest check slave *\/ */
-   /*    if(dev.dev && !__rmode()) */
-   /* 	 return 1; */
+int __fake_ata_status(ata_t *ata)
+{
+   if(ata->last_out == ATA_CMD_REG(ata->base))
+      info->vm.cpu.gpr->rax.blow = 1;
+   else if(ata->last_out == ATA_DEVICE_REG(ata->base))
+      info->vm.cpu.gpr->rax.blow = 0;
+   else
+   {
+      debug(DEV_ATA, "can't fake status for previous out(0x%x)\n", ata->last_out);
+      return 0;
+   }
 
-   /*    return dev_io_native(io, &dev.raw); */
-   /* } */
-
-
-   debug(DEV_ATA, "ata device [%s]\n"
-	 ,(info->vm.cpu.gpr->rax.low & (1<<4))?"SLAVE":"MASTER" );
-
-   return dev_io_proxify(io);
+   return 1;
 }
 
 int __dev_ata_status(ata_t *ata, io_insn_t *io)
 {
+   if(!__rmode() && __ata_guest_want_slave(ata))
+   {
+      debug(DEV_ATA, "ata fake status\n");
+      return __fake_ata_status(ata);
+   }
+
    debug(DEV_ATA, "ata status\n");
-
-   /* last device configured is slave */
-   /* if(ata->dev_reg.dev) */
-   /* { */
-   /*    if(!__rmode()) */
-   /*    { */
-   /* 	 info->vm.cpu.gpr->rax.blow = 0x0; */
-   /* 	 return 1; */
-   /*    } */
-   /* } */
-
    return dev_io_proxify(io);
 }
 
 int __dev_ata_alt_status(ata_t *ata, io_insn_t *io)
 {
+   if(!__rmode() && __ata_guest_want_slave(ata))
+   {
+      debug(DEV_ATA, "ata fake ALT status\n");
+      return __fake_ata_status(ata);
+   }
+
    debug(DEV_ATA, "ata ALT status\n");
    return dev_io_proxify(io);
 }
 
-int __dev_ata_lba(ata_t *ata, io_insn_t *io, int idx)
+int __dev_ata_lba_filter(void *device, void *arg)
 {
-   char *str;
+   ata_t     *ata  = (ata_t*)arg;
+   ata_dev_t *disk = &ata->devices[0];
+   uint8_t    lba  = *(uint8_t*)device;
+   uint8_t    idx  = ata->last_out - ATA_LBA_LOW_REG(ata->base);
 
-   switch(idx)
+   if(idx > 2)
    {
-   case 0: str = "low"; break;
-   case 1: str = "mid"; break;
-   case 2: str = "hig"; break;
+      debug(DEV_ATA, "unknown (internal) LBA index access (%d)\n", idx);
+      return 0;
    }
 
-   debug(DEV_ATA, "ata lba %s\n", str);
-   return dev_io_proxify(io);
+   disk->lba[idx] = lba;
+   debug(DEV_ATA, "ata lba[%d] = 0x%x\n", idx, lba);
+   return 1;
 }
 
-int __dev_ata_cmd(ata_t *ata, io_insn_t *io)
+int __dev_ata_scnt_filter(void *device, void *arg)
 {
-   char *str;
+   ata_t     *ata = (ata_t*)arg;
+   ata_dev_t *disk = &ata->devices[0];
 
-   switch(info->vm.cpu.gpr->rax.blow)
+   disk->cnt = *(uint8_t*)device;
+   debug(DEV_ATA, "ata sector cnt [0x%x]\n", disk->cnt);
+   return 1;
+}
+
+int __dev_ata_cmd_filter(void *device, void *arg)
+{
+   ata_t *ata = (ata_t*)arg;
+
+   ata->cmd = *(uint8_t*)device;
+
+   if(ata->cmd == ATA_READ_SECTOR_CMD || ata->cmd == ATA_WRITE_SECTOR_CMD)
    {
-   case ATA_READ_SECTOR_CMD    : str = "READ_SECTOR";break;
-   case ATA_WRITE_SECTOR_CMD   : str = "WRITE_SECTOR";break;
-   case ATA_IDENT_DEV_CMD      : str = "IDENT_DEV";break;
-   case ATA_INIT_DEV_PARAMS_CMD: str = "INIT_DEV_PARAMS";break;
-   case ATA_RECALIBRATE_CMD    : str = "RECALIBRATE";break;
-   case ATA_DEVICE_RESET_CMD   : str = "DEVICE_RESET";break;
-   case ATA_READ_DMA_CMD       : str = "READ_DMA";break;
-   case ATA_WRITE_DMA_CMD      : str = "WRITE_DMA";break;
-   case ATA_SET_FEAT_CMD       : str = "SET_FEAT";break;
-   case ATA_IDENT_PKT_DEV_CMD  : str = "IDENT_PKT_DEV";break;
-   case ATA_SET_MULTI_MODE_CMD : str = "SET_MULTI_MODE";break;
-   default                     : str = "????";
+      ata_dev_t *disk = &ata->devices[0];
+      uint32_t   lba  = __ata_build_lba(ata, disk);
+
+      debug(DEV_ATA, "ata cmd [%s 0x%x sector(s) from 0x%x]\n"
+	    ,(ata->cmd == ATA_WRITE_SECTOR_CMD) ? "write":"read"
+	    ,disk->cnt, lba);
+   }
+   else
+   {
+      char *str;
+      switch(ata->cmd)
+      {
+      case ATA_IDENT_DEV_CMD      : str = "IDENT_DEV"; break;
+      case ATA_INIT_DEV_PARAMS_CMD: str = "INIT_DEV_PARAMS";break;
+      case ATA_RECALIBRATE_CMD    : str = "RECALIBRATE";break;
+      case ATA_DEVICE_RESET_CMD   : str = "DEVICE_RESET";break;
+      case ATA_READ_DMA_CMD       : str = "READ_DMA";break;
+      case ATA_WRITE_DMA_CMD      : str = "WRITE_DMA";break;
+      case ATA_SET_FEAT_CMD       : str = "SET_FEAT";break;
+      case ATA_IDENT_PKT_DEV_CMD  : str = "IDENT_PKT_DEV";break;
+      case ATA_SET_MULTI_MODE_CMD : str = "SET_MULTI_MODE";break;
+      default                     : str = "????";
+      }
+      debug(DEV_ATA, "ata cmd [%s]\n", str);
    }
 
-   debug(DEV_ATA, "ata cmd [%s]\n", str);
-   return dev_io_proxify(io);
-}
-
-int __dev_ata_scnt(ata_t *ata, io_insn_t *io)
-{
-   debug(DEV_ATA, "ata sector cnt\n");
-   return dev_io_proxify(io);
+   return 1;
 }
 
 /*
@@ -128,12 +156,23 @@ int __dev_ata_scnt(ata_t *ata, io_insn_t *io)
 */
 int dev_ata(ata_t *ata, io_insn_t *io)
 {
+   if(!io->in)
+      ata->last_out = io->port;
+
    if(io->port == ATA_STATUS_REG(ata->base))
    {
       if(io->in)
 	 return __dev_ata_status(ata, io);
       else
-	 return __dev_ata_cmd(ata, io);
+	 return dev_io_proxify_filter(io, __dev_ata_cmd_filter, ata);
+   }
+
+   if(io->port == ATA_ALT_STATUS_REG(ata->base))
+   {
+      if(io->in)
+	 return __dev_ata_alt_status(ata, io);
+      else
+	 goto __proxify;
    }
 
    if(io->port == ATA_DEVICE_REG(ata->base))
@@ -146,12 +185,12 @@ int dev_ata(ata_t *ata, io_insn_t *io)
    }
 
    if(io->port == ATA_SECT_CNT_REG(ata->base))
-      return __dev_ata_scnt(ata, io);
+      return dev_io_proxify_filter(io, __dev_ata_scnt_filter, ata);
 
    if(io->port == ATA_LBA_LOW_REG(ata->base) ||
       io->port == ATA_LBA_MID_REG(ata->base) ||
       io->port == ATA_LBA_HIGH_REG(ata->base))
-      return __dev_ata_lba(ata, io, io->port - ATA_LBA_LOW_REG(ata->base));
+      return dev_io_proxify_filter(io, __dev_ata_lba_filter, ata);
 
    if(io->port == ATA_ERR_REG(ata->base))
    {
@@ -161,14 +200,6 @@ int dev_ata(ata_t *ata, io_insn_t *io)
 	 debug(DEV_ATA, "ata feat\n");
 
       goto __proxify;
-   }
-
-   if(io->port == ATA_ALT_STATUS_REG(ata->base))
-   {
-      if(io->in)
-	 return __dev_ata_alt_status(ata, io);
-      else
-	 goto __proxify;
    }
 
    debug(DEV_ATA, "ata ???\n");

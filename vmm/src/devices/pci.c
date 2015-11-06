@@ -22,7 +22,7 @@
 
 extern info_data_t *info;
 
-static int __dev_pci_dvd_filter(void *data)
+static int __dev_pci_dvd_filter(void *data, void __unused__ *arg)
 {
    pci_cfg_addr_t    *net  = &info->hrd.dev.net.pci.addr;
    pci_cfg_addr_t    *addr = &info->vm.dev.pci_addr;
@@ -48,7 +48,7 @@ static int __dev_pci_dvd_filter(void *data)
    return 1;
 }
 
-static int __dev_pci_cmd_sts_filter(void *data)
+static int __dev_pci_cmd_sts_filter(void *data, void __unused__ *arg)
 {
    pci_cfg_addr_t    *net  = &info->hrd.dev.net.pci.addr;
    pci_cfg_addr_t    *addr = &info->vm.dev.pci_addr;
@@ -78,7 +78,7 @@ static int __dev_pci_cmd_sts_filter(void *data)
 /*    return 0; */
 /* } */
 
-static int __dev_pci_addr_filter(void *data)
+static int __dev_pci_addr_filter(void *data, void __unused__ *arg)
 {
    pci_cfg_addr_t *net  = &info->hrd.dev.net.pci.addr;
    pci_cfg_addr_t *addr = &info->vm.dev.pci_addr;
@@ -126,5 +126,5 @@ int dev_pci(io_insn_t *io)
    default             : info->vm.dev.pci_filter = NULL;
    }
 
-   return dev_io_proxify_filter(io, info->vm.dev.pci_filter);
+   return dev_io_proxify_filter(io, info->vm.dev.pci_filter, NULL);
 }

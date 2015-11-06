@@ -85,7 +85,7 @@ typedef union ata_status_register
 
    uint8_t raw;
 
-} __attribute__((packed)) ata_status_reg_t;
+} __attribute__((packed)) ata_sts_reg_t;
 
 
 /*
@@ -95,10 +95,10 @@ typedef union ata_device_register
 {
    struct
    {
-      uint8_t  gen:4;   /* depend on command */
+      uint8_t  gen:4;   /* depend on command (ie. LBA high 4 bits for LBA 28) */
       uint8_t  dev:1;   /* device select */
       uint8_t  obs:1;   /* obsolete */
-      uint8_t  gen2:1;  /* depend on command (ie. LBA for read/write sector) */
+      uint8_t  gen2:1;  /* depend on command (ie. LBA mode for read/write sector) */
       uint8_t  obs2:1;  /* obsolete */
 
    } __attribute__((packed));
@@ -173,8 +173,8 @@ typedef union ata_device_control_register
 */
 typedef struct ata_device
 {
-   uint8_t  cnt;
-   uint8_t  lba[4];
+   uint8_t cnt;
+   uint8_t lba[4]; /* 3 LBA registers, +low 4 from dev reg if lba mode */
 
 } __attribute__((packed)) ata_dev_t;
 
@@ -182,10 +182,24 @@ typedef struct ata_device
 /*
 ** ATA Controller
 */
+#define __ata_guest_want_slave(_aTa)  ((_aTa)->dev_head.dev)
+
+#define __ata_build_lba(_aTa, _Dsk)			\
+   ({ uint32_t lba =					\
+	 ((_aTa)->dev_head.gen << 24) |			\
+	 ((_Dsk)->lba[2]       << 16) |			\
+	 ((_Dsk)->lba[1]       <<  8) |			\
+	 ((_Dsk)->lba[0]);				\
+      lba;						\
+   })
+
 typedef struct ata_controller
 {
    uint16_t          base;
-   ata_dev_reg_t     dev;
+   uint16_t          last_out;
+   uint8_t           cmd;
+   ata_dev_reg_t     dev_head;
+   ata_sts_reg_t     sts, alt_sts;
    ata_dev_t         devices[2];
 
 } __attribute__((packed)) ata_t;
