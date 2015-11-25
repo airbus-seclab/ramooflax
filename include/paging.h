@@ -118,7 +118,6 @@ int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*, int);
 int  __npg_walk(struct vm_paging*, offset_t, npg_wlk_t*);
 
 #define npg_walk(v,w)          __npg_walk(npg_get_active_paging(),v,w)
-#define vmm_pg_walk(c,v,p,s)   __pg_walk(c,v,p,s,0)
 
 #endif
 
