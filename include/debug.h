@@ -55,14 +55,19 @@
 
 #define debug_defined
 #define debug(who, format, ...)			\
-   DEBUG_CONFIG_##who##_DBG(			\
-      format,					\
-      printf("0x%X:%d:0x%X:"			\
-	     ,info->vmm.ctrl.vmexit_cnt.raw	\
-	     ,__exit_code__			\
-	     ,__cs.base.raw + __rip.raw		\
-	 );					\
-      printf, ## __VA_ARGS__)
+   ({						\
+      offset_t loc;				\
+      int      md;				\
+      vm_get_code_addr(&loc, 0, &md);		\
+      DEBUG_CONFIG_##who##_DBG(			\
+	 format,				\
+	 printf("0x%X:%d:0x%X:%d:"		\
+		,info->vmm.ctrl.vmexit_cnt.raw	\
+		,__exit_code__			\
+		,loc,md				\
+	    );					\
+	 printf, ## __VA_ARGS__);		\
+   })
 
 #endif
 #endif
