@@ -23,6 +23,6 @@
 /*
 ** Functions
 */
-int   vmx_vmexit_resolve_gp();
+int   vmx_vmexit_resolve_rmode_gp();
 
 #endif

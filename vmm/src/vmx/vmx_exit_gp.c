@@ -26,13 +26,26 @@
 
 extern info_data_t *info;
 
-int vmx_vmexit_resolve_gp()
+/*
+** In real-mode, exception #13 is not #GP
+** it's segment overrun.
+**
+** On the 8086, if sequential execution of instructions proceeds past
+** offset 65535, the processor fetches the next instruction byte from
+** offset 0 of the same segment. On the 80386, the processor raises
+** exception 13 in such a case.
+**
+*/
+int vmx_vmexit_resolve_rmode_gp()
 {
    vmcs_read(vm_exit_info.idt_info);
 
-   /* #GP are related to IDT events */
+   /* #GP are related to IDT events (idt limit) */
    if(!vm_exit_info.idt_info.v)
+   {
+      debug(VMX_EXCP_GP, "rmode #GP: not related to idt\n");
       return VM_FAIL;
+   }
 
    if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_SW_INT)
       return emulate();
@@ -40,5 +53,6 @@ int vmx_vmexit_resolve_gp()
    if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_HW_INT)
       return emulate_hard_interrupt(vm_exit_info.idt_info.vector);
 
+   debug(VMX_EXCP_GP, "rmode #GP: invalid type (%d)\n", vm_exit_info.idt_info.type);
    return VM_FAIL;
 }

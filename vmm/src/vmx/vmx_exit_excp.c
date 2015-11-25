@@ -76,7 +76,7 @@ int vmx_vmexit_resolve_excp()
    {
    case GP_EXCP:
       if(__rmode())
-	 return vmx_vmexit_resolve_gp();
+	 return vmx_vmexit_resolve_rmode_gp();
       break;
    case DB_EXCP:
       vm_state.dr6.wlow = vm_exit_info.qualification.wlow;
