@@ -36,7 +36,6 @@ void vmx_vm_init()
    info->vm.dr_shadow[4].raw = 0xffff0ff0;
    info->vm.dr_shadow[5].raw = 0x400;
    info->vm.idt_limit_rmode  = BIOS_MISC_INTERRUPT*sizeof(ivt_e_t) - 1;
-   /* info->vm.idt_limit_rmode  = 0; */
 
    vmcs_addr.raw = (offset_t)&info->vm.cpu.vmc->vm_cpu_vmcs;
 
