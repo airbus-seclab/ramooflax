@@ -80,8 +80,9 @@ static void ctrl_traps()
    if(up)
       debug(CTRL, "ctrl traps state: en:%d hw:%d stp:%d soft:%d\n"
 	    ,ctrl_traps_enabled()
-	    ,!dbg_hard_brk_disarmed(), dbg_hard_stp_enabled()
-	    ,!dbg_soft_disarmed());
+	    ,dbg_hard_brk_enabled()
+	    ,dbg_hard_stp_enabled()
+	    ,dbg_soft_enabled());
 #endif
 }
 
