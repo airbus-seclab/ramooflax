@@ -169,7 +169,8 @@
 #define npg_error_not_present(_e)               ((((((_e).raw)>>3)&7) == 0)?1:0)
 #define npg_error_execute(_e)                   ((_e).x)
 
-#define npg_write_fault(_e)                     ((_e).w && (_e).final)
+//#define npg_write_fault(_e)                     ((_e).w && (_e).final)
+#define npg_write_fault(_e)                     ((_e).w)
 
 #define npg_error()				\
    ({						\

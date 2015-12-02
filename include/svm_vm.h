@@ -148,7 +148,8 @@
 #define npg_error_not_present(_e)       ((_e).p == 0)
 #define npg_error_execute(_e)           ((_e).id)
 
-#define npg_write_fault(_e)             ((_e).wr && (_e).final)
+//#define npg_write_fault(_e)             ((_e).wr && (_e).final)
+#define npg_write_fault(_e)             ((_e).wr)
 
 #define npg_error()                     (__ctrls.exit_info_1.npf)
 #define npg_fault()                     (__ctrls.exit_info_2.raw)
