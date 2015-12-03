@@ -89,13 +89,14 @@ static inline void __format_add_chr(buffer_t *buf, size_t len, int c)
    __buf_add(buf, len, (char)c);
 }
 
-static inline void __format_add_bin(buffer_t *buf, size_t len, uint64_t value, uint32_t n)
+static inline void __format_add_bin(buffer_t *buf, size_t len,
+				    uint64_t value, uint32_t n)
 {
    uint32_t i, bit;
 
    for(i=0 ; i<n ; i++)
    {
-      bit = value & (1<<(n-i));
+      bit = (value >> (n-i-1)) & 1;
       __buf_add(buf, len, bit?'1':'0');
    }
 }
