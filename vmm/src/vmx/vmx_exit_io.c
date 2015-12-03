@@ -106,7 +106,7 @@ int __vmx_io_init(io_insn_t *io)
    }
 
    io->back = vm_state.rflags.df;
-   io->msk  = (1ULL<<(16*io->addr)) - 1;
+   io->msk  = (-1ULL)>>(64 - 16*io->addr);
    io->rep  = vmx_io->rep;
    io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 

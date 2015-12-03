@@ -58,7 +58,7 @@ int __svm_io_init(io_insn_t *io)
    io->seg  = svm->seg;
    io->addr = (svm->low>>7) & 7;
    io->back = vm_state.rflags.df;
-   io->msk  = (1ULL<<(16*io->addr)) - 1;
+   io->msk  = (-1ULL)>>(64 - 16*io->addr);
    io->rep  = svm->rep;
    io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 
