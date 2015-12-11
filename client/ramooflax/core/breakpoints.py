@@ -84,7 +84,7 @@ class BreakPoints:
                     break
 
         if tp is None:
-            ad = vm.cpu.gpr.pc
+            ad = vm.cpu.code_location()
             ln = 1
 
         for b in self.__list.values():
