@@ -21,7 +21,7 @@ from setuptools import setup
 setup(
     name = 'ramooflax',
     version = '0.1',
-    packages=['ramooflax'],
+    packages=['ramooflax.core', 'ramooflax.utils'],
     author = 'Stephane Duverger',
     author_email = 'stephane.duverger@gmail.com',
     description = 'Ramooflax hypervisor python API',
