@@ -111,7 +111,8 @@ static int __vm_access_local_operator(vm_access_t *access)
 #ifdef CONFIG_VM_ACCESS_DBG
    if(!__rmode())
    {
-      debug(VM_ACCESS,"vm_access_local %s dst 0x%X src 0x%X ln %D [0x%x:0x%x]\n"
+      debug(VM_ACCESS,
+	    "vm_access_local %s dst 0x%X src 0x%X ln %D [0x%x:0x%x]\n"
 	    ,access->wr ? "write":"read"
 	    ,dst.linear, src.linear, access->len
 	    ,dst.u8[0], dst.u8[access->len -1]);
@@ -207,7 +208,7 @@ static int __vm_access_vmem(vm_access_t *access)
       rc = __pg_walk(access->cr3, vaddr, &wlk);
       if(rc != VM_DONE)
       {
-	 debug(VM_ACCESS, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
+	 debug(VM, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
 	 if(rc == VM_FAULT)
 	 {
 	    pf_err_t pf = {.raw = 0};
