@@ -53,10 +53,10 @@ typedef struct npg_operator
 /*
 ** Actions to be applied on mapping operation
 */
-#define NPG_DO_ADDR   (1ULL<<0)
-#define NPG_DO_OFFSET (1ULL<<1)
-#define NPG_DO_PVL    (1ULL<<2)
-#define NPG_DO_CACHE  (1ULL<<3)
+#define NPG_DO_ADDR   (1ULL<<0)   /* update addr field of table entries  */
+#define NPG_DO_OFFSET (1ULL<<1)   /* add offset to addr field            */
+#define NPG_DO_PVL    (1ULL<<2)   /* update pvl part of table entries    */
+#define NPG_DO_CACHE  (1ULL<<3)   /* update cache part of table entries  */
 
 typedef struct npg_configuration
 {
