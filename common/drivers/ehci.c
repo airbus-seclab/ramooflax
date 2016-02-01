@@ -28,6 +28,8 @@ void ehci_init()
 {
    dbgp_info_t *dbgp_i = &info->hrd.dev.dbgp;
 
+   debug(EHCI, "ehci init\n");
+
    pci_cfg_dbgp(dbgp_i);
 
 #ifndef CONFIG_EHCI_FULL

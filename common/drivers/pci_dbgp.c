@@ -29,12 +29,13 @@
 void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
 {
    pci_cfg_dbg_cap_t  dbg_cap;
-   pci_cfg_ehci_bar_t bar;
-   loc_t              loc;
+   loc_t              base, loc;
    pci_cfg_val_t      *pci = &dbgp_i->pci;
 
    dbgp_i->port = DBGP_INVALID;
    dbgp_i->addr = 0;
+
+   debug(PCI_DBGP, "pci dbgp init\n");
 
 #ifdef CONFIG_EHCI_2ND
    if(!pci_search(pci_check_cap, PCI_DBGP_CAP_ID, 2, pci))
@@ -48,9 +49,12 @@ void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
    if(!pci_read_bar(pci, dbg_cap.nr-1))
       panic("could not get ehci registers");
 
-   bar.raw = pci->br.raw;
-   loc.linear = bar.addr<<8;
-   dbgp_i->ehci_cap = (ehci_host_cap_reg_t*)loc.addr;
+   if(pci->br.type == PCI_CFG_MEM_BAR_64)
+      panic("ehci 64 bits BAR not supported");
+
+   base.high = 0;
+   base.low  = pci->br.raw & 0xffffff00; /* ehci bar */
+   dbgp_i->ehci_cap = (ehci_host_cap_reg_t*)base.addr;
 
    pci_cfg_dbgp_vendor_specific(dbgp_i);
 
@@ -60,10 +64,10 @@ void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
    if(!dbgp_i->port)
       panic("could not get portsc for debug port");
 
-   loc.linear = bar.addr + dbgp_i->ehci_cap->length;
+   loc.linear = base.linear + dbgp_i->ehci_cap->length;
    dbgp_i->ehci_opr = (ehci_host_op_reg_t*)loc.addr;
 
-   loc.linear = bar.addr + dbg_cap.offset;
+   loc.linear = base.linear + dbg_cap.offset;
    dbgp_i->ehci_dbg = (ehci_dbgp_reg_t*)loc.addr;
 
    dbgp_i->ehci_psc = &dbgp_i->ehci_opr->portsc[dbgp_i->port - 1];

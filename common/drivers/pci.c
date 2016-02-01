@@ -20,7 +20,7 @@
 
 /*
 ** pci->addr should be initialized
-** only handle 32 bits mem BARs
+** only handle mem BARs
 */
 int pci_read_bar(pci_cfg_val_t *pci, uint32_t idx)
 {
@@ -30,7 +30,7 @@ int pci_read_bar(pci_cfg_val_t *pci, uint32_t idx)
    pci->addr.reg = PCI_CFG_BAR_OFFSET + idx*4;
    pci_cfg_read(pci);
 
-   return !(pci->br.io || pci->br.type);
+   return !pci->br.io;
 }
 
 /*

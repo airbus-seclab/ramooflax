@@ -58,7 +58,7 @@ void pci_cfg_e1k(net_info_t *net)
 	 ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
 
    /* BAR regs */
-   if(!pci_read_bar(pci, 0) && pci->br.io)
+   if(!pci_read_bar(pci, 0))
       panic("could not read i8254x registers (bar0 0x%x)", pci->br.raw);
 
    e1k->base.linear = pci->br.raw & 0xfffffff0;
