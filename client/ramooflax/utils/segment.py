@@ -97,6 +97,10 @@ class Descriptor32:
         else:
             raise TypeError
 
+    def __repr__(self):
+        return self.body()
+
+
 class SegmentDescriptor(Descriptor32):
     def __init__(self, raw):
         Descriptor32.__init__(self, raw)
