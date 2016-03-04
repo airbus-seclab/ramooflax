@@ -18,7 +18,9 @@
 #ifndef __VMX_VMCS_ACCESS_H__
 #define __VMX_VMCS_ACCESS_H__
 
+#include <config.h>
 #include <types.h>
+
 #include <vmx_vmcs_enc.h>
 #include <vmx_insn.h>
 #include <print.h>
