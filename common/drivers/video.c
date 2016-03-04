@@ -22,31 +22,31 @@ static uint32_t line, col;
 
 static inline void scroll()
 {
-   uint16_t *nscreen = (uint16_t*)0xb8000;
-   uint16_t *oscreen = (uint16_t*)0xb8000 + 80;
+   uint16_t *nscreen = (uint16_t*)VGA_TXT_FB_ADDR;
+   uint16_t *oscreen = (uint16_t*)VGA_TXT_FB_ADDR + VGA_TXT_C_NR;
 
-   memcpy((void*)nscreen, (void*)oscreen, 80*24*2);
-   memset((void*)&nscreen[80*24], 0, 80*2);
-   line = 24;
+   memcpy((void*)nscreen, (void*)oscreen, 2*VGA_TXT_C_NR*(VGA_TXT_L_NR - 1));
+   memset((void*)&nscreen[VGA_TXT_C_NR*(VGA_TXT_L_NR - 1)], 0, VGA_TXT_C_NR*2);
+   line = VGA_TXT_L_NR - 1;
 }
 
 static inline void newline()
 {
    line++;
-   if(line >= 25)
+   if(line >= VGA_TXT_L_NR)
       scroll();
 }
 
 static inline void newcol()
 {
    col++;
-   col %= 80;
+   col %= VGA_TXT_C_NR;
 }
 
 void video_write(uint8_t *buffer, size_t size)
 {
    size_t   i;
-   uint16_t *screen = (uint16_t*)0xb8000;
+   uint16_t *screen = (uint16_t*)VGA_TXT_FB_ADDR;
 
    for(i=0 ; i<size ; i++)
    {
@@ -58,7 +58,7 @@ void video_write(uint8_t *buffer, size_t size)
 	 col = 0;
 	 break;
       default:
-	 screen[col+80*line] = 0x0f00|buffer[i];
+	 screen[col+VGA_TXT_C_NR*line] = 0x0f00|buffer[i];
 	 newcol();
 	 if(! col)
 	    newline();

@@ -20,6 +20,10 @@
 
 #include <types.h>
 
+#define VGA_TXT_FB_ADDR   0xb8000
+#define VGA_TXT_C_NR      80
+#define VGA_TXT_L_NR      25
+
 /*
 ** Functions
 */
