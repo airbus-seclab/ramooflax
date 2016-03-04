@@ -34,18 +34,18 @@ static int __dev_pci_dvd_filter(void *data, void __unused__ *arg)
       addr->fnc != net->fnc ||
       addr->dev != net->dev ||
       addr->reg != PCI_CFG_DEV_VDR_OFFSET)
-      return 0;
+      return VM_DONE;
 
    if(dvd->vendor != PCI_CFG_VENDOR_INTEL)
-      return 0;
+      return VM_DONE;
 
    if(dvd->device != PCI_CFG_DEVICE_i82540EM &&
       dvd->device != PCI_CFG_DEVICE_i82545EM_C)
-      return 0;
+      return VM_DONE;
 
    debug(DEV_PCI, "pci io filter: ninja netcard dev\n");
    dvd->device = PCI_CFG_DEVICE_INVALID;
-   return 1;
+   return VM_DONE;
 }
 
 static int __dev_pci_cmd_sts_filter(void *data, void __unused__ *arg)
@@ -60,7 +60,7 @@ static int __dev_pci_cmd_sts_filter(void *data, void __unused__ *arg)
       addr->fnc != net->fnc ||
       addr->dev != net->dev ||
       addr->reg != PCI_CFG_CMD_STS_OFFSET)
-      return 0;
+      return VM_DONE;
 
    if(!cs->cmd.mm || !cs->cmd.bus_master)
    {
@@ -69,13 +69,13 @@ static int __dev_pci_cmd_sts_filter(void *data, void __unused__ *arg)
       cs->cmd.bus_master = 1;
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 /* static void __dev_pci_dflt_data_filter(void *data) */
 /* { */
 /*    debug(DEV_PCI, "pci io filter: netcard data 0x%x\n", ((raw32_t*)data)->raw); */
-/*    return 0; */
+/*    return VM_DONE; */
 /* } */
 
 static int __dev_pci_addr_filter(void *data, void __unused__ *arg)
@@ -110,11 +110,11 @@ static int __dev_pci_addr_filter(void *data, void __unused__ *arg)
 
 __filter_data:
    __deny_io(PCI_CONFIG_DATA);
-   return 1;
+   return VM_DONE;
 
 __release_data:
    __allow_io(PCI_CONFIG_DATA);
-   return 0;
+   return VM_DONE;
 }
 
 int dev_pci(io_insn_t *io)
