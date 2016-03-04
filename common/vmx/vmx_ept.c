@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ uint64_t __ept_mtrr_resolve(uint64_t old, uint64_t new)
    if(c_type != VMX_EPT_MEM_TYPE_UC && c_type != VMX_EPT_MEM_TYPE_WT)
       panic("EPT MTRR overlap not managed: 0x%X 0x%X", old, new);
 
-   attr = (new & ~(7UL<<3)) | (c_type<<3);
+   attr = (new & ~(7ULL<<3)) | (c_type<<3);
    return attr;
 }
 
@@ -152,6 +152,8 @@ static void vmx_ept_map_with_mtrr()
    debug(VMX_EPT, "\n- Map EPT mem with MTRR\n");
 
    npg_map(0, info->hrd.mem.top, npg_dft_attr);
+   _npg_remap_finest_4K(0);
+
    vmx_ept_map_mtrr_variable();
 
    if(info->vm.mtrr_def.fe && info->vm.mtrr_cap.fix)

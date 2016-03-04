@@ -101,10 +101,12 @@
 #include <vmx_ept.h>
 
 #define npg_init()                     vmx_ept_map()
+
 #define npg_dft_attr                   ept_dft_attr
 #define npg_dft_attr_rx                ept_dft_attr_rx
 #define npg_dft_attr_nx                ept_dft_attr_nx
 #define npg_get_attr(_e)               ept_pg_get_attr(_e)
+
 #define npg_present(_e)                ept_pg_present(_e)
 #define npg_large(_e)                  pg_large(_e)
 #define npg_zero(_e)                   ept_zero(_e)

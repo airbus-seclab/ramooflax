@@ -128,15 +128,15 @@ typedef struct fault_context
 
 typedef struct vm_cpu
 {
-   vm_pgmem_t     pg[1];     /* virtual paging tables */
-   uint32_t       dflt_excp; /* default exception mask */
-   uint8_t        active_pg; /* which virtual paging to apply */
-   vm_cpu_skill_t skillz;    /* vm cpu skillz */
-   uint64_t       max_paddr; /* maximum physical addr supported */
-   uint64_t       max_vaddr; /* maximum linear addr supported */
-   vmc_t          *vmc;      /* hardware virtualization data, strictly aligned */
-   gpr64_ctx_t    *gpr;      /* vm GPRs (in vmm stack) */
-   fault_ctx_t    fault;     /* last fault context info */
+   vm_pgmem_t     pg[NPG_NR]; /* virtual paging tables */
+   uint32_t       dflt_excp;  /* default exception mask */
+   uint8_t        active_pg;  /* which virtual paging to apply */
+   vm_cpu_skill_t skillz;     /* vm cpu skillz */
+   uint64_t       max_paddr;  /* maximum physical addr supported */
+   uint64_t       max_vaddr;  /* maximum linear addr supported */
+   vmc_t          *vmc;       /* hardware virtualization data, strictly aligned */
+   gpr64_ctx_t    *gpr;       /* vm GPRs (in vmm stack) */
+   fault_ctx_t    fault;      /* last fault context info */
    ud_t           disasm;
    emu_sts_t      emu_sts;
    uint8_t        insn_cache[X86_MAX_INSN_LEN];

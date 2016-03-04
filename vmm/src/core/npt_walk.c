@@ -27,23 +27,21 @@ extern info_data_t *info;
 ** . we use VM cpu skillz as we depend
 **   upon nested mmu features
 */
-int npg_walk(offset_t vaddr, npg_wlk_t *wlk)
+int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
 {
    npg_pml4e_t *pml4e;
    npg_pdpe_t  *pdp,*pdpe;
    npg_pde64_t *pd, *pde;
    npg_pte64_t *pt, *pte;
-   vm_pgmem_t  *pg = npg_get_active_paging();
 
-   __pre_access(npg_cr3);
-   debug(PG_W, "nested cr3 0x%X\n", page_addr(npg_cr3.addr));
+   debug(PG_WLK, "(n)cr3 0x%X\n", pg->pml4);
 
    pml4e = &pg->pml4[pml4_idx(vaddr)];
-   debug(PG_W, "pml4e @ 0x%X = 0x%X\n", (offset_t)pml4e, pml4e->raw);
+   debug(PG_WLK, "(n)pml4e @ 0x%X = 0x%X\n", (offset_t)pml4e, pml4e->raw);
 
    if(!npg_present(pml4e))
    {
-      debug(PG_W, "pml4e not present\n");
+      debug(PG_WLK, "(n)pml4e not present\n");
       wlk->type  = NPG_WALK_TYPE_PML4E;
       wlk->entry = (void*)pml4e;
       return VM_FAIL;
@@ -51,11 +49,11 @@ int npg_walk(offset_t vaddr, npg_wlk_t *wlk)
 
    pdp  = (npg_pdpe_t*)page_addr(pml4e->addr);
    pdpe = &pdp[pdp_idx(vaddr)];
-   debug(PG_W, "pdpe @ 0x%X = 0x%X\n", (offset_t)pdpe, pdpe->raw);
+   debug(PG_WLK, "(n)pdpe @ 0x%X = 0x%X\n", (offset_t)pdpe, pdpe->raw);
 
    if(!npg_present(pdpe))
    {
-      debug(PG_W, "pdpe not present\n");
+      debug(PG_WLK, "(n)pdpe not present\n");
       wlk->type  = NPG_WALK_TYPE_PDPE;
       wlk->entry = (void*)pdpe;
       return VM_FAIL;
@@ -72,11 +70,11 @@ int npg_walk(offset_t vaddr, npg_wlk_t *wlk)
 
    pd  = (npg_pde64_t*)page_addr(pdpe->addr);
    pde = &pd[pd64_idx(vaddr)];
-   debug(PG_W, "pde @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
+   debug(PG_WLK, "(n)pde @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
 
    if(!npg_present(pde))
    {
-      debug(PG_W, "pde not present\n");
+      debug(PG_WLK, "(n)pde not present\n");
       wlk->type  = NPG_WALK_TYPE_PDE;
       wlk->entry = (void*)pde;
       return VM_FAIL;
@@ -93,11 +91,11 @@ int npg_walk(offset_t vaddr, npg_wlk_t *wlk)
 
    pt  = (npg_pte64_t*)page_addr(pde->addr);
    pte = &pt[pt64_idx(vaddr)];
-   debug(PG_W, "pte @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
+   debug(PG_WLK, "(n)pte @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
 
    if(!npg_present(pte))
    {
-      debug(PG_W, "pte not present\n");
+      debug(PG_WLK, "(n)pte not present\n");
       wlk->type  = NPG_WALK_TYPE_PTE;
       wlk->entry = (void*)pte;
       return VM_FAIL;
@@ -109,6 +107,6 @@ int npg_walk(offset_t vaddr, npg_wlk_t *wlk)
    wlk->entry = (void*)pte;
 
 __success:
-   debug(PG_W, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, wlk->addr);
+   debug(PG_WLK, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, wlk->addr);
    return VM_DONE;
 }

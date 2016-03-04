@@ -18,10 +18,16 @@
 #ifndef __PAGING_H__
 #define __PAGING_H__
 
+#include <config.h>
 #include <types.h>
 #include <cr.h>
 #include <pagemem.h>
-#include <vm.h>
+
+#ifdef CONFIG_ARCH_AMD
+#include <svm_vm.h>
+#else
+#include <vmx_vm.h>
+#endif
 
 /*
 ** Nested Paging mapping operators
@@ -45,6 +51,21 @@ typedef struct npg_operator
 } __attribute__((packed)) npg_op_t;
 
 /*
+** Actions to be applied on mapping operation
+*/
+#define NPG_DO_ADDR   (1ULL<<0)
+#define NPG_DO_OFFSET (1ULL<<1)
+#define NPG_DO_PVL    (1ULL<<2)
+#define NPG_DO_CACHE  (1ULL<<3)
+
+typedef struct npg_configuration
+{
+   uint64_t mask;
+   offset_t offset;
+
+} __attribute__((packed)) npg_conf_t;
+
+/*
 ** Nested Paging walk information
 */
 #define NPG_WALK_TYPE_PML4E   0
@@ -61,7 +82,11 @@ typedef struct npg_walk_info
 
 } __attribute__((packed)) npg_wlk_t;
 
+/*
+** Controlling active nested paging
+*/
 #define NPG_DEFAULT  0
+#define NPG_NR       1
 
 #define npg_get_paging(_x)        (&info->vm.cpu.pg[(_x)])
 #define npg_set_active_paging(_x) (info->vm.cpu.active_pg = (_x))
@@ -87,9 +112,12 @@ void npg_setup_a20();
 /*
 ** Legacy && Nested walking functions
 */
-int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*, int);
-int  npg_walk(offset_t, npg_wlk_t*);
+struct vm_paging;
 
+int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*, int);
+int  __npg_walk(struct vm_paging*, offset_t, npg_wlk_t*);
+
+#define npg_walk(v,w)          __npg_walk(npg_get_active_paging(),v,w)
 #define vmm_pg_walk(c,v,p,s)   __pg_walk(c,v,p,s,0)
 
 #endif

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@
 
 extern info_data_t *info;
 
+/*
+** Allocations
+*/
 static inline offset_t __npg_new_pg()
 {
    offset_t pg = pool_pop_page();
@@ -36,22 +39,27 @@ static inline offset_t __npg_new_pg()
 
 static inline npg_pdpe_t* __npg_new_pdp()
 {
-   debug(PG, "allocating new pdp\n");
+   debug(PG_MAP, "allocating new pdp\n");
    return (npg_pdpe_t*)__npg_new_pg();
 }
 
 static inline npg_pde64_t* __npg_new_pd()
 {
-   debug(PG, "allocating new pd\n");
+   debug(PG_MAP, "allocating new pd\n");
    return (npg_pde64_t*)__npg_new_pg();
 }
 
 static inline npg_pte64_t* __npg_new_pt()
 {
-   debug(PG, "allocating new pt\n");
+   debug(PG_MAP, "allocating new pt\n");
    return (npg_pte64_t*)__npg_new_pg();
 }
 
+
+
+/*
+** Low level entry retrieval
+*/
 static inline npg_pdpe_t* __npg_get_pdpe_nocheck(npg_pml4e_t *pml4e, offset_t addr)
 {
    npg_pdpe_t *pdp = (npg_pdpe_t*)page_addr(pml4e->addr);
@@ -113,6 +121,11 @@ npg_pte64_t* _npg_get_pte(offset_t addr)
    return __npg_get_pte(pde, addr);
 }
 
+
+
+/*
+** resolve pdpe (allocate pdp if needed)
+*/
 static inline npg_pdpe_t* __npg_resolve_pdpe(offset_t addr, uint64_t attr)
 {
    vm_pgmem_t  *pg = npg_get_active_paging();
@@ -120,7 +133,6 @@ static inline npg_pdpe_t* __npg_resolve_pdpe(offset_t addr, uint64_t attr)
    npg_pdpe_t  *pdp;
 
    pml4e = &pg->pml4[pml4_idx(addr)];
-
    if(!npg_present(pml4e))
    {
       pdp = __npg_new_pdp();
@@ -181,22 +193,24 @@ static void __npg_unmap_2M(npg_pde64_t *pde)
    npg_pte64_t  *pt;
    uint32_t     i;
 
-   debug(PG, "unmap 2M 0x%X\n", pde->raw);
+   debug(PG_MAP, "unmap 2M 0x%X\n", pde->raw);
    if(!npg_large(pde))
    {
       pt = (npg_pte64_t*)page_addr(pde->addr);
 
-      debug(PG, "clear each pte\n");
+      debug(PG_MAP, "clear each pte\n");
       for(i=0 ; i<PTE64_PER_PT ; i++)
 	 if(npg_present(&pt[i]))
 	    npg_zero(&pt[i]);
 
-      debug(PG, "freeing pt\n");
+      debug(PG_MAP, "freeing pt\n");
       pool_push_page((offset_t)pt);
    }
 
    npg_zero(pde);
 }
+
+
 
 /*
 ** Low level services
@@ -208,14 +222,14 @@ static void __npg_map_2M_nolarge(npg_pde64_t *pde, offset_t addr, uint64_t attr)
    uint32_t    i;
 
    pt  = __npg_new_pt();
-   debug(PG, "new pt\n");
+   debug(PG_MAP, "new pt\n");
    pfn = pg_4K_nr(addr);
-   debug(PG, "mapping 4K for each pte\n");
+   debug(PG_MAP, "mapping 4K for each pte\n");
    for(i=0 ; i<PTE64_PER_PT ; i++, pfn++)
       npg_set_page_entry(&pt[i], attr, pfn);
 
    npg_set_entry(pde, attr, page_nr(pt));
-   debug(PG, "mapped 2M 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "mapped 2M 0x%X 0x%X\n", addr, attr);
 }
 
 static void __npg_map_2M(npg_pde64_t *pde, offset_t addr, uint64_t attr)
@@ -226,7 +240,7 @@ static void __npg_map_2M(npg_pde64_t *pde, offset_t addr, uint64_t attr)
    if(info->vm.cpu.skillz.pg_2M)
    {
       npg_set_large_page_entry(pde, attr, pg_2M_nr(addr));
-      debug(PG, "mapped 2M (large) 0x%X 0x%X\n", addr, attr);
+      debug(PG_MAP, "mapped 2M (large) 0x%X 0x%X\n", addr, attr);
       return;
    }
 
@@ -240,7 +254,7 @@ static void __npg_remap_2M_finest(npg_pde64_t *pde, offset_t addr)
    if(!pg_2M_aligned(addr))
       addr = pg_2M_align(addr);
 
-   debug(PG, "remap 2M 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "remap 2M 0x%X 0x%X\n", addr, attr);
    __npg_unmap_2M(pde);
    __npg_map_2M_nolarge(pde, addr, attr);
 }
@@ -250,17 +264,17 @@ static void __npg_unmap_1G(npg_pdpe_t *pdpe)
    npg_pde64_t *pd;
    uint32_t    i;
 
-   debug(PG, "unmap 1G 0x%X\n", pdpe->raw);
+   debug(PG_MAP, "unmap 1G 0x%X\n", pdpe->raw);
    if(!npg_large(pdpe))
    {
       pd = (npg_pde64_t*)page_addr(pdpe->addr);
 
-      debug(PG, "unmap 2M for each pde\n");
+      debug(PG_MAP, "unmap 2M for each pde\n");
       for(i=0 ; i<PDE64_PER_PD ; i++)
 	 if(npg_present(&pd[i]))
 	    __npg_unmap_2M(&pd[i]);
 
-      debug(PG, "freeing pd\n");
+      debug(PG_MAP, "freeing pd\n");
       pool_push_page((offset_t)pd);
    }
 
@@ -273,7 +287,7 @@ static void __npg_map_1G_nolarge(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
    uint32_t    i;
 
    pd = __npg_new_pd();
-   debug(PG, "map 2M for each pde\n");
+   debug(PG_MAP, "map 2M for each pde\n");
    for(i=0 ; i<PDE64_PER_PD ; i++)
    {
       __npg_map_2M(&pd[i], addr, attr);
@@ -281,7 +295,7 @@ static void __npg_map_1G_nolarge(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
    }
 
    npg_set_entry(pdpe, attr, page_nr(pd));
-   debug(PG, "mapped 1G until 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "mapped 1G until 0x%X 0x%X\n", addr, attr);
 }
 
 static void __npg_map_1G(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
@@ -292,7 +306,7 @@ static void __npg_map_1G(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
    if(info->vm.cpu.skillz.pg_1G)
    {
       npg_set_large_page_entry(pdpe, attr, pg_1G_nr(addr));
-      debug(PG, "mapped 1G (large) 0x%X 0x%X\n", addr, attr);
+      debug(PG_MAP, "mapped 1G (large) 0x%X 0x%X\n", addr, attr);
       return;
    }
 
@@ -306,10 +320,12 @@ static void __npg_remap_1G_finest(npg_pdpe_t *pdpe, offset_t addr)
    if(!pg_1G_aligned(addr))
       addr = pg_1G_align(addr);
 
-   debug(PG, "remap 1G 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "remap 1G 0x%X 0x%X\n", addr, attr);
    __npg_unmap_1G(pdpe);
    __npg_map_1G_nolarge(pdpe, addr, attr);
 }
+
+
 
 /*
 ** Intermediate services working on ALIGNED addresses
@@ -319,7 +335,7 @@ static void _npg_map_512G(offset_t addr, uint64_t attr)
    npg_pdpe_t *pdp = __npg_resolve_pdpe(pg_512G_align(addr), attr);
    uint32_t   i;
 
-   debug(PG, "map 512G 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "map 512G 0x%X 0x%X\n", addr, attr);
    for(i=0 ; i<PDPE_PER_PDP ; i++)
    {
       __npg_map_1G(&pdp[i], addr, attr);
@@ -331,7 +347,7 @@ static void _npg_map_1G(offset_t addr, uint64_t attr)
 {
    npg_pdpe_t *pdpe = __npg_resolve_pdpe(addr, attr);
 
-   debug(PG, "map 1G 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "map 1G 0x%X 0x%X\n", addr, attr);
    __npg_map_1G(pdpe, addr, attr);
 }
 
@@ -340,7 +356,7 @@ static void _npg_map_2M(offset_t addr, uint64_t attr)
    npg_pdpe_t  *pdpe = __npg_resolve_pdpe(addr, attr);
    npg_pde64_t *pde;
 
-   debug(PG, "map 2M 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "map 2M 0x%X 0x%X\n", addr, attr);
    if(npg_large(pdpe))
       return;
 
@@ -354,7 +370,7 @@ static void _npg_map_4K(offset_t addr, uint64_t attr)
    npg_pde64_t *pde  = __npg_resolve_pde(pdpe, addr, attr);
    npg_pte64_t *pte;
 
-   debug(PG, "map 4K 0x%X 0x%X\n", addr, attr);
+   debug(PG_MAP, "map 4K 0x%X 0x%X\n", addr, attr);
    if(npg_large(pdpe) || npg_large(pde))
       return;
 
@@ -367,11 +383,11 @@ static void _npg_unmap_512G(offset_t addr, uint64_t __unused__ attr)
    npg_pdpe_t *pdp = __npg_get_pdpe(addr);
    uint32_t   i;
 
-   debug(PG, "unmap 512G 0x%X\n", addr);
+   debug(PG_MAP, "unmap 512G 0x%X\n", addr);
    if(!pdp)
       return;
 
-   debug(PG, "unmap 1G for each pdpe\n");
+   debug(PG_MAP, "unmap 1G for each pdpe\n");
    for(i=0 ; i<PDPE_PER_PDP ; i++)
       if(npg_present(&pdp[i]))
 	 __npg_unmap_1G(&pdp[i]);
@@ -381,7 +397,7 @@ static void _npg_unmap_1G(offset_t addr, uint64_t __unused__ attr)
 {
    npg_pdpe_t *pdpe = __npg_get_pdpe(addr);
 
-   debug(PG, "unmap 1G 0x%X\n", addr);
+   debug(PG_MAP, "unmap 1G 0x%X\n", addr);
    if(pdpe && npg_present(pdpe))
       __npg_unmap_1G(pdpe);
 }
@@ -391,31 +407,28 @@ static void _npg_unmap_2M(offset_t addr, uint64_t __unused__ attr)
    npg_pdpe_t  *pdpe = __npg_get_pdpe(addr);
    npg_pde64_t *pde;
 
-   debug(PG, "unmap 2M 0x%X\n", addr);
+   debug(PG_MAP, "unmap 2M 0x%X\n", addr);
    if(!pdpe || !npg_present(pdpe))
    {
-      debug(PG, "unmap 2M pdpe not present\n");
+      debug(PG_MAP, "unmap 2M pdpe not present\n");
       return;
    }
 
    if(npg_large(pdpe))
       __npg_remap_1G_finest(pdpe, addr);
    else
-      debug(PG, "unmap 2M pdpe not a large one\n");
+      debug(PG_MAP, "unmap 2M pdpe not a large one\n");
 
    pde = __npg_get_pde(pdpe, addr);
    __npg_unmap_2M(pde);
 }
 
-/*
-** remap finest 4k
-*/
 npg_pte64_t* _npg_remap_finest_4K(offset_t addr)
 {
    npg_pdpe_t  *pdpe = __npg_get_pdpe(addr);
    npg_pde64_t *pde;
 
-   debug(PG, "remap 4K finest 0x%X\n", addr);
+   debug(PG_MAP, "remap 4K finest 0x%X\n", addr);
    if(!pdpe || !npg_present(pdpe))
       return (npg_pte64_t*)0;
 
@@ -435,7 +448,7 @@ npg_pte64_t* _npg_remap_finest_4K(offset_t addr)
 
 static void _npg_unmap_4K(offset_t addr, uint64_t __unused__ attr)
 {
-   debug(PG, "unmap 4K 0x%X\n", addr);
+   debug(PG_MAP, "unmap 4K 0x%X\n", addr);
    npg_pte64_t *pte = _npg_remap_finest_4K(addr);
 
    if(pte)
@@ -461,6 +474,8 @@ static void _npg_remap_4K(offset_t addr, uint64_t attr)
 {
    panic("%s(0x%X, 0x%X) not implemented !", __FUNCTION__, addr, attr);
 }
+
+
 
 /*
 ** Generic range services
@@ -545,33 +560,35 @@ static inline void __npg_fw_op(offset_t start, offset_t end, uint64_t attr,
 
 static offset_t _npg_bk_op(offset_t start, offset_t end, uint64_t attr, uint8_t act)
 {
-   debug(PG, "backward 0x%X 0x%X\n", start, end);
+   debug(PG_MAP, "backward 0x%X 0x%X\n", start, end);
    return __npg_bk_op(start, end, info->vm.cpu.max_paddr, attr, &npg_512G_op, act);
 }
 
 static void _npg_fw_op(offset_t start, offset_t end, uint64_t attr, uint8_t act)
 {
-   debug(PG, "forward 0x%X 0x%X\n", start, end);
+   debug(PG_MAP, "forward 0x%X 0x%X\n", start, end);
    __npg_fw_op(start, end, attr, &npg_512G_op, act);
 }
+
+
 
 /*
 ** High-level services
 */
 void npg_map(offset_t start, offset_t end, uint64_t attr)
 {
-   debug(PG, "map [0x%X - 0x%X] 0x%X\n", start, end, attr);
+   debug(PG_MAP, "map [0x%X - 0x%X] 0x%X\n", start, end, attr);
    _npg_fw_op(_npg_bk_op(start, end, attr, NPG_OP_MAP), end, attr, NPG_OP_MAP);
 }
 
 void npg_unmap(offset_t start, offset_t end)
 {
-   debug(PG, "unmap [0x%X - 0x%X]\n", start, end);
+   debug(PG_MAP, "unmap [0x%X - 0x%X]\n", start, end);
    _npg_fw_op(_npg_bk_op(start, end, 0, NPG_OP_UNMAP), end, 0, NPG_OP_UNMAP);
 }
 
 void npg_setup_a20()
 {
-   debug(PG, "A20 %s (wrap-around not implemented)\n", info->vm.dev.mem.a20?"on":"off");
+   debug(PG_MAP, "A20 %s (wrap-around not implemented)\n"
+	 , info->vm.dev.mem.a20?"on":"off");
 }
-
