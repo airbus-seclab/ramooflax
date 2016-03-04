@@ -274,6 +274,47 @@ int dev_io_insn(io_insn_t *io, void *device, io_size_t *sz)
    return __io_insn_simple(io, device, sz);
 }
 
+static int __dev_io_proxy_filter_in(io_insn_t    *io,
+				    io_flt_hdl_t filter,  void      *arg,
+				    void         *device, io_size_t *sz)
+{
+   if(!dev_io_native(io, device))
+      return 0;
+
+   debug(DEV_IO, "proxy io in 0x%x = 0x%x\n", io->port, *(uint8_t*)device);
+
+   if(filter && (filter(device, arg) & (VM_FAIL|VM_FAULT)))
+      return 0;
+
+   return dev_io_insn(io, device, sz);
+}
+
+static int __dev_io_proxy_filter_out(io_insn_t    *io,
+				     io_flt_hdl_t filter,  void      *arg,
+				     void         *device, io_size_t *sz)
+{
+   int rc = 1;
+
+   if(!dev_io_insn(io, device, sz))
+      return 0;
+
+   if(filter)
+   {
+      int rc = filter(device, arg);
+
+      if(rc & (VM_FAIL|VM_FAULT))
+	 return 0;
+   }
+
+   debug(DEV_IO, "proxy io out 0x%x = 0x%x\n", io->port, *(uint8_t*)device);
+
+   /* filter by-pass native io (put here for debug message) */
+   if(rc != VM_IGNORE)
+      dev_io_native(io, device);
+
+   return 1;
+}
+
 int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
 {
    uint64_t  space;
@@ -301,36 +342,10 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
    }
 
    if(io->in)
-   {
-      if(!dev_io_native(io, device.addr))
-      {
-	 rc = 0;
-	 goto __release;
-      }
+      rc = __dev_io_proxy_filter_in(io, filter, arg, device.addr, &sz);
+   else
+      rc = __dev_io_proxy_filter_out(io, filter, arg, device.addr, &sz);
 
-      debug(DEV_IO, "proxy io in 0x%x = 0x%x\n", io->port, *device.u8);
-
-      if(filter)
-	 filter(device.addr, arg);
-
-      rc = dev_io_insn(io, device.addr, &sz);
-      goto __release;
-   }
-
-   if(!dev_io_insn(io, device.addr, &sz))
-   {
-      rc = 0;
-      goto __release;
-   }
-
-   if(filter)
-      filter(device.addr, arg);
-
-   debug(DEV_IO, "proxy io out 0x%x = 0x%x\n", io->port, *device.u8);
-   dev_io_native(io, device.addr);
-   rc = 1;
-
-__release:
    if(device.u64 != &space)
       pool_push_page(device.linear);
 
