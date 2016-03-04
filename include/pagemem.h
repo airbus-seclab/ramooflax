@@ -417,12 +417,18 @@ typedef pte64_t (pt64_t)[PTE64_PER_PT];
 /*
 ** Universal macros
 */
-#define pg_present(_e_)                       ((_e_)->p)
-#define pg_large(_e_)                         ((_e_)->page.ps)
-#define pg_zero(_e_)                          ((_e_)->raw = 0)
+#define pg_present(_e_)              ((_e_)->p)
+#define pg_readable(_e_)             pg_present(_e_)
+#define pg_writable(_e_)             (pg_present(_e_) && ((_e_)->rw))
+#define pg_large(_e_)                ((_e_)->page.ps)
+#define pg_zero(_e_)                 ((_e_)->raw = 0)
 
 /* XXX: what about NX bit ? */
-#define pg_get_attr(_e_)                      ((_e_)->raw & (PG_USR|PG_RW))
+#define pg_get_attr(_e_)             ((_e_)->raw & (PG_USR|PG_RW))
+#define pg_set_pvl(_e_,_p_)          ({(_e_)->blow &= ~7;(_e_)->blow |= (_p_);})
+#define pg_has_pvl_w(_e)             ((_e_)->blow & PG_RW)
+
+
 
 #define pg_set_entry(_e_,_attr_,_pfn_)		\
    ({						\
