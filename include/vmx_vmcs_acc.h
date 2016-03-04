@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@
 */
 #ifndef __INIT__
 void vmx_vmcs_collect();
+void vmx_vmcs_dirty_guest();
+void vmx_vmcs_collect_guest();
 #endif
 
 void vmx_vmcs_commit();

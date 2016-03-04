@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -435,4 +435,164 @@ void vmx_vmcs_collect()
    /* Fake fields */
    vmcs_read(vm_state.cr2);
    vmcs_read(vm_state.dr6);
+}
+
+void vmx_vmcs_dirty_guest()
+{
+   vmcs_dirty(vm_state.es.selector);
+   vmcs_dirty(vm_state.cs.selector);
+   vmcs_dirty(vm_state.ss.selector);
+   vmcs_dirty(vm_state.ds.selector);
+   vmcs_dirty(vm_state.fs.selector);
+   vmcs_dirty(vm_state.gs.selector);
+   vmcs_dirty(vm_state.ldtr.selector);
+   vmcs_dirty(vm_state.tr.selector);
+
+   vmcs_dirty(vm_state.vmcs_link_ptr);
+   vmcs_dirty(vm_state.ia32_dbgctl);
+
+   if(vm_entry_ctrls.entry.load_ia32_pat)
+      vmcs_dirty(vm_state.ia32_pat);
+
+   if(vm_entry_ctrls.entry.load_ia32_efer)
+      vmcs_dirty(vm_state.ia32_efer);
+
+   if(vm_entry_ctrls.entry.load_ia32_perf)
+      vmcs_dirty(vm_state.ia32_perf);
+
+   vmcs_dirty(vm_state.pdpe_0);
+   vmcs_dirty(vm_state.pdpe_1);
+   vmcs_dirty(vm_state.pdpe_2);
+   vmcs_dirty(vm_state.pdpe_3);
+
+   vmcs_dirty(vm_state.es.limit);
+   vmcs_dirty(vm_state.cs.limit);
+   vmcs_dirty(vm_state.ss.limit);
+   vmcs_dirty(vm_state.ds.limit);
+   vmcs_dirty(vm_state.fs.limit);
+   vmcs_dirty(vm_state.gs.limit);
+   vmcs_dirty(vm_state.ldtr.limit);
+   vmcs_dirty(vm_state.tr.limit);
+   vmcs_dirty(vm_state.gdtr.limit);
+   vmcs_dirty(vm_state.idtr.limit);
+   vmcs_dirty(vm_state.es.attributes);
+   vmcs_dirty(vm_state.cs.attributes);
+   vmcs_dirty(vm_state.ss.attributes);
+   vmcs_dirty(vm_state.ds.attributes);
+   vmcs_dirty(vm_state.fs.attributes);
+   vmcs_dirty(vm_state.gs.attributes);
+   vmcs_dirty(vm_state.ldtr.attributes);
+   vmcs_dirty(vm_state.tr.attributes);
+   vmcs_dirty(vm_state.interrupt);
+   vmcs_dirty(vm_state.activity);
+#ifdef CONFIG_VMX_FEAT_VMCS_SMBASE
+   vmcs_dirty(vm_state.smbase);
+#endif
+   vmcs_dirty(vm_state.ia32_sysenter_cs);
+
+   if(info->vm.vmx_fx_pin.allow_1.preempt)
+      vmcs_dirty(vm_state.preempt_timer);
+
+   vmx_set_fixed(vm_state.cr0.low, info->vm.vmx_fx_cr0);
+   vmcs_dirty(vm_state.cr0);
+   vmcs_dirty(vm_state.cr3);
+   vmx_set_fixed(vm_state.cr4.low, info->vm.vmx_fx_cr4);
+   vmcs_dirty(vm_state.cr4);
+   vmcs_dirty(vm_state.es.base);
+   vmcs_dirty(vm_state.cs.base);
+   vmcs_dirty(vm_state.ss.base);
+   vmcs_dirty(vm_state.ds.base);
+   vmcs_dirty(vm_state.fs.base);
+   vmcs_dirty(vm_state.gs.base);
+   vmcs_dirty(vm_state.tr.base);
+   vmcs_dirty(vm_state.ldtr.base);
+   vmcs_dirty(vm_state.gdtr.base);
+   vmcs_dirty(vm_state.idtr.base);
+   vmcs_dirty(vm_state.dr7);
+   vmcs_dirty(vm_state.rsp);
+   vmcs_dirty(vm_state.rip);
+   vmcs_dirty(vm_state.rflags);
+   vmcs_dirty(vm_state.dbg_excp);
+   vmcs_dirty(vm_state.ia32_sysenter_esp);
+   vmcs_dirty(vm_state.ia32_sysenter_eip);
+}
+
+void vmx_vmcs_collect_guest()
+{
+   vmcs_read(vm_state.es.selector);
+   vmcs_read(vm_state.cs.selector);
+   vmcs_read(vm_state.ss.selector);
+   vmcs_read(vm_state.ds.selector);
+   vmcs_read(vm_state.fs.selector);
+   vmcs_read(vm_state.gs.selector);
+   vmcs_read(vm_state.ldtr.selector);
+   vmcs_read(vm_state.tr.selector);
+
+   vmcs_read(vm_state.vmcs_link_ptr);
+   vmcs_read(vm_state.ia32_dbgctl);
+
+   if(vm_entry_ctrls.entry.load_ia32_pat)
+      vmcs_read(vm_state.ia32_pat);
+
+   if(vm_entry_ctrls.entry.load_ia32_efer)
+      vmcs_read(vm_state.ia32_efer);
+
+   if(vm_entry_ctrls.entry.load_ia32_perf)
+      vmcs_read(vm_state.ia32_perf);
+
+   vmcs_read(vm_state.pdpe_0);
+   vmcs_read(vm_state.pdpe_1);
+   vmcs_read(vm_state.pdpe_2);
+   vmcs_read(vm_state.pdpe_3);
+
+   vmcs_read(vm_state.es.limit);
+   vmcs_read(vm_state.cs.limit);
+   vmcs_read(vm_state.ss.limit);
+   vmcs_read(vm_state.ds.limit);
+   vmcs_read(vm_state.fs.limit);
+   vmcs_read(vm_state.gs.limit);
+   vmcs_read(vm_state.ldtr.limit);
+   vmcs_read(vm_state.tr.limit);
+   vmcs_read(vm_state.gdtr.limit);
+   vmcs_read(vm_state.idtr.limit);
+   vmcs_read(vm_state.es.attributes);
+   vmcs_read(vm_state.cs.attributes);
+   vmcs_read(vm_state.ss.attributes);
+   vmcs_read(vm_state.ds.attributes);
+   vmcs_read(vm_state.fs.attributes);
+   vmcs_read(vm_state.gs.attributes);
+   vmcs_read(vm_state.ldtr.attributes);
+   vmcs_read(vm_state.tr.attributes);
+   vmcs_read(vm_state.interrupt);
+   vmcs_read(vm_state.activity);
+#ifdef CONFIG_VMX_FEAT_VMCS_SMBASE
+   vmcs_read(vm_state.smbase);
+#endif
+   vmcs_read(vm_state.ia32_sysenter_cs);
+
+   if(info->vm.vmx_fx_pin.allow_1.preempt)
+      vmcs_read(vm_state.preempt_timer);
+
+   vmx_set_fixed(vm_state.cr0.low, info->vm.vmx_fx_cr0);
+   vmcs_read(vm_state.cr0);
+   vmcs_read(vm_state.cr3);
+   vmx_set_fixed(vm_state.cr4.low, info->vm.vmx_fx_cr4);
+   vmcs_read(vm_state.cr4);
+   vmcs_read(vm_state.es.base);
+   vmcs_read(vm_state.cs.base);
+   vmcs_read(vm_state.ss.base);
+   vmcs_read(vm_state.ds.base);
+   vmcs_read(vm_state.fs.base);
+   vmcs_read(vm_state.gs.base);
+   vmcs_read(vm_state.tr.base);
+   vmcs_read(vm_state.ldtr.base);
+   vmcs_read(vm_state.gdtr.base);
+   vmcs_read(vm_state.idtr.base);
+   vmcs_read(vm_state.dr7);
+   vmcs_read(vm_state.rsp);
+   vmcs_read(vm_state.rip);
+   vmcs_read(vm_state.rflags);
+   vmcs_read(vm_state.dbg_excp);
+   vmcs_read(vm_state.ia32_sysenter_esp);
+   vmcs_read(vm_state.ia32_sysenter_eip);
 }
