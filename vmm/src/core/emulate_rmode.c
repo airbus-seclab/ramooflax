@@ -125,9 +125,15 @@ int emulate_rmode_interrupt(uint8_t vector, uint16_t insn_sz)
    emulate_rmode_push(__rflags.wlow);
 
    __rflags.IF = 0;
-   __rflags.tf = 0;
-   __rflags.rf = 0;
    __rflags.ac = 0;
+
+   /* XXX for controlled singlestep */
+   if(!dbg_hard_stp_enabled())
+      __rflags.tf = 0;
+
+   /* XXX for controlled hardware BP */
+   if(!dbg_hard_brk_insn_enabled())
+      __rflags.rf = 0;
 
    emulate_rmode_far_call(&fptr, insn_sz);
    __post_access(__rflags);
