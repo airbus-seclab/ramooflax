@@ -90,6 +90,7 @@
 
 #define npg_init()                     svm_npt_map()
 #define npg_dft_attr                   ((uint64_t)(PG_USR|PG_RW))
+#define npg_dft_attr_rx                ((uint64_t)(PG_USR|PG_R))
 #define npg_dft_attr_nx                ((uint64_t)(PG_USR|PG_RW|PG_NX))
 #define npg_get_attr(_e)               pg_get_attr(_e)
 #define npg_present(_e)                pg_present(_e)
@@ -99,6 +100,11 @@
 #define npg_set_entry(_e,_a,_p)            pg_set_entry(_e,_a,_p)
 #define npg_set_page_entry(_e,_a,_p)       pg_set_entry(_e,_a,_p)
 #define npg_set_large_page_entry(_e,_a,_p) pg_set_large_entry(_e,_a,_p)
+
+#define npg_pvl_rx                     ((uint8_t)(PG_USR|PG_R))
+#define npg_dft_pvl                    ((uint8_t)(PG_USR|PG_RW))
+#define npg_set_pvl(_e,_p)             pg_set_pvl(_e,_p)
+#define npg_pvl_has_w(_e)              pg_has_pvl_w(_e)
 
 #define npg_pml4e_t                    pml4e_t
 #define npg_pdpe_t                     pdpe_t
@@ -136,8 +142,10 @@
 #define npg_set_asid(_x)                ({__ctrls.tlb_ctrl.guest_asid = (_x);})
 
 #define npg_err_t                       vmcb_exit_info_npf_t
-#define npg_error_not_present(_e)       (_e.p == 0)
-#define npg_error_execute(_e)           (_e.id)
+#define npg_error_not_present(_e)       ((_e).p == 0)
+#define npg_error_execute(_e)           ((_e).id)
+
+#define npg_write_fault(_e)             ((_e).wr && (_e).final)
 
 #define npg_error()                     (__ctrls.exit_info_1.npf)
 #define npg_fault()                     (__ctrls.exit_info_2.raw)

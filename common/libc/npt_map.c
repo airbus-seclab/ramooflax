@@ -34,6 +34,12 @@ static inline offset_t __npg_new_pg()
    return pg;
 }
 
+static inline npg_pdpe_t* __npg_new_pdp()
+{
+   debug(PG, "allocating new pdp\n");
+   return (npg_pdpe_t*)__npg_new_pg();
+}
+
 static inline npg_pde64_t* __npg_new_pd()
 {
    debug(PG, "allocating new pd\n");
@@ -46,10 +52,10 @@ static inline npg_pte64_t* __npg_new_pt()
    return (npg_pte64_t*)__npg_new_pg();
 }
 
-static inline npg_pdpe_t* __npg_get_pdpe_nocheck(offset_t addr)
+static inline npg_pdpe_t* __npg_get_pdpe_nocheck(npg_pml4e_t *pml4e, offset_t addr)
 {
-   vm_pgmem_t *pg = npg_get_active_paging();
-   return &pg->pdp[pml4_idx(addr)][pdp_idx(addr)];
+   npg_pdpe_t *pdp = (npg_pdpe_t*)page_addr(pml4e->addr);
+   return &pdp[pdp_idx(addr)];
 }
 
 static inline npg_pde64_t* __npg_get_pde_nocheck(npg_pdpe_t *pdpe, offset_t addr)
@@ -72,7 +78,7 @@ static inline npg_pdpe_t* __npg_get_pdpe(offset_t addr)
    if(!npg_present(pml4e))
       return 0;
 
-   return __npg_get_pdpe_nocheck(addr);
+   return __npg_get_pdpe_nocheck(pml4e, addr);
 }
 
 static inline npg_pde64_t* __npg_get_pde(npg_pdpe_t *pdpe, offset_t addr)
@@ -107,7 +113,6 @@ npg_pte64_t* _npg_get_pte(offset_t addr)
    return __npg_get_pte(pde, addr);
 }
 
-/* resolve pdpe (pdp tables are pre-allocated) */
 static inline npg_pdpe_t* __npg_resolve_pdpe(offset_t addr, uint64_t attr)
 {
    vm_pgmem_t  *pg = npg_get_active_paging();
@@ -115,10 +120,14 @@ static inline npg_pdpe_t* __npg_resolve_pdpe(offset_t addr, uint64_t attr)
    npg_pdpe_t  *pdp;
 
    pml4e = &pg->pml4[pml4_idx(addr)];
-   pdp   = pg->pdp[pml4_idx(addr)];
 
    if(!npg_present(pml4e))
+   {
+      pdp = __npg_new_pdp();
       npg_set_entry(pml4e, attr, page_nr(pdp));
+   }
+   else
+      pdp = (npg_pdpe_t*)page_addr(pml4e->addr);
 
    return &pdp[pdp_idx(addr)];
 }

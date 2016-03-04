@@ -102,6 +102,7 @@
 
 #define npg_init()                     vmx_ept_map()
 #define npg_dft_attr                   ept_dft_attr
+#define npg_dft_attr_rx                ept_dft_attr_rx
 #define npg_dft_attr_nx                ept_dft_attr_nx
 #define npg_get_attr(_e)               ept_pg_get_attr(_e)
 #define npg_present(_e)                ept_pg_present(_e)
@@ -111,6 +112,11 @@
 #define npg_set_entry(_e,_a,_p)            ept_pg_set_entry(_e,_a,_p)
 #define npg_set_page_entry(_e,_a,_p)       ept_pg_set_page_entry(_e,_a,_p)
 #define npg_set_large_page_entry(_e,_a,_p) ept_pg_set_large_page_entry(_e,_a,_p)
+
+#define npg_pvl_rx                     ept_pvl_rx
+#define npg_dft_pvl                    ept_dft_pvl
+#define npg_set_pvl(_e,_p)             ept_pg_set_pvl(_e,_p)
+#define npg_pvl_has_w(_e)              ept_pg_has_pvl_w(_e)
 
 #define npg_pml4e_t                    ept_pml4e_t
 #define npg_pdpe_t                     ept_pdpe_t
@@ -155,8 +161,10 @@
    })
 
 #define npg_err_t                               vmcs_exit_info_ept_t
-#define npg_error_not_present(_e)               (((((_e.raw)>>3)&7) == 0)?1:0)
-#define npg_error_execute(_e)                   (_e.x)
+#define npg_error_not_present(_e)               ((((((_e).raw)>>3)&7) == 0)?1:0)
+#define npg_error_execute(_e)                   ((_e).x)
+
+#define npg_write_fault(_e)                     ((_e).w && (_e).final)
 
 #define npg_error()				\
    ({						\

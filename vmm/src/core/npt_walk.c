@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,16 +27,16 @@ extern info_data_t *info;
 ** . we use VM cpu skillz as we depend
 **   upon nested mmu features
 */
-int npg_walk(offset_t vaddr, offset_t *paddr)
+int npg_walk(offset_t vaddr, npg_wlk_t *wlk)
 {
-   vm_pgmem_t  *pg = npg_get_active_paging();
    npg_pml4e_t *pml4e;
-   npg_pdpe_t  *pdpe;
+   npg_pdpe_t  *pdp,*pdpe;
    npg_pde64_t *pd, *pde;
    npg_pte64_t *pt, *pte;
+   vm_pgmem_t  *pg = npg_get_active_paging();
 
    __pre_access(npg_cr3);
-   debug(PG_W, "nested cr3 0x%X\n", npg_cr3.raw);
+   debug(PG_W, "nested cr3 0x%X\n", page_addr(npg_cr3.addr));
 
    pml4e = &pg->pml4[pml4_idx(vaddr)];
    debug(PG_W, "pml4e @ 0x%X = 0x%X\n", (offset_t)pml4e, pml4e->raw);
@@ -44,21 +44,29 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pml4e))
    {
       debug(PG_W, "pml4e not present\n");
+      wlk->type  = NPG_WALK_TYPE_PML4E;
+      wlk->entry = (void*)pml4e;
       return VM_FAIL;
    }
 
-   pdpe = &pg->pdp[pml4_idx(vaddr)][pdp_idx(vaddr)];
+   pdp  = (npg_pdpe_t*)page_addr(pml4e->addr);
+   pdpe = &pdp[pdp_idx(vaddr)];
    debug(PG_W, "pdpe @ 0x%X = 0x%X\n", (offset_t)pdpe, pdpe->raw);
 
    if(!npg_present(pdpe))
    {
       debug(PG_W, "pdpe not present\n");
+      wlk->type  = NPG_WALK_TYPE_PDPE;
+      wlk->entry = (void*)pdpe;
       return VM_FAIL;
    }
 
    if(info->vm.cpu.skillz.pg_1G && npg_large(pdpe))
    {
-      *paddr = pg_1G_addr((offset_t)pdpe->page.addr) + pg_1G_offset(vaddr);
+      wlk->addr  = pg_1G_addr((offset_t)pdpe->page.addr) + pg_1G_offset(vaddr);
+      wlk->type  = NPG_WALK_TYPE_PDPE;
+      wlk->size  = PG_1G_SIZE;
+      wlk->entry = (void*)pdpe;
       goto __success;
    }
 
@@ -69,12 +77,17 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pde))
    {
       debug(PG_W, "pde not present\n");
+      wlk->type  = NPG_WALK_TYPE_PDE;
+      wlk->entry = (void*)pde;
       return VM_FAIL;
    }
 
    if(info->vm.cpu.skillz.pg_2M && npg_large(pde))
    {
-      *paddr = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
+      wlk->addr  = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
+      wlk->type  = NPG_WALK_TYPE_PDE;
+      wlk->size  = PG_2M_SIZE;
+      wlk->entry = (void*)pde;
       goto __success;
    }
 
@@ -85,12 +98,17 @@ int npg_walk(offset_t vaddr, offset_t *paddr)
    if(!npg_present(pte))
    {
       debug(PG_W, "pte not present\n");
+      wlk->type  = NPG_WALK_TYPE_PTE;
+      wlk->entry = (void*)pte;
       return VM_FAIL;
    }
 
-   *paddr = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
+   wlk->addr  = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
+   wlk->type  = NPG_WALK_TYPE_PTE;
+   wlk->size  = PG_4K_SIZE;
+   wlk->entry = (void*)pte;
 
 __success:
-   debug(PG_W, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, *paddr);
+   debug(PG_W, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, wlk->addr);
    return VM_DONE;
 }

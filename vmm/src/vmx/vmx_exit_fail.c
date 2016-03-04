@@ -246,7 +246,7 @@ char* vmx_vmexit_string_from_vector_type(uint8_t type,  uint8_t vector)
 static void vmx_vmexit_show_gp_event()
 {
    int_desc_t *idt;
-   offset_t   paddr;
+   npg_wlk_t   npg;
 
    if(!vm_exit_info.int_err_code.sl.idt ||_xx_lmode())
       return;
@@ -255,9 +255,9 @@ static void vmx_vmexit_show_gp_event()
 
    if(!__paging())
       goto __show_gp;
-   else if(vm_full_walk((offset_t)idt, &paddr))
+   else if(vm_full_walk((offset_t)idt, &npg))
    {
-      idt = (int_desc_t*)paddr;
+      idt = (int_desc_t*)npg.addr;
       goto __show_gp;
    }
 
@@ -291,9 +291,9 @@ static void vmx_vmexit_show_event()
    {
    case PF_EXCP:
    {
-      offset_t paddr;
-      vm_full_walk(__cr2.raw, &paddr);
-      printf("cr2 0x%X -> nested 0x%X\n", __cr2.raw, paddr);
+      npg_wlk_t npg;
+      vm_full_walk(__cr2.raw, &npg);
+      printf("cr2 0x%X -> nested 0x%X\n", __cr2.raw, npg.addr);
       break;
    }
    case GP_EXCP:
@@ -337,15 +337,16 @@ static void vmx_vmexit_show_info()
 
    if(vm_exit_info.reason.basic == VMX_VMEXIT_EPT_CONF)
    {
-      offset_t vaddr, paddr;
-      int      mode;
+      offset_t  vaddr;
+      npg_wlk_t npg;
+      int       mode;
 
       vm_get_code_addr(&vaddr, 0, &mode);
-      npg_walk(vaddr, &paddr);
+      npg_walk(vaddr, &npg);
    }
    else if(vm_exit_info.reason.basic == VMX_VMEXIT_EPT)
    {
-      offset_t paddr;
+      npg_wlk_t npg;
 
       printf("-\n"
 	     " . glinear      : 0x%X\n"
@@ -353,7 +354,7 @@ static void vmx_vmexit_show_info()
 	     ,vm_exit_info.guest_linear.raw
 	     ,vm_exit_info.guest_physical.raw
 	 );
-      npg_walk(vm_exit_info.guest_physical.raw, &paddr);
+      npg_walk(vm_exit_info.guest_physical.raw, &npg);
    }
    else if(vm_exit_info.reason.basic == VMX_VMEXIT_CR_ACCESS)
    {

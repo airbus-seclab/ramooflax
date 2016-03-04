@@ -25,8 +25,8 @@ extern info_data_t *info;
 
 int __svm_vmexit_resolve_pf()
 {
-   offset_t fault = vm_ctrls.exit_info_2.raw;
-   offset_t paddr;
+   offset_t  fault = vm_ctrls.exit_info_2.raw;
+   npg_wlk_t npg;
 
    debug(SVM_EXCP_PF,
 	 "#PF 0x%X (p:%d wr:%d us:%d rsv:%d id:%d)\n"
@@ -34,7 +34,7 @@ int __svm_vmexit_resolve_pf()
 	 ,vm_ctrls.exit_info_1.npf.wr, vm_ctrls.exit_info_1.npf.us
 	 ,vm_ctrls.exit_info_1.npf.rsv, vm_ctrls.exit_info_1.npf.id);
 
-   vm_full_walk(fault, &paddr);
+   vm_full_walk(fault, &npg);
    return __svm_vmexit_inject_exception(PF_EXCP, vm_ctrls.exit_info_1.low, fault);
 }
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -57,26 +57,25 @@ static inline offset_t pmem_vmm_pg_alloc(vmm_t *vmm, offset_t area, pg_cnt_t *pg
 /*
 ** cf vm.h for paging structures
 **
-** pdp(s) are pre-allocated
-** pd(s) and pt(s) will be allocated from the pool
+** pdp(s), pd(s) and pt(s) will be allocated from the pool
 */
-static inline size_t pmem_vm_pg_size(pg_cnt_t *pg)
+static inline size_t pmem_vm_pg_size(pg_cnt_t __unused__ *pg)
 {
-   return (sizeof(npg_pml4_t) + pg->pdp*sizeof(npg_pdp_t));
+   return sizeof(npg_pml4_t);
 }
 
 static inline size_t pmem_vm_pg_pool_size(pg_cnt_t *pg)
 {
-   return (pg->pd*sizeof(npg_pd64_t) + pg->pt*sizeof(npg_pt64_t));
+   return (pg->pdp*sizeof(npg_pdp_t)  +
+	   pg->pd *sizeof(npg_pd64_t) +
+	   pg->pt *sizeof(npg_pt64_t));
 }
 
-static inline offset_t pmem_vm_pg_alloc(vm_t *vm, offset_t area, pg_cnt_t *pg)
+static inline offset_t pmem_vm_pg_alloc(vm_t *vm, offset_t area,
+					pg_cnt_t __unused__ *pg)
 {
-   vm->cpu.pg[0].pml4 = (npg_pml4e_t*)area;
+   vm->cpu.pg[NPG_DEFAULT].pml4 = (npg_pml4e_t*)area;
    area += sizeof(npg_pml4_t);
-
-   vm->cpu.pg[0].pdp = (npg_pdp_t*)area;
-   area += pg->pdp*sizeof(npg_pdp_t);
 
    return area;
 }
@@ -113,10 +112,10 @@ static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
       vm->pt = max_pt;
 
    debug(PMEM,
-	 "vmm needs %D pd and %D pt\n"
-	 "vm  needs %D pd and %D pt\n"
-	 ,vmm->pd, vmm->pt
-	 ,vm->pd, vm->pt);
+	 "vmm needs %D pdp %D pd %D pt\n"
+	 "vm  needs %D pdp %D pd %D pt\n"
+	 ,vmm->pdp, vmm->pd, vmm->pt
+	 ,vm->pdp,  vm->pd,  vm->pt);
 }
 
 static int pmem_pool_opt_hdl(char *str, void *arg)

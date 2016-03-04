@@ -560,7 +560,8 @@ static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
 
 static void gdb_vmm_npg_translate(uint8_t *data, size_t len)
 {
-   offset_t paddr, saddr;
+   offset_t  paddr;
+   npg_wlk_t npg;
 
    if(!gdb_get_number(data, len, (uint64_t*)&paddr, 0))
    {
@@ -570,16 +571,16 @@ static void gdb_vmm_npg_translate(uint8_t *data, size_t len)
 
    debug(GDBSTUB_CMD, "(nested) translating 0x%X\n", paddr);
 
-   if(npg_walk(paddr, &saddr) != VM_DONE)
+   if(npg_walk(paddr, &npg) != VM_DONE)
    {
       debug(GDBSTUB, "(nested) memory translation failure\n");
       gdb_err_mem();
       return;
    }
 
-   debug(GDBSTUB_CMD, "sending 0x%X\n", saddr);
+   debug(GDBSTUB_CMD, "sending 0x%X\n", npg.addr);
 
-   gdb_add_number(saddr, sizeof(uint64_t)*2, 0);
+   gdb_add_number(npg.addr, sizeof(uint64_t)*2, 0);
    gdb_send_packet();
 }
 

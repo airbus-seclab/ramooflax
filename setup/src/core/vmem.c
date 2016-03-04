@@ -30,10 +30,7 @@ extern info_data_t *info;
 
 static void vm_pagemem_init()
 {
-   npg_pdpe_t *pdp = info->vm.cpu.pg[0].pdp[0];
-
    npg_init();
-   npg_set_entry(&info->vm.cpu.pg[0].pml4[0], npg_dft_attr, page_nr(pdp));
 }
 
 /*

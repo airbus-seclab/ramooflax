@@ -323,13 +323,13 @@ int vm_pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
 /*
 ** Resolve guest virtual into system physical
 **/
-int vm_full_walk(offset_t vaddr, offset_t *paddr)
+int vm_full_walk(offset_t vaddr, npg_wlk_t *wlk)
 {
    size_t   sz;
    offset_t gp;
 
    if(vm_pg_walk(vaddr, &gp, &sz) == VM_DONE)
-      return npg_walk(gp, paddr);
+      return npg_walk(gp, wlk);
 
    return VM_FAIL;
 }

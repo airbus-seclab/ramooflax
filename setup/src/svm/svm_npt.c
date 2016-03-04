@@ -16,6 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <svm_npt.h>
+#include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;

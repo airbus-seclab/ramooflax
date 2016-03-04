@@ -54,9 +54,10 @@
 */
 typedef struct vmm_paging
 {
-   pml4e_t     *pml4;  /* strictly aligned */
-   pdp_t       *pdp;   /* strictly aligned */
-   pd64_t      *pd;    /* strictly aligned */
+   /* strictly aligned */
+   pml4e_t     *pml4;
+   pdp_t       *pdp;
+   pd64_t      *pd;
 
 } __attribute__((packed)) vmm_pgmem_t;
 

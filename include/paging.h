@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@
 #include <pagemem.h>
 #include <vm.h>
 
+/*
+** Nested Paging mapping operators
+*/
 typedef enum
 {
    NPG_OP_MAP = 0,
@@ -41,8 +44,26 @@ typedef struct npg_operator
 
 } __attribute__((packed)) npg_op_t;
 
+/*
+** Nested Paging walk information
+*/
+#define NPG_WALK_TYPE_PML4E   0
+#define NPG_WALK_TYPE_PDPE    1
+#define NPG_WALK_TYPE_PDE     2
+#define NPG_WALK_TYPE_PTE     3
+
+typedef struct npg_walk_info
+{
+   offset_t addr;
+   int      type;
+   size_t   size;
+   void     *entry;
+
+} __attribute__((packed)) npg_wlk_t;
+
 #define NPG_DEFAULT  0
 
+#define npg_get_paging(_x)        (&info->vm.cpu.pg[(_x)])
 #define npg_set_active_paging(_x) (info->vm.cpu.active_pg = (_x))
 #define npg_get_active_paging()   (&info->vm.cpu.pg[info->vm.cpu.active_pg])
 
@@ -53,7 +74,7 @@ typedef struct npg_operator
    })
 
 /*
-** Nested mapping functions
+** Nested Paging mapping functions
 */
 npg_pte64_t* _npg_remap_finest_4K(offset_t);
 npg_pte64_t* _npg_get_pte(offset_t);
@@ -64,10 +85,10 @@ void npg_setup_a20();
 
 #ifndef __INIT__
 /*
-** Classical && Nested walking functions
+** Legacy && Nested walking functions
 */
 int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*, int);
-int  npg_walk(offset_t, offset_t*);
+int  npg_walk(offset_t, npg_wlk_t*);
 
 #define vmm_pg_walk(c,v,p,s)   __pg_walk(c,v,p,s,0)
 

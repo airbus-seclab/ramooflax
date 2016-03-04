@@ -79,7 +79,6 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 typedef struct vm_paging
 {
    npg_pml4e_t  *pml4; /* strictly aligned */
-   npg_pdp_t    *pdp;  /* strictly aligned */
 
 } __attribute__((packed)) vm_pgmem_t;
 
@@ -216,8 +215,11 @@ int   vm_write_mem(offset_t, uint8_t*, size_t);
 int   vm_enter_rmode();
 int   vm_enter_pmode();
 
+void  vm_setup_npg(int);
 int   vm_pg_walk(offset_t, offset_t*, size_t*);
-int   vm_full_walk(offset_t, offset_t*);
+
+struct npg_walk_info;
+int   vm_full_walk(offset_t, struct npg_walk_info*);
 
 #endif
 

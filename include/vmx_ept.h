@@ -245,10 +245,17 @@ typedef union ept_page_table_entry_64
 #define VMX_EPT_MEM_TYPE_WP          5
 #define VMX_EPT_MEM_TYPE_WB          6
 
+#define VMX_EPT_PVL_R                1
+#define VMX_EPT_PVL_W                2
 #define VMX_EPT_PVL_RW               3
 #define VMX_EPT_PVL_RX               5
 #define VMX_EPT_PVL_RWX              7
+
+#define ept_pvl_rx                   VMX_EPT_PVL_RX
 #define ept_dft_pvl                  VMX_EPT_PVL_RWX
+
+#define ept_pg_set_pvl(_e_,_p_)      ({(_e_)->blow &= ~7;(_e_)->blow |= ((_p_)&7);})
+#define ept_pg_has_pvl_w(_e_)        ((_e_)->blow & VMX_EPT_PVL_W)
 
 #define __ept_dft_attr(_pvl)			\
    ({						\
@@ -264,6 +271,7 @@ typedef union ept_page_table_entry_64
    })
 
 #define ept_dft_attr     __ept_dft_attr(ept_dft_pvl)
+#define ept_dft_attr_rx  __ept_dft_attr(VMX_EPT_PVL_RX)
 #define ept_dft_attr_nx  __ept_dft_attr(VMX_EPT_PVL_RW)
 
 uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);

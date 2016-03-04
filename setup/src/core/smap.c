@@ -20,6 +20,9 @@
 #include <string.h>
 #include <print.h>
 #include <debug.h>
+#include <info_data.h>
+
+extern info_data_t *info;
 
 void smap_parse(mbi_t *mbi, smap_t *smap, offset_t *area, offset_t *acme)
 {
