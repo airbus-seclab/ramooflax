@@ -468,7 +468,7 @@ void vmx_vmcs_collect()
    vmx_vmcs_collect_exit_info();
 }
 
-static void vmx_vmcs_dirty_guest()
+void vmx_vmcs_dirty_guest()
 {
    vmcs_dirty(vm_state.es.selector);
    vmcs_dirty(vm_state.cs.selector);
@@ -552,7 +552,7 @@ static void vmx_vmcs_dirty_guest()
    vmcs_dirty(vm_state.dr6);
 }
 
-static void vmx_vmcs_dirty_exec()
+void vmx_vmcs_dirty_exec()
 {
    vmcs_dirty(vm_exec_ctrls.vpid);
    vmcs_dirty(vm_exec_ctrls.io_bitmap_a);
@@ -594,7 +594,7 @@ static void vmx_vmcs_dirty_exec()
    vmcs_dirty(vm_exec_ctrls.cr3_target_3);
 }
 
-static void vmx_vmcs_dirty_entry()
+ void vmx_vmcs_dirty_entry()
 {
    vmcs_dirty(vm_entry_ctrls.msr_load_addr);
    vmcs_dirty(vm_entry_ctrls.entry);

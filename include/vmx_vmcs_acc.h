@@ -35,8 +35,6 @@
 */
 #ifndef __INIT__
 void vmx_vmcs_collect();
-void vmx_vmcs_dirty_guest();
-void vmx_vmcs_collect_guest();
 #endif
 
 void vmx_vmcs_commit();
