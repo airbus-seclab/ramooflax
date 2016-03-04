@@ -173,24 +173,29 @@ typedef union ata_device_control_register
 */
 typedef struct ata_device
 {
-   uint8_t cnt;
-   uint8_t lba[4]; /* 3 LBA registers, +low 4 from dev reg if lba mode */
+   uint16_t cnt; /* 256 overflow */
+
+   union
+   {
+      uint8_t  lba_r[4]; /* 3 LBA registers, +low 4 from dev reg if lba mode */
+      uint32_t lba;
+
+   } __attribute__((packed));
 
 } __attribute__((packed)) ata_dev_t;
-
 
 /*
 ** ATA Controller
 */
 #define __ata_guest_want_slave(_aTa)  ((_aTa)->dev_head.dev)
 
-#define __ata_build_lba(_aTa, _Dsk)			\
-   ({ uint32_t lba =					\
-	 ((_aTa)->dev_head.gen << 24) |			\
-	 ((_Dsk)->lba[2]       << 16) |			\
-	 ((_Dsk)->lba[1]       <<  8) |			\
-	 ((_Dsk)->lba[0]);				\
-      lba;						\
+#define __ata_build_lba(_aTa, _Dsk)				\
+   ({ uint32_t lba =						\
+	 ((_aTa)->dev_head.gen << 24) |				\
+	 ((_Dsk)->lba_r[2]     << 16) |				\
+	 ((_Dsk)->lba_r[1]     <<  8) |				\
+	 ((_Dsk)->lba_r[0]);					\
+      lba;							\
    })
 
 typedef struct ata_controller

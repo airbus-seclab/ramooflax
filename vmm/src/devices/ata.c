@@ -22,7 +22,7 @@
 
 extern info_data_t *info;
 
-int __dev_ata_device(ata_t *ata, io_insn_t *io)
+static int __dev_ata_device(ata_t *ata, io_insn_t *io)
 {
    ata_dev_reg_t dev;
    io_size_t     sz = {.available = sizeof(ata_dev_reg_t)};
@@ -47,7 +47,7 @@ int __dev_ata_device(ata_t *ata, io_insn_t *io)
    }
 }
 
-int __fake_ata_status(ata_t *ata)
+static int __fake_ata_status(ata_t *ata)
 {
    if(ata->last_out == ATA_CMD_REG(ata->base))
       info->vm.cpu.gpr->rax.blow = 1;
@@ -62,7 +62,7 @@ int __fake_ata_status(ata_t *ata)
    return 1;
 }
 
-int __dev_ata_status(ata_t *ata, io_insn_t *io)
+static int __dev_ata_status(ata_t *ata, io_insn_t *io)
 {
    if(!__rmode() && __ata_guest_want_slave(ata))
    {
@@ -74,7 +74,7 @@ int __dev_ata_status(ata_t *ata, io_insn_t *io)
    return dev_io_proxify(io);
 }
 
-int __dev_ata_alt_status(ata_t *ata, io_insn_t *io)
+static int __dev_ata_alt_status(ata_t *ata, io_insn_t *io)
 {
    if(!__rmode() && __ata_guest_want_slave(ata))
    {
@@ -86,7 +86,7 @@ int __dev_ata_alt_status(ata_t *ata, io_insn_t *io)
    return dev_io_proxify(io);
 }
 
-int __dev_ata_lba_filter(void *device, void *arg)
+static int __dev_ata_lba_filter(void *device, void *arg)
 {
    ata_t     *ata  = (ata_t*)arg;
    ata_dev_t *disk = &ata->devices[0];
@@ -96,25 +96,28 @@ int __dev_ata_lba_filter(void *device, void *arg)
    if(idx > 2)
    {
       debug(DEV_ATA, "unknown (internal) LBA index access (%d)\n", idx);
-      return 0;
+      return VM_FAIL;
    }
 
-   disk->lba[idx] = lba;
+   disk->lba_r[idx] = lba;
    debug(DEV_ATA, "ata lba[%d] = 0x%x\n", idx, lba);
-   return 1;
+   return VM_DONE;
 }
 
-int __dev_ata_scnt_filter(void *device, void *arg)
+static int __dev_ata_scnt_filter(void *device, void *arg)
 {
    ata_t     *ata = (ata_t*)arg;
    ata_dev_t *disk = &ata->devices[0];
 
    disk->cnt = *(uint8_t*)device;
+   if(!disk->cnt)
+      disk->cnt = 256;
+
    debug(DEV_ATA, "ata sector cnt [0x%x]\n", disk->cnt);
-   return 1;
+   return VM_DONE;
 }
 
-int __dev_ata_cmd_filter(void *device, void *arg)
+static int __dev_ata_cmd_filter(void *device, void *arg)
 {
    ata_t *ata = (ata_t*)arg;
 
@@ -122,8 +125,10 @@ int __dev_ata_cmd_filter(void *device, void *arg)
 
    if(ata->cmd == ATA_READ_SECTOR_CMD || ata->cmd == ATA_WRITE_SECTOR_CMD)
    {
-      ata_dev_t *disk = &ata->devices[0];
-      uint32_t   lba  = __ata_build_lba(ata, disk);
+      ata_dev_reg_t dev;
+      ata_dev_t     *disk = &ata->devices[0];
+
+      disk->lba |= ata->dev_head.gen << 24;
 
       debug(DEV_ATA, "ata cmd [%s 0x%x sector(s) from 0x%x]\n"
 	    ,(ata->cmd == ATA_WRITE_SECTOR_CMD) ? "write":"read"
@@ -148,7 +153,29 @@ int __dev_ata_cmd_filter(void *device, void *arg)
       debug(DEV_ATA, "ata cmd [%s]\n", str);
    }
 
-   return 1;
+   return VM_DONE;
+}
+
+static int __dev_ata_data(ata_t *ata, io_insn_t *io)
+{
+   ata_dev_t *disk  = &ata->devices[0];
+   uint32_t   lba   = disk->lba;
+   int        slave, rc;
+
+   debug(DEV_ATA, "ata data\n");
+
+   if(ata->cmd != ATA_READ_SECTOR_CMD && ata->cmd != ATA_WRITE_SECTOR_CMD)
+      return dev_io_proxify(io);
+
+__rw_sector:
+   rc = dev_io_proxify(io);
+   if(rc)
+   {
+      disk->lba++;
+      disk->cnt--;
+   }
+
+   return rc;
 }
 
 /*
@@ -179,10 +206,7 @@ int dev_ata(ata_t *ata, io_insn_t *io)
       return __dev_ata_device(ata, io);
 
    if(io->port == ATA_DATA_REG(ata->base))
-   {
-      debug(DEV_ATA, "ata data\n");
-      goto __proxify;
-   }
+      return __dev_ata_data(ata, io);
 
    if(io->port == ATA_SECT_CNT_REG(ata->base))
       return dev_io_proxify_filter(io, __dev_ata_scnt_filter, ata);
