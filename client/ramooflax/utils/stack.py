@@ -17,13 +17,17 @@
 #
 import struct
 
-def stackdump(vm, n):
+def stackargs(vm, n):
     sz   = vm.cpu.mode.addr_sz/8
     data = vm.mem.vread(vm.cpu.stack_location(), n*sz)
-    fmt  = "%#0*x"
-    sf = {16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
+    sf   = {16:"H",32:"L",64:"Q"}[vm.cpu.mode.addr_sz]
+    return struct.unpack("<"+sf*n, data)
+
+def stackdump(vm, n):
+    sz  = vm.cpu.mode.addr_sz/8
+    fmt = "%#0*x"
     msg = ""
-    for x in struct.unpack("<"+sf*n, data):
+    for x in stackargs(vm,n):
         msg += fmt % ((sz*2)+2, x)
     return msg
 
