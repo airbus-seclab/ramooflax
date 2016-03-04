@@ -125,14 +125,13 @@ static int __dev_ata_cmd_filter(void *device, void *arg)
 
    if(ata->cmd == ATA_READ_SECTOR_CMD || ata->cmd == ATA_WRITE_SECTOR_CMD)
    {
-      ata_dev_reg_t dev;
-      ata_dev_t     *disk = &ata->devices[0];
+      ata_dev_t *disk = &ata->devices[0];
 
       disk->lba |= ata->dev_head.gen << 24;
 
       debug(DEV_ATA, "ata cmd [%s 0x%x sector(s) from 0x%x]\n"
 	    ,(ata->cmd == ATA_WRITE_SECTOR_CMD) ? "write":"read"
-	    ,disk->cnt, lba);
+	    ,disk->cnt, disk->lba);
    }
    else
    {
@@ -159,15 +158,13 @@ static int __dev_ata_cmd_filter(void *device, void *arg)
 static int __dev_ata_data(ata_t *ata, io_insn_t *io)
 {
    ata_dev_t *disk  = &ata->devices[0];
-   uint32_t   lba   = disk->lba;
-   int        slave, rc;
+   int        rc;
 
    debug(DEV_ATA, "ata data\n");
 
    if(ata->cmd != ATA_READ_SECTOR_CMD && ata->cmd != ATA_WRITE_SECTOR_CMD)
       return dev_io_proxify(io);
 
-__rw_sector:
    rc = dev_io_proxify(io);
    if(rc)
    {
