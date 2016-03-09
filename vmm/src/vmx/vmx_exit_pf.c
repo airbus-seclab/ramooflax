@@ -17,6 +17,7 @@
 */
 #include <vmx_exit_pf.h>
 #include <vmx_vmcs_acc.h>
+
 #include <debug.h>
 #include <info_data.h>
 
@@ -56,6 +57,8 @@ int vmx_vmexit_resolve_ept_viol()
 	 ,info->vm.cpu.fault.npf.err.gl, info->vm.cpu.fault.npf.err.final
 	 ,info->vm.cpu.fault.npf.err.nmi);
 
-   ctrl_evt_npf();
+   if(ctrl_evt_npf() == VM_IGNORE)
+      return VM_FAIL;
+
    return VM_DONE;
 }

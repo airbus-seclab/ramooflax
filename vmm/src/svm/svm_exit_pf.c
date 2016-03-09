@@ -18,6 +18,7 @@
 #include <svm_exit_pf.h>
 #include <paging.h>
 #include <emulate.h>
+
 #include <info_data.h>
 #include <debug.h>
 
@@ -25,8 +26,8 @@ extern info_data_t *info;
 
 int __svm_vmexit_resolve_pf()
 {
-   offset_t  fault = vm_ctrls.exit_info_2.raw;
-   npg_wlk_t npg;
+   offset_t fault = vm_ctrls.exit_info_2.raw;
+   pg_wlk_t wlk;
 
    debug(SVM_EXCP_PF,
 	 "#PF 0x%X (p:%d wr:%d us:%d rsv:%d id:%d)\n"
@@ -34,7 +35,7 @@ int __svm_vmexit_resolve_pf()
 	 ,vm_ctrls.exit_info_1.npf.wr, vm_ctrls.exit_info_1.npf.us
 	 ,vm_ctrls.exit_info_1.npf.rsv, vm_ctrls.exit_info_1.npf.id);
 
-   vm_full_walk(fault, &npg);
+   vm_full_walk(fault, &wlk);
    return __svm_vmexit_inject_exception(PF_EXCP, vm_ctrls.exit_info_1.low, fault);
 }
 
@@ -53,6 +54,8 @@ int svm_vmexit_resolve_npf()
 	 ,info->vm.cpu.fault.npf.err.rsv, info->vm.cpu.fault.npf.err.id
 	 ,info->vm.cpu.fault.npf.err.final, info->vm.cpu.fault.npf.err.ptb);
 
-   ctrl_evt_npf();
+   if(ctrl_evt_npf() == VM_IGNORE)
+      return VM_FAIL;
+
    return VM_DONE;
 }
