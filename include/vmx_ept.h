@@ -278,6 +278,8 @@ uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
 
 #define ept_pg_get_attr(_e_)        ((_e_)->blow & 0x7f)
 #define ept_pg_present(_e_)         ((ept_pg_get_attr(_e_)&0x7) != 0)
+#define ept_pg_readable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_R)
+#define ept_pg_writable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_W)
 
 /* keep mem type and mtrr info */
 #define ept_zero(_e_)				\

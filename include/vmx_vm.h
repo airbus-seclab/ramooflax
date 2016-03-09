@@ -108,6 +108,8 @@
 #define npg_get_attr(_e)               ept_pg_get_attr(_e)
 
 #define npg_present(_e)                ept_pg_present(_e)
+#define npg_readable(_e)               ept_pg_readable(_e)
+#define npg_writable(_e)               ept_pg_writable(_e)
 #define npg_large(_e)                  pg_large(_e)
 #define npg_zero(_e)                   ept_zero(_e)
 
@@ -142,7 +144,8 @@
 #define npg_set_asid(_x)	 ({})
 #endif
 
-#define npg_invlpg(_va)          invept(VMCS_EPT_INV_ALL)
+/* prevent "unused argument" warnings */
+#define npg_invlpg(_va)          ({invept(VMCS_EPT_INV_ALL);_va;})
 #define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
 

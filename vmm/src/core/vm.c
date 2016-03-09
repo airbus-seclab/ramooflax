@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -87,26 +87,12 @@ void vm_rewind_rip(offset_t offset)
    __post_access(__rip);
 }
 
-int __vm_local_resolve_pmem(vm_access_t __unused__ *access)
-{
-   /*
-   ** XXX: need to check
-   ** - segment limit
-   ** - segment valid
-   ** - align check
-   */
-   return VM_DONE;
-}
-
-int __vm_local_access_pmem(vm_access_t *access)
+/*
+** VM memory access operators
+*/
+static int __vm_local_access_pmem(vm_access_t *access)
 {
    loc_t src, dst;
-
-   if(vmm_area_range(access->addr, access->len))
-      return VM_FAIL;
-
-   if(__vm_local_resolve_pmem(access) != VM_DONE)
-      return VM_FAIL;
 
    if(access->wr)
    {
@@ -128,12 +114,6 @@ int __vm_remote_access_pmem(vm_access_t *access)
    loc_t  loc;
    size_t done, len;
 
-   if(vmm_area_range(access->addr, access->len))
-      return VM_FAIL;
-
-   if(__vm_local_resolve_pmem(access) != VM_DONE)
-      return VM_FAIL;
-
    loc.linear = access->addr;
 
    if(access->wr)
@@ -153,7 +133,71 @@ int __vm_remote_access_pmem(vm_access_t *access)
    return VM_DONE;
 }
 
-int __vm_access_mem(vm_access_t *access)
+static int __vm_access_smem(vm_access_t *access)
+{
+   npg_wlk_t   wlk;
+   npg_pte64_t *pte;
+
+   if(npg_walk(access->addr, &wlk) != VM_DONE)
+      return VM_FAIL;
+
+   /* pdpe, pde, pte have same layout for pvl checking */
+   pte = (npg_pte64_t*)wlk.entry;
+
+   /* XXX
+   ** check access on several nested entries if granularity
+   ** is finest than guest virtual mapping (__vm_access_vmem)
+   **
+   ** ie. guest  has 2MB entry
+   **     nested has several 4KB entries some of them not mapped
+   */
+   if(access->len > wlk.size)
+   {
+      debug(VM_ACCESS, "vm_access: need to check several npg entries\n");
+      return VM_FAIL;
+   }
+
+   if(access->wr)
+   {
+      if(!npg_writable(pte))
+#ifdef CONFIG_SNAPSHOT
+	 if(__ctrl_snapshot_npg_cow(&wlk, access->addr) != VM_DONE)
+#endif
+	    return VM_FAIL;
+   }
+   else if(!npg_readable(pte))
+      return VM_FAIL;
+
+   access->addr = wlk.addr;
+   return VM_DONE;
+}
+
+static int __vm_check_pmem(vm_access_t __unused__ *access)
+{
+   /*
+   ** XXX
+   ** - segment limit
+   ** - segment valid
+   ** - align check
+   */
+   return VM_DONE;
+}
+
+static int __vm_access_pmem(vm_access_t *access)
+{
+   if(vmm_area_range(access->addr, access->len))
+      return VM_FAIL;
+
+   if(__vm_check_pmem(access) != VM_DONE)
+      return VM_FAIL;
+
+   if(__vm_access_smem(access) != VM_DONE)
+      return VM_FAIL;
+
+   return access->operator(access);
+}
+
+static int __vm_access_vmem(vm_access_t *access)
 {
    offset_t vaddr, nxt;
    size_t   psz, len, olen;
@@ -178,7 +222,7 @@ int __vm_access_mem(vm_access_t *access)
       nxt = __align_next(vaddr, psz);
       access->len = min(len, (nxt - vaddr));
 
-      if(!access->operator(access))
+      if(__vm_access_pmem(access) != VM_DONE)
 	 goto __vm_access_error;
 
       len  -= access->len;
@@ -205,7 +249,7 @@ int __vm_recv_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
    access.wr   = 0;
    access.operator = __vm_remote_access_pmem;
 
-   return __vm_access_mem(&access);
+   return __vm_access_vmem(&access);
 }
 
 int __vm_send_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
@@ -219,7 +263,7 @@ int __vm_send_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
    access.wr   = 1;
    access.operator = __vm_remote_access_pmem;
 
-   return __vm_access_mem(&access);
+   return __vm_access_vmem(&access);
 }
 
 int __vm_read_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
@@ -233,7 +277,7 @@ int __vm_read_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
    access.wr   = 0;
    access.operator = __vm_local_access_pmem;
 
-   return __vm_access_mem(&access);
+   return __vm_access_vmem(&access);
 }
 
 int __vm_write_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
@@ -247,7 +291,7 @@ int __vm_write_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
    access.wr   = 1;
    access.operator = __vm_local_access_pmem;
 
-   return __vm_access_mem(&access);
+   return __vm_access_vmem(&access);
 }
 
 int vm_read_mem(offset_t vaddr, uint8_t *data, size_t len)
@@ -261,7 +305,7 @@ int vm_read_mem(offset_t vaddr, uint8_t *data, size_t len)
    access.wr   = 0;
    access.operator = __vm_local_access_pmem;
 
-   return __vm_access_mem(&access);
+   return __vm_access_vmem(&access);
 }
 
 int vm_write_mem(offset_t vaddr, uint8_t *data, size_t len)
@@ -275,7 +319,7 @@ int vm_write_mem(offset_t vaddr, uint8_t *data, size_t len)
    access.wr   = 1;
    access.operator = __vm_local_access_pmem;
 
-   return __vm_access_mem(&access);
+   return __vm_access_vmem(&access);
 }
 
 int vm_enter_pmode()

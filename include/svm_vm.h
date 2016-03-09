@@ -93,7 +93,10 @@
 #define npg_dft_attr_rx                ((uint64_t)(PG_USR|PG_R))
 #define npg_dft_attr_nx                ((uint64_t)(PG_USR|PG_RW|PG_NX))
 #define npg_get_attr(_e)               pg_get_attr(_e)
+
 #define npg_present(_e)                pg_present(_e)
+#define npg_readable(_e)               pg_readable(_e)
+#define npg_writable(_e)               pg_writable(_e)
 #define npg_large(_e)                  pg_large(_e)
 #define npg_zero(_e)                   pg_zero(_e)
 

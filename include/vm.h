@@ -199,9 +199,7 @@ void  vm_get_stack_addr(offset_t*, offset_t, int*);
 void  vm_update_rip(offset_t);
 void  vm_rewind_rip(offset_t);
 
-int   __vm_local_access_pmem(vm_access_t*);
 int   __vm_remote_access_pmem(vm_access_t*);
-int   __vm_access_mem(vm_access_t*);
 
 int   __vm_recv_mem(cr3_reg_t*, offset_t, size_t);
 int   __vm_send_mem(cr3_reg_t*, offset_t, size_t);
