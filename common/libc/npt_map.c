@@ -136,7 +136,8 @@ static inline npg_pdpe_t* __npg_resolve_pdpe(offset_t addr, uint64_t attr)
    if(!npg_present(pml4e))
    {
       pdp = __npg_new_pdp();
-      npg_set_entry(pml4e, attr, page_nr(pdp));
+      /* upper-level entry has full pvl */
+      npg_set_entry(pml4e, attr|npg_dft_pvl, page_nr(pdp));
    }
    else
       pdp = (npg_pdpe_t*)page_addr(pml4e->addr);
@@ -156,7 +157,8 @@ npg_pde64_t* __npg_resolve_pde(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
    if(!npg_present(pdpe))
    {
       pd = __npg_new_pd();
-      npg_set_entry(pdpe, attr, page_nr(pd));
+      /* upper-level entry has full pvl */
+      npg_set_entry(pdpe, attr|npg_dft_pvl, page_nr(pd));
    }
    else if(npg_large(pdpe))
       return 0;
@@ -178,7 +180,8 @@ npg_pte64_t* __npg_resolve_pte(npg_pde64_t *pde, offset_t addr, uint64_t attr)
    if(!npg_present(pde))
    {
       pt = __npg_new_pt();
-      npg_set_entry(pde, attr, page_nr(pt));
+      /* upper-level entry has full pvl */
+      npg_set_entry(pde, attr|npg_dft_pvl, page_nr(pt));
    }
    else if(npg_large(pde))
       return 0;
@@ -228,7 +231,8 @@ static void __npg_map_2M_nolarge(npg_pde64_t *pde, offset_t addr, uint64_t attr)
    for(i=0 ; i<PTE64_PER_PT ; i++, pfn++)
       npg_set_page_entry(&pt[i], attr, pfn);
 
-   npg_set_entry(pde, attr, page_nr(pt));
+   /* upper-level entry has full pvl */
+   npg_set_entry(pde, attr|npg_dft_pvl, page_nr(pt));
    debug(PG_MAP, "mapped 2M 0x%X 0x%X\n", addr, attr);
 }
 
@@ -294,7 +298,8 @@ static void __npg_map_1G_nolarge(npg_pdpe_t *pdpe, offset_t addr, uint64_t attr)
       addr += PG_2M_SIZE;
    }
 
-   npg_set_entry(pdpe, attr, page_nr(pd));
+   /* upper-level entry has full pvl */
+   npg_set_entry(pdpe, attr|npg_dft_pvl, page_nr(pd));
    debug(PG_MAP, "mapped 1G until 0x%X 0x%X\n", addr, attr);
 }
 
