@@ -224,11 +224,9 @@ int   vm_write_mem_sz(offset_t, uint8_t*, size_t, size_t*);
 int   vm_enter_rmode();
 int   vm_enter_pmode();
 
+int   vm_pg_walk(offset_t, pg_wlk_t*);
+int   vm_full_walk(offset_t, pg_wlk_t*);
 void  vm_setup_npg(int);
-int   vm_pg_walk(offset_t, offset_t*, size_t*);
-
-struct npg_walk_info;
-int   vm_full_walk(offset_t, struct npg_walk_info*);
 
 #endif
 

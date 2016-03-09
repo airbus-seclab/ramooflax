@@ -66,23 +66,6 @@ typedef struct npg_configuration
 } __attribute__((packed)) npg_conf_t;
 
 /*
-** Nested Paging walk information
-*/
-#define NPG_WALK_TYPE_PML4E   0
-#define NPG_WALK_TYPE_PDPE    1
-#define NPG_WALK_TYPE_PDE     2
-#define NPG_WALK_TYPE_PTE     3
-
-typedef struct npg_walk_info
-{
-   offset_t addr;
-   int      type;
-   size_t   size;
-   void     *entry;
-
-} __attribute__((packed)) npg_wlk_t;
-
-/*
 ** Controlling active nested paging
 */
 #define NPG_DEFAULT  0
@@ -108,17 +91,40 @@ void npg_map(offset_t, offset_t, uint64_t);
 void npg_unmap(offset_t, offset_t);
 void npg_setup_a20();
 
-#ifndef __INIT__
+
 /*
 ** Legacy && Nested walking functions
 */
+
+/*
+** Paging walk information
+** valid for Legacy and Nested
+*/
+#define PG_WALK_TYPE_PML4E     0
+#define PG_WALK_TYPE_PDPE      1
+#define PG_WALK_TYPE_PDPE_PAE  2
+#define PG_WALK_TYPE_PDE64     3
+#define PG_WALK_TYPE_PDE32     4
+#define PG_WALK_TYPE_PTE64     5
+#define PG_WALK_TYPE_PTE32     6
+
+typedef struct page_walk_info
+{
+   offset_t addr;
+   int      type;
+   size_t   size;
+   void     *entry;
+
+} __attribute__((packed)) pg_wlk_t;
+
+#ifndef __INIT__
 struct vm_paging;
 
-int  __pg_walk(cr3_reg_t*, offset_t, offset_t*, size_t*, int);
-int  __npg_walk(struct vm_paging*, offset_t, npg_wlk_t*);
+int  __pg_walk(cr3_reg_t*, offset_t, pg_wlk_t*);
+int  __npg_walk(struct vm_paging*, offset_t, pg_wlk_t*);
 
+#define pg_walk(v,w)           __pg_walk(&__cr3,v,w)
 #define npg_walk(v,w)          __npg_walk(npg_get_active_paging(),v,w)
-
 #endif
 
 #endif

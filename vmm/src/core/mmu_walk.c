@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,10 +26,7 @@ extern info_data_t *info;
 ** cr4.pse is ignored
 ** 1GB cpuid feature must be checked
 */
-static inline
-int pg_walk_lmode(cr3_reg_t *cr3,
-		  offset_t vaddr, offset_t *paddr,
-		  size_t *psz, int chk)
+static int __pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
 {
    pml4e_t *pml4, *pml4e;
    pdpe_t  *pdp, *pdpe;
@@ -37,7 +34,7 @@ int pg_walk_lmode(cr3_reg_t *cr3,
    pte64_t *pt, *pte;
 
    pml4 = (pml4e_t*)page_addr(cr3->pml4.addr);
-   if(chk && vmm_area(pml4))
+   if(vmm_area_range(pml4, PG_4K_SIZE))
    {
       debug(PG_WLK, "pml4 in vmm area\n");
       return VM_FAIL;
@@ -49,11 +46,13 @@ int pg_walk_lmode(cr3_reg_t *cr3,
    if(!pg_present(pml4e))
    {
       debug(PG_WLK, "pml4e not present\n");
+      wlk->type  = PG_WALK_TYPE_PML4E;
+      wlk->entry = (void*)pml4e;
       return VM_FAULT;
    }
 
    pdp = (pdpe_t*)page_addr(pml4e->addr);
-   if(chk && vmm_area(pdp))
+   if(vmm_area_range(pdp, PG_4K_SIZE))
    {
       debug(PG_WLK, "pdp in vmm area\n");
       return VM_FAIL;
@@ -65,66 +64,72 @@ int pg_walk_lmode(cr3_reg_t *cr3,
    if(!pg_present(pdpe))
    {
       debug(PG_WLK, "pdpe not present\n");
+      wlk->type  = PG_WALK_TYPE_PDPE;
+      wlk->entry = (void*)pdpe;
       return VM_FAULT;
    }
 
    if(info->vmm.cpu.skillz.pg_1G && pg_large(pdpe))
    {
-      *paddr = pg_1G_addr((offset_t)pdpe->page.addr) + pg_1G_offset(vaddr);
-      *psz = PG_1G_SIZE;
-      goto __prepare_addr;
+      wlk->addr  = pg_1G_addr((offset_t)pdpe->page.addr) + pg_1G_offset(vaddr);
+      wlk->type  = PG_WALK_TYPE_PDPE;
+      wlk->size  = PG_1G_SIZE;
+      wlk->entry = (void*)pdpe;
+      goto __success;
    }
 
    pd = (pde64_t*)page_addr(pdpe->addr);
-   if(chk && vmm_area(pd))
+   if(vmm_area_range(pd, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pd in vmm area\n");
+      debug(PG_WLK, "pd64 in vmm area\n");
       return VM_FAIL;
    }
 
    pde = &pd[pd64_idx(vaddr)];
-   debug(PG_WLK, "pde @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
+   debug(PG_WLK, "pde64 @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
 
    if(!pg_present(pde))
    {
       debug(PG_WLK, "pde not present\n");
+      wlk->type  = PG_WALK_TYPE_PDE64;
+      wlk->entry = (void*)pde;
       return VM_FAULT;
    }
 
    if(pg_large(pde))
    {
-      *paddr = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
-      *psz = PG_2M_SIZE;
-      goto __prepare_addr;
+      wlk->addr  = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
+      wlk->type  = PG_WALK_TYPE_PDE64;
+      wlk->size  = PG_2M_SIZE;
+      wlk->entry = (void*)pde;
+      goto __success;
    }
 
    pt = (pte64_t*)page_addr(pde->addr);
-   if(chk && vmm_area(pt))
+   if(vmm_area_range(pt, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pt in vmm area\n");
+      debug(PG_WLK, "pt64 in vmm area\n");
       return VM_FAIL;
    }
 
    pte = &pt[pt64_idx(vaddr)];
-   debug(PG_WLK, "pte @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
+   debug(PG_WLK, "pte64 @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
 
    if(!pg_present(pte))
    {
       debug(PG_WLK, "pte not present\n");
+      wlk->type  = PG_WALK_TYPE_PTE64;
+      wlk->entry = (void*)pte;
       return VM_FAULT;
    }
 
-   *paddr = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
-   *psz = PG_4K_SIZE;
+   wlk->addr  = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
+   wlk->type  = PG_WALK_TYPE_PTE64;
+   wlk->size  = PG_4K_SIZE;
+   wlk->entry = (void*)pte;
 
-__prepare_addr:
-   if(chk && vmm_area(*paddr))
-   {
-      debug(PG_WLK, "paddr 0x%x in vmm area\n", *paddr);
-      return VM_FAIL;
-   }
-
-   debug(PG_WLK, "lmode vaddr 0x%X -> paddr 0x%X\n", vaddr, *paddr);
+__success:
+   debug(PG_WLK, "lmode vaddr 0x%X -> guest paddr 0x%X\n", vaddr, wlk->addr);
    return VM_DONE;
 }
 
@@ -132,10 +137,7 @@ __prepare_addr:
 ** pmode+pae: 2MB and 4KB pages
 ** cr4.pse is used
 */
-static inline
-int pg_walk_pmode_pae(cr3_reg_t *cr3,
-		      offset_t _vaddr, offset_t *paddr,
-		      size_t *psz, int chk)
+static int __pg_walk_pmode_pae(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
 {
    pdpe_t   *pdp, *pdpe;
    pde64_t  *pd, *pde;
@@ -143,71 +145,75 @@ int pg_walk_pmode_pae(cr3_reg_t *cr3,
    uint32_t vaddr = _vaddr & 0xffffffff;
 
    pdp = (pdpe_t*)pg_32B_addr((offset_t)cr3->pae.addr);
-   if(chk && vmm_area(pdp))
+   if(vmm_area_range(pdp, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pdp in vmm area\n");
+      debug(PG_WLK, "pdp_pae in vmm area\n");
       return VM_FAIL;
    }
 
    pdpe = &pdp[pdp_pae_idx(vaddr)];
-   debug(PG_WLK, "pdpe @ 0x%X = 0x%X\n", (offset_t)pdpe, pdpe->raw);
+   debug(PG_WLK, "pdpe_pae @ 0x%X = 0x%X\n", (offset_t)pdpe, pdpe->raw);
 
    if(!pg_present(pdpe))
    {
-      debug(PG_WLK, "pdpe not present\n");
+      debug(PG_WLK, "pdpe_pae not present\n");
+      wlk->type  = PG_WALK_TYPE_PDPE_PAE;
+      wlk->entry = (void*)pdpe;
       return VM_FAULT;
    }
 
    pd = (pde64_t*)page_addr(pdpe->pae.addr);
-   if(chk && vmm_area(pd))
+   if(vmm_area_range(pd, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pd in vmm area\n");
-      return VM_FAULT;
+      debug(PG_WLK, "pd64 in vmm area\n");
+      return VM_FAIL;
    }
 
    pde = &pd[pd64_idx(vaddr)];
-   debug(PG_WLK, "pde @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
+   debug(PG_WLK, "pde64 @ 0x%X = 0x%X\n", (offset_t)pde, pde->raw);
 
    if(!pg_present(pde))
    {
       debug(PG_WLK, "pde not present\n");
+      wlk->type  = PG_WALK_TYPE_PDE64;
+      wlk->entry = (void*)pde;
       return VM_FAULT;
    }
 
    if(__cr4.pse && pg_large(pde))
    {
-      *paddr = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
-      *psz = PG_2M_SIZE;
-      goto __prepare_addr;
+      wlk->addr  = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
+      wlk->type  = PG_WALK_TYPE_PDE64;
+      wlk->size  = PG_2M_SIZE;
+      wlk->entry = (void*)pde;
+      goto __success;
    }
 
    pt = (pte64_t*)page_addr(pde->addr);
-   if(chk && vmm_area(pt))
+   if(vmm_area_range(pt, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pt in vmm area\n");
+      debug(PG_WLK, "pt64 in vmm area\n");
       return VM_FAIL;
    }
 
    pte = &pt[pt64_idx(vaddr)];
-   debug(PG_WLK, "pte @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
+   debug(PG_WLK, "pte64 @ 0x%X = 0x%X\n", (offset_t)pte, pte->raw);
 
    if(!pg_present(pte))
    {
-      debug(PG_WLK, "pte not present\n");
+      debug(PG_WLK, "pte64 not present\n");
+      wlk->type  = PG_WALK_TYPE_PTE64;
+      wlk->entry = (void*)pte;
       return VM_FAULT;
    }
 
-   *paddr = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
-   *psz = PG_4K_SIZE;
+   wlk->addr  = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
+   wlk->type  = PG_WALK_TYPE_PTE64;
+   wlk->size  = PG_4K_SIZE;
+   wlk->entry = (void*)pte;
 
-__prepare_addr:
-   if(chk && vmm_area(*paddr))
-   {
-      debug(PG_WLK, "paddr 0x%x in vmm area\n", *paddr);
-      return VM_FAIL;
-   }
-
-   debug(PG_WLK, "pae vaddr 0x%x -> paddr 0x%x\n", vaddr, *paddr);
+__success:
+   debug(PG_WLK, "pae vaddr 0x%x -> guest paddr 0x%X\n", vaddr, wlk->addr);
    return VM_DONE;
 }
 
@@ -215,81 +221,69 @@ __prepare_addr:
 ** pmode: 4MB and 4KB pages
 ** cr4.pse is used
 */
-static inline
-int pg_walk_pmode(cr3_reg_t *cr3,
-		  offset_t _vaddr, offset_t *_paddr,
-		  size_t *psz, int chk)
+static int __pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
 {
    pde32_t  *pd, *pde;
    pte32_t  *pt, *pte;
-   uint32_t paddr;
    uint32_t vaddr = _vaddr & 0xffffffff;
 
    pd = (pde32_t*)page_addr(cr3->addr);
-   if(chk && vmm_area_range(pd, PG_4K_SIZE))
+   if(vmm_area_range(pd, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pd in vmm area\n");
+      debug(PG_WLK, "pd32 in vmm area\n");
       return VM_FAIL;
    }
 
    pde = &pd[pd32_idx(vaddr)];
-   debug(PG_WLK, "pde @ 0x%X = 0x%x\n", (offset_t)pde, pde->raw);
+   debug(PG_WLK, "pde32 @ 0x%X = 0x%x\n", (offset_t)pde, pde->raw);
 
    if(!pg_present(pde))
    {
-      debug(PG_WLK, "pde not present\n");
+      debug(PG_WLK, "pde32 not present\n");
+      wlk->type  = PG_WALK_TYPE_PDE32;
+      wlk->entry = (void*)pde;
       return VM_FAULT;
    }
 
    if(__cr4.pse && pg_large(pde))
    {
-      debug(PG_WLK, "large page found (pde->addr 0x%x)\n",(uint32_t)pde->page.addr);
-      paddr = pg_4M_addr((uint32_t)pde->page.addr) + pg_4M_offset(vaddr);
-      *psz = PG_4M_SIZE;
-      goto __prepare_addr;
+      wlk->addr  = pg_4M_addr((uint32_t)pde->page.addr) + pg_4M_offset(vaddr);
+      wlk->type  = PG_WALK_TYPE_PDE32;
+      wlk->size  = PG_4M_SIZE;
+      wlk->entry = (void*)pde;
+      goto __success;
    }
 
    pt = (pte32_t*)page_addr(pde->addr);
-   if(chk && vmm_area_range(pt, PG_4K_SIZE))
+   if(vmm_area_range(pt, PG_4K_SIZE))
    {
-      debug(PG_WLK, "pt in vmm area\n");
+      debug(PG_WLK, "pt32 in vmm area\n");
       return VM_FAIL;
    }
 
    pte = &pt[pt32_idx(vaddr)];
-   debug(PG_WLK, "pte @ 0x%X = 0x%x\n", (offset_t)pte, pte->raw);
+   debug(PG_WLK, "pte32 @ 0x%X = 0x%x\n", (offset_t)pte, pte->raw);
 
    if(!pg_present(pte))
    {
-      debug(PG_WLK, "pte not present\n");
+      debug(PG_WLK, "pte32 not present\n");
+      wlk->type  = PG_WALK_TYPE_PTE32;
+      wlk->entry = (void*)pte;
       return VM_FAULT;
    }
 
-   paddr = pg_4K_addr((uint32_t)pte->addr) + pg_4K_offset(vaddr);
-   *psz = PG_4K_SIZE;
+   wlk->addr  = (offset_t)(pg_4K_addr((uint32_t)pte->addr) + pg_4K_offset(vaddr));
+   wlk->type  = PG_WALK_TYPE_PTE32;
+   wlk->size  = PG_4K_SIZE;
+   wlk->entry = (void*)pte;
 
-   /* we might not need to check here
-   ** because the service is called
-   ** in functions that check final page (vm_vmem_access)
-   ** and in case of just __pg_walk() called alone
-   ** we only translate page (gdbstub_vmm)
-   **
-   ** XXX : need to rewrite everything there !
-   */
-__prepare_addr:
-   if(chk && vmm_area_range(paddr, *psz))
-   {
-      debug(PG_WLK, "page [0x%x - 0x%x] in vmm area\n", paddr, paddr + *psz);
-      return VM_FAIL;
-   }
-
-   debug(PG_WLK, "pmode vaddr 0x%x -> paddr 0x%x\n", vaddr, paddr);
-   *_paddr = (offset_t)paddr;
+__success:
+   debug(PG_WLK, "pmode vaddr 0x%x -> guest paddr 0x%X\n", vaddr, wlk->addr);
    return VM_DONE;
 }
 
 /*
-** Page walking services
+** Page walking service
 **
 ** . we use VMM cpu skillz as we depend
 **   upon system mmu and not nested one
@@ -299,17 +293,15 @@ __prepare_addr:
 **   - legacy protected mode + paging + pae
 **   - legacy protected mode + paging
 */
-int __pg_walk(cr3_reg_t *cr3,
-	      offset_t vaddr, offset_t *paddr,
-	      size_t *psz, int chk)
+int __pg_walk(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
 {
    debug(PG_WLK, "cr3 0x%X\n", cr3->raw);
 
    if(_xx_lmode())
-      return pg_walk_lmode(cr3, vaddr, paddr, psz, chk);
+      return __pg_walk_lmode(cr3, vaddr, wlk);
 
    if(__cr4.pae)
-      return pg_walk_pmode_pae(cr3, vaddr, paddr, psz, chk);
+      return __pg_walk_pmode_pae(cr3, vaddr, wlk);
 
-   return pg_walk_pmode(cr3, vaddr, paddr, psz, chk);
+   return __pg_walk_pmode(cr3, vaddr, wlk);
 }

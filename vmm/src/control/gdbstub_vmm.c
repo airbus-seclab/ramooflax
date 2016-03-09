@@ -377,8 +377,9 @@ static void gdb_vmm_wr_vmem(uint8_t *data, size_t len)
 
 static void gdb_vmm_translate(uint8_t *data, size_t len)
 {
-   offset_t vaddr, paddr;
-   size_t   psz, sz;
+   pg_wlk_t wlk;
+   offset_t vaddr;
+   size_t   sz;
 
    if(!gdb_get_number(data, len, (uint64_t*)&vaddr, 0))
    {
@@ -389,22 +390,22 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
    debug(GDBSTUB_CMD, "translating 0x%X\n", vaddr);
 
    if(!__paging())
-      paddr = vaddr;
-   else if(__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz, 1) != VM_DONE)
+      wlk.addr = vaddr;
+   else if(__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &wlk) != VM_DONE)
    {
       debug(GDBSTUB, "memory translation failure\n");
       gdb_err_mem();
       return;
    }
 
-   debug(GDBSTUB_CMD, "sending 0x%X\n", paddr);
+   debug(GDBSTUB_CMD, "sending 0x%X\n", wlk.addr);
 
    if(cpu_addr_sz() == 64)
       sz = sizeof(uint64_t)*2;
    else /* XXX: gdb seems to wait for 32 bits regs at least */
       sz = sizeof(uint32_t)*2;
 
-   gdb_add_number(paddr, sz, 0);
+   gdb_add_number(wlk.addr, sz, 0);
    gdb_send_packet();
 }
 
@@ -552,7 +553,7 @@ static void gdb_vmm_npg_set_pte(uint8_t *data, size_t len)
 static void gdb_vmm_npg_translate(uint8_t *data, size_t len)
 {
    offset_t  paddr;
-   npg_wlk_t npg;
+   pg_wlk_t  wlk;
 
    if(!gdb_get_number(data, len, (uint64_t*)&paddr, 0))
    {
@@ -562,16 +563,16 @@ static void gdb_vmm_npg_translate(uint8_t *data, size_t len)
 
    debug(GDBSTUB_CMD, "(nested) translating 0x%X\n", paddr);
 
-   if(npg_walk(paddr, &npg) != VM_DONE)
+   if(npg_walk(paddr, &wlk) != VM_DONE)
    {
       debug(GDBSTUB, "(nested) memory translation failure\n");
       gdb_err_mem();
       return;
    }
 
-   debug(GDBSTUB_CMD, "sending 0x%X\n", npg.addr);
+   debug(GDBSTUB_CMD, "sending 0x%X\n", wlk.addr);
 
-   gdb_add_number(npg.addr, sizeof(uint64_t)*2, 0);
+   gdb_add_number(wlk.addr, sizeof(uint64_t)*2, 0);
    gdb_send_packet();
 }
 

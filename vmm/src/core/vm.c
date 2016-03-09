@@ -191,8 +191,9 @@ static int __vm_access_pmem(vm_access_t *access)
 
 static int __vm_access_vmem(vm_access_t *access)
 {
+   pg_wlk_t wlk;
    offset_t vaddr, nxt;
-   size_t   psz, len;
+   size_t   len;
    int      rc;
 
    if(!__paging())
@@ -203,7 +204,7 @@ static int __vm_access_vmem(vm_access_t *access)
 
    while(len)
    {
-      rc = __pg_walk(access->cr3, vaddr, &access->addr, &psz, 1);
+      rc = __pg_walk(access->cr3, vaddr, &wlk);
       if(rc != VM_DONE)
       {
 	 debug(VM_ACCESS, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
@@ -222,8 +223,9 @@ static int __vm_access_vmem(vm_access_t *access)
 	 return rc;
       }
 
-      nxt = __align_next(vaddr, psz);
-      access->len = min(len, (nxt - vaddr));
+      nxt = __align_next(vaddr, wlk.size);
+      access->addr = wlk.addr;
+      access->len  = min(len, (nxt - vaddr));
 
       rc = __vm_access_pmem(access);
       if(rc != VM_DONE)
@@ -358,6 +360,41 @@ int vm_write_mem(offset_t vaddr, uint8_t *data, size_t len)
    return __vm_access_vmem(&access);
 }
 
+/*
+** Resolve guest virtual into guest physical
+*/
+int vm_pg_walk(offset_t vaddr, pg_wlk_t *wlk)
+{
+   if(!__paging())
+   {
+      debug(VM, "vm page walk while paging disabled !\n");
+      return VM_FAIL;
+   }
+
+   return pg_walk(vaddr, wlk);
+}
+
+/*
+** Resolve guest virtual into system physical
+**/
+int vm_full_walk(offset_t vaddr, pg_wlk_t *wlk)
+{
+   int rc = vm_pg_walk(vaddr, wlk);
+
+   if(rc == VM_DONE)
+      return npg_walk(wlk->addr, wlk);
+
+   return rc;
+}
+
+/*
+** Change active Nested Paging
+*/
+void vm_setup_npg(int who)
+{
+   npg_set_active_paging(who);
+   npg_set_active_paging_cpu();
+}
 
 /*
 ** VM cpu mode transitions
@@ -382,40 +419,4 @@ int vm_enter_rmode()
    __deny_io_range(KBD_START_PORT, KBD_END_PORT);
 
    return VM_DONE;
-}
-
-void vm_setup_npg(int who)
-{
-   npg_set_active_paging(who);
-   npg_set_active_paging_cpu();
-}
-
-/*
-** Resolve guest virtual into guest physical
-*/
-int vm_pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
-{
-   if(!__paging())
-   {
-      debug(VM, "walk while paging disabled !\n");
-      return VM_FAIL;
-   }
-
-   return __pg_walk(&__cr3, vaddr, paddr, psz, 1);
-}
-
-/*
-** Resolve guest virtual into system physical
-**/
-int vm_full_walk(offset_t vaddr, npg_wlk_t *wlk)
-{
-   size_t   sz;
-   offset_t gp;
-   int      rc;
-
-   rc = vm_pg_walk(vaddr, &gp, &sz);
-   if(rc == VM_DONE)
-      return npg_walk(gp, wlk);
-
-   return rc;
 }

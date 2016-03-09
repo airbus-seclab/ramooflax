@@ -22,12 +22,12 @@
 extern info_data_t *info;
 
 /*
-** Nested page walking services
+** Nested page walking service
 **
 ** . we use VM cpu skillz as we depend
 **   upon nested mmu features
 */
-int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
+int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, pg_wlk_t *wlk)
 {
    npg_pml4e_t *pml4e;
    npg_pdpe_t  *pdp,*pdpe;
@@ -42,7 +42,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
    if(!npg_present(pml4e))
    {
       debug(PG_WLK, "(n)pml4e not present\n");
-      wlk->type  = NPG_WALK_TYPE_PML4E;
+      wlk->type  = PG_WALK_TYPE_PML4E;
       wlk->entry = (void*)pml4e;
       return VM_FAULT;
    }
@@ -54,7 +54,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
    if(!npg_present(pdpe))
    {
       debug(PG_WLK, "(n)pdpe not present\n");
-      wlk->type  = NPG_WALK_TYPE_PDPE;
+      wlk->type  = PG_WALK_TYPE_PDPE;
       wlk->entry = (void*)pdpe;
       return VM_FAULT;
    }
@@ -62,7 +62,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
    if(info->vm.cpu.skillz.pg_1G && npg_large(pdpe))
    {
       wlk->addr  = pg_1G_addr((offset_t)pdpe->page.addr) + pg_1G_offset(vaddr);
-      wlk->type  = NPG_WALK_TYPE_PDPE;
+      wlk->type  = PG_WALK_TYPE_PDPE;
       wlk->size  = PG_1G_SIZE;
       wlk->entry = (void*)pdpe;
       goto __success;
@@ -75,7 +75,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
    if(!npg_present(pde))
    {
       debug(PG_WLK, "(n)pde not present\n");
-      wlk->type  = NPG_WALK_TYPE_PDE;
+      wlk->type  = PG_WALK_TYPE_PDE64;
       wlk->entry = (void*)pde;
       return VM_FAULT;
    }
@@ -83,7 +83,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
    if(info->vm.cpu.skillz.pg_2M && npg_large(pde))
    {
       wlk->addr  = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
-      wlk->type  = NPG_WALK_TYPE_PDE;
+      wlk->type  = PG_WALK_TYPE_PDE64;
       wlk->size  = PG_2M_SIZE;
       wlk->entry = (void*)pde;
       goto __success;
@@ -96,13 +96,13 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
    if(!npg_present(pte))
    {
       debug(PG_WLK, "(n)pte not present\n");
-      wlk->type  = NPG_WALK_TYPE_PTE;
+      wlk->type  = PG_WALK_TYPE_PTE64;
       wlk->entry = (void*)pte;
       return VM_FAULT;
    }
 
    wlk->addr  = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);
-   wlk->type  = NPG_WALK_TYPE_PTE;
+   wlk->type  = PG_WALK_TYPE_PTE64;
    wlk->size  = PG_4K_SIZE;
    wlk->entry = (void*)pte;
 
