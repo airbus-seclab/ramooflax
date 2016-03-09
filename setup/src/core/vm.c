@@ -36,7 +36,7 @@ static void vm_dev_init()
 
    /* proxify to detect rebase for uart irq injection */
    info->vm.dev.pic1_icw2 = DFLT_PIC1_ICW2;
-   /* __deny_io_range(PIC1_START_PORT, PIC1_END_PORT); */
+   __deny_io_range(PIC1_START_PORT, PIC1_END_PORT);
 
    /* lazzy emulation */
    __deny_io_range(COM1_START_PORT, COM1_END_PORT);
@@ -50,17 +50,17 @@ static void vm_dev_init()
    __deny_io_range(ATA1_START_PORT, ATA1_END_PORT);
 
    /* prevent net card detection */
-/* #ifdef CONFIG_HAS_NET */
-/*    __deny_io(PCI_CONFIG_ADDR); */
-/* #ifdef CONFIG_HAS_E1000 */
-/*    { */
-/*       e1k_info_t *e1k = &info->hrd.dev.net.arch; */
-/*       npg_unmap(e1k->base.linear, e1k->base.linear + (128<<10)); */
-/*       debug(E1000, "protect e1000 mmio space [0x%X - 0x%X]\n" */
-/* 	    ,e1k->base.linear, e1k->base.linear + (128<<10)); */
-/*    } */
-/* #endif */
-/* #endif */
+#ifdef CONFIG_HAS_NET
+   __deny_io(PCI_CONFIG_ADDR);
+#ifdef CONFIG_HAS_E1000
+   {
+      e1k_info_t *e1k = &info->hrd.dev.net.arch;
+      npg_unmap(e1k->base.linear, e1k->base.linear + (128<<10));
+      debug(E1000, "protect e1000 mmio space [0x%X - 0x%X]\n"
+	    ,e1k->base.linear, e1k->base.linear + (128<<10));
+   }
+#endif
+#endif
 }
 
 static void vm_cpu_init()
