@@ -41,21 +41,42 @@ int vmx_vmexit_resolve_ept_viol()
    {
       vmcs_read(vm_exit_info.guest_linear);
       info->vm.cpu.fault.npf.vaddr = vm_exit_info.guest_linear.raw;
+      debug(VMX_EPT,
+	    "#NPF gv 0x%X gp 0x%X err 0x%X "
+	    "(r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
+	    ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
+	    ,info->vm.cpu.fault.npf.err.raw
+	    ,info->vm.cpu.fault.npf.err.r
+	    ,info->vm.cpu.fault.npf.err.w
+	    ,info->vm.cpu.fault.npf.err.x
+	    ,info->vm.cpu.fault.npf.err.gr
+	    ,info->vm.cpu.fault.npf.err.gw
+	    ,info->vm.cpu.fault.npf.err.gx
+	    ,info->vm.cpu.fault.npf.err.gl
+	    ,info->vm.cpu.fault.npf.err.final
+	    ,info->vm.cpu.fault.npf.err.nmi);
    }
    else
+   {
+      /*
+      ** no guest linear, maybe mov CR to pdpte in PAE mode ?
+      ** final bit is invalid too
+      */
       info->vm.cpu.fault.npf.vaddr = __rip.raw & 0xffffffffUL;
 
-   debug(VMX_EPT,
-	 "#NPF gv 0x%X gp 0x%X err 0x%X "
-	 "(r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
-	 ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
-	 ,info->vm.cpu.fault.npf.err.raw
-	 ,info->vm.cpu.fault.npf.err.r, info->vm.cpu.fault.npf.err.w
-	 ,info->vm.cpu.fault.npf.err.x
-	 ,info->vm.cpu.fault.npf.err.gr, info->vm.cpu.fault.npf.err.gw
-	 ,info->vm.cpu.fault.npf.err.gx
-	 ,info->vm.cpu.fault.npf.err.gl, info->vm.cpu.fault.npf.err.final
-	 ,info->vm.cpu.fault.npf.err.nmi);
+      debug(VMX_EPT,
+	    "#NPF (partial) gp 0x%X err 0x%X "
+	    "(r:%d w:%d x:%d gr:%d gw:%d gx:%d nmi:%d)\n"
+	    ,info->vm.cpu.fault.npf.paddr
+	    ,info->vm.cpu.fault.npf.err.raw
+	    ,info->vm.cpu.fault.npf.err.r
+	    ,info->vm.cpu.fault.npf.err.w
+	    ,info->vm.cpu.fault.npf.err.x
+	    ,info->vm.cpu.fault.npf.err.gr
+	    ,info->vm.cpu.fault.npf.err.gw
+	    ,info->vm.cpu.fault.npf.err.gx
+	    ,info->vm.cpu.fault.npf.err.nmi);
+   }
 
    if(ctrl_evt_npf() == VM_IGNORE)
       return VM_FAIL;
