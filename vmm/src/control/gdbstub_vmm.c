@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -311,21 +311,6 @@ static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len,
    return 1;
 }
 
-static void __gdb_vmm_rw_pmem(offset_t addr, size_t sz, uint8_t wr)
-{
-   vm_access_t access;
-
-   access.addr = addr;
-   access.len  = sz;
-   access.wr   = wr;
-
-   if(__vm_remote_access_pmem(&access) == VM_FAIL)
-   {
-      debug(GDBSTUB, "memory access failure\n");
-      gdb_err_mem();
-   }
-}
-
 static void gdb_vmm_rd_pmem(uint8_t *data, size_t len)
 {
    loc_t  addr;
@@ -335,7 +320,11 @@ static void gdb_vmm_rd_pmem(uint8_t *data, size_t len)
       return;
 
    debug(GDBSTUB_CMD, "reading physical memory @ 0x%X sz %d\n", addr.linear, sz);
-   __gdb_vmm_rw_pmem(addr.linear, sz, 1);
+   if(gdb_pmem_send(addr.linear, sz) != VM_DONE)
+   {
+      debug(GDBSTUB, "memory access failure\n");
+      gdb_err_mem();
+   }
 }
 
 static void gdb_vmm_wr_pmem(uint8_t *data, size_t len)
@@ -347,7 +336,11 @@ static void gdb_vmm_wr_pmem(uint8_t *data, size_t len)
       return;
 
    debug(GDBSTUB_CMD, "writing physical memory @ 0x%X sz %d\n", addr.linear, sz);
-   __gdb_vmm_rw_pmem(addr.linear, sz, 0);
+   if(gdb_pmem_recv(addr.linear, sz) != VM_DONE)
+   {
+      debug(GDBSTUB, "memory access failure\n");
+      gdb_err_mem();
+   }
 }
 
 static void gdb_vmm_rd_vmem(uint8_t *data, size_t len)
@@ -359,11 +352,10 @@ static void gdb_vmm_rd_vmem(uint8_t *data, size_t len)
       return;
 
    debug(GDBSTUB_CMD, "reading virtual memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(gdb_mem_send(addr.linear, sz) != VM_DONE)
+   if(gdb_vmem_send(addr.linear, sz) != VM_DONE)
    {
       debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
-      return;
    }
 }
 
@@ -376,11 +368,10 @@ static void gdb_vmm_wr_vmem(uint8_t *data, size_t len)
       return;
 
    debug(GDBSTUB_CMD, "writing virtual memory @ 0x%X sz %d\n", addr.linear, sz);
-   if(gdb_mem_recv(addr.linear, sz) != VM_DONE)
+   if(gdb_vmem_recv(addr.linear, sz) != VM_DONE)
    {
       debug(GDBSTUB, "memory access failure\n");
       gdb_err_mem();
-      return;
    }
 }
 
@@ -399,7 +390,7 @@ static void gdb_vmm_translate(uint8_t *data, size_t len)
 
    if(!__paging())
       paddr = vaddr;
-   else if(!__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz, 1))
+   else if(__pg_walk(info->vmm.ctrl.active_cr3, vaddr, &paddr, &psz, 1) != VM_DONE)
    {
       debug(GDBSTUB, "memory translation failure\n");
       gdb_err_mem();

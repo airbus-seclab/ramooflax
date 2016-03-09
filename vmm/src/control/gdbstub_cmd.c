@@ -140,7 +140,7 @@ static void gdb_cmd_rd_mem(uint8_t *data, size_t len)
    {
       need = min(size, sizeof(store));
 
-      if(gdb_mem_read(addr, store, need) != VM_DONE)
+      if(gdb_vmem_read(addr, store, need) != VM_DONE)
       {
 	 debug(GDBSTUB_CMD, "access failure\n");
 	 gdb_err_mem();
@@ -189,7 +189,7 @@ static void gdb_cmd_wr_mem(uint8_t *data, size_t len)
 	 }
       }
 
-      if(gdb_mem_write(addr, store, can) != VM_DONE)
+      if(gdb_vmem_write(addr, store, can) != VM_DONE)
       {
 	 debug(GDBSTUB_CMD, "access failure\n");
 	 gdb_err_mem();
@@ -303,9 +303,14 @@ static void gdb_cmd_rm_brk(uint8_t *data, size_t len)
 
 static void __gdb_cmd_resume(uint8_t stp)
 {
-   dbg_resume(stp);
-   gdb_ack();
-   gdb_set_lock(0);
+   if(dbg_resume(stp) == VM_DONE)
+   {
+      gdb_ack();
+      gdb_set_lock(0);
+      return;
+   }
+
+   gdb_err();
 }
 
 static void gdb_cmd_cont(uint8_t __unused__ *data, size_t len)

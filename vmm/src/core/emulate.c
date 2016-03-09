@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -39,11 +39,11 @@ int emulate_done(int rc, size_t sz)
 
 int emulate()
 {
-   int    rc;
    size_t sz;
+   int    rc = disassemble(&info->vm.cpu.disasm);
 
-   if(!disassemble(&info->vm.cpu.disasm))
-      return VM_FAIL;
+   if(rc != VM_DONE)
+      return rc;
 
    rc = emulate_insn(&info->vm.cpu.disasm);
    sz = ud_insn_len(&info->vm.cpu.disasm);

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,94 +25,86 @@ extern info_data_t *info;
 
 static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 {
-   if(vm_write_mem(io->dst.linear, io->src.u8, sz->miss) != VM_DONE)
-   {
-      debug(DEV_IO, "io fwd ins: vm_write_mem() fail\n");
-      return 0;
-   }
+   int rc = vm_write_mem_sz(io->dst.linear, io->src.u8, sz->miss, &sz->done);
 
-   sz->done      += sz->miss;
-   sz->available -= sz->miss;
-   sz->miss       = 0;
-   return 1;
+   if(rc != VM_DONE)
+      debug(DEV_IO, "io fwd ins: vm_write_mem() fail\n");
+
+   sz->available -= sz->done;
+   sz->miss      -= sz->done;
+   return rc;
 }
 
 static int __io_insn_string_out_fwd(io_insn_t *io, io_size_t *sz)
 {
-   if(vm_read_mem(io->src.linear, io->dst.u8, sz->miss) != VM_DONE)
-   {
-      debug(DEV_IO, "io fwd outs: vm_read_mem() fail\n");
-      return 0;
-   }
+   int rc = vm_read_mem_sz(io->src.linear, io->dst.u8, sz->miss, &sz->done);
 
-   sz->done      += sz->miss;
-   sz->available -= sz->miss;
-   sz->miss       = 0;
-   return 1;
+   if(rc != VM_DONE)
+      debug(DEV_IO, "io fwd outs: vm_read_mem() fail\n");
+
+   sz->available -= sz->done;
+   sz->miss      -= sz->done;
+   return rc;
 }
 
 static int __io_insn_string_in_bwd(io_insn_t __unused__ *io, io_size_t __unused__ *sz)
 {
    debug(DEV_IO, "io bwd ins: not implemented !\n");
-   return 0;
+   return VM_FAIL;
 }
 
 static int __io_insn_string_out_bwd(io_insn_t __unused__ *io, io_size_t __unused__ *sz)
 {
    debug(DEV_IO, "io bwd outs: not implemented !\n");
-   return 0;
+   return VM_FAIL;
 }
 
 static int __io_insn_string_in(io_insn_t *io, io_size_t *sz)
 {
+   int      rc;
    uint64_t update = info->vm.cpu.gpr->rdi.raw & io->msk;
 
    if(io->back)
    {
-      if(!__io_insn_string_in_bwd(io, sz))
-	 return 0;
-
+      rc = __io_insn_string_in_bwd(io, sz);
       update -= (sz->done & io->msk);
    }
    else
    {
-      if(!__io_insn_string_in_fwd(io, sz))
-	 return 0;
-
+      rc = __io_insn_string_in_fwd(io, sz);
       update += (sz->done & io->msk);
    }
 
    info->vm.cpu.gpr->rdi.raw &= ~io->msk;
    info->vm.cpu.gpr->rdi.raw |= update;
-   return 1;
+   return rc;
 }
 
 static int __io_insn_string_out(io_insn_t *io, io_size_t *sz)
 {
+   int      rc;
    uint64_t update = info->vm.cpu.gpr->rsi.raw & io->msk;
 
    if(io->back)
    {
-      if(!__io_insn_string_out_bwd(io, sz))
-	 return 0;
-
+      rc = __io_insn_string_out_bwd(io, sz);
       update -= (sz->done & io->msk);
    }
    else
    {
-      if(!__io_insn_string_out_fwd(io, sz))
-	 return 0;
-
+      rc = __io_insn_string_out_fwd(io, sz);
       update += (sz->done & io->msk);
    }
 
    info->vm.cpu.gpr->rsi.raw &= ~io->msk;
    info->vm.cpu.gpr->rsi.raw |= update;
-   return 1;
+   return rc;
 }
 
 static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
 {
+   int rc;
+
    if(io->rep)
       sz->miss *= (info->vm.cpu.gpr->rcx.raw & io->msk);
 
@@ -120,17 +112,13 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    {
       io->src.addr = device;
       __string_io_linear(io->dst.linear, io);
-
-      if(!__io_insn_string_in(io, sz))
-	 return 0;
+      rc = __io_insn_string_in(io, sz);
    }
    else
    {
       io->dst.addr = device;
       __string_io_linear(io->src.linear, io);
-
-      if(!__io_insn_string_out(io, sz))
-	 return 0;
+      rc = __io_insn_string_out(io, sz);
    }
 
    if(io->rep)
@@ -140,13 +128,10 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    }
 
    if(sz->miss)
-   {
       debug(DEV_IO, "missing %d bytes, available %d, done %d !\n",
 	    sz->miss, sz->available, sz->done);
-      return 0;
-   }
 
-   return 1;
+   return rc;
 }
 
 static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
@@ -173,7 +158,7 @@ static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
    sz->available -= io->sz;
    sz->miss      -= io->sz;
 
-   return 1;
+   return VM_DONE;
 }
 
 static void __io_pic_detect(io_insn_t *io, uint8_t data)
@@ -204,7 +189,7 @@ static int __io_string_native(io_insn_t *io, void *device)
    if(io->back)
    {
       debug(DEV_IO, "native io bwd string: not implemented !\n");
-      return 0;
+      return VM_FAIL;
    }
 
    debug(DEV_IO, "native io string: %D bytes (cnt %D, sz %d)\n"
@@ -226,7 +211,7 @@ static int __io_string_native(io_insn_t *io, void *device)
       case 4: rep_outsl(data, io->port, io->cnt); break;
       }
 
-   return 1;
+   return VM_DONE;
 }
 
 static int __io_simple_native(io_insn_t *io, void *device)
@@ -248,7 +233,7 @@ static int __io_simple_native(io_insn_t *io, void *device)
       case 4: outl(data->raw,  io->port); break;
       }
 
-   return 1;
+   return VM_DONE;
 }
 
 /*
@@ -278,13 +263,15 @@ static int __dev_io_proxy_filter_in(io_insn_t    *io,
 				    io_flt_hdl_t filter,  void      *arg,
 				    void         *device, io_size_t *sz)
 {
-   if(!dev_io_native(io, device))
-      return 0;
+   int rc = dev_io_native(io, device);
+
+   if(rc != VM_DONE)
+      return rc;
 
    debug(DEV_IO, "proxy io in 0x%x = 0x%x\n", io->port, *(uint8_t*)device);
 
    if(filter && (filter(device, arg) & (VM_FAIL|VM_FAULT)))
-      return 0;
+      return VM_FAIL;
 
    return dev_io_insn(io, device, sz);
 }
@@ -293,17 +280,17 @@ static int __dev_io_proxy_filter_out(io_insn_t    *io,
 				     io_flt_hdl_t filter,  void      *arg,
 				     void         *device, io_size_t *sz)
 {
-   int rc = 1;
+   int rc; /* needed if no filter */
 
-   if(!dev_io_insn(io, device, sz))
-      return 0;
+   rc = dev_io_insn(io, device, sz);
+   if(rc != VM_DONE)
+      return rc;
 
    if(filter)
    {
-      int rc = filter(device, arg);
-
+      rc = filter(device, arg);
       if(rc & (VM_FAIL|VM_FAULT))
-	 return 0;
+	 return rc;
    }
 
    debug(DEV_IO, "proxy io out 0x%x = 0x%x\n", io->port, *(uint8_t*)device);
@@ -312,7 +299,7 @@ static int __dev_io_proxy_filter_out(io_insn_t    *io,
    if(rc != VM_IGNORE)
       dev_io_native(io, device);
 
-   return 1;
+   return VM_DONE;
 }
 
 int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
@@ -332,13 +319,13 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
       if(!device.linear)
       {
 	 debug(DEV_IO, "proxy io memory no more page\n");
-	 return 0;
+	 return VM_FAIL;
       }
    }
    else
    {
       debug(DEV_IO, "proxy io memory need %D\n", sz.available);
-      return 0;
+      return VM_FAIL;
    }
 
    if(io->in)

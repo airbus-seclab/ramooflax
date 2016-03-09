@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
 
 /*
 ** VM-EXIT handling return codes
+** Do not use 0 value, binary tests
+** wouldn't work (ie. rc & VM_FAIL)
 */
 #define VM_FAIL              (1<<0)
 #define VM_FAULT             (1<<1)
@@ -32,6 +34,7 @@
 #define VM_IGNORE            (1<<5)
 #define VM_INTERN            (1<<6)
 #define VM_PARTIAL           (1<<7)
+
 
 /*
 ** VM architecture dependant stuff
@@ -173,16 +176,20 @@ typedef struct vm
 } __attribute__((packed)) vm_t;
 
 struct vm_access;
-
 typedef int (*vm_access_mem_op_t)(struct vm_access*);
+
+#define VM_ACC_REQ_VMM      0  /* vm mem access from a vmm request */
+#define VM_ACC_REQ_VM       1  /* vm mem access from a vm request  */
 
 typedef struct vm_access
 {
    cr3_reg_t          *cr3;      /* translate virt to phys vm addr */
    offset_t           addr;      /* vm addr (virt or phys) */
    void               *data;
-   size_t             len;       /* total bytes */
+   size_t             len;       /* total requested bytes */
+   size_t             done;      /* total processed bytes */
    uint8_t            wr;        /* write access */
+   uint8_t            rq;        /* requestor (vmm, vm) */
    vm_access_mem_op_t operator;  /* memcpy, remote, io */
 
 } __attribute__((packed)) vm_access_t;
@@ -199,16 +206,20 @@ void  vm_get_stack_addr(offset_t*, offset_t, int*);
 void  vm_update_rip(offset_t);
 void  vm_rewind_rip(offset_t);
 
-int   __vm_remote_access_pmem(vm_access_t*);
+int   __vm_recv_pmem(offset_t, size_t);
+int   __vm_send_pmem(offset_t, size_t);
+int   __vm_read_pmem(offset_t, uint8_t*, size_t);
+int   __vm_write_pmem(offset_t, uint8_t*, size_t);
 
-int   __vm_recv_mem(cr3_reg_t*, offset_t, size_t);
-int   __vm_send_mem(cr3_reg_t*, offset_t, size_t);
-
-int   __vm_read_mem(cr3_reg_t*, offset_t, uint8_t*, size_t);
-int   __vm_write_mem(cr3_reg_t*, offset_t, uint8_t*, size_t);
+int   __vm_recv_vmem(cr3_reg_t*, offset_t, size_t);
+int   __vm_send_vmem(cr3_reg_t*, offset_t, size_t);
+int   __vm_read_vmem(cr3_reg_t*, offset_t, uint8_t*, size_t);
+int   __vm_write_vmem(cr3_reg_t*, offset_t, uint8_t*, size_t);
 
 int   vm_read_mem(offset_t, uint8_t*, size_t);
 int   vm_write_mem(offset_t, uint8_t*, size_t);
+int   vm_read_mem_sz(offset_t, uint8_t*, size_t, size_t*);
+int   vm_write_mem_sz(offset_t, uint8_t*, size_t, size_t*);
 
 int   vm_enter_rmode();
 int   vm_enter_pmode();

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -166,7 +166,7 @@ static void svm_vmexit_show_insn()
 {
    ud_t disasm;
 
-   if(disassemble(&disasm))
+   if(disassemble(&disasm) == VM_DONE)
       printf("-\ninsn            : \"%s\" (len %d)\n"
 	     ,ud_insn_asm(&disasm),ud_insn_len(&disasm));
 }

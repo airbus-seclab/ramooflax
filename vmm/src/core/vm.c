@@ -88,9 +88,9 @@ void vm_rewind_rip(offset_t offset)
 }
 
 /*
-** VM memory access operators
+** VM internal memory access operators
 */
-static int __vm_local_access_pmem(vm_access_t *access)
+static int __vm_access_local_operator(vm_access_t *access)
 {
    loc_t src, dst;
 
@@ -106,10 +106,26 @@ static int __vm_local_access_pmem(vm_access_t *access)
    }
 
    memcpy(dst.addr, src.addr, access->len);
+   access->done += access->len;
+
+#ifdef CONFIG_VM_ACCESS_DBG
+   if(!__rmode())
+   {
+      debug(VM_ACCESS,"vm_access_local %s dst 0x%X src 0x%X ln %D [0x%x:0x%x]\n"
+	    ,access->wr ? "write":"read"
+	    ,dst.linear, src.linear, access->len
+	    ,dst.u8[0], dst.u8[access->len -1]);
+      size_t i=0;
+      while(i<access->len)
+	 printf("%c", dst.u8[i++]);
+      printf("\n");
+   }
+#endif
+
    return VM_DONE;
 }
 
-int __vm_remote_access_pmem(vm_access_t *access)
+static int __vm_access_remote_operator(vm_access_t *access)
 {
    loc_t  loc;
    size_t done, len;
@@ -119,6 +135,7 @@ int __vm_remote_access_pmem(vm_access_t *access)
    if(access->wr)
    {
       ctrl_io_write(loc.u8, access->len);
+      access->done += access->len;
       return VM_DONE;
    }
 
@@ -126,56 +143,34 @@ int __vm_remote_access_pmem(vm_access_t *access)
    while(len)
    {
       done = ctrl_io_read(loc.u8, len);
-      loc.linear += done;
-      len -= done;
+
+      loc.linear   += done;
+      access->done += done;
+      len          -= done;
    }
 
    return VM_DONE;
 }
 
-static int __vm_access_smem(vm_access_t *access)
+static int __vm_access_smem_identity(vm_access_t *access)
 {
-   npg_wlk_t   wlk;
-   npg_pte64_t *pte;
-
-   if(npg_walk(access->addr, &wlk) != VM_DONE)
-      return VM_FAIL;
-
-   /* pdpe, pde, pte have same layout for pvl checking */
-   pte = (npg_pte64_t*)wlk.entry;
-
-   /* XXX
-   ** check access on several nested entries if granularity
-   ** is finest than guest virtual mapping (__vm_access_vmem)
+   /*
+   ** identity mapped guest paddr to system addr
+   ** so no walk through npg tables to be faster
    **
-   ** ie. guest  has 2MB entry
-   **     nested has several 4KB entries some of them not mapped
+   ** we must check for scarry access
    */
-   if(access->len > wlk.size)
-   {
-      debug(VM_ACCESS, "vm_access: need to check several npg entries\n");
-      return VM_FAIL;
-   }
-
-   if(access->wr)
-   {
-      if(!npg_writable(pte))
-#ifdef CONFIG_SNAPSHOT
-	 if(__ctrl_snapshot_npg_cow(&wlk, access->addr) != VM_DONE)
-#endif
-	    return VM_FAIL;
-   }
-   else if(!npg_readable(pte))
+   if(vmm_area_range(access->addr, access->len))
       return VM_FAIL;
 
-   access->addr = wlk.addr;
-   return VM_DONE;
+   return access->operator(access);
 }
+
+#define __vm_access_smem(_a_) __vm_access_smem_identity(_a_)
 
 static int __vm_check_pmem(vm_access_t __unused__ *access)
 {
-   /*
-   ** XXX
+   /* XXX
    ** - segment limit
    ** - segment valid
    ** - align check
@@ -185,143 +180,188 @@ static int __vm_check_pmem(vm_access_t __unused__ *access)
 
 static int __vm_access_pmem(vm_access_t *access)
 {
-   if(vmm_area_range(access->addr, access->len))
-      return VM_FAIL;
+   if(!access->len)
+      return VM_DONE;
 
    if(__vm_check_pmem(access) != VM_DONE)
       return VM_FAIL;
 
-   if(__vm_access_smem(access) != VM_DONE)
-      return VM_FAIL;
-
-   return access->operator(access);
+   return __vm_access_smem(access);
 }
 
 static int __vm_access_vmem(vm_access_t *access)
 {
    offset_t vaddr, nxt;
-   size_t   psz, len, olen;
-
-   if(!access->len)
-      return VM_DONE;
+   size_t   psz, len;
+   int      rc;
 
    if(!__paging())
-      return access->operator(access);
+      return __vm_access_pmem(access);
 
    vaddr = access->addr;
-   olen = len = access->len;
+   len = access->len;
 
    while(len)
    {
-      if(!__pg_walk(access->cr3, vaddr, &access->addr, &psz, 1))
+      rc = __pg_walk(access->cr3, vaddr, &access->addr, &psz, 1);
+      if(rc != VM_DONE)
       {
 	 debug(VM_ACCESS, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
-	 goto __vm_access_error;
+	 if(rc == VM_FAULT)
+	 {
+	    pf_err_t pf = {.raw = 0};
+
+	    if(access->rq == VM_ACC_REQ_VMM)
+	       return VM_PARTIAL;
+
+	    pf.wr = access->wr;
+	    pf.us = (__cpl == 3);
+	    __inject_exception(PF_EXCP, pf.raw, vaddr);
+	 }
+
+	 return rc;
       }
 
       nxt = __align_next(vaddr, psz);
       access->len = min(len, (nxt - vaddr));
 
-      if(__vm_access_pmem(access) != VM_DONE)
-	 goto __vm_access_error;
+      rc = __vm_access_pmem(access);
+      if(rc != VM_DONE)
+	 return rc;
 
       len  -= access->len;
       vaddr = nxt;
    }
 
    return VM_DONE;
-
-__vm_access_error:
-   if(len != olen)
-      return VM_PARTIAL;
-
-   return VM_FAIL;
 }
 
-int __vm_recv_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
+static void __vm_access_setup(vm_access_t *access,
+			      cr3_reg_t *cr3, offset_t addr,
+			      uint8_t *data, size_t len,
+			      uint8_t wr, uint8_t rq, uint8_t rm)
+{
+   access->addr = addr;
+   access->data = (void*)data;
+   access->len  = len;
+   access->done = 0;
+   access->wr   = wr;
+   access->rq   = rq;
+
+   if(cr3)
+      access->cr3  = cr3;
+
+   if(rm)
+      access->operator = __vm_access_remote_operator;
+   else
+      access->operator = __vm_access_local_operator;
+}
+
+/*
+** VM physical memory access operators for VMM operations only
+*/
+int __vm_recv_pmem(offset_t paddr, size_t len)
 {
    vm_access_t access;
+   __vm_access_setup(&access, NULL, paddr, NULL, len, 0, VM_ACC_REQ_VMM, 1);
+   return __vm_access_pmem(&access);
+}
 
-   access.cr3  = cr3;
-   access.addr = vaddr;
-   access.data = (void*)0;
-   access.len  = len;
-   access.wr   = 0;
-   access.operator = __vm_remote_access_pmem;
+int __vm_send_pmem(offset_t paddr, size_t len)
+{
+   vm_access_t access;
+   __vm_access_setup(&access, NULL, paddr, NULL, len, 1, VM_ACC_REQ_VMM, 1);
+   return __vm_access_pmem(&access);
+}
 
+int __vm_read_pmem(offset_t paddr, uint8_t *data, size_t len)
+{
+   vm_access_t access;
+   __vm_access_setup(&access, NULL, paddr, data, len, 0, VM_ACC_REQ_VMM, 0);
+   return __vm_access_pmem(&access);
+}
+
+int __vm_write_pmem(offset_t paddr, uint8_t *data, size_t len)
+{
+   vm_access_t access;
+   __vm_access_setup(&access, NULL, paddr, data, len, 1, VM_ACC_REQ_VMM, 0);
+   return __vm_access_pmem(&access);
+}
+
+/*
+** VM virtual memory access operators for VMM operations only
+*/
+int __vm_recv_vmem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
+{
+   vm_access_t access;
+   __vm_access_setup(&access, cr3, vaddr, NULL, len, 0, VM_ACC_REQ_VMM, 1);
    return __vm_access_vmem(&access);
 }
 
-int __vm_send_mem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
+int __vm_send_vmem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
 {
    vm_access_t access;
-
-   access.cr3  = cr3;
-   access.addr = vaddr;
-   access.data = (void*)0;
-   access.len  = len;
-   access.wr   = 1;
-   access.operator = __vm_remote_access_pmem;
-
+   __vm_access_setup(&access, cr3, vaddr, NULL, len, 1, VM_ACC_REQ_VMM, 1);
    return __vm_access_vmem(&access);
 }
 
-int __vm_read_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
+int __vm_read_vmem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
 {
    vm_access_t access;
-
-   access.cr3  = cr3;
-   access.addr = vaddr;
-   access.data = (void*)data;
-   access.len  = len;
-   access.wr   = 0;
-   access.operator = __vm_local_access_pmem;
-
+   __vm_access_setup(&access, cr3, vaddr, data, len, 0, VM_ACC_REQ_VMM, 0);
    return __vm_access_vmem(&access);
 }
 
-int __vm_write_mem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
+int __vm_write_vmem(cr3_reg_t *cr3, offset_t vaddr, uint8_t *data, size_t len)
 {
    vm_access_t access;
-
-   access.cr3  = cr3;
-   access.addr = vaddr;
-   access.data = (void*)data;
-   access.len  = len;
-   access.wr   = 1;
-   access.operator = __vm_local_access_pmem;
-
+   __vm_access_setup(&access, cr3, vaddr, data, len, 1, VM_ACC_REQ_VMM, 0);
    return __vm_access_vmem(&access);
+}
+
+/*
+** VM virtual memory access operators upon VM request
+*/
+int vm_read_mem_sz(offset_t vaddr, uint8_t *data, size_t len, size_t *done)
+{
+   int         rc;
+   vm_access_t access;
+
+   __vm_access_setup(&access, &__cr3, vaddr, data, len, 0, VM_ACC_REQ_VM, 0);
+   rc = __vm_access_vmem(&access);
+   *done = access.done;
+   return rc;
+}
+
+int vm_write_mem_sz(offset_t vaddr, uint8_t *data, size_t len, size_t *done)
+{
+   int         rc;
+   vm_access_t access;
+
+   __vm_access_setup(&access, &__cr3, vaddr, data, len, 1, VM_ACC_REQ_VM, 0);
+   rc = __vm_access_vmem(&access);
+   *done = access.done;
+   return rc;
 }
 
 int vm_read_mem(offset_t vaddr, uint8_t *data, size_t len)
 {
    vm_access_t access;
-
-   access.cr3  = &__cr3;
-   access.addr = vaddr;
-   access.data = (void*)data;
-   access.len  = len;
-   access.wr   = 0;
-   access.operator = __vm_local_access_pmem;
-
+   __vm_access_setup(&access, &__cr3, vaddr, data, len, 0, VM_ACC_REQ_VM, 0);
    return __vm_access_vmem(&access);
 }
 
 int vm_write_mem(offset_t vaddr, uint8_t *data, size_t len)
 {
    vm_access_t access;
-
-   access.cr3  = &__cr3;
-   access.addr = vaddr;
-   access.data = (void*)data;
-   access.len  = len;
-   access.wr   = 1;
-   access.operator = __vm_local_access_pmem;
-
+   __vm_access_setup(&access, &__cr3, vaddr, data, len, 1, VM_ACC_REQ_VM, 0);
    return __vm_access_vmem(&access);
 }
 
+
+/*
+** VM cpu mode transitions
+*/
 int vm_enter_pmode()
 {
    info->vm.cpu.dflt_excp = VM_PMODE_EXCP_BITMAP;
@@ -361,7 +401,7 @@ int vm_pg_walk(offset_t vaddr, offset_t *paddr, size_t *psz)
       return VM_FAIL;
    }
 
-   return (__pg_walk(&__cr3, vaddr, paddr, psz, 1) ? VM_DONE : VM_FAIL);
+   return __pg_walk(&__cr3, vaddr, paddr, psz, 1);
 }
 
 /*
@@ -371,9 +411,11 @@ int vm_full_walk(offset_t vaddr, npg_wlk_t *wlk)
 {
    size_t   sz;
    offset_t gp;
+   int      rc;
 
-   if(vm_pg_walk(vaddr, &gp, &sz) == VM_DONE)
+   rc = vm_pg_walk(vaddr, &gp, &sz);
+   if(rc == VM_DONE)
       return npg_walk(gp, wlk);
 
-   return VM_FAIL;
+   return rc;
 }

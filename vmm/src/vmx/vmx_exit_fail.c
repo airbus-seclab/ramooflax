@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -162,6 +162,7 @@ static void vmx_vmexit_show_gpr()
 static void vmx_vmexit_show_cr()
 {
    printf("\n- control registers\n"
+	  "mode            : %d bits\n"
 	  "cpl             : %d\n"
 	  "cr0             : 0x%x (pe:%d pg:%d ne:%d)\n"
 	  "cr0 fixed       : 0x%x 0x%x\n"
@@ -175,7 +176,7 @@ static void vmx_vmexit_show_cr()
 	  "efer            : 0x%x (lma:%d lme:%d nxe:%d ia32e:%d)\n"
 	  "gdtr (limit)    : 0x%x (0x%x)\n"
 	  "idtr (limit)    : 0x%x (0x%x)\n"
-	  ,__cpl
+	  ,cpu_addr_sz(), __cpl
 	  ,vm_state.cr0.low, vm_state.cr0.pe, vm_state.cr0.pg, vm_state.cr0.ne
 	  ,info->vm.vmx_fx_cr0.allow_0.raw, info->vm.vmx_fx_cr0.allow_1.raw
 	  ,vm_state.cr2.raw
@@ -225,7 +226,7 @@ static void vmx_vmexit_show_insn()
 {
    ud_t disasm;
 
-   if(disassemble(&disasm))
+   if(disassemble(&disasm) == VM_DONE)
       printf("\n- insn : \"%s\" (len %d)\n"
 	     ,ud_insn_asm(&disasm),ud_insn_len(&disasm));
 }
@@ -438,6 +439,7 @@ void vmx_vmexit_show()
    if(vmx_vmexit_show_exit())
       vmx_vmexit_show_detail();
 
+   printf("\n         <----------------- VMX Features ---------------->\n");
    show_vmm_mem_map();
    vmx_vmexit_show_cap_fix();
 }

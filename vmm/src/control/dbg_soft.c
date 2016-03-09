@@ -23,7 +23,7 @@ extern info_data_t *info;
 
 static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
 {
-   int rc = ctrl_mem_write_with(&bp->cr3, bp->addr, &bp->byte, 1);
+   int rc = ctrl_vmem_write_with(&bp->cr3, bp->addr, &bp->byte, 1);
 
    if(rc != VM_DONE)
    {
@@ -39,7 +39,7 @@ static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
 static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp)
 {
    uint8_t brk_insn = BREAKPOINT_INSN;
-   int     rc = ctrl_mem_write_with(&bp->cr3, bp->addr, &brk_insn, 1);
+   int     rc = ctrl_vmem_write_with(&bp->cr3, bp->addr, &brk_insn, 1);
 
    if(rc != VM_DONE)
    {
@@ -100,7 +100,7 @@ static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
       bp->sts.on  = 1;
       bp->cr3.raw = info->vmm.ctrl.active_cr3->raw;
 
-      rc = ctrl_mem_read_with(&bp->cr3, addr, &bp->byte, 1);
+      rc = ctrl_vmem_read_with(&bp->cr3, addr, &bp->byte, 1);
       if(rc != VM_DONE)
       {
 	 debug(DBG_SOFT, "set soft bp @ 0x%X failed\n", addr);

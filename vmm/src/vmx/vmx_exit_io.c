@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,8 +25,10 @@ extern info_data_t *info;
 
 int vmx_vmexit_resolve_io()
 {
-   if(!dev_access())
-      return VM_FAIL;
+   int rc = dev_access();
+
+   if(rc != VM_DONE)
+      return rc;
 
    vmcs_read(vm_exit_info.insn_len);
    return emulate_done(VM_DONE, vm_exit_info.insn_len.raw);
@@ -47,7 +49,7 @@ int __vmx_io_init(io_insn_t *io)
    if(!io->s)
    {
       io->cnt = 1;
-      return 1;
+      return VM_DONE;
    }
 
    vmcs_read(vm_exit_info.guest_linear);
@@ -62,9 +64,10 @@ int __vmx_io_init(io_insn_t *io)
    io->addr = 1<<vmx_io_s->addr;
 #else
    ud_t *insn = &info->vm.cpu.disasm;
+   int   rc   = disassemble(insn);
 
-   if(!disassemble(insn))
-      return 0;
+   if(rc != VM_DONE)
+      return rc;
 
    if(insn->dis_mode == 64)
    {
@@ -99,7 +102,7 @@ int __vmx_io_init(io_insn_t *io)
    if(io->seg > 5)
    {
       debug(VMX_IO, "invalid io seg pfx %d\n", io->seg);
-      return 0;
+      return VM_FAIL;
    }
 
    io->back = vm_state.rflags.df;
@@ -107,5 +110,5 @@ int __vmx_io_init(io_insn_t *io)
    io->rep  = vmx_io->rep;
    io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 
-   return 1;
+   return VM_DONE;
 }

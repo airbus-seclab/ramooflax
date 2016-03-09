@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -113,11 +113,15 @@ typedef struct gdbstub
 #define gdb_io_read(_b,_l)             ctrl_io_read(_b,_l)
 #define gdb_io_write(_b,_l)            ctrl_io_write(_b,_l)
 
-#define gdb_mem_read(_a,_b,_l)         ctrl_mem_read(_a,_b,_l)
-#define gdb_mem_write(_a,_b,_l)        ctrl_mem_write(_a,_b,_l)
+#define gdb_pmem_recv(_a,_l)            ctrl_pmem_recv(_a,_l)
+#define gdb_pmem_send(_a,_l)            ctrl_pmem_send(_a,_l)
+#define gdb_pmem_read(_a,_b,_l)         ctrl_pmem_read(_a,_b,_l)
+#define gdb_pmem_write(_a,_b,_l)        ctrl_pmem_write(_a,_b,_l)
 
-#define gdb_mem_send(_a,_l)            ctrl_mem_send(_a,_l)
-#define gdb_mem_recv(_a,_l)            ctrl_mem_recv(_a,_l)
+#define gdb_vmem_recv(_a,_l)            ctrl_vmem_recv(_a,_l)
+#define gdb_vmem_send(_a,_l)            ctrl_vmem_send(_a,_l)
+#define gdb_vmem_read(_a,_b,_l)         ctrl_vmem_read(_a,_b,_l)
+#define gdb_vmem_write(_a,_b,_l)        ctrl_vmem_write(_a,_b,_l)
 
 
 
