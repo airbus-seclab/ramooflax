@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ static int __vmx_vmexit_lidt(dt_reg_t *dt_reg)
    return VM_DONE;
 }
 
-static int __vmx_vmexit_sgdt(dt_reg_t *dt_reg)
+static void __vmx_vmexit_sgdt(dt_reg_t *dt_reg)
 {
    vmcs_read(vm_state.gdtr.base);
    vmcs_read(vm_state.gdtr.limit);
@@ -61,10 +61,9 @@ static int __vmx_vmexit_sgdt(dt_reg_t *dt_reg)
    dt_reg->limit = vm_state.gdtr.limit.wlow;
 
    debug(VMX_DT, "sgdt\n");
-   return VM_DONE;
 }
 
-static int __vmx_vmexit_sidt(dt_reg_t *dt_reg)
+static void __vmx_vmexit_sidt(dt_reg_t *dt_reg)
 {
    vmcs_read(vm_state.idtr.base);
 
@@ -72,7 +71,6 @@ static int __vmx_vmexit_sidt(dt_reg_t *dt_reg)
    dt_reg->limit = info->vm.idt_limit_saved;
 
    debug(VMX_DT, "sidt\n");
-   return VM_DONE;
 }
 
 int vmx_vmexit_resolve_dt()
@@ -168,23 +166,25 @@ int vmx_vmexit_resolve_dt()
    if(dt_insn->type < VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_LGDT)
    {
       if(dt_insn->type == VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_SGDT)
-	 rc = __vmx_vmexit_sgdt(&dt_reg);
+	 __vmx_vmexit_sgdt(&dt_reg);
       else
-	 rc = __vmx_vmexit_sidt(&dt_reg);
+	 __vmx_vmexit_sidt(&dt_reg);
 
       dt_reg.base.raw &= op_msk;
-      if(vm_write_mem(dt_addr, (uint8_t*)&dt_reg, sz) != VM_DONE)
+      rc = vm_write_mem(dt_addr, (uint8_t*)&dt_reg, sz);
+      if(rc != VM_DONE)
       {
 	 debug(VMX_DT, "could not write vm mem @0x%X\n", dt_addr);
-	 return VM_FAIL;
+	 return rc;
       }
    }
    else
    {
-      if(vm_read_mem(dt_addr, (uint8_t*)&dt_reg, sz) != VM_DONE)
+      rc = vm_read_mem(dt_addr, (uint8_t*)&dt_reg, sz);
+      if(rc != VM_DONE)
       {
 	 debug(VMX_DT, "could not read vm mem @0x%X\n", dt_addr);
-	 return VM_FAIL;
+	 return rc;
       }
 
       dt_reg.base.raw &= op_msk;

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,13 +24,14 @@ extern info_data_t *info;
 int dev_ps2(ps2_t *ps2, io_insn_t *io)
 {
    io_size_t sz = { .available = 1 };
+   int       rc = dev_io_insn(io, &ps2->raw, &sz);
 
-   if(!dev_io_insn(io, &ps2->raw, &sz))
-      return 0;
+   if(rc != VM_DONE)
+      return rc;
 
    if(ps2->fast_reset)
       panic("ps2 fast reset !");
 
    dev_a20_set((uint8_t)ps2->enabled_a20);
-   return 1;
+   return VM_DONE;
 }

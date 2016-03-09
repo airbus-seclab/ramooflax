@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,21 +20,24 @@
 
 extern info_data_t *info;
 
-void dbg_resume(uint8_t stp)
+int dbg_resume(uint8_t stp)
 {
-   uint8_t rs, who;
+   uint8_t rc, who;
 
    dbg_hard_brk_resume();
-   rs = dbg_soft_resume();
+   rc = dbg_soft_resume();
+   if(!(rc & (VM_DONE|VM_IGNORE)))
+      return rc;
 
    if(stp)
       who = DBG_REQ_USR;
-   else if(rs)
+   else if(rc == VM_DONE)
       who = DBG_REQ_VMM;
    else
-      return;
+      return VM_DONE;
 
    dbg_hard_stp_enable(who);
+   return VM_DONE;
 }
 
 void dbg_enable()

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,8 +25,10 @@ extern info_data_t *info;
 
 int svm_vmexit_resolve_io()
 {
-   if(!dev_access())
-      return 0;
+   int rc = dev_access();
+
+   if(rc != VM_DONE)
+      return rc;
 
    vm_state.rip.raw = vm_ctrls.exit_info_2.raw;
    return emulate_done(VM_DONE, 0);
@@ -44,13 +46,13 @@ int __svm_io_init(io_insn_t *io)
    if(!io->s)
    {
       io->cnt = 1;
-      return 1;
+      return VM_DONE;
    }
 
    if(svm->seg > 5)
    {
       debug(SVM_IO, "invalid io seg pfx %d\n", svm->seg);
-      return 0;
+      return VM_FAIL;
    }
 
    io->seg  = svm->seg;
@@ -60,5 +62,5 @@ int __svm_io_init(io_insn_t *io)
    io->rep  = svm->rep;
    io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 
-   return 1;
+   return VM_FAIL;
 }

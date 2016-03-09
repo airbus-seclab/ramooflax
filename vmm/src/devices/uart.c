@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,13 +33,15 @@ static inline void __dev_uart_flush(uart_t *uart)
 static inline int __dev_uart_tx(uart_t *uart, io_insn_t *io)
 {
    io_size_t sz;
+   int       rc;
 
    do
    {
       sz.available = DEV_UART_BUFF_LEN - uart->index;
 
-      if(!dev_io_insn(io, &uart->buffer[uart->index], &sz))
-	 return 0;
+      rc = dev_io_insn(io, &uart->buffer[uart->index], &sz);
+      if(rc != VM_DONE)
+	 return rc;
 
       uart->index += sz.done;
 
@@ -51,7 +53,7 @@ static inline int __dev_uart_tx(uart_t *uart, io_insn_t *io)
 
    } while(sz.miss);
 
-   return 1;
+   return VM_FAIL;
 }
 
 /*
@@ -231,5 +233,5 @@ int dev_uart(uart_t *uart, io_insn_t *io)
       return __dev_uart_scr(uart, io);
 
    debug(DEV_UART, "unsupported uart operation !\n");
-   return 0;
+   return VM_FAIL;
 }

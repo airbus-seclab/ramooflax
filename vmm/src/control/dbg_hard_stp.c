@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -113,6 +113,7 @@ static int dbg_hard_stp_event_fast_syscall(int tf)
 int dbg_hard_stp_event_gp()
 {
    size_t mn;
+   int    rc;
 
    if(!dbg_hard_stp_enabled())
       return VM_IGNORE;
@@ -121,8 +122,9 @@ int dbg_hard_stp_event_gp()
 
    __db_show_pending();
 
-   if(!disassemble(&info->vm.cpu.disasm))
-      return VM_FAIL;
+   rc = disassemble(&info->vm.cpu.disasm);
+   if(rc != VM_DONE)
+      return rc;
 
    mn = info->vm.cpu.disasm.mnemonic;
    switch(mn)
@@ -147,7 +149,14 @@ int dbg_hard_stp_event()
 	 ,dbg_hard_stp_requestor()?"vmm":"usr");
 
    if(dbg_soft_resuming())
-      dbg_soft_resume_post();
+   {
+      int rc = dbg_soft_resume_post();
+      if(rc != VM_DONE)
+      {
+	 debug(DBG_HARD_STP, "sstep soft resume failed !\n");
+	 return rc;
+      }
+   }
 
    dbg_hard_stp_disable();
 

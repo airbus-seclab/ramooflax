@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -41,9 +41,10 @@ void dev_a20_set(uint8_t on)
 int dev_access()
 {
    io_insn_t io;
+   int       rc = __io_init(&io);
 
-   if(!__io_init(&io))
-      return 0;
+   if(rc != VM_DONE)
+      return rc;
 
 #ifdef CONFIG_HAS_NET
    if(io.port == PCI_CONFIG_ADDR || io.port == PCI_CONFIG_DATA)
@@ -59,8 +60,10 @@ int dev_access()
    if(range(io.port, COM1_START_PORT, COM1_END_PORT))
       return dev_uart(&info->vm.dev.uart, &io);
 
+#ifdef CONFIG_SNAPSHOT
    if(range(io.port, ATA1_START_PORT, ATA1_END_PORT) || io.port == ATA1_CTRL_PORT)
       return dev_ata(&info->vm.dev.ata[0], &io);
+#endif
 
    return dev_io_proxify(&io);
 }

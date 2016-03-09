@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ int __dev_pic_icw1(pic_t *pic, uint8_t data)
    if(pic->icw1.ltim)
    {
       debug(DEV_PIC, "level triggered interrupt mode not supported !\n");
-      return 0;
+      return VM_FAIL;
    }
 
    /* clear mask register  */
@@ -67,7 +67,7 @@ int __dev_pic_icw1(pic_t *pic, uint8_t data)
    /* XXX: clear pending irq !? */
    irq_clear_all_pending();
 
-   return 1;
+   return VM_DONE;
 }
 
 int __dev_pic_icw2(pic_t *pic, uint8_t data)
@@ -83,7 +83,7 @@ int __dev_pic_icw2(pic_t *pic, uint8_t data)
    else
       pic->wait_icw = 0;
 
-   return 1;
+   return VM_DONE;
 }
 
 int __dev_pic_icw3(pic_t *pic, uint8_t data)
@@ -97,7 +97,7 @@ int __dev_pic_icw3(pic_t *pic, uint8_t data)
    else
       pic->wait_icw = 0;
 
-   return 1;
+   return VM_DONE;
 }
 
 int __dev_pic_icw4(pic_t *pic, uint8_t data)
@@ -109,13 +109,13 @@ int __dev_pic_icw4(pic_t *pic, uint8_t data)
    if(!pic->icw4.x86)
    {
       debug(DEV_PIC, "MCS-80/85 mode not supported !\n");
-      return 0;
+      return VM_FAIL;
    }
 
    if(pic->icw4.buff)
    {
       debug(DEV_PIC, "buffered mode not supported !\n");
-      return 0;
+      return VM_FAIL;
    }
 
    /* aeoi only allowed on master */
@@ -131,7 +131,7 @@ int __dev_pic_icw4(pic_t *pic, uint8_t data)
    }
 
    pic->wait_icw = 0;
-   return 1;
+   return VM_DONE;
 }
 
 int __dev_pic_imr(pic_t *pic, uint8_t vm_imr)
@@ -166,7 +166,7 @@ int __dev_pic_ocw2(pic_t *pic, uint8_t data)
    pic->ocw2.raw = data;
 
    out(data, PIC_OCW2(pic->base));
-   return 1;
+   return VM_DONE;
 }
 
 int __dev_pic_status(pic_t *pic, io_insn_t *io)
@@ -185,7 +185,7 @@ int __dev_pic_status(pic_t *pic, io_insn_t *io)
       else
       {
 	 debug(DEV_PIC, "read status from bad register (0x%x) !\n", pic->ocw3.reg);
-	 return 0;
+	 return VM_FAIL;
       }
 
       *target = in(io->port);
@@ -209,7 +209,7 @@ int __dev_pic_ocw3(pic_t *pic, uint8_t data)
    if(pic->ocw3.smm == PIC_OCW3_SPECIAL_MASK_MODE_ENABLED)
    {
       debug(DEV_PIC, "special mask mode not supported !\n");
-      return 0;
+      return VM_FAIL;
    }
 
    out(data, PIC_OCW3(pic->base));
@@ -217,7 +217,7 @@ int __dev_pic_ocw3(pic_t *pic, uint8_t data)
    if(pic->ocw3.poll)
       debug(DEV_PIC, "poll command\n");
 
-   return 1;
+   return VM_DONE;
 }
 
 int dev_pic(pic_t *pic, io_insn_t *io)
@@ -229,9 +229,10 @@ int dev_pic(pic_t *pic, io_insn_t *io)
    else
    {
       uint8_t data;
+      int     rc = dev_io_insn(io, &data, &sz);
 
-      if(!dev_io_insn(io, &data, &sz))
-	 return 0;
+      if(rc != VM_DONE)
+	 return rc;
 
       /* ICW1/OCW2/OCW3 */
       if((io->port & 1) == 0)
@@ -245,7 +246,7 @@ int dev_pic(pic_t *pic, io_insn_t *io)
 	 else
 	 {
 	    debug(DEV_PIC, "invalid command (0x%x) !\n", data);
-	    return 0;
+	    return VM_FAIL;
 	 }
       }
       /* IMR/ICW2/ICW3/ICW4 : complete/uncomplete configuration */
@@ -262,7 +263,7 @@ int dev_pic(pic_t *pic, io_insn_t *io)
       }
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 int dev_pic_acting(uint8_t irq, uint32_t *vector)
@@ -289,14 +290,14 @@ int dev_pic_acting(uint8_t irq, uint32_t *vector)
       if(pic->icw4.aeoi)
 	 pic_eoi(pic->base);
 
-      return 1;
+      return VM_DONE;
    }
 
    /* spurious */
    pic->isr = pic_isr(pic->base);
 
    if(!(pic->isr & (1<<r_irq)))
-      return 1;
+      return VM_DONE;
 
 
    /* disabled irq line */
@@ -313,7 +314,7 @@ int dev_pic_acting(uint8_t irq, uint32_t *vector)
 	  pic_imr(pic->base), pic_isr(pic->base), pic_irr(pic->base)
      );
 
-   return 0;
+   return VM_FAIL;
 }
 
 uint8_t pic_irr(uint8_t base)

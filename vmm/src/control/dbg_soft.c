@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,10 +23,12 @@ extern info_data_t *info;
 
 static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
 {
-   if(ctrl_mem_write_with(&bp->cr3, bp->addr, &bp->byte, 1) != VM_DONE)
+   int rc = ctrl_mem_write_with(&bp->cr3, bp->addr, &bp->byte, 1);
+
+   if(rc != VM_DONE)
    {
       debug(DBG_SOFT, "restore insn @ 0x%X failed\n", bp->addr);
-      return VM_FAIL;
+      return rc;
    }
 
    bp->sts.st = 0;
@@ -37,11 +39,12 @@ static int __dbg_soft_restore_insn(dbg_soft_bp_t *bp)
 static int __dbg_soft_restore_bp(dbg_soft_bp_t *bp)
 {
    uint8_t brk_insn = BREAKPOINT_INSN;
+   int     rc = ctrl_mem_write_with(&bp->cr3, bp->addr, &brk_insn, 1);
 
-   if(ctrl_mem_write_with(&bp->cr3, bp->addr, &brk_insn, 1) != VM_DONE)
+   if(rc != VM_DONE)
    {
       debug(DBG_SOFT, "restore soft bp @ 0x%X failed\n", bp->addr);
-      return VM_FAIL;
+      return rc;
    }
 
    bp->sts.st = 1;
@@ -91,14 +94,17 @@ static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
 
    if(!bp->sts.on)
    {
+      int rc;
+
       bp->addr    = addr;
       bp->sts.on  = 1;
       bp->cr3.raw = info->vmm.ctrl.active_cr3->raw;
 
-      if(ctrl_mem_read_with(&bp->cr3, addr, &bp->byte, 1) != VM_DONE)
+      rc = ctrl_mem_read_with(&bp->cr3, addr, &bp->byte, 1);
+      if(rc != VM_DONE)
       {
 	 debug(DBG_SOFT, "set soft bp @ 0x%X failed\n", addr);
-	 return VM_FAIL;
+	 return rc;
       }
 
       debug(DBG_SOFT, "set soft bp @ 0x%X\n", addr);
@@ -230,32 +236,33 @@ int dbg_soft_del(offset_t addr)
 */
 int dbg_soft_resume()
 {
+   int            rc;
    dbg_soft_bp_t *bp = info->vmm.ctrl.dbg.evt.soft;
 
    if(info->vmm.ctrl.dbg.evt.type != DBG_EVT_TYPE_SOFT_BRK)
-      return 0;
+      return VM_IGNORE;
 
    if(!bp->sts.on || bp->addr != info->vmm.ctrl.dbg.evt.addr)
-      return 0;
+      return VM_IGNORE;
 
-   if(__dbg_soft_restore_insn(bp) == VM_DONE)
+   rc = __dbg_soft_restore_insn(bp);
+   if(rc == VM_DONE)
    {
       dbg_soft_set_resume(1);
-      return 1;
+      return VM_DONE;
    }
 
-   return 0;
+   return rc;
 }
 
 int dbg_soft_resume_post()
 {
-   if(__dbg_soft_restore_bp(info->vmm.ctrl.dbg.evt.soft) == VM_DONE)
-   {
-      dbg_soft_set_resume(0);
-      return 1;
-   }
+   int rc = __dbg_soft_restore_bp(info->vmm.ctrl.dbg.evt.soft);
 
-   return 0;
+   if(rc == VM_DONE)
+      dbg_soft_set_resume(0);
+
+   return rc;
 }
 
 int dbg_soft_disarm()
@@ -263,11 +270,11 @@ int dbg_soft_disarm()
    if(dbg_soft_for_each(dbg_soft_restore_insn, 0, VM_FAIL) == VM_FAIL)
    {
       debug(DBG_SOFT, "fail to disarm bp\n");
-      return 0;
+      return VM_FAIL;
    }
 
    dbg_soft_set_disarm(1);
-   return 1;
+   return VM_DONE;
 }
 
 int dbg_soft_rearm()
@@ -275,11 +282,11 @@ int dbg_soft_rearm()
    if(dbg_soft_for_each(dbg_soft_restore_bp, 0, VM_FAIL) == VM_FAIL)
    {
       debug(DBG_SOFT, "fail to rearm bp\n");
-      return 0;
+      return VM_FAIL;
    }
 
    dbg_soft_set_disarm(0);
-   return 1;
+   return VM_DONE;
 }
 
 int dbg_soft_event(ctrl_evt_hdl_t *hdlr)

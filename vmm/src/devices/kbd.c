@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ int __dev_kbd_ctrl(kbd_t *kbd, io_insn_t *io)
       out(info->vm.cpu.gpr->rax.blow, io->port);
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 int __dev_kbd_data(kbd_t *kbd, io_insn_t *io)
@@ -68,7 +68,7 @@ int __dev_kbd_data(kbd_t *kbd, io_insn_t *io)
       out(rax->blow, io->port);
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 int dev_kbd(kbd_t *kbd, io_insn_t *io)
@@ -86,5 +86,5 @@ int dev_kbd(kbd_t *kbd, io_insn_t *io)
    else
       out(info->vm.cpu.gpr->rax.blow, io->port);
 
-   return 1;
+   return VM_DONE;
 }

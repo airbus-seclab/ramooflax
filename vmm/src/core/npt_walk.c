@@ -44,7 +44,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
       debug(PG_WLK, "(n)pml4e not present\n");
       wlk->type  = NPG_WALK_TYPE_PML4E;
       wlk->entry = (void*)pml4e;
-      return VM_FAIL;
+      return VM_FAULT;
    }
 
    pdp  = (npg_pdpe_t*)page_addr(pml4e->addr);
@@ -56,7 +56,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
       debug(PG_WLK, "(n)pdpe not present\n");
       wlk->type  = NPG_WALK_TYPE_PDPE;
       wlk->entry = (void*)pdpe;
-      return VM_FAIL;
+      return VM_FAULT;
    }
 
    if(info->vm.cpu.skillz.pg_1G && npg_large(pdpe))
@@ -77,7 +77,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
       debug(PG_WLK, "(n)pde not present\n");
       wlk->type  = NPG_WALK_TYPE_PDE;
       wlk->entry = (void*)pde;
-      return VM_FAIL;
+      return VM_FAULT;
    }
 
    if(info->vm.cpu.skillz.pg_2M && npg_large(pde))
@@ -98,7 +98,7 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, npg_wlk_t *wlk)
       debug(PG_WLK, "(n)pte not present\n");
       wlk->type  = NPG_WALK_TYPE_PTE;
       wlk->entry = (void*)pte;
-      return VM_FAIL;
+      return VM_FAULT;
    }
 
    wlk->addr  = pg_4K_addr((offset_t)pte->addr) + pg_4K_offset(vaddr);

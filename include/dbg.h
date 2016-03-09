@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ typedef struct ctrl_debugger
 /*
 ** Functions
 */
-void  dbg_resume(uint8_t);
+int   dbg_resume(uint8_t);
 void  dbg_enable();
 void  dbg_disable();
 

@@ -25,6 +25,7 @@ extern info_data_t *info;
 static int __dev_ata_device(ata_t *ata, io_insn_t *io)
 {
    ata_dev_reg_t dev;
+   int           rc;
    io_size_t     sz = {.available = sizeof(ata_dev_reg_t)};
 
    if(io->in)
@@ -35,11 +36,12 @@ static int __dev_ata_device(ata_t *ata, io_insn_t *io)
       if((io->sz * io->cnt) > sizeof(ata_dev_reg_t))
       {
 	 debug(DEV_ATA, "unsupported ata dev access\n");
-	 return 0;
+	 return VM_FAIL;
       }
 
-      if(!dev_io_insn(io, (void*)&dev.raw, &sz))
-   	 return 0;
+      rc = dev_io_insn(io, (void*)&dev.raw, &sz);
+      if(rc != VM_DONE)
+	 return rc;
 
       ata->dev_head = dev;
       debug(DEV_ATA, "ata device [%s]\n", dev.dev ? "SLAVE":"MASTER");
@@ -56,10 +58,10 @@ static int __fake_ata_status(ata_t *ata)
    else
    {
       debug(DEV_ATA, "can't fake status for previous out(0x%x)\n", ata->last_out);
-      return 0;
+      return VM_FAIL;
    }
 
-   return 1;
+   return VM_DONE;
 }
 
 static int __dev_ata_status(ata_t *ata, io_insn_t *io)
@@ -166,7 +168,7 @@ static int __dev_ata_data(ata_t *ata, io_insn_t *io)
       return dev_io_proxify(io);
 
    rc = dev_io_proxify(io);
-   if(rc)
+   if(rc == VM_DONE)
    {
       disk->lba++;
       disk->cnt--;
