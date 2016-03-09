@@ -180,6 +180,7 @@ void pmem_init(mbi_t *mbi)
 
    fixed = (VMM_MIN_STACK_SIZE
 	    + pool_sz
+	    + VMM_IO_POOL_SZ
 	    + pmem_vmm_pg_size(&vmm_pg)
 	    + pmem_vm_pg_size(&vm_pg)
 	    + sizeof(vmc_t)
@@ -213,6 +214,9 @@ void pmem_init(mbi_t *mbi)
    vmm->pool.addr = area;
    vmm->pool.sz = pool_sz;
    area += pool_sz;
+
+   vmm->io_pool = area;
+   area += VMM_IO_POOL_SZ;
 
    area = pmem_vmm_pg_alloc(vmm, area, &vmm_pg);
    area = pmem_vm_pg_alloc(vm, area, &vm_pg);

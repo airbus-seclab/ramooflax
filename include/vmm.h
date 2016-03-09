@@ -94,6 +94,9 @@ typedef struct vmm_cpu
 
 } __attribute__((packed)) vmm_cpu_t;
 
+
+#define VMM_IO_POOL_SZ  (4*PAGE_SIZE)
+
 /*
 ** VMM structure
 */
@@ -101,6 +104,7 @@ typedef struct vmm
 {
    vmm_cpu_t  cpu;              /* vmm cpu info */
    vmm_pool_t pool;             /* vmm page pool */
+   offset_t   io_pool;          /* vmm io cache pool */
    vmm_ctrl_t ctrl;             /* vmm controller */
    offset_t   entry;            /* vmm entry point */
    offset_t   base;             /* vmm relocation addr */

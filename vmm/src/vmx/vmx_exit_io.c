@@ -44,7 +44,18 @@ int __vmx_io_init(io_insn_t *io)
    io->in   = vmx_io->d;
    io->s    = vmx_io->s;
    io->sz   = vmx_io->sz+1;
+   io->rep  = vmx_io->rep;
    io->port = vmx_io->port;
+
+   /*
+   ** XXX: to be removed, vmx does not provide bad info
+   ** (maybe vmware ?)
+   */
+   if(io->sz != 1 && io->sz != 2 && io->sz != 4)
+   {
+      debug(VMX_IO, "invalid io size (%d)\n", io->sz);
+      return VM_FAIL;
+   }
 
    if(!io->s)
    {
@@ -107,7 +118,6 @@ int __vmx_io_init(io_insn_t *io)
 
    io->back = vm_state.rflags.df;
    io->msk  = (-1ULL)>>(64 - 16*io->addr);
-   io->rep  = vmx_io->rep;
    io->cnt  = io->rep ? (info->vm.cpu.gpr->rcx.raw & io->msk) : 1;
 
    return VM_DONE;

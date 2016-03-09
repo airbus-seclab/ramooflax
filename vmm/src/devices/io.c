@@ -28,7 +28,7 @@ static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
    int rc = vm_write_mem_sz(io->dst.linear, io->src.u8, sz->miss, &sz->done);
 
    if(rc != VM_DONE)
-      debug(DEV_IO, "io fwd ins: vm_write_mem() fail\n");
+      debug(DEV_IO_ERR, "io fwd ins: vm_write_mem() fail\n");
 
    sz->available -= sz->done;
    sz->miss      -= sz->done;
@@ -40,7 +40,7 @@ static int __io_insn_string_out_fwd(io_insn_t *io, io_size_t *sz)
    int rc = vm_read_mem_sz(io->src.linear, io->dst.u8, sz->miss, &sz->done);
 
    if(rc != VM_DONE)
-      debug(DEV_IO, "io fwd outs: vm_read_mem() fail\n");
+      debug(DEV_IO_ERR, "io fwd outs: vm_read_mem() fail\n");
 
    sz->available -= sz->done;
    sz->miss      -= sz->done;
@@ -49,13 +49,13 @@ static int __io_insn_string_out_fwd(io_insn_t *io, io_size_t *sz)
 
 static int __io_insn_string_in_bwd(io_insn_t __unused__ *io, io_size_t __unused__ *sz)
 {
-   debug(DEV_IO, "io bwd ins: not implemented !\n");
+   debug(DEV_IO_ERR, "io bwd ins: not implemented !\n");
    return VM_FAIL;
 }
 
 static int __io_insn_string_out_bwd(io_insn_t __unused__ *io, io_size_t __unused__ *sz)
 {
-   debug(DEV_IO, "io bwd outs: not implemented !\n");
+   debug(DEV_IO_ERR, "io bwd outs: not implemented !\n");
    return VM_FAIL;
 }
 
@@ -116,6 +116,9 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    }
    else
    {
+      if(io->seg != IO_S_PFX_DS)
+	 debug(DEV_IO_ERR, "segment prefix override (%d)\n",io->seg);
+
       io->dst.addr = device;
       __string_io_linear(io->src.linear, io);
       rc = __io_insn_string_out(io, sz);
@@ -128,7 +131,7 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    }
 
    if(sz->miss)
-      debug(DEV_IO, "missing %d bytes, available %d, done %d !\n",
+      debug(DEV_IO_ERR, "missing %d bytes, available %d, done %d !\n",
 	    sz->miss, sz->available, sz->done);
 
    return rc;
@@ -136,6 +139,12 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
 
 static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
 {
+   if(io->rep)
+   {
+      debug(DEV_IO_ERR, "simple emu IO with rep prefix\n");
+      return VM_FAIL;
+   }
+
    if(io->in)
    {
       io->dst.addr = (void*)&info->vm.cpu.gpr->rax.low;
@@ -188,11 +197,11 @@ static int __io_string_native(io_insn_t *io, void *device)
 
    if(io->back)
    {
-      debug(DEV_IO, "native io bwd string: not implemented !\n");
+      debug(DEV_IO_ERR, "native io bwd string: not implemented !\n");
       return VM_FAIL;
    }
 
-   debug(DEV_IO, "native io string: %D bytes (cnt %D, sz %d)\n"
+   debug(DEV_IO_STR, "native io string: %D bytes (cnt %D, sz %d)\n"
 	 ,io->cnt*io->sz, io->cnt, io->sz);
 
    if(io->in)
@@ -217,6 +226,12 @@ static int __io_string_native(io_insn_t *io, void *device)
 static int __io_simple_native(io_insn_t *io, void *device)
 {
    raw32_t *data = (raw32_t*)device;
+
+   if(io->rep)
+   {
+      debug(DEV_IO_ERR, "simple native IO with rep prefix\n");
+      return VM_FAIL;
+   }
 
    if(io->in)
       switch(io->sz)
@@ -304,39 +319,24 @@ static int __dev_io_proxy_filter_out(io_insn_t    *io,
 
 int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
 {
-   uint64_t  space;
    loc_t     device;
    io_size_t sz;
-   int       rc;
 
    sz.available = io->sz * io->cnt;
 
-   if(sz.available <= sizeof(uint64_t))
-      device.u64 = &space;
-   else if(sz.available <= PAGE_SIZE)
+   if(sz.available > VMM_IO_POOL_SZ)
    {
-      device.linear = pool_pop_page();
-      if(!device.linear)
-      {
-	 debug(DEV_IO, "proxy io memory no more page\n");
-	 return VM_FAIL;
-      }
-   }
-   else
-   {
-      debug(DEV_IO, "proxy io memory need %D\n", sz.available);
+      debug(DEV_IO_ERR, "vmm io pool sz too small %D < %D\n"
+	    ,VMM_IO_POOL_SZ, sz.available);
       return VM_FAIL;
    }
 
+   device.linear = info->vmm.io_pool;
+
    if(io->in)
-      rc = __dev_io_proxy_filter_in(io, filter, arg, device.addr, &sz);
-   else
-      rc = __dev_io_proxy_filter_out(io, filter, arg, device.addr, &sz);
+      return __dev_io_proxy_filter_in(io, filter, arg, device.addr, &sz);
 
-   if(device.u64 != &space)
-      pool_push_page(device.linear);
-
-   return rc;
+   return __dev_io_proxy_filter_out(io, filter, arg, device.addr, &sz);
 }
 
 int dev_io_proxify(io_insn_t *io)

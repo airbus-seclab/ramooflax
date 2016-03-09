@@ -40,7 +40,7 @@ void dev_a20_set(uint8_t on)
 
 int dev_access()
 {
-   io_insn_t io;
+   io_insn_t io = {.raw = 0};
    int       rc = __io_init(&io);
 
    if(rc != VM_DONE)
@@ -60,10 +60,8 @@ int dev_access()
    if(range(io.port, COM1_START_PORT, COM1_END_PORT))
       return dev_uart(&info->vm.dev.uart, &io);
 
-#ifdef CONFIG_SNAPSHOT
    if(range(io.port, ATA1_START_PORT, ATA1_END_PORT) || io.port == ATA1_CTRL_PORT)
       return dev_ata(&info->vm.dev.ata[0], &io);
-#endif
 
    return dev_io_proxify(&io);
 }
