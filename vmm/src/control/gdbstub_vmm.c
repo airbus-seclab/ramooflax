@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -726,44 +726,44 @@ static void gdb_vmm_filter_cpuid(uint8_t *data, size_t len)
    gdb_ok();
 }
 
-static gdb_vmm_hdl_t gdb_vmm_handlers[] = {
-   gdb_vmm_rd_all_sysregs,
-   gdb_vmm_wr_all_sysregs,
-   gdb_vmm_rd_sysreg,
-   gdb_vmm_wr_sysreg,
-   gdb_vmm_set_lbr,
-   gdb_vmm_del_lbr,
-   gdb_vmm_get_lbr,
-   gdb_vmm_rd_excp_mask,
-   gdb_vmm_wr_excp_mask,
-   gdb_vmm_set_active_cr3,
-   gdb_vmm_del_active_cr3,
-   gdb_vmm_rd_pmem,
-   gdb_vmm_wr_pmem,
-   gdb_vmm_rd_vmem,
-   gdb_vmm_wr_vmem,
-   gdb_vmm_translate,
-   gdb_vmm_rd_cr_rd_mask,
-   gdb_vmm_wr_cr_rd_mask,
-   gdb_vmm_rd_cr_wr_mask,
-   gdb_vmm_wr_cr_wr_mask,
-   gdb_vmm_keep_active_cr3,
-   gdb_vmm_set_affinity,
-   gdb_vmm_clear_idt_event,
-   gdb_vmm_rdtsc,
-   gdb_vmm_npg_get_pte,
-   gdb_vmm_npg_set_pte,
-   gdb_vmm_get_fault,
-   gdb_vmm_get_idt_event,
-   gdb_vmm_can_cli,
-   gdb_vmm_npg_translate,
-   gdb_vmm_npg_map,
-   gdb_vmm_npg_unmap,
-   gdb_vmm_cpu_mode,
-   gdb_vmm_rd_filter_mask,
-   gdb_vmm_wr_filter_mask,
-   gdb_vmm_rd_msr,
-   gdb_vmm_filter_cpuid,
+static gdb_vmm_hdl_dsc_t gdb_vmm_handlers[] = {
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_all_sysregs),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_all_sysregs),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_sysreg),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_sysreg),
+   _gdb_vmm_dsc_gen(gdb_vmm_set_lbr),
+   _gdb_vmm_dsc_gen(gdb_vmm_del_lbr),
+   _gdb_vmm_dsc_gen(gdb_vmm_get_lbr),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_excp_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_excp_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_set_active_cr3),
+   _gdb_vmm_dsc_gen(gdb_vmm_del_active_cr3),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_pmem),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_pmem),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_vmem),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_vmem),
+   _gdb_vmm_dsc_gen(gdb_vmm_translate),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_cr_rd_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_cr_rd_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_cr_wr_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_cr_wr_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_keep_active_cr3),
+   _gdb_vmm_dsc_gen(gdb_vmm_set_affinity),
+   _gdb_vmm_dsc_gen(gdb_vmm_clear_idt_event),
+   _gdb_vmm_dsc_gen(gdb_vmm_rdtsc),
+   _gdb_vmm_dsc_gen(gdb_vmm_npg_get_pte),
+   _gdb_vmm_dsc_gen(gdb_vmm_npg_set_pte),
+   _gdb_vmm_dsc_gen(gdb_vmm_get_fault),
+   _gdb_vmm_dsc_gen(gdb_vmm_get_idt_event),
+   _gdb_vmm_dsc_gen(gdb_vmm_can_cli),
+   _gdb_vmm_dsc_gen(gdb_vmm_npg_translate),
+   _gdb_vmm_dsc_gen(gdb_vmm_npg_map),
+   _gdb_vmm_dsc_gen(gdb_vmm_npg_unmap),
+   _gdb_vmm_dsc_gen(gdb_vmm_cpu_mode),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_filter_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_wr_filter_mask),
+   _gdb_vmm_dsc_gen(gdb_vmm_rd_msr),
+   _gdb_vmm_dsc_gen(gdb_vmm_filter_cpuid),
 };
 
 void gdb_cmd_vmm(uint8_t *data, size_t len)
@@ -772,10 +772,10 @@ void gdb_cmd_vmm(uint8_t *data, size_t len)
 
    data++; len--;
 
-   if(idx <= sizeof(gdb_vmm_handlers)/sizeof(gdb_vmm_hdl_t))
+   if(idx <= sizeof(gdb_vmm_handlers)/sizeof(gdb_vmm_hdl_dsc_t))
    {
-      debug(GDBSTUB_CMD, "gdb_vmm handler call %d\n", idx);
-      gdb_vmm_handlers[idx](data, len);
+      debug(GDBSTUB_CMD, "%s\n", gdb_vmm_handlers[idx].nm);
+      gdb_vmm_handlers[idx].hd(data, len);
       return;
    }
 

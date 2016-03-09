@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,15 @@
 #define GDB_CMD_VMM    5
 
 typedef void (*gdb_vmm_hdl_t)(uint8_t*, size_t);
+
+typedef struct gdb_vmm_hanlder_descriptor
+{
+   gdb_vmm_hdl_t hd;
+   char*         nm;
+
+} __attribute__((packed)) gdb_vmm_hdl_dsc_t;
+
+#define _gdb_vmm_dsc_gen(_X_)  {.hd = _X_, .nm = #_X_}
 
 /*
 ** Functions
