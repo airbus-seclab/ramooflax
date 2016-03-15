@@ -46,8 +46,8 @@ static void vm_dev_init()
    __deny_io(PS2_SYS_CTRL_PORT_A);
 
    /* ata filtering */
-   __deny_io(ATA1_CTRL_PORT);
-   __deny_io_range(ATA1_START_PORT, ATA1_END_PORT);
+   /* __deny_io(ATA1_CTRL_PORT); */
+   /* __deny_io_range(ATA1_START_PORT, ATA1_END_PORT); */
 
    /* prevent net card detection */
 #ifdef CONFIG_HAS_NET
