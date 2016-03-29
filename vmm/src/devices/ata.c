@@ -135,6 +135,7 @@ static int __dev_ata_cmd_filter(void *device, void *arg)
 	    ,(ata->cmd == ATA_WRITE_SECTOR_CMD) ? "write":"read"
 	    ,disk->cnt, disk->lba);
    }
+#ifdef CONFIG_DEV_ATA_DBG
    else
    {
       char *str;
@@ -153,6 +154,7 @@ static int __dev_ata_cmd_filter(void *device, void *arg)
       }
       debug(DEV_ATA, "ata cmd [%s]\n", str);
    }
+#endif
 
    return VM_DONE;
 }
