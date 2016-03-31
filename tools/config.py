@@ -74,19 +74,21 @@ class Config(Ordict):
                       "debug"  : "include/config_debug.h"}
 
         self.read("default")
-        self.update("config")
+        self.update("config", False)
         self.__resolve_items()
 
-    def read(self, tag):
-        self.__read(tag, False)
+    def read(self, tag, mandatory=True):
+        self.__read(tag, False, mandatory)
 
-    def update(self, tag):
-        self.__read(tag, True)
+    def update(self, tag, mandatory=True):
+        self.__read(tag, True, mandatory)
 
-    def __read(self, tag, update):
+    def __read(self, tag, update, mandatory):
         try:
             fd = open(self.files[tag])
         except:
+            if not mandatory:
+                return
             print "failed to open config", self.files[tag]
             sys.exit(1)
 
