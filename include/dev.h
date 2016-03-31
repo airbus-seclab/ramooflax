@@ -21,6 +21,7 @@
 #include <config.h>
 #include <types.h>
 #include <smap.h>
+#include <ppg.h>
 #include <io.h>
 #include <mbi.h>
 
@@ -44,7 +45,8 @@ typedef struct hardware_device_data
 
 typedef struct hardware_memory_data
 {
-   offset_t top;
+   offset_t    top;  /* max mapped virtual address */
+   ppg_info_t  ppg;  /* physical page descriptors  */
 
 } __attribute__((packed)) hrdw_mem_t;
 

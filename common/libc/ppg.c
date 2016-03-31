@@ -15,23 +15,53 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __PMEM_H__
-#define __PMEM_H__
+#include <ppg.h>
+#include <debug.h>
+#include <info_data.h>
 
-#include <mbi.h>
-#include <types.h>
+extern info_data_t *info;
 
-/* convenient */
-typedef struct paging_count
+#ifdef __INIT__
+void ppg_desc_init()
 {
-   size_t pdp, pd, pt;
+   ppg_info_t *ppg  = &info->hrd.mem.ppg;
+   ppg_dsc_t  *dsc  = ppg->dsc;
+   offset_t    end  = info->hrd.mem.top;
+   offset_t    addr = 0;
 
-} __attribute__((packed)) pg_cnt_t;
+   ppg->vmm.nr = 0;
+   ppg->vm.nr  = 0;
 
-/*
-** Functions
-*/
-void  pmem_init(mbi_t*);
+   while(addr < end)
+   {
+      dsc->addr = addr;
 
+      if(vmm_area(addr))
+      {
+	 dsc->count = 1;
+	 dsc->vmm   = 1;
+	 cdll_fill(ppg->vmm.list, dsc);
+	 ppg->vmm.nr++;
+      }
+      else
+      {
+	 cdll_fill(ppg->vm.list, dsc);
+	 ppg->vm.nr++;
+      }
 
+      addr += PAGE_SIZE;
+      dsc++;
+   }
+}
 #endif
+
+ppg_dsc_t* ppg_get_desc(offset_t addr)
+{
+   ppg_info_t *ppg = &info->hrd.mem.ppg;
+   offset_t    n   = page_nr(addr);
+
+   if(n < ppg->nr)
+      return &ppg->dsc[n];
+
+   return ((ppg_dsc_t*)0);
+}

@@ -21,8 +21,7 @@
 /*
 ** Circular Double Linked List Functions
 */
-
-#define cdll_push(__lst__, __new__)			\
+#define __cdll_add(__lst__, __new__)			\
    ({							\
       if((__lst__))					\
       {							\
@@ -33,7 +32,18 @@
       }							\
       else						\
 	 (__new__)->next = (__new__)->prev = (__new__);	\
-      							\
+   })
+
+#define cdll_fill(__lst__, __new__)			 \
+   ({							 \
+      __cdll_add(__lst__, __new__);			 \
+      if(!(__lst__))					 \
+	 (__lst__) = (__new__);				 \
+   })
+
+#define cdll_push(__lst__, __new__)			\
+   ({							\
+      __cdll_add(__lst__, __new__);			\
       (__lst__) = (__new__);				\
    })
 

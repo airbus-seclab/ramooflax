@@ -139,10 +139,12 @@ void pmem_init(mbi_t *mbi)
    info_data_t  *info_r;
    size_t       vmm_elf_sz, smap_sz;
    size_t       pool_sz, pool_opt, pool_desc_sz;
+   size_t       ppg_dsc_sz;
    pg_cnt_t     vmm_pg, vm_pg;
    offset_t     fixed, area;
    module_t     *mod;
    smap_t       *smap;
+   ppg_info_t   *ppg;
    vmm_t        *vmm;
    vm_t         *vm;
 
@@ -154,6 +156,7 @@ void pmem_init(mbi_t *mbi)
 
    mod  = (module_t*)((offset_t)mbi->mods_addr + sizeof(module_t));
    smap = &info->vm.dev.mem.smap;
+   ppg  = &info->hrd.mem.ppg;
    vmm  = &info->vmm;
    vm   = &info->vm;
 
@@ -162,10 +165,12 @@ void pmem_init(mbi_t *mbi)
    */
    smap_parse(mbi, smap, &info->area.end, &info->hrd.mem.top);
    pmem_pg_predict(&vmm_pg, &vm_pg);
+   ppg->nr = page_nr(info->hrd.mem.top);
 
-   smap_sz = smap->nr*sizeof(smap_e_t);
+   smap_sz    = smap->nr*sizeof(smap_e_t);
+   ppg_dsc_sz = ppg->nr*sizeof(ppg_dsc_t);
    vmm_elf_sz = elf_module_load_size(mod);
-   pool_sz = pmem_vm_pg_pool_size(&vm_pg);
+   pool_sz    = pmem_vm_pg_pool_size(&vm_pg);
 
    if(!page_aligned(info->area.end))
       info->area.end = page_align(info->area.end);
@@ -191,6 +196,7 @@ void pmem_init(mbi_t *mbi)
 	    + vmm_elf_sz + sizeof(long)
 	    + smap_sz
 	    + pool_desc_sz
+	    + ppg_dsc_sz
 	    + sizeof(info_data_t));
 
    info->area.start = page_align(info->area.end - fixed);
@@ -245,6 +251,9 @@ void pmem_init(mbi_t *mbi)
    vmm->pool.all = (pool_pg_desc_t*)area;
    area += pool_desc_sz;
 
+   ppg->dsc = (ppg_dsc_t*)area;
+   area += ppg_dsc_sz;
+
    info_r = (info_data_t*)area;
    area += sizeof(info_data_t);
 
@@ -258,6 +267,7 @@ void pmem_init(mbi_t *mbi)
    /* loaded vmm starts with 'info_data' pointer */
    *(info_data_t**)vmm->base = info_r;
 
+   ppg_desc_init();
    smap_init(mbi, smap, info->area.start);
    pool_init();
 
@@ -280,6 +290,4 @@ void pmem_init(mbi_t *mbi)
   mmio memory should be mapped to uncachable
   or pte should be set PCD/PWT
 */
-
-
 }

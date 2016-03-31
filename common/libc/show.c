@@ -28,6 +28,7 @@ void show_vmm_mem_map()
           "area end      : 0x%X\n"
           "area size     : %D B (%D KB)\n"
           "vmm stack     : 0x%X\n"
+          "vmm pg dsc    : 0x%X (%D pages)\n"
           "vmm pool      : 0x%X (%D KB)\n"
           "vmm elf       : 0x%X - 0x%X (%D B)\n"
           "gdt           : 0x%X\n"
@@ -38,6 +39,7 @@ void show_vmm_mem_map()
           ,info->area.end
           ,info->area.size, (info->area.size)>>10
           ,info->vmm.stack_bottom
+          ,info->hrd.mem.ppg.dsc, info->hrd.mem.ppg.nr
           ,info->vmm.pool.addr, (info->vmm.pool.sz)>>10
           ,info->vmm.base, info->vmm.base+info->vmm.size, info->vmm.size
           ,info->vmm.cpu.sg->gdt
