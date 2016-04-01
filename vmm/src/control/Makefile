@@ -17,3 +17,5 @@ obj +=	gdbstub.o	\
 else
 obj +=	local_evt.o
 endif
+
+obj +=	vmm_evt.o
