@@ -71,7 +71,7 @@ static int gdbstub_evt_cpuid(arg_t __unused__ arg)
    return VM_DONE;
 }
 
-ctrl_evt_hdl_t ctrl_evt_dft_hdl[] = {
+ctrl_evt_hdl_t ctrl_evt_usr_hdl[] = {
    gdbstub_evt_cr_rd,
    gdbstub_evt_cr_wr,
    gdbstub_evt_excp,

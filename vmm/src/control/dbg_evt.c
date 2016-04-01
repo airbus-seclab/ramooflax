@@ -31,7 +31,7 @@ int dbg_evt_soft()
    {
       arg_t arg;
       arg.addr = &info->vmm.ctrl.dbg.evt;
-      ctrl_evt_setup(CTRL_EVT_TYPE_BRK, hdlr, arg);
+      ctrl_evt_setup(CTRL_EVT_USR_TYPE_BRK, hdlr, arg);
    }
 
    return rc;
@@ -47,13 +47,13 @@ int dbg_evt_hard()
 
    if(__dr6.bs)
    {
-      type = CTRL_EVT_TYPE_SSTEP;
+      type = CTRL_EVT_USR_TYPE_SSTEP;
       hdlr = 0;
       rc   = dbg_hard_stp_event();
    }
    else
    {
-      type = CTRL_EVT_TYPE_BRK;
+      type = CTRL_EVT_USR_TYPE_BRK;
       rc = dbg_hard_brk_event(&hdlr);
    }
 

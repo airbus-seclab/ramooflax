@@ -22,53 +22,17 @@
 
 extern info_data_t *info;
 
-static int local_evt_cr_rd(arg_t __unused__ arg)
+static int vmm_evt_excp(arg_t __unused__ arg)
 {
-   return VM_DONE;
+   return VM_IGNORE;
 }
 
-static int local_evt_cr_wr(arg_t __unused__ arg)
+static int vmm_evt_hyp(arg_t __unused__ arg)
 {
-   return VM_DONE;
+   return VM_IGNORE;
 }
 
-static int local_evt_excp(arg_t __unused__ arg)
-{
-   return VM_DONE;
-}
-
-static int local_evt_brk(arg_t __unused__ arg)
-{
-   return VM_DONE;
-}
-
-static int local_evt_stp(arg_t __unused__ arg)
-{
-   return VM_DONE;
-}
-
-static int local_evt_npf(arg_t __unused__ arg)
-{
-   return VM_DONE;
-}
-
-static int local_evt_hyp(arg_t __unused__ arg)
-{
-   return VM_DONE;
-}
-
-static int local_evt_cpuid(arg_t __unused__ arg)
-{
-   return VM_DONE;
-}
-
-ctrl_evt_hdl_t ctrl_evt_usr_hdl[] = {
-   local_evt_cr_rd,
-   local_evt_cr_wr,
-   local_evt_excp,
-   local_evt_brk,
-   local_evt_stp,
-   local_evt_npf,
-   local_evt_hyp,
-   local_evt_cpuid,
+ctrl_evt_hdl_t ctrl_evt_vmm_hdl[] = {
+   vmm_evt_excp,
+   vmm_evt_hyp,
 };

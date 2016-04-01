@@ -23,70 +23,56 @@
 #include <info_data.h>
 
 extern info_data_t    *info;
-extern ctrl_evt_hdl_t ctrl_evt_dft_hdl[];
+extern ctrl_evt_hdl_t ctrl_evt_usr_hdl[];
+extern ctrl_evt_hdl_t ctrl_evt_vmm_hdl[];
 
-int __ctrl_evt_excp_dbg(uint32_t vector)
+/*
+** Exceptions
+*/
+static int __ctrl_evt_excp_vmm(uint32_t vector)
 {
-   arg_t arg;
-
-   if(!(info->vmm.ctrl.dbg.excp & (1<<vector)))
-      return VM_IGNORE;
-
-   debug(CTRL_EVT, "ctrl dbg excp\n");
-
-   switch(vector)
+   if(info->vm.cpu.dflt_excp & (1<<vector))
    {
-   case DB_EXCP: return dbg_evt_hard();
-   case BP_EXCP: return dbg_evt_soft();
-   case GP_EXCP: return dbg_evt_gp();
+      arg_t arg;
+      arg.low = vector;
+      debug(CTRL_EVT, "ctrl vmm excp\n");
+
+      return ctrl_evt_vmm_hdl[CTRL_EVT_VMM_TYPE_EXCP](arg);
    }
 
-   debug(CTRL_EVT, "unhandled ctrl dbg excp %d\n", vector);
-   arg.low = vector;
-   ctrl_evt_setup(CTRL_EVT_TYPE_EXCP, 0, arg);
-   return VM_DONE;
+   debug(CTRL_EVT, "unhandled ctrl vmm excp %d (ignoring)\n", vector);
+   return VM_IGNORE;
 }
 
-static int __ctrl_evt_excp_user(uint32_t vector)
+static int __ctrl_evt_excp_dbg(uint32_t vector)
+{
+   if(info->vmm.ctrl.dbg.excp & (1<<vector))
+   {
+      debug(CTRL_EVT, "ctrl dbg excp\n");
+
+      switch(vector)
+      {
+      case DB_EXCP: return dbg_evt_hard();
+      case BP_EXCP: return dbg_evt_soft();
+      case GP_EXCP: return dbg_evt_gp();
+      }
+   }
+
+   debug(CTRL_EVT, "unhandled ctrl dbg excp %d (ignoring)\n", vector);
+   return VM_IGNORE;
+}
+
+static int __ctrl_evt_excp_usr(uint32_t vector)
 {
    if(info->vmm.ctrl.usr.excp & (1<<vector))
    {
       arg_t arg;
       arg.low = vector;
-      ctrl_evt_setup(CTRL_EVT_TYPE_EXCP, 0, arg);
+      ctrl_evt_setup(CTRL_EVT_USR_TYPE_EXCP, 0, arg);
       debug(CTRL_EVT, "ctrl usr excp\n");
    }
 
    /* force vmm to inject exception */
-   return VM_IGNORE;
-}
-
-static int __ctrl_evt_excp_vmm_np()
-{
-   debug(CTRL_EVT, "#NP\n");
-   return VM_IGNORE;
-}
-
-static int __ctrl_evt_excp_vmm_gp()
-{
-   debug(CTRL_EVT, "#GP\n");
-   return VM_IGNORE;
-}
-
-static int __ctrl_evt_excp_vmm(uint32_t vector)
-{
-   if(!(info->vm.cpu.dflt_excp & (1<<vector)))
-      return VM_IGNORE;
-
-   debug(CTRL_EVT, "ctrl vmm excp\n");
-
-   switch(vector)
-   {
-   case NP_EXCP: return __ctrl_evt_excp_vmm_np();
-   case GP_EXCP: return __ctrl_evt_excp_vmm_gp();
-   }
-
-   debug(CTRL_EVT, "unhandled ctrl vmm excp %d (ignoring)\n", vector);
    return VM_IGNORE;
 }
 
@@ -96,7 +82,7 @@ int ctrl_evt_excp(uint32_t vector)
 
    if((rc = __ctrl_evt_excp_vmm(vector)) == VM_IGNORE)
       if((rc = __ctrl_evt_excp_dbg(vector)) == VM_IGNORE)
-	 rc = __ctrl_evt_excp_user(vector);
+	 rc = __ctrl_evt_excp_usr(vector);
 
    return rc;
 }
@@ -107,46 +93,90 @@ int ctrl_evt_cr_rd(uint8_t n)
    {
       arg_t arg;
       arg.blow = n;
-      ctrl_evt_setup(CTRL_EVT_TYPE_CR_RD, 0, arg);
+      ctrl_evt_setup(CTRL_EVT_USR_TYPE_CR_RD, 0, arg);
       return VM_DONE;
    }
 
    return VM_IGNORE;
 }
 
+/*
+** Control Registers
+*/
 int ctrl_evt_cr_wr(uint8_t n)
 {
    if(info->vmm.ctrl.usr.cr_wr & (1<<n))
    {
       arg_t arg;
       arg.blow = n;
-      ctrl_evt_setup(CTRL_EVT_TYPE_CR_WR, 0, arg);
+      ctrl_evt_setup(CTRL_EVT_USR_TYPE_CR_WR, 0, arg);
       return VM_DONE;
    }
 
    return VM_IGNORE;
 }
 
-int ctrl_evt_npf()
+/*
+** Nested Page Faults
+*/
+static int __ctrl_evt_npf_vmm()
+{
+   arg_t arg = {.raw = 0};
+   return ctrl_evt_vmm_hdl[CTRL_EVT_VMM_TYPE_NPF](arg);
+}
+
+static int __ctrl_evt_npf_usr()
 {
    if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_NPF))
       return VM_IGNORE;
 
    arg_t arg = {.raw = 0};
-   ctrl_evt_setup(CTRL_EVT_TYPE_NPF, 0, arg);
+   ctrl_evt_setup(CTRL_EVT_USR_TYPE_NPF, 0, arg);
    return VM_DONE;
 }
 
-int ctrl_evt_hypercall()
+int ctrl_evt_npf()
+{
+   int rc;
+
+   if((rc = __ctrl_evt_npf_vmm()) == VM_IGNORE)
+      rc = __ctrl_evt_npf_usr();
+
+   return rc;
+}
+
+/*
+** Hypercall
+*/
+static int __ctrl_evt_hyp_vmm()
+{
+   arg_t arg = {.raw = 0};
+   return ctrl_evt_vmm_hdl[CTRL_EVT_VMM_TYPE_HYP](arg);
+}
+
+static int __ctrl_evt_hyp_usr()
 {
    if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_HYP))
       return VM_IGNORE;
 
    arg_t arg = {.raw = 0};
-   ctrl_evt_setup(CTRL_EVT_TYPE_HYP, 0, arg);
+   ctrl_evt_setup(CTRL_EVT_USR_TYPE_HYP, 0, arg);
    return VM_DONE;
 }
 
+int ctrl_evt_hypercall()
+{
+   int rc;
+
+   if((rc = __ctrl_evt_hyp_vmm()) == VM_IGNORE)
+      rc = __ctrl_evt_hyp_usr();
+
+   return rc;
+}
+
+/*
+** CPUID
+*/
 int ctrl_evt_cpuid(uint32_t index)
 {
    if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_CPUID))
@@ -157,10 +187,13 @@ int ctrl_evt_cpuid(uint32_t index)
       return VM_IGNORE;
 
    arg_t arg = {.raw = 0};
-   ctrl_evt_setup(CTRL_EVT_TYPE_CPUID, 0, arg);
+   ctrl_evt_setup(CTRL_EVT_USR_TYPE_CPUID, 0, arg);
    return VM_DONE;
 }
 
+/*
+** Event Services
+*/
 int ctrl_evt_setup(uint8_t type, ctrl_evt_hdl_t hdl, arg_t arg)
 {
    info->vmm.ctrl.event.type = type;
@@ -170,8 +203,8 @@ int ctrl_evt_setup(uint8_t type, ctrl_evt_hdl_t hdl, arg_t arg)
       info->vmm.ctrl.event.hdl = hdl;
    else
    {
-      debug(CTRL_EVT, "using dft ctrl evt table 0x%X\n", ctrl_evt_dft_hdl);
-      info->vmm.ctrl.event.hdl = ctrl_evt_dft_hdl[type];
+      debug(CTRL_EVT, "using usr ctrl evt table 0x%X\n", ctrl_evt_usr_hdl);
+      info->vmm.ctrl.event.hdl = ctrl_evt_usr_hdl[type];
    }
 
    debug(CTRL_EVT

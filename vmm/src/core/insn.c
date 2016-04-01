@@ -28,7 +28,12 @@ extern info_data_t *info;
 
 int resolve_hypercall()
 {
-   ctrl_evt_hypercall();
+   if(ctrl_evt_hypercall() == VM_IGNORE)
+   {
+      __inject_exception(UD_EXCP, 0, 0);
+      return VM_DONE;
+   }
+
    return emulate_done(VM_DONE, max(__insn_sz(), HYPERCALL_INSN_SZ));
 }
 

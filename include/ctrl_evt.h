@@ -22,14 +22,24 @@
 
 typedef int (*ctrl_evt_hdl_t)(arg_t);
 
-#define CTRL_EVT_TYPE_CR_RD    0
-#define CTRL_EVT_TYPE_CR_WR    1
-#define CTRL_EVT_TYPE_EXCP     2
-#define CTRL_EVT_TYPE_BRK      3
-#define CTRL_EVT_TYPE_SSTEP    4
-#define CTRL_EVT_TYPE_NPF      5
-#define CTRL_EVT_TYPE_HYP      6
-#define CTRL_EVT_TYPE_CPUID    7
+/*
+** VMM events are pre-hooks
+*/
+#define CTRL_EVT_VMM_TYPE_EXCP     0
+#define CTRL_EVT_VMM_TYPE_HYP      1
+#define CTRL_EVT_VMM_TYPE_NPF      2
+
+/*
+** User events are post-hooks
+*/
+#define CTRL_EVT_USR_TYPE_CR_RD    0
+#define CTRL_EVT_USR_TYPE_CR_WR    1
+#define CTRL_EVT_USR_TYPE_EXCP     2
+#define CTRL_EVT_USR_TYPE_BRK      3
+#define CTRL_EVT_USR_TYPE_SSTEP    4
+#define CTRL_EVT_USR_TYPE_NPF      5
+#define CTRL_EVT_USR_TYPE_HYP      6
+#define CTRL_EVT_USR_TYPE_CPUID    7
 
 typedef struct controller_event
 {
@@ -38,8 +48,6 @@ typedef struct controller_event
    ctrl_evt_hdl_t  hdl;
 
 } __attribute__((packed)) ctrl_evt_t;
-
-int  __ctrl_evt_excp_dbg(uint32_t);
 
 /*
 ** Functions
