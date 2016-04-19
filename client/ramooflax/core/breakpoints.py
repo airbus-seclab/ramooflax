@@ -37,8 +37,6 @@ class BreakPoint:
             s = "eXecute"
         elif self.type == BreakPointType.w:
             s = "Write"
-        elif self.type == BreakPointType.r:
-            s = "Read"
         elif self.type == BreakPointType.rw:
             s = "Read/Write"
 
