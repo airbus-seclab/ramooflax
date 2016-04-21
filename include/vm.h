@@ -79,12 +79,7 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 /*
 ** VM data structures
 */
-typedef struct vm_paging
-{
-   npg_pml4e_t  *pml4; /* strictly aligned */
-   size_t       asid;
-
-} __attribute__((packed)) vm_pgmem_t;
+#include <vm_paging.h>
 
 typedef union vm_cpu_skill
 {
