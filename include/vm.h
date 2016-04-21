@@ -82,6 +82,7 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 typedef struct vm_paging
 {
    npg_pml4e_t  *pml4; /* strictly aligned */
+   size_t       asid;
 
 } __attribute__((packed)) vm_pgmem_t;
 
@@ -131,15 +132,15 @@ typedef struct fault_context
 
 typedef struct vm_cpu
 {
-   vm_pgmem_t     pg[NPG_NR]; /* virtual paging tables */
-   uint32_t       dflt_excp;  /* default exception mask */
-   uint8_t        active_pg;  /* which virtual paging to apply */
-   vm_cpu_skill_t skillz;     /* vm cpu skillz */
-   uint64_t       max_paddr;  /* maximum physical addr supported */
-   uint64_t       max_vaddr;  /* maximum linear addr supported */
-   vmc_t          *vmc;       /* hardware virtualization data, strictly aligned */
-   gpr64_ctx_t    *gpr;       /* vm GPRs (in vmm stack) */
-   fault_ctx_t    fault;      /* last fault context info */
+   vm_pgmem_t     *active_npg; /* current virtual paging table */
+   vm_pgmem_t     dflt_npg;    /* default virtual paging table */
+   uint32_t       dflt_excp;   /* default exception mask */
+   vm_cpu_skill_t skillz;      /* vm cpu skillz */
+   uint64_t       max_paddr;   /* maximum physical addr supported */
+   uint64_t       max_vaddr;   /* maximum linear addr supported */
+   vmc_t          *vmc;        /* hardware virtualization data, strictly aligned */
+   gpr64_ctx_t    *gpr;        /* vm GPRs (in vmm stack) */
+   fault_ctx_t    fault;       /* last fault context info */
    ud_t           disasm;
    emu_sts_t      emu_sts;
    uint8_t        insn_cache[X86_MAX_INSN_LEN];
@@ -226,7 +227,7 @@ int   vm_enter_pmode();
 
 int   vm_pg_walk(offset_t, pg_wlk_t*);
 int   vm_full_walk(offset_t, pg_wlk_t*);
-void  vm_setup_npg(int);
+void  vm_setup_npg(vm_pgmem_t*);
 
 #endif
 

@@ -81,9 +81,9 @@ static void svm_vmcb_controls_init()
 
    info->vm.asid_nr                 = svm_feat.asid_nr;
    vm_ctrls.sys_insn_bitmap.invlpga = 1;
-   vm_ctrls.tlb_ctrl.guest_asid     = 1;
+   vm_ctrls.tlb_ctrl.guest_asid     = npg_get_default_paging()->asid;
    vm_ctrls.npt.raw                 = 1UL;
-   vm_ctrls.ncr3.pml4.addr          = page_nr(info->vm.cpu.pg[0].pml4);
+   vm_ctrls.ncr3.pml4.addr          = page_nr(npg_get_default_paging()->pml4);
 
    vm_ctrls.sys_insn_bitmap.intn    = 1;
    vm_ctrls.vmm_insn_bitmap.stgi    = 1;

@@ -68,17 +68,15 @@ typedef struct npg_configuration
 /*
 ** Controlling active nested paging
 */
-#define NPG_DEFAULT  0
-#define NPG_NR       1
+#define npg_get_default_paging()  (&info->vm.cpu.dflt_npg)
 
-#define npg_get_paging(_x)        (&info->vm.cpu.pg[(_x)])
-#define npg_set_active_paging(_x) (info->vm.cpu.active_pg = (_x))
-#define npg_get_active_paging()   (&info->vm.cpu.pg[info->vm.cpu.active_pg])
+#define npg_get_active_paging()   (info->vm.cpu.active_npg)
+#define npg_set_active_paging(_x) (info->vm.cpu.active_npg = (_x))
 
 #define npg_set_active_paging_cpu()				\
    ({								\
       npg_cr3_set(npg_get_active_paging()->pml4);		\
-      npg_set_asid(info->vm.cpu.active_pg+1);			\
+      npg_set_asid(npg_get_active_paging()->asid);		\
    })
 
 /*

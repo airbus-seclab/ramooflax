@@ -391,9 +391,9 @@ int vm_full_walk(offset_t vaddr, pg_wlk_t *wlk)
 /*
 ** Change active Nested Paging
 */
-void vm_setup_npg(int who)
+void vm_setup_npg(vm_pgmem_t *npg)
 {
-   npg_set_active_paging(who);
+   npg_set_active_paging(npg);
    npg_set_active_paging_cpu();
 }
 

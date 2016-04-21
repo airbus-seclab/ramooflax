@@ -140,11 +140,11 @@ static void vmx_vmcs_exec_controls_init()
 
    vm_exec_ctrls.eptp.cache = VMX_EPT_MEM_TYPE_WB;
    vm_exec_ctrls.eptp.pwl   = 3;
-   vm_exec_ctrls.eptp.addr  = page_nr(info->vm.cpu.pg[0].pml4);
+   vm_exec_ctrls.eptp.addr  = page_nr(npg_get_default_paging()->pml4);
 
 #ifdef CONFIG_VMX_FEAT_VPID
    vm_exec_ctrls.proc2.vpid = 1;
-   vm_exec_ctrls.vpid.raw   = 1;
+   vm_exec_ctrls.vpid.raw   = npg_get_default_paging()->asid;
 #endif
 
    vm_exec_ctrls.excp_bitmap.raw = info->vm.cpu.dflt_excp;

@@ -30,6 +30,10 @@ extern info_data_t *info;
 
 static void vm_pagemem_init()
 {
+   vm_pgmem_t *npg = npg_get_default_paging();
+
+   npg->asid = 1;
+   npg_set_active_paging(npg);
    npg_init();
 }
 
