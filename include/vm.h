@@ -105,23 +105,26 @@ typedef enum emulate_status
    EMU_STS_DONE
 } emu_sts_t;
 
+/* Last exception fault */
+typedef struct excp_fault_context
+{
+   excp32_err_code_t err;
+
+} __attribute__((packed)) excp_fault_ctx_t;
+
+/* Last nested page fault */
+typedef struct nested_fault_context
+{
+   npg_err_t  err;
+   offset_t   vaddr;
+   offset_t   paddr;
+
+} __attribute__((packed)) npf_fault_ctx_t;
+
 typedef struct fault_context
 {
-   /* Last Exception context */
-   struct
-   {
-      uint32_t   err;
-
-   } __attribute__((packed)) excp;
-
-   /* Last Nested Page Fault context */
-   struct
-   {
-      npg_err_t  err;
-      offset_t   vaddr;
-      offset_t   paddr;
-
-   } __attribute__((packed)) npf;
+   excp_fault_ctx_t excp;
+   npf_fault_ctx_t  npf;
 
 } __attribute__((packed)) fault_ctx_t;
 

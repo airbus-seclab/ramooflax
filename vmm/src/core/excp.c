@@ -75,7 +75,7 @@ static int __resolve_exception(uint32_t vector, uint32_t error, uint64_t fault)
 {
    int rc;
 
-   info->vm.cpu.fault.excp.err = error;
+   info->vm.cpu.fault.excp.err.raw = error;
 
    if((rc=ctrl_evt_excp(vector)) == VM_IGNORE)
    {

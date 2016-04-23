@@ -608,7 +608,7 @@ static void gdb_vmm_get_fault(uint8_t __unused__ *data, size_t __unused__ len)
 {
    fault_ctx_t *fault = &info->vm.cpu.fault;
 
-   gdb_add_number(fault->excp.err,     8, 0);
+   gdb_add_number(fault->excp.err.raw, 8, 0);
    gdb_add_number(fault->npf.err.raw, 16, 0);
    gdb_add_number(fault->npf.vaddr,   16, 0);
    gdb_add_number(fault->npf.paddr,   16, 0);
