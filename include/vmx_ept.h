@@ -248,7 +248,9 @@ typedef union ept_page_table_entry_64
 #define VMX_EPT_PVL_R                1
 #define VMX_EPT_PVL_W                2
 #define VMX_EPT_PVL_RW               3
+#define VMX_EPT_PVL_X                4
 #define VMX_EPT_PVL_RX               5
+#define VMX_EPT_PVL_WX               6
 #define VMX_EPT_PVL_RWX              7
 
 #define ept_pvl_rx                   VMX_EPT_PVL_RX
