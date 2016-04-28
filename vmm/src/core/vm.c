@@ -97,11 +97,11 @@ static int __vm_access_local_operator(vm_access_t *access)
    if(access->wr)
    {
       dst.linear = access->addr;
-      src.addr = access->data;
+      src.addr = access->data + access->done;
    }
    else
    {
-      dst.addr = access->data;
+      dst.addr = access->data + access->done;
       src.linear = access->addr;
    }
 
@@ -118,7 +118,7 @@ static int __vm_access_local_operator(vm_access_t *access)
 	    ,dst.u8[0], dst.u8[access->len -1]);
       size_t i=0;
       while(i<access->len)
-	 printf("%c", dst.u8[i++]);
+	 printf("%x", dst.u8[i++]);
       printf("\n");
    }
 #endif
