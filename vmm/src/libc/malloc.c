@@ -15,52 +15,25 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#include <ppg.h>
+#include <malloc.h>
+#include <slab.h>
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-#ifdef __INIT__
-void ppg_desc_init()
+void* malloc(size_t sz)
 {
-   ppg_info_t *ppg  = &info->hrd.mem.ppg;
-   ppg_dsc_t  *dsc  = ppg->dsc;
-   offset_t    end  = info->hrd.mem.top;
-   offset_t    addr = 0;
+   slab_t     *slab;
+   slab_obj_t *obj;
 
-   /* ppg->vmm.nr = 0; */
-   /* ppg->vm.nr  = 0; */
+   if(!(slab = slab_find(sz)) && !(slab = slab_new(sz, 1)))
+      return (void*)0;
 
-   while(addr < end)
-   {
-      if(vmm_area(addr))
-      {
-	 dsc->cnt     = 1;
-	 dsc->flg.vmm = 1;
-	 /* cdll_fill(ppg->vmm.list, dsc); */
-	 /* ppg->vmm.nr++; */
-      }
-      /* else */
-      /* { */
-      /* 	 /\* cdll_fill(ppg->vm.list, dsc); *\/ */
-      /* 	 /\* ppg->vm.nr++; *\/ */
-      /* } */
+   if(!(obj = cdll_pop(slab->obj)) && !slab_grow(slab, 1))
+      return (void*)0;
 
-      addr += PAGE_SIZE;
-      dsc++;
-   }
-}
-#endif
-
-ppg_dsc_t* ppg_get_desc(offset_t addr)
-{
-   ppg_info_t *ppg = &info->hrd.mem.ppg;
-   offset_t    n   = page_nr(addr);
-
-   if(n < ppg->nr)
-      return &ppg->dsc[n];
-
-   debug(PG, "failed to get page descriptor 0x%X\n", addr);
-   return ((ppg_dsc_t*)0);
+   obj = cdll_pop(slab->obj);
+   slab->nr--;
+   return (void*)obj;
 }

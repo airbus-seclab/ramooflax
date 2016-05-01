@@ -87,4 +87,33 @@
       }									\
    })
 
+#define cdll_insert_before(__lst__, __cel__, __ref__ )	\
+   ({							\
+      if((__lst__))					\
+      {							\
+	 (__cel__)->prev = (__ref__)->prev;		\
+	 (__ref__)->prev->next = (__cel__);		\
+	 (__cel__)->next = (__ref__);			\
+	 (__ref__)->prev = (__cel__);			\
+							\
+	 if((__ref__) == (__lst__))			\
+	    (__lst__) = (__cel__);			\
+      }							\
+   })
+
+#define cdll_search(__lst__,__cel__)					\
+   ({									\
+      typeof((__cel__)) __tmp__;					\
+      int    __rEt__=0;							\
+      if((__lst__))							\
+      {									\
+	 __tmp__ = (__lst__);						\
+	 while( __tmp__ != (__cel__) && __tmp__->next != (__lst__))	\
+	    __tmp__ = __tmp__->next;					\
+	 if(__tmp__ == (__cel__))					\
+	    __rEt__=1;							\
+      }									\
+      __rEt__;								\
+   })
+
 #endif

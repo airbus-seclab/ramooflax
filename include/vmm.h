@@ -26,6 +26,7 @@
 #include <dev.h>
 #include <ctrl.h>
 #include <gdbstub.h>
+#include <slab.h>
 
 /*
 ** General VMM settings
@@ -105,12 +106,12 @@ typedef struct vmm
    vmm_cpu_t  cpu;              /* vmm cpu info */
    vmm_pool_t pool;             /* vmm page pool */
    offset_t   io_pool;          /* vmm io cache pool */
+   vmm_slab_t slab;             /* vmm slab allocator caches */
    vmm_ctrl_t ctrl;             /* vmm controller */
    offset_t   entry;            /* vmm entry point */
    offset_t   base;             /* vmm relocation addr */
    size_t     size;             /* vmm loaded elf size */
    offset_t   stack_bottom;     /* vmm stack bottom location */
-
 #ifdef CONFIG_GDBSTUB
    gdbstub_t  gstub;            /* vmm GDB stub */
 #endif

@@ -18,4 +18,5 @@ obj :=	idt.o			\
 	emulate_int15.o		\
 	pvl.o			\
 	vm.o			\
+	slab.o			\
 #	smi.o			\

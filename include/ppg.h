@@ -21,45 +21,59 @@
 #include <types.h>
 #include <pagemem.h>
 #include <smap.h>
+#include <slab.h>
 
-typedef struct physical_page_descriptor
+typedef union physical_page_flags
 {
-   offset_t  addr;
-   size_t    count;
-
    struct
    {
       uint64_t   vmm:1;   /* vmm owned */
+      uint64_t   rsv:31;  /* reserved for future generic usage */
+      uint64_t   avl:32;  /* available for extensions */
 
    } __attribute__((packed));
 
-   struct physical_page_descriptor  *prev;
-   struct physical_page_descriptor  *next;
+   raw64_t;
+
+} __attribute__((packed)) ppg_flags_t;
+
+typedef struct physical_page_descriptor
+{
+   size_t       cnt;
+   ppg_flags_t  flg;
+   slab_t       *slab;
+
+   /* struct physical_page_descriptor  *prev; */
+   /* struct physical_page_descriptor  *next; */
 
 } __attribute__((packed)) ppg_dsc_t;
 
-typedef struct physical_page_list
-{
-   ppg_dsc_t *list;
-   size_t     nr;
+/* typedef struct physical_page_list */
+/* { */
+/*    ppg_dsc_t *list; */
+/*    size_t     nr; */
 
-} __attribute__((packed)) ppg_list_t;
+/* } __attribute__((packed)) ppg_list_t; */
 
 /*
 ** Physical Memory Page descriptors
 **
-** descriptor refers to contigous pages
+** Descriptors refer to contigous pages
 ** from 0 to maximum available page
 ** to linearly acces them even if all pages
-** are not available
+** are not available.
+**
+** It also allows us to not store an address
+** field inside each descriptor. Only the
+** index helps us compute the page address
 */
 typedef struct physical_memory_page_info
 {
    ppg_dsc_t   *dsc;   /* all ppg desc */
    size_t       nr;
 
-   ppg_list_t   vmm;   /* vmm owned ppg desc */
-   ppg_list_t   vm;    /* vm  owned ppg desc */
+   /* ppg_list_t   vmm;   /\* vmm owned ppg desc *\/ */
+   /* ppg_list_t   vm;    /\* vm  owned ppg desc *\/ */
 
 } __attribute__((packed)) ppg_info_t;
 
@@ -68,8 +82,6 @@ typedef struct physical_memory_page_info
 */
 #ifdef __INIT__
 void  ppg_desc_init();
-void  ppg_desc_set_region_type(smap_e_t*);
-void  debug_ppg();
 #endif
 
 ppg_dsc_t* ppg_get_desc(offset_t);
