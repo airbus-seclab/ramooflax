@@ -25,7 +25,7 @@ extern info_data_t *info;
 ** Elementary slab allocator
 **
 ** - cache grow is based on pool pages
-** - cache obj size is a power of 2
+** - cache obj size is rounded with slab_size(sz)
 ** - cache objects are aligned on cache size (sz <= PAGE_SIZE)
 **
 ** Heap is allocated through vmm pool, meaning that heap addr are
@@ -113,10 +113,6 @@ static slab_t* slab_create(size_t sz, size_t nr)
    return slab;
 }
 
-/*
-** Create and insert a new cache
-** before "nxt" or at the end if NULL
-*/
 static slab_t* slab_insert(size_t sz, size_t nr, slab_t *nxt)
 {
    slab_t *slab = slab_create(sz, nr);
@@ -134,7 +130,7 @@ static slab_t* slab_insert(size_t sz, size_t nr, slab_t *nxt)
    return slab;
 }
 
-static size_t slab_size(size_t asz)
+static size_t __slab_size_power2(size_t asz)
 {
    size_t sh = 4;
    size_t sz = 1ULL<<sh;
@@ -143,6 +139,23 @@ static size_t slab_size(size_t asz)
       sz = _2_power(++sh);
 
    return sz;
+}
+
+static size_t __slab_size_long(size_t asz)
+{
+   if(long_aligned(asz))
+      return asz;
+
+   return (size_t)long_align_next(asz);
+}
+
+static size_t slab_size(size_t asz)
+{
+   if(asz < sizeof(slab_obj_t))
+      return sizeof(slab_obj_t);
+
+   return __slab_size_long(asz);
+   /* return __slab_size_power2(asz); */
 }
 
 slab_t* slab_at(offset_t addr)
