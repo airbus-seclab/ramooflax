@@ -130,16 +130,16 @@ static slab_t* slab_insert(size_t sz, size_t nr, slab_t *nxt)
    return slab;
 }
 
-static size_t __slab_size_power2(size_t asz)
-{
-   size_t sh = 4;
-   size_t sz = 1ULL<<sh;
+/* static size_t __slab_size_power2(size_t asz) */
+/* { */
+/*    size_t sh = 4; */
+/*    size_t sz = 1ULL<<sh; */
 
-   while(sz < asz)
-      sz = _2_power(++sh);
+/*    while(sz < asz) */
+/*       sz = _2_power(++sh); */
 
-   return sz;
-}
+/*    return sz; */
+/* } */
 
 static size_t __slab_size_long(size_t asz)
 {
