@@ -87,6 +87,27 @@ int ctrl_evt_excp(uint32_t vector)
    return rc;
 }
 
+/*
+** Control Registers
+*/
+static int __ctrl_evt_cr_wr_vmm(uint8_t n)
+{
+   arg_t arg;
+   arg.blow = n;
+   return ctrl_evt_vmm_hdl[CTRL_EVT_VMM_TYPE_WCR](arg);
+}
+
+static int __ctrl_evt_cr_wr_usr(uint8_t n)
+{
+   if(!(info->vmm.ctrl.usr.cr_wr & (1<<n)))
+      return VM_IGNORE;
+
+   arg_t arg;
+   arg.blow = n;
+   ctrl_evt_setup(CTRL_EVT_USR_TYPE_CR_WR, 0, arg);
+   return VM_DONE;
+}
+
 int ctrl_evt_cr_rd(uint8_t n)
 {
    if(info->vmm.ctrl.usr.cr_rd & (1<<n))
@@ -100,20 +121,14 @@ int ctrl_evt_cr_rd(uint8_t n)
    return VM_IGNORE;
 }
 
-/*
-** Control Registers
-*/
 int ctrl_evt_cr_wr(uint8_t n)
 {
-   if(info->vmm.ctrl.usr.cr_wr & (1<<n))
-   {
-      arg_t arg;
-      arg.blow = n;
-      ctrl_evt_setup(CTRL_EVT_USR_TYPE_CR_WR, 0, arg);
-      return VM_DONE;
-   }
+   int rc;
 
-   return VM_IGNORE;
+   if((rc = __ctrl_evt_cr_wr_vmm(n)) == VM_IGNORE)
+      rc = __ctrl_evt_cr_wr_usr(n);
+
+   return rc;
 }
 
 /*

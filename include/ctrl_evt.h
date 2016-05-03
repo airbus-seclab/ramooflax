@@ -28,6 +28,7 @@ typedef int (*ctrl_evt_hdl_t)(arg_t);
 #define CTRL_EVT_VMM_TYPE_EXCP     0
 #define CTRL_EVT_VMM_TYPE_HYP      1
 #define CTRL_EVT_VMM_TYPE_NPF      2
+#define CTRL_EVT_VMM_TYPE_WCR      3
 
 /*
 ** User events are post-hooks
