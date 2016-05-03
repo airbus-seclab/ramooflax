@@ -107,11 +107,44 @@ void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
 	 " . cs:rip 0x%X:0x%X\n"
 	 " . ss:rsp 0x%X:0x%X\n"
 	 " . rflags 0x%X\n"
+	 "\n- general registers\n"
+	 "rax     : 0x%X\n"
+	 "rcx     : 0x%X\n"
+	 "rdx     : 0x%X\n"
+	 "rbx     : 0x%X\n"
+	 "rsp     : 0x%X\n"
+	 "rbp     : 0x%X\n"
+	 "rsi     : 0x%X\n"
+	 "rdi     : 0x%X\n"
+	 "r08     : 0x%X\n"
+	 "r09     : 0x%X\n"
+	 "r10     : 0x%X\n"
+	 "r11     : 0x%X\n"
+	 "r12     : 0x%X\n"
+	 "r13     : 0x%X\n"
+	 "r14     : 0x%X\n"
+	 "r15     : 0x%X\n"
 	 ,exception_names[ctx->nr.blow]
 	 ,ctx->nr.blow, ctx->err.raw
 	 ,ctx->cs.raw,  ctx->rip.raw
 	 ,ctx->ss.raw,  ctx->rsp.raw
-	 ,ctx->rflags.raw);
+	 ,ctx->rflags.raw
+	 ,ctx->gpr.rax.raw
+	 ,ctx->gpr.rcx.raw
+	 ,ctx->gpr.rdx.raw
+	 ,ctx->gpr.rbx.raw
+	 ,ctx->gpr.rsp.raw
+	 ,ctx->gpr.rbp.raw
+	 ,ctx->gpr.rsi.raw
+	 ,ctx->gpr.rdi.raw
+	 ,ctx->gpr.r8.raw
+	 ,ctx->gpr.r9.raw
+	 ,ctx->gpr.r10.raw
+	 ,ctx->gpr.r11.raw
+	 ,ctx->gpr.r12.raw
+	 ,ctx->gpr.r13.raw
+	 ,ctx->gpr.r14.raw
+	 ,ctx->gpr.r15.raw);
 
    switch(ctx->nr.blow)
    {
