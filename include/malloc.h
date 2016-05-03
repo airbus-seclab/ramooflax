@@ -20,6 +20,8 @@
 
 #include <types.h>
 #include <slab.h>
+#include <string.h>
+
 
 /*
 ** Functions
@@ -27,5 +29,16 @@
 #define free(_aDdR) slab_add(slab_at((offset_t)(_aDdR)),(slab_obj_t*)(_aDdR))
 
 void* malloc(size_t);
+
+static inline void* calloc(size_t sz)
+{
+   void *m = malloc(sz);
+
+   if(m)
+      memset(m, 0, sz);
+
+   return m;
+}
+
 
 #endif
