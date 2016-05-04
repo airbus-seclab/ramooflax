@@ -28,12 +28,22 @@ void* malloc(size_t sz)
    slab_obj_t *obj;
 
    if(!(slab = slab_find(sz)) && !(slab = slab_new(sz, 1)))
+   {
+      debug(VMEM, "malloc: can't find/create new slab\n");
       return (void*)0;
+   }
 
-   if(!(obj = cdll_pop(slab->obj)) && !slab_grow(slab, 1))
-      return (void*)0;
+   if(!(obj = cdll_pop(slab->obj)))
+   {
+      if(!slab_grow(slab, 1))
+      {
+	 debug(VMEM, "malloc: slab exhausted/can't grow\n");
+	 return (void*)0;
+      }
 
-   obj = cdll_pop(slab->obj);
+      obj = cdll_pop(slab->obj);
+   }
+
    slab->nr--;
    return (void*)obj;
 }
