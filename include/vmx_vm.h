@@ -120,7 +120,9 @@
 #define npg_pvl_rx                     ept_pvl_rx
 #define npg_dft_pvl                    ept_dft_pvl
 #define npg_set_pvl(_e,_p)             ept_pg_set_pvl(_e,_p)
+#define npg_get_pvl(_e)                ept_pg_set_pvl(_e)
 #define npg_pvl_has_w(_e)              ept_pg_has_pvl_w(_e)
+#define npg_pvl_x_only(_e)             ept_pg_has_pvl_x_only(_e)
 
 #define npg_pml4e_t                    ept_pml4e_t
 #define npg_pdpe_t                     ept_pdpe_t

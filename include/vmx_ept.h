@@ -257,7 +257,9 @@ typedef union ept_page_table_entry_64
 #define ept_dft_pvl                  VMX_EPT_PVL_RWX
 
 #define ept_pg_set_pvl(_e_,_p_)      ({(_e_)->blow &= ~7;(_e_)->blow |= ((_p_)&7);})
-#define ept_pg_has_pvl_w(_e_)        ((_e_)->blow & VMX_EPT_PVL_W)
+#define ept_pg_get_pvl(_e_)          ((_e_)->blow & 7)
+#define ept_pg_has_pvl_w(_e_)        (ept_pg_get_pvl(_e_) & VMX_EPT_PVL_W)
+#define ept_pg_has_pvl_x_only(_e_)   (ept_pg_get_pvl(_e_) == VMX_EPT_PVL_X)
 
 #define __ept_dft_attr(_pvl)			\
    ({						\
