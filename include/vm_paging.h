@@ -24,7 +24,8 @@
 typedef struct vm_paging
 {
    npg_pml4e_t  *pml4; /* strictly aligned */
-   size_t       asid;
+   void         *arg;  /* available */
+   size_t        asid; /* address space identifier */
 
 } __attribute__((packed)) vm_pgmem_t;
 
