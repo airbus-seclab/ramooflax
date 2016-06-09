@@ -378,8 +378,11 @@
 #define __allow_io_range(_p1,_p2)         vmx_allow_io_range(info->vm.cpu.vmc,_p1,_p2)
 #define __deny_io_range(_p1,_p2)          vmx_deny_io_range(info->vm.cpu.vmc,_p1,_p2)
 
-#define __string_io_linear(_tgt,_iO)			\
-   (_tgt = (__exit_info.guest_linear.raw & (_iO->msk)))
+/*
+** XXX: Only if segment is usable (should check segment)
+*/
+#define __string_io_linear(_tgt,_iO)		\
+   (_tgt = __exit_info.guest_linear.raw)
 
 #define __vmx_update_efer_lma()				\
    ({							\

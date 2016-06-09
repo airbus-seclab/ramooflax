@@ -301,6 +301,9 @@
 #define __allow_io_range(_p1,_p2)         svm_allow_io_range(info->vm.cpu.vmc,_p1,_p2)
 #define __deny_io_range(_p1,_p2)          svm_deny_io_range(info->vm.cpu.vmc,_p1,_p2)
 
+/*
+** XXX: check segment validity
+*/
 #define __string_io_linear(_tgt,_iO)					\
    ({									\
       _tgt = (&__state.es + vm_ctrls.exit_info_1.io.seg)->base.raw;	\
