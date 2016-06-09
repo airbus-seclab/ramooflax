@@ -53,7 +53,7 @@ static inline int __dev_uart_tx(uart_t *uart, io_insn_t *io)
 
    } while(sz.miss);
 
-   return VM_FAIL;
+   return rc;
 }
 
 /*
