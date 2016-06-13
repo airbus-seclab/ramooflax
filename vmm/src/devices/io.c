@@ -151,7 +151,7 @@ static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
 
    if(io->sz > sz->available)
    {
-      debug(DEV_IO_ERR, "simple emu IO too big: %d %D\n", io->sz, io->available);
+      debug(DEV_IO_ERR, "simple emu IO too big: %d %D\n", io->sz, sz->available);
       return VM_FAIL;
    }
 
