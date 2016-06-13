@@ -46,7 +46,12 @@ void __regparm__(2) __vmcs_force_read(raw64_t *val, vmcs_field_enc_t enc)
       default:                            val->raw  = tmp.raw;  break;
       }
 
-      //debug(VMX,"vmread(0x%x) = 0x%X\n", enc.raw, tmp.raw);
+      /*
+      ** don't use debug, since some fields might have not been read
+      */
+#ifdef CONFIG_VMX_ACC_DBG
+      printf("vmread(0x%x) = 0x%X\n", enc.raw, tmp.raw);
+#endif
       return;
    }
 
@@ -65,7 +70,12 @@ void __regparm__(2) __vmcs_force_flush(raw64_t *val, vmcs_field_enc_t enc)
       if(!vmx_vmwrite(&vmx_err, val->raw, enc.raw))
 	 panic("vmwrite(0x%x, 0x%x) err %d\n", val->raw, enc.raw, vmx_err.raw);
 
-      //debug(VMX,"vmwrite(0x%x) = 0x%X\n", enc.raw, val->raw);
+      /*
+      ** don't use debug, since some fields might have not been read
+      */
+#ifdef CONFIG_VMX_ACC_DBG
+      printf("vmwrite(0x%x) = 0x%X\n", enc.raw, val->raw);
+#endif
       return;
    }
 
