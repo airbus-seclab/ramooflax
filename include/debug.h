@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -54,19 +54,19 @@
 #endif
 
 #define debug_defined
-#define debug(who, format, ...)			\
-   ({						\
-      offset_t _dbg_loc_;				\
-      int      _dbg_md_;				\
-      vm_get_code_addr(&_dbg_loc_, 0, &_dbg_md_);	\
-      DEBUG_CONFIG_##who##_DBG(				\
-	 format,					\
-	 printf("0x%X:%d:0x%X:%d:"			\
-		,info->vmm.ctrl.vmexit_cnt.raw		\
-		,__exit_code__				\
-		,_dbg_loc_,_dbg_md_			\
-	    );						\
-	 printf, ## __VA_ARGS__);			\
+#define debug(who, format, ...)                 \
+   ({                                           \
+      offset_t _dbg_loc_;                               \
+      int      _dbg_md_;                                \
+      vm_get_code_addr(&_dbg_loc_, 0, &_dbg_md_);       \
+      DEBUG_CONFIG_##who##_DBG(                         \
+         format,                                        \
+         printf("0x%X:%d:0x%X:%d:"                      \
+                ,info->vmm.ctrl.vmexit_cnt.raw          \
+                ,__exit_code__                          \
+                ,_dbg_loc_,_dbg_md_                     \
+            );                                          \
+         printf, ## __VA_ARGS__);                       \
    })
 
 #endif

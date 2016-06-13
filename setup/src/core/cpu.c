@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -39,15 +39,15 @@ static void vmm_cpu_skillz_init()
    }
 
    debug(CPU,
-	 "\n- vmm cpu features\n"
-	 "1GB pages support   : %s\n"
-	 "osxsave enabled     : %s\n"
-	 "max physical addr   : 0x%X\n"
-	 "max linear addr     : 0x%X\n"
-	 ,info->vmm.cpu.skillz.pg_1G?"yes":"no"
-	 ,info->vmm.cpu.skillz.osxsave?"yes":"no"
-	 ,info->vmm.cpu.max_paddr
-	 ,info->vmm.cpu.max_vaddr);
+         "\n- vmm cpu features\n"
+         "1GB pages support   : %s\n"
+         "osxsave enabled     : %s\n"
+         "max physical addr   : 0x%X\n"
+         "max linear addr     : 0x%X\n"
+         ,info->vmm.cpu.skillz.pg_1G?"yes":"no"
+         ,info->vmm.cpu.skillz.osxsave?"yes":"no"
+         ,info->vmm.cpu.max_paddr
+         ,info->vmm.cpu.max_vaddr);
 }
 
 void cpu_init()

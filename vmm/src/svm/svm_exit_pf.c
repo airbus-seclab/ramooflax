@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,10 +30,10 @@ int __svm_vmexit_resolve_pf()
    pg_wlk_t wlk;
 
    debug(SVM_EXCP_PF,
-	 "#PF 0x%X (p:%d wr:%d us:%d rsv:%d id:%d)\n"
-	 ,fault, vm_ctrls.exit_info_1.npf.p
-	 ,vm_ctrls.exit_info_1.npf.wr, vm_ctrls.exit_info_1.npf.us
-	 ,vm_ctrls.exit_info_1.npf.rsv, vm_ctrls.exit_info_1.npf.id);
+         "#PF 0x%X (p:%d wr:%d us:%d rsv:%d id:%d)\n"
+         ,fault, vm_ctrls.exit_info_1.npf.p
+         ,vm_ctrls.exit_info_1.npf.wr, vm_ctrls.exit_info_1.npf.us
+         ,vm_ctrls.exit_info_1.npf.rsv, vm_ctrls.exit_info_1.npf.id);
 
    vm_full_walk(fault, &wlk);
    return __svm_vmexit_inject_exception(PF_EXCP, vm_ctrls.exit_info_1.low, fault);
@@ -46,13 +46,13 @@ int svm_vmexit_resolve_npf()
    info->vm.cpu.fault.npf.vaddr   = __rip.raw & 0xffffffffUL;
 
    debug(SVM_NPF,
-	 "#NPF gv 0x%X gp 0x%X err 0x%X "
-	 "details (p:%d wr:%d us:%d rsv:%d id:%d final:%d ptb:%d)\n"
-	 ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
-	 ,info->vm.cpu.fault.npf.err.raw, info->vm.cpu.fault.npf.err.p
-	 ,info->vm.cpu.fault.npf.err.wr, info->vm.cpu.fault.npf.err.us
-	 ,info->vm.cpu.fault.npf.err.rsv, info->vm.cpu.fault.npf.err.id
-	 ,info->vm.cpu.fault.npf.err.final, info->vm.cpu.fault.npf.err.ptb);
+         "#NPF gv 0x%X gp 0x%X err 0x%X "
+         "details (p:%d wr:%d us:%d rsv:%d id:%d final:%d ptb:%d)\n"
+         ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
+         ,info->vm.cpu.fault.npf.err.raw, info->vm.cpu.fault.npf.err.p
+         ,info->vm.cpu.fault.npf.err.wr, info->vm.cpu.fault.npf.err.us
+         ,info->vm.cpu.fault.npf.err.rsv, info->vm.cpu.fault.npf.err.id
+         ,info->vm.cpu.fault.npf.err.final, info->vm.cpu.fault.npf.err.ptb);
 
    if(ctrl_evt_npf() == VM_IGNORE)
       return VM_FAIL;

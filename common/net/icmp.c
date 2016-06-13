@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -54,8 +54,8 @@ static size_t __icmp_gen(icmp_hdr_t *hdr, uint8_t type, uint8_t code, size_t dle
 }
 
 static size_t __icmp_echo(icmp_hdr_t *hdr, uint8_t type,
-			  uint16_t id, uint16_t seq,
-			  void *data, size_t dlen)
+                          uint16_t id, uint16_t seq,
+                          void *data, size_t dlen)
 {
    loc_t pkt;
 
@@ -70,15 +70,15 @@ static size_t __icmp_echo(icmp_hdr_t *hdr, uint8_t type,
 }
 
 size_t icmp_echo_request(icmp_hdr_t *hdr,
-			 uint16_t id, uint16_t seq,
-			 void *data, size_t dlen)
+                         uint16_t id, uint16_t seq,
+                         void *data, size_t dlen)
 {
    return __icmp_echo(hdr, ICMP_TYPE_ECHO_REQUEST, id, seq, data, dlen);
 }
 
 size_t icmp_echo_reply(icmp_hdr_t *hdr,
-		       uint16_t id, uint16_t seq,
-		       void *data, size_t dlen)
+                       uint16_t id, uint16_t seq,
+                       void *data, size_t dlen)
 {
    return __icmp_echo(hdr, ICMP_TYPE_ECHO_REPLY, id, seq, data, dlen);
 }
@@ -98,8 +98,8 @@ int icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
       rpkt.linear = net_tx_get_pktbuf();
       if(!rpkt.linear)
       {
-	 debug(ICMP, "faild to echo-reply (no more pkt)\n");
-	 return NET_DISSECT_FAIL;
+         debug(ICMP, "faild to echo-reply (no more pkt)\n");
+         return NET_DISSECT_FAIL;
       }
 
       hdr->ping.id = swap16(hdr->ping.id);
@@ -107,16 +107,16 @@ int icmp_dissect(ip_addr_t ip, loc_t pkt, size_t len)
 
       data.linear = pkt.linear + sizeof(icmp_hdr_t);
       rlen = net_gen_pong_pkt(ip, rpkt,
-			      hdr->ping.id, hdr->ping.seq,
-			      data.addr, len - sizeof(icmp_hdr_t));
+                              hdr->ping.id, hdr->ping.seq,
+                              data.addr, len - sizeof(icmp_hdr_t));
       if(!rlen)
       {
 #ifdef CONFIG_ICMP_DBG
-	 char ips[IP_STR_SZ];
-	 ip_str(ip, ips);
-	 debug(ICMP, "failed to echo-reply to %s\n", ips);
+         char ips[IP_STR_SZ];
+         ip_str(ip, ips);
+         debug(ICMP, "failed to echo-reply to %s\n", ips);
 #endif
-	 return NET_DISSECT_FAIL;
+         return NET_DISSECT_FAIL;
       }
 
       net_send_pkt(net, rpkt, rlen);

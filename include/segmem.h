@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -197,23 +197,23 @@ typedef struct interrupt_descriptor_64
 
 } __attribute__((packed)) int64_desc_t;
 
-#define int32_desc(_dsc_, _cs_, _isr_)					\
-   ({									\
-      raw32_t addr32;							\
-      addr32.raw        = _isr_;					\
-      (_dsc_)->raw      = addr32.wlow;					\
-      (_dsc_)->selector = _cs_;						\
-      (_dsc_)->type     = SEG_DESC_SYS_INTR_GATE_32;			\
-      (_dsc_)->offset_2 = addr32.whigh;					\
-      (_dsc_)->p        = 1;						\
+#define int32_desc(_dsc_, _cs_, _isr_)                                  \
+   ({                                                                   \
+      raw32_t addr32;                                                   \
+      addr32.raw        = _isr_;                                        \
+      (_dsc_)->raw      = addr32.wlow;                                  \
+      (_dsc_)->selector = _cs_;                                         \
+      (_dsc_)->type     = SEG_DESC_SYS_INTR_GATE_32;                    \
+      (_dsc_)->offset_2 = addr32.whigh;                                 \
+      (_dsc_)->p        = 1;                                            \
    })
 
-#define int64_desc(_dsc_, _cs_, _isr64_)				\
-   ({									\
-      raw64_t addr64;							\
-      addr64.raw = _isr64_;						\
-      (_dsc_)->offset_3 = addr64.high;					\
-      int32_desc(_dsc_, _cs_, addr64.low);				\
+#define int64_desc(_dsc_, _cs_, _isr64_)                                \
+   ({                                                                   \
+      raw64_t addr64;                                                   \
+      addr64.raw = _isr64_;                                             \
+      (_dsc_)->offset_3 = addr64.high;                                  \
+      int32_desc(_dsc_, _cs_, addr64.low);                              \
    })
 
 /*
@@ -359,38 +359,38 @@ typedef struct task_state_segment_64
 #define tss_deny_io(_tss_,_idx_)        tss_deny(_tss_,io_bitmap,_idx_)
 #define tss_is_denied_io(_tss_,_idx_)   tss_is_denied_io(_tss_,io_bitmap,_idx_)
 
-#define __tss_desc(dsc,_aDdr_,_sz_)				\
-   ({								\
-      dsc->raw    = _sz_;					\
-      dsc->base_1 = _aDdr_.wlow;				\
-      dsc->base_2 = _aDdr_._whigh.blow;				\
-      dsc->base_3 = _aDdr_._whigh.bhigh;			\
-      dsc->type   = SEG_DESC_SYS_TSS_AVL_32;			\
-      dsc->p      = 1;						\
+#define __tss_desc(dsc,_aDdr_,_sz_)                             \
+   ({                                                           \
+      dsc->raw    = _sz_;                                       \
+      dsc->base_1 = _aDdr_.wlow;                                \
+      dsc->base_2 = _aDdr_._whigh.blow;                         \
+      dsc->base_3 = _aDdr_._whigh.bhigh;                        \
+      dsc->type   = SEG_DESC_SYS_TSS_AVL_32;                    \
+      dsc->p      = 1;                                          \
    })
 
 #define tss32_desc(dsc,_tss_)   __tss_desc(dsc, _tss_, sizeof(tss_t))
 
-#define tss64_desc(dsc64,_tss_)					\
-   ({								\
-      raw64_t addr64;						\
-      addr64.raw = _tss_;					\
-      __tss_desc(dsc64, addr64._low, sizeof(tss64_t));		\
-      dsc64->base_4 = addr64.high;				\
-      dsc64->zero = 0ULL;					\
+#define tss64_desc(dsc64,_tss_)                                 \
+   ({                                                           \
+      raw64_t addr64;                                           \
+      addr64.raw = _tss_;                                       \
+      __tss_desc(dsc64, addr64._low, sizeof(tss64_t));          \
+      dsc64->base_4 = addr64.high;                              \
+      dsc64->zero = 0ULL;                                       \
    })
 
 /*
 ** Various segmentation related cpu instructions
 */
-#define get_seg_sel(_reg_)						\
-   ({									\
-      uint16_t seg;							\
-      asm volatile (							\
-	 "xor %%eax, %%eax        \n"					\
-	 "mov %%"##_reg_##", %%ax \n"					\
-	 :"=a"(seg));							\
-      seg;								\
+#define get_seg_sel(_reg_)                                              \
+   ({                                                                   \
+      uint16_t seg;                                                     \
+      asm volatile (                                                    \
+         "xor %%eax, %%eax        \n"                                   \
+         "mov %%"##_reg_##", %%ax \n"                                   \
+         :"=a"(seg));                                                   \
+      seg;                                                              \
    })
 
 #define get_ss()                  get_seg_sel(ss)
@@ -413,39 +413,39 @@ typedef struct task_state_segment_64
 #ifndef __X86_64__
 #define set_cs(_cs)               asm volatile ("ljmp  %0, $1f ; 1:"::"i"(_cs))
 #else
-#define set_cs(_cs)						\
-   ({								\
-      fptr64_t addr;						\
-      addr.segment = _cs;					\
-      asm volatile (						\
-	 "leaq  1f(%%rip), %%rax  \n"				\
-	 "movq  %%rax, %0         \n"				\
-	 "rex.w ljmp  *%0         \n"				\
-	 "1:"							\
-	 :"=m"(addr.offset)::"rax","memory");			\
+#define set_cs(_cs)                                             \
+   ({                                                           \
+      fptr64_t addr;                                            \
+      addr.segment = _cs;                                       \
+      asm volatile (                                            \
+         "leaq  1f(%%rip), %%rax  \n"                           \
+         "movq  %%rax, %0         \n"                           \
+         "rex.w ljmp  *%0         \n"                           \
+         "1:"                                                   \
+         :"=m"(addr.offset)::"rax","memory");                   \
    })
 #endif
-/* #define set_cs(_cs)					\ */
-/*    ({						\ */
-/*       fptr32_t addr;					\ */
-/*       addr.segment = _cs;				\ */
-/*       asm volatile (					\ */
-/* 	 "movl  $1f, %0 \n"				\ */
-/* 	 "ljmp  *%0     \n"				\ */
-/* 	 "1:            \n"				\ */
-/* 	 ::"m"(addr.offset):"memory");			\ */
+/* #define set_cs(_cs)                                  \ */
+/*    ({                                                \ */
+/*       fptr32_t addr;                                 \ */
+/*       addr.segment = _cs;                            \ */
+/*       asm volatile (                                 \ */
+/*       "movl  $1f, %0 \n"                             \ */
+/*       "ljmp  *%0     \n"                             \ */
+/*       "1:            \n"                             \ */
+/*       ::"m"(addr.offset):"memory");                  \ */
 /*    }) */
 
-#define segmem_reload(_cs,_ds)			\
-   ({						\
-      set_cs(_cs);				\
-      asm volatile (				\
-	 "movw   %%ax, %%ss  \n"		\
-	 "movw   %%ax, %%ds  \n"		\
-	 "movw   %%ax, %%es  \n"		\
-	 "movw   %%ax, %%fs  \n"		\
-	 "movw   %%ax, %%gs  \n"		\
-	 ::"a"(_ds));				\
+#define segmem_reload(_cs,_ds)                  \
+   ({                                           \
+      set_cs(_cs);                              \
+      asm volatile (                            \
+         "movw   %%ax, %%ss  \n"                \
+         "movw   %%ax, %%ds  \n"                \
+         "movw   %%ax, %%es  \n"                \
+         "movw   %%ax, %%fs  \n"                \
+         "movw   %%ax, %%gs  \n"                \
+         ::"a"(_ds));                           \
    })
 
 #endif

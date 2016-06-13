@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -133,9 +133,9 @@ static int emulate_int15_get_ext_mem()
    for(n=0 ; n<smap->nr ; n++, sme++)
       if(sme->type == SMAP_TYPE_AVL && sme->base == 0x100000ULL)
       {
-	 x.raw = (sme->base + sme->len) - (16<<20);
-	 x.raw >>= 16;
-	 break;
+         x.raw = (sme->base + sme->len) - (16<<20);
+         x.raw >>= 16;
+         break;
       }
 
    if(x.raw == 0)
@@ -247,15 +247,15 @@ int emulate_int15()
       switch(emulate_int15_smap())
       {
       case VM_DONE:
-	 __rflags.cf = 0;
-	 rax->low = BIOS_SMAP_ID;
-	 break;
+         __rflags.cf = 0;
+         rax->low = BIOS_SMAP_ID;
+         break;
       case VM_FAULT:
-	 __rflags.cf = 1;
-	 rax->bhigh = BIOS_SMAP_ERROR;
-	 break;
+         __rflags.cf = 1;
+         rax->bhigh = BIOS_SMAP_ERROR;
+         break;
       default:
-	 return VM_FAIL;
+         return VM_FAIL;
       }
       __post_access(__rflags);
       return VM_DONE;

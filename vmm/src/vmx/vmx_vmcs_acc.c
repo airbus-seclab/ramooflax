@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ void __regparm__(2) __vmcs_force_read(raw64_t *val, vmcs_field_enc_t enc)
       vmx_insn_err_t vmx_err;
 
       if(!vmx_vmread(&vmx_err, &tmp.raw, enc.raw))
-	 panic("vmread(0x%x) err %d\n", enc.raw, vmx_err.raw);
+         panic("vmread(0x%x) err %d\n", enc.raw, vmx_err.raw);
 
       switch(enc.fwidth)
       {
@@ -68,7 +68,7 @@ void __regparm__(2) __vmcs_force_flush(raw64_t *val, vmcs_field_enc_t enc)
       vmx_insn_err_t vmx_err;
 
       if(!vmx_vmwrite(&vmx_err, val->raw, enc.raw))
-	 panic("vmwrite(0x%x, 0x%x) err %d\n", val->raw, enc.raw, vmx_err.raw);
+         panic("vmwrite(0x%x, 0x%x) err %d\n", val->raw, enc.raw, vmx_err.raw);
 
       /*
       ** don't use debug, since some fields might have not been read

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ int vmx_vmexit_resolve_cr_access()
       break;
    case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_LMSW:
       if(access->lmsw_op)
-	 return VM_FAIL;
+         return VM_FAIL;
       rc = vmx_vmexit_resolve_lmsw(info->vm.cpu.gpr->raw[gpr].wlow);
       break;
    case VMCS_VM_EXIT_INFORMATION_QUALIFICATION_CR_ACCESS_TYPE_CLTS:

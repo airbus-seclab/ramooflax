@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -44,23 +44,23 @@
 /*
 ** Gives addr size depending on running vm cpu mode
 */
-#define cpu_addr_sz()				\
-   ({						\
-      int mode;					\
-      if(_xx_lmode())				\
-      {						\
-	 if(__cs.attributes.l)			\
-	    mode = 64;				\
-	 else if(__cs.attributes.d)		\
-	    mode = 32;				\
-	 else					\
-	    mode = 16;				\
-      }						\
-      else if(_xx_pmode32())			\
-	 mode = 32;				\
-      else					\
-	 mode = 16;				\
-      mode;					\
+#define cpu_addr_sz()                           \
+   ({                                           \
+      int mode;                                 \
+      if(_xx_lmode())                           \
+      {                                         \
+         if(__cs.attributes.l)                  \
+            mode = 64;                          \
+         else if(__cs.attributes.d)             \
+            mode = 32;                          \
+         else                                   \
+            mode = 16;                          \
+      }                                         \
+      else if(_xx_pmode32())                    \
+         mode = 32;                             \
+      else                                      \
+         mode = 16;                             \
+      mode;                                     \
    })
 
 
@@ -74,11 +74,11 @@
 ** [ 0x0000000000000000 ; 0x00007fffffffffff ]
 ** [ 0xffff800000000000 ; 0xffffffffffffffff ]
 */
-#define canonical_linear(_aDdR)						\
-   ({									\
-      uint64_t lmt = (1ULL<<47) - 1;					\
+#define canonical_linear(_aDdR)                                         \
+   ({                                                                   \
+      uint64_t lmt = (1ULL<<47) - 1;                                    \
       bool_t   can = (!__paged64() || ((_aDdR) <= lmt || (_aDdR) >= ~lmt)); \
-      can;							 	\
+      can;                                                              \
    })
 
 #endif

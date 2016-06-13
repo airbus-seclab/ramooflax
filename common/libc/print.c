@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ static inline void __format_add_chr(buffer_t *buf, size_t len, int c)
 }
 
 static inline void __format_add_bin(buffer_t *buf, size_t len,
-				    uint64_t value, uint32_t n)
+                                    uint64_t value, uint32_t n)
 {
    uint32_t i, bit;
 
@@ -129,7 +129,7 @@ static inline void __format_add_dec(buffer_t *buf, size_t len, sint64_t value)
 }
 
 static inline void __format_add_hex(buffer_t *buf, size_t len,
-				    uint64_t value, size_t precision)
+                                    uint64_t value, size_t precision)
 {
    uint64_to_hex(buf, len, value, precision);
 }
@@ -152,37 +152,37 @@ size_t __vsnprintf(char *buffer, size_t len, const char *format, va_list params)
 
       if(interp)
       {
-	 if(c == 's'){
-	    char* value = va_arg(params, char*);
-	    __format_add_str(&buf, len, value);
-	 } else if(c == 'c'){
-	    int value = va_arg(params, int);
-	    __format_add_chr(&buf, len, value);
-	 } else if(c == 'b'){
-	    uint64_t value = va_arg(params, uint32_t);
-	    __format_add_bin(&buf, len, value, 32);
-	 } else if(c == 'B'){
-	    uint64_t value = va_arg(params, uint64_t);
-	    __format_add_bin(&buf, len, value, 64);
-	 } else if(c == 'd'){
-	    sint64_t value = va_arg(params, sint32_t);
-	    __format_add_dec(&buf, len, value);
-	 } else if(c == 'D'){
-	    sint64_t value = va_arg(params, sint64_t);
-	    __format_add_dec(&buf, len, value);
-	 } else if(c == 'x'){
-	    uint64_t value = va_arg(params, uint32_t);
-	    __format_add_hex(&buf, len, value, 0);
-	 } else if(c == 'X'){
-	    uint64_t value = va_arg(params, uint64_t);
-	    __format_add_hex(&buf, len, value, 0);
-	 } else {
-	    __buf_add(&buf, len, c);
-	 }
-	 interp = false;
+         if(c == 's'){
+            char* value = va_arg(params, char*);
+            __format_add_str(&buf, len, value);
+         } else if(c == 'c'){
+            int value = va_arg(params, int);
+            __format_add_chr(&buf, len, value);
+         } else if(c == 'b'){
+            uint64_t value = va_arg(params, uint32_t);
+            __format_add_bin(&buf, len, value, 32);
+         } else if(c == 'B'){
+            uint64_t value = va_arg(params, uint64_t);
+            __format_add_bin(&buf, len, value, 64);
+         } else if(c == 'd'){
+            sint64_t value = va_arg(params, sint32_t);
+            __format_add_dec(&buf, len, value);
+         } else if(c == 'D'){
+            sint64_t value = va_arg(params, sint64_t);
+            __format_add_dec(&buf, len, value);
+         } else if(c == 'x'){
+            uint64_t value = va_arg(params, uint32_t);
+            __format_add_hex(&buf, len, value, 0);
+         } else if(c == 'X'){
+            uint64_t value = va_arg(params, uint64_t);
+            __format_add_hex(&buf, len, value, 0);
+         } else {
+            __buf_add(&buf, len, c);
+         }
+         interp = false;
       }
       else if(c == '%')
-	 interp = true;
+         interp = true;
       else
          __buf_add(&buf, len, c);
    }

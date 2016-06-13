@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -189,13 +189,13 @@ typedef struct ata_device
 */
 #define __ata_guest_want_slave(_aTa)  ((_aTa)->dev_head.dev)
 
-#define __ata_build_lba(_aTa, _Dsk)				\
-   ({ uint32_t lba =						\
-	 ((_aTa)->dev_head.gen << 24) |				\
-	 ((_Dsk)->lba_r[2]     << 16) |				\
-	 ((_Dsk)->lba_r[1]     <<  8) |				\
-	 ((_Dsk)->lba_r[0]);					\
-      lba;							\
+#define __ata_build_lba(_aTa, _Dsk)                             \
+   ({ uint32_t lba =                                            \
+         ((_aTa)->dev_head.gen << 24) |                         \
+         ((_Dsk)->lba_r[2]     << 16) |                         \
+         ((_Dsk)->lba_r[1]     <<  8) |                         \
+         ((_Dsk)->lba_r[0]);                                    \
+      lba;                                                      \
    })
 
 typedef struct ata_controller

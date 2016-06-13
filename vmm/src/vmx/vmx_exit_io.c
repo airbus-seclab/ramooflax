@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -83,23 +83,23 @@ int __vmx_io_init(io_insn_t *io)
    if(insn->dis_mode == 64)
    {
       if(insn->pfx_adr)
-	 io->addr = 2;
+         io->addr = 2;
       else
-	 io->addr = 4;
+         io->addr = 4;
    }
    else if(insn->dis_mode == 32)
    {
       if(insn->pfx_adr)
-	 io->addr = 1;
+         io->addr = 1;
       else
-	 io->addr = 2;
+         io->addr = 2;
    }
    else
    {
       if(insn->pfx_adr)
-	 io->addr = 2;
+         io->addr = 2;
       else
-	 io->addr = 1;
+         io->addr = 1;
    }
 
    if(insn->pfx_seg)

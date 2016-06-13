@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -34,12 +34,12 @@ static mp_ptr_t* mp_search_ptr_chunk(uint32_t addr, uint32_t len)
    {
       _memchr8(dst, src, 0x5f, len);
       if(!len)
-	 break;
+         break;
 
       loc.linear = dst - 1;
       mp_ptr = (mp_ptr_t*)loc.addr;
       if(mp_ptr->sig == MP_PTR_SIG)
-	 return mp_ptr;
+         return mp_ptr;
 
       len -= dst - src;
       src  = dst;
@@ -82,14 +82,14 @@ static void mp_parse(mp_table_t *mp_tbl)
    {
       if(*loc.u8 == MP_TBL_ENTRY_PROC)
       {
-	 mp_tbl_proc_t *proc = (mp_tbl_proc_t*)loc.addr;
-	 debug(MP, "proc entry: en %d bp %d\n", proc->flags.en, proc->flags.bp);
-	 loc.linear += sizeof(mp_tbl_proc_t);
+         mp_tbl_proc_t *proc = (mp_tbl_proc_t*)loc.addr;
+         debug(MP, "proc entry: en %d bp %d\n", proc->flags.en, proc->flags.bp);
+         loc.linear += sizeof(mp_tbl_proc_t);
       }
       else
       {
-	 debug(MP, "entry %d\n", *loc.u8);
-	 loc.linear += MP_TBL_ENTRY_SZ_OTHER;
+         debug(MP, "entry %d\n", *loc.u8);
+         loc.linear += MP_TBL_ENTRY_SZ_OTHER;
       }
    }
 }

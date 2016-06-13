@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -39,23 +39,23 @@
 ** VM-entry
 */
 vmx_vmlaunch:
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%r11
-	popq	%r10
-	popq	%r9
-	popq	%r8
-	popq	%rdi
-	popq	%rsi
-	popq	%rbp
-	addq	$8, %rsp
- 	popq	%rbx
- 	popq	%rdx
- 	popq	%rcx
- 	popq	%rax
-	vmlaunch
+        popq    %r15
+        popq    %r14
+        popq    %r13
+        popq    %r12
+        popq    %r11
+        popq    %r10
+        popq    %r9
+        popq    %r8
+        popq    %rdi
+        popq    %rsi
+        popq    %rbp
+        addq    $8, %rsp
+        popq    %rbx
+        popq    %rdx
+        popq    %rcx
+        popq    %rax
+        vmlaunch
 
 /*
 ** VM-entry failure
@@ -67,103 +67,103 @@ vmx_vmlaunch:
 ** rsp +  0 [  panic @     ]
 **
 ** Params:
-**	RDI = mem64 VMX error code ptr = @vmx_err
+**      RDI = mem64 VMX error code ptr = @vmx_err
 */
 vmx_vmlaunch_failure:
-	mov	%rsp, %rdi
-	push	$vmx_vmlaunch_failure_fmt
-	push	$vmx_vmlaunch_failure_fnm
-	push	$0xbadc0de
-	push	$__panic
-	jmp	vmx_check_error
+        mov     %rsp, %rdi
+        push    $vmx_vmlaunch_failure_fmt
+        push    $vmx_vmlaunch_failure_fnm
+        push    $0xbadc0de
+        push    $__panic
+        jmp     vmx_check_error
 
 /*
 ** Enter VMX root operations
 **
 ** params:
-**	RDI = mem64 VMXON region paddr
+**      RDI = mem64 VMXON region paddr
 **
 ** returns:
-**	0 on failure
-**	1 on success
+**      0 on failure
+**      1 on success
 */
 __vmx_vmxon:
-	vmxon	(%rdi)
-	jc	vmx_fail
-	jmp	vmx_success
+        vmxon   (%rdi)
+        jc      vmx_fail
+        jmp     vmx_success
 
 /*
 ** Clear VMCS
 **
 ** params:
-**	RDI = mem64 VMX error code ptr
-**	RSI = mem64 VMCS region paddr
+**      RDI = mem64 VMX error code ptr
+**      RSI = mem64 VMCS region paddr
 **
 ** returns:
-**	0 on failure
-**	1 on success
+**      0 on failure
+**      1 on success
 */
 __vmx_vmclear:
-	vmclear (%rsi)
-	jmp	vmx_check_error
+        vmclear (%rsi)
+        jmp     vmx_check_error
 
 /*
 ** Load VMCS
 **
 ** params:
-**	RDI = mem64 VMX error code ptr
-**	RSI = mem64 VMCS region paddr
+**      RDI = mem64 VMX error code ptr
+**      RSI = mem64 VMCS region paddr
 **
 ** returns:
-**	0 on failure
-**	1 on success
+**      0 on failure
+**      1 on success
 */
 __vmx_vmload:
-	vmptrld	(%rsi)
-	jmp	vmx_check_error
+        vmptrld (%rsi)
+        jmp     vmx_check_error
 
 /*
 ** VM write
 **
 ** params:
-**	RDI = mem64 VMX error code ptr
-**	RSI = value to write
-**	RDX = VMCS field encoding
+**      RDI = mem64 VMX error code ptr
+**      RSI = value to write
+**      RDX = VMCS field encoding
 **
 ** returns:
-**	0 on failure
-**	1 on success
+**      0 on failure
+**      1 on success
 */
 __vmx_vmwrite:
-	vmwrite	%rsi, %rdx
-	jmp	vmx_check_error
+        vmwrite %rsi, %rdx
+        jmp     vmx_check_error
 
 /*
 ** VM read
 **
 ** params:
-**	RDI = mem64 VMX error code ptr
-**	RSI = mem64 read value ptr
-**	RDX = VMCS field encoding
+**      RDI = mem64 VMX error code ptr
+**      RSI = mem64 read value ptr
+**      RDX = VMCS field encoding
 **
 ** returns:
-**	0 on failure
-**	1 on success
+**      0 on failure
+**      1 on success
 */
 __vmx_vmread:
-	vmread	%rdx, (%rsi)
-	jmp	vmx_check_error
+        vmread  %rdx, (%rsi)
+        jmp     vmx_check_error
 
 /*
 ** VMX insn error checks
 */
 vmx_check_error:
-	jz	vmx_fail_valid
-	jc	vmx_fail_invalid
+        jz      vmx_fail_valid
+        jc      vmx_fail_invalid
 
 vmx_success:
-	mov	$1, %rax
-	ret
+        mov     $1, %rax
+        ret
 
 /*
 ** VM Fail Valid : ZF=1
@@ -172,11 +172,11 @@ vmx_success:
 ** store it to (%rdi)
 */
 vmx_fail_valid:
-	push	%rdx
-	mov	$0x4400, %rdx
-	vmread	%rdx, (%rdi)
-	pop	%rdx
-	jmp	vmx_fail
+        push    %rdx
+        mov     $0x4400, %rdx
+        vmread  %rdx, (%rdi)
+        pop     %rdx
+        jmp     vmx_fail
 
 /*
 ** VM Fail Invalid : CF=1
@@ -184,8 +184,8 @@ vmx_fail_valid:
 ** VMCS instruction error code is 0
 */
 vmx_fail_invalid:
-	movl	$0, (%rdi)
+        movl    $0, (%rdi)
 
 vmx_fail:
-	xor	%rax, %rax
-	ret
+        xor     %rax, %rax
+        ret

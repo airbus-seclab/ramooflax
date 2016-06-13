@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@
 /* BIOS bootloader @ */
 #define BIOS_BOOTLOADER       0x07c00
 
-#define is_bios_mem(__AdDr__)					\
-   (mem_range((__AdDr__),IVT_START,BIOS_DATA_END) ||		\
+#define is_bios_mem(__AdDr__)                                   \
+   (mem_range((__AdDr__),IVT_START,BIOS_DATA_END) ||            \
     mem_range((__AdDr__),BIOS_EXT_DATA_START,EXT_MEM_START))
 
 /*

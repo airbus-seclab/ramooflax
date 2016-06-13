@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -67,9 +67,9 @@ typedef union ip_header
 /*
 ** Functions
 */
-#define ip_checksum(_hdr_)						\
-   ({									\
-      (_hdr_)->chk = 0;							\
+#define ip_checksum(_hdr_)                                              \
+   ({                                                                   \
+      (_hdr_)->chk = 0;                                                 \
       (_hdr_)->chk = swap16(rfc1071_checksum((uint16_t*)(_hdr_), sizeof(ip_hdr_t))); \
    })
 

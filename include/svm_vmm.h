@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ typedef struct svm_bazaar
 */
 #ifdef __INIT__
 void    svm_vmm_init();
-#define svm_vmm_start(rsp,rip)						\
+#define svm_vmm_start(rsp,rip)                                          \
    asm volatile("mov %0, %%rsp ; jmp *%%rax"::"m"(rsp),"a"(rip):"memory")
 #endif
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -32,20 +32,20 @@
 /*
 ** Some protections
 */
-#define ___access_rflags(_access_)		\
-   ({						\
-      __#_access_##_pushf();			\
-      __#_access_##_popf();			\
-      __#_access_##_iret();			\
-      __#_access_##_icebp();			\
-      __#_access_##_soft_int();			\
-      __#_access_##_hrdw_int();			\
-      __#_access_##_excp();			\
-      info->vmm.ctrl.dbg.excp |= (1<<GP_EXCP);	\
+#define ___access_rflags(_access_)              \
+   ({                                           \
+      __#_access_##_pushf();                    \
+      __#_access_##_popf();                     \
+      __#_access_##_iret();                     \
+      __#_access_##_icebp();                    \
+      __#_access_##_soft_int();                 \
+      __#_access_##_hrdw_int();                 \
+      __#_access_##_excp();                     \
+      info->vmm.ctrl.dbg.excp |= (1<<GP_EXCP);  \
    })
 
-#define __protect_rflags()		___access_rflags(deny)
-#define __release_rflags()		___access_rflags(allow)
+#define __protect_rflags()              ___access_rflags(deny)
+#define __release_rflags()              ___access_rflags(allow)
 
 typedef struct ctrl_debugger
 {

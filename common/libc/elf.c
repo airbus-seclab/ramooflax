@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ static Elf64_Shdr* __elf_section(Elf64_Ehdr *e_hdr, Elf64_Word type)
       s_hdr = (Elf64_Shdr*)sloc.addr;
 
       if(s_hdr->sh_type == type)
-	 return s_hdr;
+         return s_hdr;
 
       sloc.linear += (offset_t)e_hdr->e_shentsize;
    }
@@ -113,10 +113,10 @@ void elf_module_load_relocatable(module_t *mod, offset_t base)
       rel = (Elf64_Rela*)rloc.addr;
 
       if(ELF64_R_TYPE(rel->r_info) != R_X86_64_RELATIVE)
-	 panic("bad relocation entry");
+         panic("bad relocation entry");
 
       if(rel->r_addend < 0)
-	 panic("humm negative addend");
+         panic("humm negative addend");
 
       fix.linear   = base + (offset_t)rel->r_offset;
       *fix.u64     = base + (offset_t)rel->r_addend;

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ void stack_trace()
    offset_t *rbp, *rip;
 
    printf("\n------ Setup Stack Trace [rsp: 0x%X | rip 0x%X]\n",
-	  get_rsp(), get_pc());
+          get_rsp(), get_pc());
 
    rbp = (offset_t*)get_rbp();
 

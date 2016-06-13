@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@ void stack_trace()
    offset_t *rbp, *rip;
 
    printf("\n------ VMM Stack Trace ------ \n"
-	  "vmm stack boundaries [0x%X - 0x%X] rsp 0x%X\n"
-	  "vmm relocation base 0x%X\n"
-	  , page_align(info->vmm.stack_bottom - VMM_MIN_STACK_SIZE)
-	  , info->vmm.stack_bottom
-	  , get_rsp()
-	  , info->vmm.base);
+          "vmm stack boundaries [0x%X - 0x%X] rsp 0x%X\n"
+          "vmm relocation base 0x%X\n"
+          , page_align(info->vmm.stack_bottom - VMM_MIN_STACK_SIZE)
+          , info->vmm.stack_bottom
+          , get_rsp()
+          , info->vmm.base);
 
    rbp = (offset_t*)get_rbp();
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -46,12 +46,12 @@ typedef struct programmable_interrupt_controler
 ** Functions
 */
 #ifdef __INIT__
-#define dev_pic_init(_pic_, n)				\
-   ({							\
-      (_pic_)->base     = PIC##n;			\
-      (_pic_)->icw2.raw = DFLT_PIC##n##_ICW2;		\
-      (_pic_)->wait_icw = 1;				\
-      (_pic_)->imr.raw  = in(PIC_IMR((_pic_)->base));	\
+#define dev_pic_init(_pic_, n)                          \
+   ({                                                   \
+      (_pic_)->base     = PIC##n;                       \
+      (_pic_)->icw2.raw = DFLT_PIC##n##_ICW2;           \
+      (_pic_)->wait_icw = 1;                            \
+      (_pic_)->imr.raw  = in(PIC_IMR((_pic_)->base));   \
    })
 
 #else

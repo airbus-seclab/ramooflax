@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ static void init_pagemem_2M()
       pg_set_entry(&pdp[p], PG_KRN|PG_RW, page_nr(pd[p]));
 
       for(n=0 ; n<PDE64_PER_PD ; n++)
-	 pg_set_large_entry(&pd[p][n], PG_KRN|PG_RW, base+n);
+         pg_set_large_entry(&pd[p][n], PG_KRN|PG_RW, base+n);
    }
 }
 

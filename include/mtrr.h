@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -76,12 +76,12 @@ typedef union ia32_mtrr_default_type
 #define rd_msr_ia32_mtrr_def(_m)   rd_msr64(IA32_MTRR_DEF_TYPE, (_m).edx, (_m).eax)
 #define wr_msr_ia32_mtrr_def(_m)   wr_msr64(IA32_MTRR_DEF_TYPE, (_m).edx, (_m).eax)
 
-#define __mtrr_def_set_enable(_x)	\
-   ({					\
-      ia32_mtrr_def_t def;		\
-      rd_msr_ia32_mtrr_def(def);	\
-      def.e = _x;			\
-      wr_msr_ia32_mtrr_def(def);	\
+#define __mtrr_def_set_enable(_x)       \
+   ({                                   \
+      ia32_mtrr_def_t def;              \
+      rd_msr_ia32_mtrr_def(def);        \
+      def.e = _x;                       \
+      wr_msr_ia32_mtrr_def(def);        \
    })
 
 #define disable_mtrr()    __mtrr_def_set_enable(0)

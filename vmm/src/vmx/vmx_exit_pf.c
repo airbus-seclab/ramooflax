@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -42,19 +42,19 @@ int vmx_vmexit_resolve_ept_viol()
       vmcs_read(vm_exit_info.guest_linear);
       info->vm.cpu.fault.npf.vaddr = vm_exit_info.guest_linear.raw;
       debug(VMX_EPT,
-	    "#NPF gv 0x%X gp 0x%X err 0x%X "
-	    "(r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
-	    ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
-	    ,info->vm.cpu.fault.npf.err.raw
-	    ,info->vm.cpu.fault.npf.err.r
-	    ,info->vm.cpu.fault.npf.err.w
-	    ,info->vm.cpu.fault.npf.err.x
-	    ,info->vm.cpu.fault.npf.err.gr
-	    ,info->vm.cpu.fault.npf.err.gw
-	    ,info->vm.cpu.fault.npf.err.gx
-	    ,info->vm.cpu.fault.npf.err.gl
-	    ,info->vm.cpu.fault.npf.err.final
-	    ,info->vm.cpu.fault.npf.err.nmi);
+            "#NPF gv 0x%X gp 0x%X err 0x%X "
+            "(r:%d w:%d x:%d gr:%d gw:%d gx:%d gl:%d final:%d nmi:%d)\n"
+            ,info->vm.cpu.fault.npf.vaddr, info->vm.cpu.fault.npf.paddr
+            ,info->vm.cpu.fault.npf.err.raw
+            ,info->vm.cpu.fault.npf.err.r
+            ,info->vm.cpu.fault.npf.err.w
+            ,info->vm.cpu.fault.npf.err.x
+            ,info->vm.cpu.fault.npf.err.gr
+            ,info->vm.cpu.fault.npf.err.gw
+            ,info->vm.cpu.fault.npf.err.gx
+            ,info->vm.cpu.fault.npf.err.gl
+            ,info->vm.cpu.fault.npf.err.final
+            ,info->vm.cpu.fault.npf.err.nmi);
    }
    else
    {
@@ -65,17 +65,17 @@ int vmx_vmexit_resolve_ept_viol()
       info->vm.cpu.fault.npf.vaddr = __rip.raw & 0xffffffffUL;
 
       debug(VMX_EPT,
-	    "#NPF (partial) gp 0x%X err 0x%X "
-	    "(r:%d w:%d x:%d gr:%d gw:%d gx:%d nmi:%d)\n"
-	    ,info->vm.cpu.fault.npf.paddr
-	    ,info->vm.cpu.fault.npf.err.raw
-	    ,info->vm.cpu.fault.npf.err.r
-	    ,info->vm.cpu.fault.npf.err.w
-	    ,info->vm.cpu.fault.npf.err.x
-	    ,info->vm.cpu.fault.npf.err.gr
-	    ,info->vm.cpu.fault.npf.err.gw
-	    ,info->vm.cpu.fault.npf.err.gx
-	    ,info->vm.cpu.fault.npf.err.nmi);
+            "#NPF (partial) gp 0x%X err 0x%X "
+            "(r:%d w:%d x:%d gr:%d gw:%d gx:%d nmi:%d)\n"
+            ,info->vm.cpu.fault.npf.paddr
+            ,info->vm.cpu.fault.npf.err.raw
+            ,info->vm.cpu.fault.npf.err.r
+            ,info->vm.cpu.fault.npf.err.w
+            ,info->vm.cpu.fault.npf.err.x
+            ,info->vm.cpu.fault.npf.err.gr
+            ,info->vm.cpu.fault.npf.err.gw
+            ,info->vm.cpu.fault.npf.err.gx
+            ,info->vm.cpu.fault.npf.err.nmi);
    }
 
    if(ctrl_evt_npf() == VM_IGNORE)

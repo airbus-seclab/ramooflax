@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -117,11 +117,11 @@ typedef union vmcb_ctrl_tlb
    {
       uint64_t   guest_asid:32;
       uint64_t   tlb_control:8; /*
-				** (0) do nothing
-				** (1) flush TLB on VMRUN
-				** (3) flush this guest TLB
-				** (7) flush this guest non-global TLB
-				*/
+                                ** (0) do nothing
+                                ** (1) flush TLB on VMRUN
+                                ** (3) flush this guest TLB
+                                ** (7) flush this guest non-global TLB
+                                */
    } __attribute__((packed));
 
    raw64_t;
@@ -142,10 +142,10 @@ typedef union vmcb_ctrl_interrupt
       uint64_t  v_ign_tpr:1;       /* (1) current virtual interrupt ignore v_tpr */
       uint64_t  rsrvd1:3;
       uint64_t  v_intr_masking:1;  /* (1) guest RFLAGS.IF controls virtual interrupts
-				   **     host  RFLAGS.IF controls physical interrupts
-				   **
-				   ** (0) RFLAGS.IF controls all interrupts
-				   */
+                                   **     host  RFLAGS.IF controls physical interrupts
+                                   **
+                                   ** (0) RFLAGS.IF controls all interrupts
+                                   */
       uint64_t  rsrvd2:7;
       uint64_t  v_intr_vector:8;   /* vector to use for interrupt */
       uint64_t  rsrvd3:24;
@@ -178,14 +178,14 @@ typedef union vmcb_idt_delivery
       uint64_t  ev:1;         /* exception push error code */
       uint64_t  rsrvd:19;     /* reserved */
       uint64_t  v:1;          /*
-			      ** Exit Interrupt Info :
-			      ** (1) we intercepted something while the guest
-			      **  was delivering the following IDT info
-			      **
-			      ** Interrupt Injection :
-			      ** (1) inject the following IDT info into guest
-			      **
-			      */
+                              ** Exit Interrupt Info :
+                              ** (1) we intercepted something while the guest
+                              **  was delivering the following IDT info
+                              **
+                              ** Interrupt Injection :
+                              ** (1) inject the following IDT info into guest
+                              **
+                              */
       uint64_t  err_code:32;  /* exception error code */
 
    } __attribute__((packed));
@@ -359,15 +359,15 @@ typedef struct vmcb_state_area_fields
 {
    vmcb_segment_desc_t  es, cs, ss, ds, fs, gs; /* only low32 base addr used */
    vmcb_segment_desc_t  gdtr, ldtr, idtr, tr;   /*
-						** For IDTR and GDTR:
-						** only lower 16 bits of limit are used
-						** attributes and selector are reserved
-						*/
+                                                ** For IDTR and GDTR:
+                                                ** only lower 16 bits of limit are used
+                                                ** attributes and selector are reserved
+                                                */
    uint8_t              rsvrd0[43];
    uint8_t              cpl;                    /*
-						** - force to 0 for real mode
-						** - force to 3 for virtual-mode
-						*/
+                                                ** - force to 0 for real mode
+                                                ** - force to 3 for virtual-mode
+                                                */
    uint32_t             rsvrd1;
    amd_efer_msr_t       efer;
    uint8_t              rsvrd2[112];
@@ -452,82 +452,82 @@ typedef union vmcb_area
 #define __svm_allow_bitmap(_bm_,_x_)   (_bm_[(_x_)/8] &= ~(1<<((_x_)%8)))
 #define __svm_deny_bitmap(_bm_,_x_)    (_bm_[(_x_)/8] |=  (1<<((_x_)%8)))
 
-#define __svm_access_io_range(_access_,_vmc_,_sp_,_ep_)		\
-   ({								\
-      uint32_t p;						\
-      for( p=_sp_ ; p<=_ep_ ; p++ )				\
-	 svm_##_access_##_##io(_vmc_,p);			\
+#define __svm_access_io_range(_access_,_vmc_,_sp_,_ep_)         \
+   ({                                                           \
+      uint32_t p;                                               \
+      for( p=_sp_ ; p<=_ep_ ; p++ )                             \
+         svm_##_access_##_##io(_vmc_,p);                        \
    })
 
-#define svm_allow_io(_vmc_,_p_)			\
+#define svm_allow_io(_vmc_,_p_)                 \
    __svm_allow_bitmap((_vmc_)->io_bitmap,_p_)
-#define svm_deny_io(_vmc_,_p_)			\
+#define svm_deny_io(_vmc_,_p_)                  \
    __svm_deny_bitmap((_vmc_)->io_bitmap,_p_)
-#define svm_allow_io_range(_vmc_,_sx_,_ex_)	\
+#define svm_allow_io_range(_vmc_,_sx_,_ex_)     \
    __svm_access_io_range(allow,_vmc_,_sx_,_ex_)
-#define svm_deny_io_range(_vmc_,_sx_,_ex_)	\
+#define svm_deny_io_range(_vmc_,_sx_,_ex_)      \
    __svm_access_io_range(deny,_vmc_,_sx_,_ex_)
 
 /*
 ** MSR bitmap macros
 */
-#define __svm_allow_bitmap_dual_rd(_bm_,_base_,_x_)	\
+#define __svm_allow_bitmap_dual_rd(_bm_,_base_,_x_)     \
    (_bm_[(_base_)+(_x_)/4] &= ~(1<<(((_x_)%4)*2)))
-#define __svm_deny_bitmap_dual_rd(_bm_,_base_,_x_)	\
+#define __svm_deny_bitmap_dual_rd(_bm_,_base_,_x_)      \
    (_bm_[(_base_)+(_x_)/4] |=  (1<<(((_x_)%4)*2)))
-#define __svm_allow_bitmap_dual_wr(_bm_,_base_,_x_)	\
+#define __svm_allow_bitmap_dual_wr(_bm_,_base_,_x_)     \
    (_bm_[(_base_)+(_x_)/4] &= ~(1<<((((_x_)%4)*2)+1)))
-#define __svm_deny_bitmap_dual_wr(_bm_,_base_,_x_)	\
+#define __svm_deny_bitmap_dual_wr(_bm_,_base_,_x_)      \
    (_bm_[(_base_)+(_x_)/4] |=  (1<<((((_x_)%4)*2)+1)))
-#define __svm_allow_bitmap_dual_rw(_bm_,_base_,_x_)	\
+#define __svm_allow_bitmap_dual_rw(_bm_,_base_,_x_)     \
    (_bm_[(_base_)+(_x_)/4] &= ~(3<<(((_x_)%4)*2)))
-#define __svm_deny_bitmap_dual_rw(_bm_,_base_,_x_)	\
+#define __svm_deny_bitmap_dual_rw(_bm_,_base_,_x_)      \
    (_bm_[(_base_)+(_x_)/4] |=  (3<<(((_x_)%4)*2)))
 
-#define __svm_access_msr(_x_,_access_,_op_,_bm_)			\
-   ({									\
-      uint32_t msr = (_x_);						\
-      if( msr < 0x2000 )						\
-	 __svm_##_access_##_bitmap_dual_##_op_(_bm_,0,msr);		\
-      else if( range(msr,0xc0000000,0xc0001fff) )			\
-	 __svm_##_access_##_bitmap_dual_##_op_(_bm_,0x800,(msr-0xbffff800)-0x800); \
-      else if( range(msr,0xc0010000,0xc0011fff) )			\
-	 __svm_##_access_##_bitmap_dual_##_op_(_bm_,0x1000,(msr-0xc000f000)-0x1000); \
-      else								\
-	 panic( "can't access msr 0x%x !", msr );			\
+#define __svm_access_msr(_x_,_access_,_op_,_bm_)                        \
+   ({                                                                   \
+      uint32_t msr = (_x_);                                             \
+      if( msr < 0x2000 )                                                \
+         __svm_##_access_##_bitmap_dual_##_op_(_bm_,0,msr);             \
+      else if( range(msr,0xc0000000,0xc0001fff) )                       \
+         __svm_##_access_##_bitmap_dual_##_op_(_bm_,0x800,(msr-0xbffff800)-0x800); \
+      else if( range(msr,0xc0010000,0xc0011fff) )                       \
+         __svm_##_access_##_bitmap_dual_##_op_(_bm_,0x1000,(msr-0xc000f000)-0x1000); \
+      else                                                              \
+         panic( "can't access msr 0x%x !", msr );                       \
    })
 
-#define svm_allow_msr_rd(_vmc_,_i_)				\
+#define svm_allow_msr_rd(_vmc_,_i_)                             \
    __svm_access_msr(_i_, allow, rd, (_vmc_)->msr_bitmap)
-#define svm_deny_msr_rd(_vmc_,_i_)				\
+#define svm_deny_msr_rd(_vmc_,_i_)                              \
    __svm_access_msr(_i_, deny,  rd, (_vmc_)->msr_bitmap)
-#define svm_allow_msr_wr(_vmc_,_i_)				\
+#define svm_allow_msr_wr(_vmc_,_i_)                             \
    __svm_access_msr(_i_, allow, wr, (_vmc_)->msr_bitmap)
-#define svm_deny_msr_wr(_vmc_,_i_)				\
+#define svm_deny_msr_wr(_vmc_,_i_)                              \
    __svm_access_msr(_i_, deny,  wr, (_vmc_)->msr_bitmap)
-#define svm_allow_msr_rw(_vmc_,_i_)				\
+#define svm_allow_msr_rw(_vmc_,_i_)                             \
    __svm_access_msr(_i_, allow, rw, (_vmc_)->msr_bitmap)
-#define svm_deny_msr_rw(_vmc_,_i_)				\
+#define svm_deny_msr_rw(_vmc_,_i_)                              \
    __svm_access_msr(_i_, deny,  rw, (_vmc_)->msr_bitmap)
 
-#define __svm_access_msr_range(_access_,_op_,_vmc_,_sp_,_ep_)		\
-   ({									\
-      uint32_t p;							\
-      for( p=_sp_ ; p<=_ep_ ; p++ )					\
-	 svm_##_access_##_##msr##_##_op_(_vmc_,p);			\
+#define __svm_access_msr_range(_access_,_op_,_vmc_,_sp_,_ep_)           \
+   ({                                                                   \
+      uint32_t p;                                                       \
+      for( p=_sp_ ; p<=_ep_ ; p++ )                                     \
+         svm_##_access_##_##msr##_##_op_(_vmc_,p);                      \
    })
 
-#define svm_allow_msr_rd_range(_vmc_,_sx_,_ex_)		\
+#define svm_allow_msr_rd_range(_vmc_,_sx_,_ex_)         \
    __svm_access_msr_range(allow, rd, _vmc_,_sx_,_ex_)
-#define svm_deny_msr_rd_range(_vmc_,_sx_,_ex_)		\
+#define svm_deny_msr_rd_range(_vmc_,_sx_,_ex_)          \
    __svm_access_msr_range(deny,  rd, _vmc_,_sx_,_ex_)
-#define svm_allow_msr_wr_range(_vmc_,_sx_,_ex_)		\
+#define svm_allow_msr_wr_range(_vmc_,_sx_,_ex_)         \
    __svm_access_msr_range(allow, wr, _vmc_,_sx_,_ex_)
-#define svm_deny_msr_wr_range(_vmc_,_sx_,_ex_)		\
+#define svm_deny_msr_wr_range(_vmc_,_sx_,_ex_)          \
    __svm_access_msr_range(deny,  wr, _vmc_,_sx_,_ex_)
-#define svm_allow_msr_rw_range(_vmc_,_sx_,_ex_)		\
+#define svm_allow_msr_rw_range(_vmc_,_sx_,_ex_)         \
    __svm_access_msr_range(allow, rw, _vmc_,_sx_,_ex_)
-#define svm_deny_msr_rw_range(_vmc_,_sx_,_ex_)		\
+#define svm_deny_msr_rw_range(_vmc_,_sx_,_ex_)          \
    __svm_access_msr_range(deny,  rw, _vmc_,_sx_,_ex_)
 
 /*

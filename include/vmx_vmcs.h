@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -325,23 +325,23 @@ typedef union vmcs_cpu_region
 #define __vmx_allow_bitmap(_bm_,_x_)   ((_bm_)[(_x_)/8] &= ~(1<<((_x_)%8)))
 #define __vmx_deny_bitmap(_bm_,_x_)    ((_bm_)[(_x_)/8] |=  (1<<((_x_)%8)))
 
-#define __vmx_access_io(_x_,_access_,_vmc_)				\
-   ({									\
-      uint32_t io = (_x_);						\
-      if( io < 0x8000 )							\
-	 __vmx_##_access_##_bitmap((_vmc_)->io_bitmap_a,io);		\
-      else								\
-	 __vmx_##_access_##_bitmap((_vmc_)->io_bitmap_b,(io-0x8000));	\
+#define __vmx_access_io(_x_,_access_,_vmc_)                             \
+   ({                                                                   \
+      uint32_t io = (_x_);                                              \
+      if( io < 0x8000 )                                                 \
+         __vmx_##_access_##_bitmap((_vmc_)->io_bitmap_a,io);            \
+      else                                                              \
+         __vmx_##_access_##_bitmap((_vmc_)->io_bitmap_b,(io-0x8000));   \
    })
 
 #define vmx_allow_io(_vmc_,_p_)        __vmx_access_io(_p_, allow, _vmc_)
 #define vmx_deny_io(_vmc_,_p_)         __vmx_access_io(_p_, deny, _vmc_)
 
-#define __vmx_access_io_range(_access_,_vmc_,_sp_,_ep_)		\
-   ({								\
-      uint32_t p;						\
-      for( p=_sp_ ; p<=_ep_ ; p++ )				\
-	 vmx_##_access_##_##io(_vmc_,p);			\
+#define __vmx_access_io_range(_access_,_vmc_,_sp_,_ep_)         \
+   ({                                                           \
+      uint32_t p;                                               \
+      for( p=_sp_ ; p<=_ep_ ; p++ )                             \
+         vmx_##_access_##_##io(_vmc_,p);                        \
    })
 
 #define vmx_allow_io_range(_vmc_,_sx_,_ex_)   __vmx_access_io_range(allow,_vmc_,_sx_,_ex_)
@@ -350,25 +350,25 @@ typedef union vmcs_cpu_region
 /*
 ** MSR bitmap macros
 */
-#define __vmx_access_msr(_x_,_r_,_w_,_access_,_bm_)			\
-   ({									\
-      uint32_t msr = (_x_);						\
-      if( msr < 0x2000 )						\
-      {									\
-	 if( _r_ )							\
-	    __vmx_##_access_##_bitmap((_bm_),msr);			\
-	 if( _w_ )							\
-	    __vmx_##_access_##_bitmap((_bm_)+2048,msr);			\
-      }									\
-      else if( range(msr,0xc0000000,0xc0002000-1) )			\
-      {									\
-	 if( _r_ )							\
-	    __vmx_##_access_##_bitmap((_bm_)+1024,msr-0xc0000000);	\
-	 if( _w_ )							\
-	    __vmx_##_access_##_bitmap((_bm_)+3072,msr-0xc0000000);	\
-      }									\
-      else								\
-	 panic( "can't access msr 0x%x !", msr );			\
+#define __vmx_access_msr(_x_,_r_,_w_,_access_,_bm_)                     \
+   ({                                                                   \
+      uint32_t msr = (_x_);                                             \
+      if( msr < 0x2000 )                                                \
+      {                                                                 \
+         if( _r_ )                                                      \
+            __vmx_##_access_##_bitmap((_bm_),msr);                      \
+         if( _w_ )                                                      \
+            __vmx_##_access_##_bitmap((_bm_)+2048,msr);                 \
+      }                                                                 \
+      else if( range(msr,0xc0000000,0xc0002000-1) )                     \
+      {                                                                 \
+         if( _r_ )                                                      \
+            __vmx_##_access_##_bitmap((_bm_)+1024,msr-0xc0000000);      \
+         if( _w_ )                                                      \
+            __vmx_##_access_##_bitmap((_bm_)+3072,msr-0xc0000000);      \
+      }                                                                 \
+      else                                                              \
+         panic( "can't access msr 0x%x !", msr );                       \
    })
 
 #define vmx_allow_msr_rd(_vmc_,_i_)     __vmx_access_msr(_i_, 1,0, allow, (_vmc_)->msr_bitmap)
@@ -378,11 +378,11 @@ typedef union vmcs_cpu_region
 #define vmx_allow_msr_rw(_vmc_,_i_)     __vmx_access_msr(_i_, 1,1, allow, (_vmc_)->msr_bitmap)
 #define vmx_deny_msr_rw(_vmc_,_i_)      __vmx_access_msr(_i_, 1,1, deny,  (_vmc_)->msr_bitmap)
 
-#define __vmx_access_msr_range(_access_,_op_,_vmc_,_sp_,_ep_)		\
-   ({									\
-      uint32_t p;							\
-      for( p=_sp_ ; p<=_ep_ ; p++ )					\
-	 vmx_##_access_##_##msr##_##_op_(_vmc_,p);			\
+#define __vmx_access_msr_range(_access_,_op_,_vmc_,_sp_,_ep_)           \
+   ({                                                                   \
+      uint32_t p;                                                       \
+      for( p=_sp_ ; p<=_ep_ ; p++ )                                     \
+         vmx_##_access_##_##msr##_##_op_(_vmc_,p);                      \
    })
 
 #define vmx_allow_msr_rd_range(_vmc_,_sx_,_ex_)  __vmx_access_msr_range(allow, rd, _vmc_,_sx_,_ex_)

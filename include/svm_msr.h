@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -52,13 +52,13 @@ typedef union amd_dbgctl_msr
 #define rd_msr_amd_dbgctl(val)      rd_msr64(AMD_DBGCTL_MSR,(val).edx,(val).eax)
 #define wr_msr_amd_dbgctl(val)      wr_msr64(AMD_DBGCTL_MSR,(val).edx,(val).eax)
 
-#define set_amd_dbgctl(_n,_v)		\
-   ({					\
-      amd_dbgctl_msr_t dbgctl;		\
-      rd_msr_amd_dbgctl(dbgctl);	\
-      if(_v) dbgctl.raw |=  (_n);	\
-      else   dbgctl.raw &= ~(_n);	\
-      wr_msr_amd_dbgctl(dbgctl);	\
+#define set_amd_dbgctl(_n,_v)           \
+   ({                                   \
+      amd_dbgctl_msr_t dbgctl;          \
+      rd_msr_amd_dbgctl(dbgctl);        \
+      if(_v) dbgctl.raw |=  (_n);       \
+      else   dbgctl.raw &= ~(_n);       \
+      wr_msr_amd_dbgctl(dbgctl);        \
    })
 
 #define amd_dbgctl_lbr_enable()      set_amd_dbgctl(AMD_DBGCTL_LBR, 1)
@@ -72,11 +72,11 @@ typedef union amd_dbgctl_msr
 #define AMD_LBR_FROM_EXCP_MSR        0x1ddUL
 #define AMD_LBR_TO_EXCP_MSR          0x1deUL
 
-#define __amd_dbgctl_lbr(_idx_)		\
-   ({					\
-      msr_t m;				\
-      rd_msr64(_idx_, m.edx, m.eax);	\
-      m.raw;				\
+#define __amd_dbgctl_lbr(_idx_)         \
+   ({                                   \
+      msr_t m;                          \
+      rd_msr64(_idx_, m.edx, m.eax);    \
+      m.raw;                            \
    })
 
 #define amd_dbgctl_lbr_from()        __amd_dbgctl_lbr(AMD_LBR_FROM_MSR)
@@ -137,11 +137,11 @@ typedef union amd_top_of_memory_msr
 
 } __attribute__((packed)) amd_top_mem_msr_t;
 
-#define rd_msr_topmem(_x_)		\
-   ({					\
-      msr_t m;		\
-      rd_msr64(_x_,m.edx,m.eax);	\
-      m.raw;				\
+#define rd_msr_topmem(_x_)              \
+   ({                                   \
+      msr_t m;          \
+      rd_msr64(_x_,m.edx,m.eax);        \
+      m.raw;                            \
    })
 
 #define rd_msr_topmem1()      rd_msr_topmem(AMD_TOP_MEM1_MSR)
@@ -185,13 +185,13 @@ typedef union amd_efer_msr
 #define rd_msr_amd_efer(val)      rd_msr64(AMD_EFER_MSR,(val).edx,(val).eax)
 #define wr_msr_amd_efer(val)      wr_msr64(AMD_EFER_MSR,(val).edx,(val).eax)
 
-#define set_amd_efer(_n,_v)		\
-   ({					\
-      amd_efer_msr_t efer;		\
-      rd_msr_amd_efer(efer);		\
-      if(_v) efer.raw |=  (_n);		\
-      else   efer.raw &= ~(_n);		\
-      wr_msr_amd_efer(efer);		\
+#define set_amd_efer(_n,_v)             \
+   ({                                   \
+      amd_efer_msr_t efer;              \
+      rd_msr_amd_efer(efer);            \
+      if(_v) efer.raw |=  (_n);         \
+      else   efer.raw &= ~(_n);         \
+      wr_msr_amd_efer(efer);            \
    })
 
 #define svm_enable()          set_amd_efer(AMD_EFER_SVME,1)

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ static int emulate_mov(ud_t *disasm)
       uint8_t cr = op2->base - UD_R_CR0;
 
       if(disasm->pfx_lock != UD_NONE || disasm->pfx_rex != UD_NONE)
-	 return VM_FAIL;
+         return VM_FAIL;
 
       gpr = __emulate_get_gpr(op1);
       return __resolve_cr(0, cr, gpr);
@@ -74,7 +74,7 @@ static int emulate_mov(ud_t *disasm)
       uint8_t cr = op1->base - UD_R_CR0;
 
       if(disasm->pfx_lock != UD_NONE || disasm->pfx_rex != UD_NONE)
-	 return VM_FAIL;
+         return VM_FAIL;
 
       gpr = __emulate_get_gpr(op2);
       return __resolve_cr(1, cr, gpr);
@@ -171,7 +171,7 @@ static int emulate_sysexit()
    if(__cpl || !__cr0.pe || !cs.index)
    {
       debug(EMU_INSN, "sysexit fault: cpl %d cr0.pe %d cs.index %d\n"
-	    , __cpl, __cr0.pe, cs.index);
+            , __cpl, __cr0.pe, cs.index);
       __inject_exception(GP_EXCP, 0, 0);
       return VM_FAULT;
    }

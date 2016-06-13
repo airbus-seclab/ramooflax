@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,6 +40,6 @@ void __regparm__(1) init(mbi_t *mbi)
    vm_init();
 
    debug(VM,
-	 "\n---=oO0Oo=--- starting vm cpu (vmm base 0x%X) ---=oO0Oo=---\n\n"
-	 , info->vmm.base);
+         "\n---=oO0Oo=--- starting vm cpu (vmm base 0x%X) ---=oO0Oo=---\n\n"
+         , info->vmm.base);
 }

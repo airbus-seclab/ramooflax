@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,10 +30,10 @@ static int __svm_vmexit_resolve_msr_efer(uint8_t wr)
    if(wr)
    {
       if(efer_update & (AMD_EFER_LME|AMD_EFER_LMA|AMD_EFER_NXE))
-	 __flush_tlb_glb();
+         __flush_tlb_glb();
 
       if(ctx->rax.low & AMD_EFER_SVME)
-	 debug(SVM_MSR, "vm wants svm\n");
+         debug(SVM_MSR, "vm wants svm\n");
 
       vm_state.efer.eax = ctx->rax.low | AMD_EFER_SVME;
       vm_state.efer.edx = ctx->rdx.low;

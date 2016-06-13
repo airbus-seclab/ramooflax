@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ extern info_data_t *info;
 ** can change default size
 */
 static void __vm_resolve_seg_offset(offset_t *vaddr, offset_t base, offset_t offset,
-				    offset_t addend, int *mode)
+                                    offset_t addend, int *mode)
 {
    *mode = cpu_addr_sz();
 
@@ -44,9 +44,9 @@ static void __vm_resolve_seg_offset(offset_t *vaddr, offset_t base, offset_t off
       *vaddr = (base & 0xffffffff);
 
       if(*mode == 32)
-	 *vaddr += (offset & 0xffffffff) + (addend & 0xffffffff);
+         *vaddr += (offset & 0xffffffff) + (addend & 0xffffffff);
       else
-	 *vaddr += (offset & 0xffff) + (addend & 0xffff);
+         *vaddr += (offset & 0xffff) + (addend & 0xffff);
    }
 }
 
@@ -58,7 +58,7 @@ void vm_get_code_addr(offset_t *vaddr, offset_t addend, int *mode)
 void vm_get_stack_addr(offset_t *vaddr, offset_t addend, int *mode)
 {
    __vm_resolve_seg_offset(vaddr, __ss.base.raw, info->vm.cpu.gpr->rsp.raw,
-			   addend, mode);
+                           addend, mode);
 }
 
 void vm_update_rip(offset_t offset)
@@ -112,13 +112,13 @@ static int __vm_access_local_operator(vm_access_t *access)
    if(!__rmode())
    {
       debug(VM_ACCESS,
-	    "vm_access_local %s dst 0x%X src 0x%X ln %D [0x%x:0x%x]\n"
-	    ,access->wr ? "write":"read"
-	    ,dst.linear, src.linear, access->len
-	    ,dst.u8[0], dst.u8[access->len -1]);
+            "vm_access_local %s dst 0x%X src 0x%X ln %D [0x%x:0x%x]\n"
+            ,access->wr ? "write":"read"
+            ,dst.linear, src.linear, access->len
+            ,dst.u8[0], dst.u8[access->len -1]);
       size_t i=0;
       while(i<access->len)
-	 printf("%x", dst.u8[i++]);
+         printf("%x", dst.u8[i++]);
       printf("\n");
    }
 #endif
@@ -208,20 +208,20 @@ static int __vm_access_vmem(vm_access_t *access)
       rc = __pg_walk(access->cr3, vaddr, &wlk);
       if(rc != VM_DONE)
       {
-	 debug(VM, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
-	 if(rc == VM_FAULT)
-	 {
-	    pf_err_t pf = {.raw = 0};
+         debug(VM, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
+         if(rc == VM_FAULT)
+         {
+            pf_err_t pf = {.raw = 0};
 
-	    if(access->rq == VM_ACC_REQ_VMM)
-	       return VM_PARTIAL;
+            if(access->rq == VM_ACC_REQ_VMM)
+               return VM_PARTIAL;
 
-	    pf.wr = access->wr;
-	    pf.us = (__cpl == 3);
-	    __inject_exception(PF_EXCP, pf.raw, vaddr);
-	 }
+            pf.wr = access->wr;
+            pf.us = (__cpl == 3);
+            __inject_exception(PF_EXCP, pf.raw, vaddr);
+         }
 
-	 return rc;
+         return rc;
       }
 
       nxt = __align_next(vaddr, wlk.size);
@@ -230,7 +230,7 @@ static int __vm_access_vmem(vm_access_t *access)
 
       rc = __vm_access_pmem(access);
       if(rc != VM_DONE)
-	 return rc;
+         return rc;
 
       len  -= access->len;
       vaddr = nxt;
@@ -240,9 +240,9 @@ static int __vm_access_vmem(vm_access_t *access)
 }
 
 static void __vm_access_setup(vm_access_t *access,
-			      cr3_reg_t *cr3, offset_t addr,
-			      uint8_t *data, size_t len,
-			      uint8_t wr, uint8_t rq, uint8_t rm)
+                              cr3_reg_t *cr3, offset_t addr,
+                              uint8_t *data, size_t len,
+                              uint8_t wr, uint8_t rq, uint8_t rm)
 {
    access->addr = addr;
    access->data = (void*)data;

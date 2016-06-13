@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@ void arp_init()
 #endif
 
 static size_t __arp_op(arp_hdr_t *hdr, uint16_t op,
-		       mac_addr_t *hwsrc, mac_addr_t *hwdst,
-		       ip_addr_t src, ip_addr_t dst)
+                       mac_addr_t *hwsrc, mac_addr_t *hwdst,
+                       ip_addr_t src, ip_addr_t dst)
 {
    hdr->hwtype = swap16(ARP_TYPE_ETH);
    hdr->proto = swap16(ETHER_TYPE_IP);
@@ -51,8 +51,8 @@ static size_t __arp_op(arp_hdr_t *hdr, uint16_t op,
 }
 
 size_t arp_who_has_pkt(arp_hdr_t *hdr,
-		       mac_addr_t *hwsrc, mac_addr_t *hwdst,
-		       ip_addr_t src, ip_addr_t dst)
+                       mac_addr_t *hwsrc, mac_addr_t *hwdst,
+                       ip_addr_t src, ip_addr_t dst)
 {
 #ifdef CONFIG_ARP_DBG
    {
@@ -67,8 +67,8 @@ size_t arp_who_has_pkt(arp_hdr_t *hdr,
 }
 
 size_t arp_is_at_pkt(arp_hdr_t *hdr,
-		     mac_addr_t *hwsrc, mac_addr_t *hwdst,
-		     ip_addr_t src, ip_addr_t dst)
+                     mac_addr_t *hwsrc, mac_addr_t *hwdst,
+                     ip_addr_t src, ip_addr_t dst)
 {
 #ifdef CONFIG_ARP_DBG
    {
@@ -92,14 +92,14 @@ static void arp_cache_update(ip_addr_t ip, mac_addr_t *mac)
    for(i=0 ; i<end ; i++)
       if(arp->cache[i].ip == ip)
       {
-	 if(!mac_cmp(&arp->cache[i].mac, mac))
-	 {
-	    mac_copy(&arp->cache[i].mac, mac);
+         if(!mac_cmp(&arp->cache[i].mac, mac))
+         {
+            mac_copy(&arp->cache[i].mac, mac);
 #ifdef CONFIG_ARP_DBG
-	    goto __cache_updated;
+            goto __cache_updated;
 #endif
-	 }
-	 return ;
+         }
+         return ;
       }
 
    arp->cache[arp->tail].ip = ip;
@@ -128,8 +128,8 @@ int arp_cache_lookup(ip_addr_t ip, mac_addr_t *mac)
    for(i=0 ; i<end ; i++)
       if(arp->cache[i].ip == ip)
       {
-	 mac_copy(mac, &arp->cache[i].mac);
-	 return 1;
+         mac_copy(mac, &arp->cache[i].mac);
+         return 1;
       }
 
    return 0;

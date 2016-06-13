@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -46,61 +46,61 @@ void __vmcs_force_flush(raw64_t*, vmcs_field_enc_t) __regparm__(2);
 ** Wrappers
 */
 #define vmcs_fake_it(_fld_)             (_fld_##_enc.fake = 1)
-#define vmcs_encode(_fld_,_eNc_)	(_fld_##_enc.raw  = _eNc_)
+#define vmcs_encode(_fld_,_eNc_)        (_fld_##_enc.raw  = _eNc_)
 #define vmcs_is_dirty(_fld_)            (_fld_##_enc.dirty != 0)
-#define vmcs_set_read(_fld_)	        (_fld_##_enc.read = 1)
-#define vmcs_clear(_fld_)	        (_fld_##_enc.dirty = 0)
+#define vmcs_set_read(_fld_)            (_fld_##_enc.read = 1)
+#define vmcs_clear(_fld_)               (_fld_##_enc.dirty = 0)
 
-#define vmcs_dirty(_fld_)		  \
-   ({					  \
-      if(!_fld_##_enc.dirty)		  \
-      {					  \
-	 _fld_##_enc.read  = 1;		  \
-	 _fld_##_enc.dirty = 1;		  \
-      }					  \
+#define vmcs_dirty(_fld_)                                               \
+   ({                                                                   \
+      if(!_fld_##_enc.dirty)                                            \
+      {                                                                 \
+         _fld_##_enc.read  = 1;                                         \
+         _fld_##_enc.dirty = 1;                                         \
+      }                                                                 \
    })
 
-#define vmcs_force_read(_fld_)					\
-   __vmcs_force_read((raw64_t*)&_fld_.raw, _fld_##_enc);	\
+#define vmcs_force_read(_fld_)                                  \
+   __vmcs_force_read((raw64_t*)&_fld_.raw, _fld_##_enc);        \
 
-#define vmcs_force_flush(_fld_)					\
-   __vmcs_force_flush((raw64_t*)&_fld_.raw, _fld_##_enc);	\
+#define vmcs_force_flush(_fld_)                                 \
+   __vmcs_force_flush((raw64_t*)&_fld_.raw, _fld_##_enc);       \
 
-#define vmcs_read(_fld_)		\
-   ({					\
-      if(!_fld_##_enc.read)		\
-      {					\
-	 vmcs_force_read(_fld_);	\
-	 _fld_##_enc.read = 1;		\
-      }					\
+#define vmcs_read(_fld_)                                                \
+   ({                                                                   \
+      if(!_fld_##_enc.read)                                             \
+      {                                                                 \
+         vmcs_force_read(_fld_);                                        \
+         _fld_##_enc.read = 1;                                          \
+      }                                                                 \
    })
 
-#define vmcs_flush(_fld_)		\
-   ({					\
-      _fld_##_enc.read = 0;		\
-      if(_fld_##_enc.dirty)		\
-      {					\
-	 _fld_##_enc.dirty = 0;		\
-	 vmcs_force_flush(_fld_);	\
-      }					\
+#define vmcs_flush(_fld_)               \
+   ({                                   \
+      _fld_##_enc.read = 0;             \
+      if(_fld_##_enc.dirty)             \
+      {                                 \
+         _fld_##_enc.dirty = 0;         \
+         vmcs_force_flush(_fld_);       \
+      }                                 \
    })
 
-#define vmcs_flush_fixed(_fld_,_fx_)		\
-   ({						\
-      _fld_##_enc.read = 0;			\
-      if(_fld_##_enc.dirty)			\
-      {						\
-	 _fld_##_enc.dirty = 0;			\
-	 vmx_set_fixed(_fld_.raw, _fx_);	\
-	 vmcs_force_flush(_fld_);		\
-      }						\
+#define vmcs_flush_fixed(_fld_,_fx_)            \
+   ({                                           \
+      _fld_##_enc.read = 0;                     \
+      if(_fld_##_enc.dirty)                     \
+      {                                         \
+         _fld_##_enc.dirty = 0;                 \
+         vmx_set_fixed(_fld_.raw, _fx_);        \
+         vmcs_force_flush(_fld_);               \
+      }                                         \
    })
 
-#define vmcs_cond(_will_wr_,_fld_)	\
-   ({					\
-      vmcs_read(_fld_);			\
-      if(_will_wr_)			\
-	 _fld_##_enc.dirty = 1;		\
+#define vmcs_cond(_will_wr_,_fld_)      \
+   ({                                   \
+      vmcs_read(_fld_);                 \
+      if(_will_wr_)                     \
+         _fld_##_enc.dirty = 1;         \
    })
 
 #endif

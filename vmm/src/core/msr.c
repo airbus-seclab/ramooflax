@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -60,8 +60,8 @@ int resolve_msr(uint8_t wr)
    int rc = wr ? __resolve_msr_wr() : __resolve_msr_rd();
 
    debug(MSR, "%smsr 0x%x | 0x%x 0x%x\n"
-	 , wr?"wr":"rd", info->vm.cpu.gpr->rcx.low
-	 , info->vm.cpu.gpr->rdx.low, info->vm.cpu.gpr->rax.low);
+         , wr?"wr":"rd", info->vm.cpu.gpr->rcx.low
+         , info->vm.cpu.gpr->rdx.low, info->vm.cpu.gpr->rax.low);
 
    return emulate_done(rc, max(__insn_sz(), MSR_INSN_SZ));
 }

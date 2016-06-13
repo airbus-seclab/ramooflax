@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -135,14 +135,14 @@ static size_t gdb_parse_packet(uint8_t *data, size_t len)
 
       if(gdb_checksum_verify(data, dlen, ptr))
       {
-	 debug(GDBSTUB_PKT, "cmd packet (%D)\n", dlen);
-	 __gdb_reset_buffer();
-	 gdb_process_packet(data, dlen);
+         debug(GDBSTUB_PKT, "cmd packet (%D)\n", dlen);
+         __gdb_reset_buffer();
+         gdb_process_packet(data, dlen);
       }
       else
       {
-	 debug(GDBSTUB_PKT, "invalid checksum\n");
-	 gdb_nak();
+         debug(GDBSTUB_PKT, "invalid checksum\n");
+         gdb_nak();
       }
    }
 
@@ -171,36 +171,36 @@ static size_t gdb_consume_packet(uint8_t *data, size_t len)
       switch(*data)
       {
       case GDB_ACK_BYTE:
-	 if(!gdb_enabled())
-	 {
-	    debug(GDBSTUB_PKT, "gdb connect\n");
-	    gdb_enable();
-	 }
-	 done = 1;
-	 break;
+         if(!gdb_enabled())
+         {
+            debug(GDBSTUB_PKT, "gdb connect\n");
+            gdb_enable();
+         }
+         done = 1;
+         break;
 
       case GDB_PKT_BYTE:
-	 done = gdb_parse_packet(data, len);
-	 if(!done)
-	    goto __end;
-	 break;
+         done = gdb_parse_packet(data, len);
+         if(!done)
+            goto __end;
+         break;
 
       case GDB_INT_BYTE:
-	 done = 1;
-	 debug(GDBSTUB_PKT, "interrupt sequence requested\n");
-	 gdb_interrupt_sequence();
-	 break;
+         done = 1;
+         debug(GDBSTUB_PKT, "interrupt sequence requested\n");
+         gdb_interrupt_sequence();
+         break;
 
       case GDB_NAK_BYTE:
-	 done = 1;
-	 gdb_ack();
-	 break;
+         done = 1;
+         gdb_ack();
+         break;
 
       default:
-	 done = 1;
-	 debug(GDBSTUB_PKT, "gdb_stub unsupported '\\x%x' (sz %D)\n", *data, len);
-	 gdb_unsupported();
-	 break;
+         done = 1;
+         debug(GDBSTUB_PKT, "gdb_stub unsupported '\\x%x' (sz %D)\n", *data, len);
+         gdb_unsupported();
+         break;
       }
 
       len -= done;
@@ -254,8 +254,8 @@ int gdb_get_number(uint8_t *data, size_t len, uint64_t *store, uint8_t endian)
 }
 
 int __gdb_setup_reg_op(uint8_t *data, size_t len,
-		       raw64_t **reg, size_t *size,
-		       raw64_t *value, uint8_t wr, uint8_t sys)
+                       raw64_t **reg, size_t *size,
+                       raw64_t *value, uint8_t wr, uint8_t sys)
 {
    uint8_t  *s_idx, *s_value;
    size_t   l_idx, l_value;
@@ -267,8 +267,8 @@ int __gdb_setup_reg_op(uint8_t *data, size_t len,
    {
       if(!(s_value = (uint8_t*)strchr((char*)s_idx, len, '=')))
       {
-	 debug(GDBSTUB_PKT, "setup_reg_op can't parse value\n");
-	 goto __nak;
+         debug(GDBSTUB_PKT, "setup_reg_op can't parse value\n");
+         goto __nak;
       }
 
       l_idx = (size_t)(s_value - s_idx);
@@ -277,8 +277,8 @@ int __gdb_setup_reg_op(uint8_t *data, size_t len,
 
       if(!gdb_get_number(s_value, l_value, (uint64_t*)value, 1))
       {
-	 debug(GDBSTUB_PKT, "setup_reg_op can't get value\n");
-	 goto __nak;
+         debug(GDBSTUB_PKT, "setup_reg_op can't get value\n");
+         goto __nak;
       }
    }
    else
@@ -304,8 +304,8 @@ __nak:
 }
 
 int __gdb_setup_mem_op(uint8_t *data, size_t len,
-		       offset_t *addr, size_t *size,
-		       loc_t *bytes)
+                       offset_t *addr, size_t *size,
+                       loc_t *bytes)
 {
    uint8_t  *s_addr, *s_size;
    size_t   l_addr, l_size;
@@ -321,7 +321,7 @@ int __gdb_setup_mem_op(uint8_t *data, size_t len,
    if(bytes)
    {
       if(!(bytes->u8 = (uint8_t*)strchr((char*)s_size, len - (l_addr+1), ':')))
-	 goto __nak;
+         goto __nak;
 
       l_size = (size_t)(bytes->u8 - s_size);
       bytes->u8++;
@@ -343,7 +343,7 @@ __nak:
 }
 
 int __gdb_setup_brk_op(uint8_t *data, size_t len,
-		       uint64_t *type, size_t *kind, offset_t *addr)
+                       uint64_t *type, size_t *kind, offset_t *addr)
 {
    uint8_t  *s_type, *s_addr, *s_kind;
    size_t   l_type, l_addr, l_kind;
@@ -445,22 +445,22 @@ void gdb_recv_packet()
    {
       do
       {
-	 len = remain;
-	 remain = 0;
-	 ptr = &gdb_input[len];
-	 len += gdb_io_read(ptr, sizeof(gdb_input) - len);
+         len = remain;
+         remain = 0;
+         ptr = &gdb_input[len];
+         len += gdb_io_read(ptr, sizeof(gdb_input) - len);
 
-	 if(len)
-	 {
-	    remain = gdb_consume_packet(gdb_input, len);
-	    debug(GDBSTUB_PKT, "remain (%D)\n", remain);
+         if(len)
+         {
+            remain = gdb_consume_packet(gdb_input, len);
+            debug(GDBSTUB_PKT, "remain (%D)\n", remain);
 
-	    if(remain && remain != len)
-	    {
-	       ptr = gdb_input + (len - remain);
-	       memcpy(gdb_input, ptr, remain);
-	    }
-	 }
+            if(remain && remain != len)
+            {
+               ptr = gdb_input + (len - remain);
+               memcpy(gdb_input, ptr, remain);
+            }
+         }
       } while(remain);
    } while(gdb_locked());
 }

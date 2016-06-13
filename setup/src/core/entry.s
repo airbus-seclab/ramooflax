@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@
 ** - start the vmm
 */
 entry:
-	cli
-	movq	$__kernel_start__, %rsp
-	pushq	$0
-	popf
-	call	init
-	jmp	vmm_start
+        cli
+        movq    $__kernel_start__, %rsp
+        pushq   $0
+        popf
+        call    init
+        jmp     vmm_start

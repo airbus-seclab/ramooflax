@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -35,13 +35,13 @@ static int __dev_ata_device(ata_t *ata, io_insn_t *io)
       /* check crazy io (should not happen) */
       if((io->sz * io->cnt) > sizeof(ata_dev_reg_t))
       {
-	 debug(DEV_ATA, "unsupported ata dev access\n");
-	 return VM_FAIL;
+         debug(DEV_ATA, "unsupported ata dev access\n");
+         return VM_FAIL;
       }
 
       rc = dev_io_insn(io, (void*)&dev.raw, &sz);
       if(rc != VM_DONE)
-	 return rc;
+         return rc;
 
       ata->dev_head = dev;
       debug(DEV_ATA, "ata device [%s]\n", dev.dev ? "SLAVE":"MASTER");
@@ -132,8 +132,8 @@ static int __dev_ata_cmd_filter(void *device, void *arg)
       disk->lba |= ata->dev_head.gen << 24;
 
       debug(DEV_ATA, "ata cmd [%s 0x%x sector(s) from 0x%x]\n"
-	    ,(ata->cmd == ATA_WRITE_SECTOR_CMD) ? "write":"read"
-	    ,disk->cnt, disk->lba);
+            ,(ata->cmd == ATA_WRITE_SECTOR_CMD) ? "write":"read"
+            ,disk->cnt, disk->lba);
    }
 #ifdef CONFIG_DEV_ATA_DBG
    else
@@ -190,17 +190,17 @@ int dev_ata(ata_t *ata, io_insn_t *io)
    if(io->port == ATA_STATUS_REG(ata->base))
    {
       if(io->in)
-	 return __dev_ata_status(ata, io);
+         return __dev_ata_status(ata, io);
       else
-	 return dev_io_proxify_filter(io, __dev_ata_cmd_filter, ata);
+         return dev_io_proxify_filter(io, __dev_ata_cmd_filter, ata);
    }
 
    if(io->port == ATA_ALT_STATUS_REG(ata->base))
    {
       if(io->in)
-	 return __dev_ata_alt_status(ata, io);
+         return __dev_ata_alt_status(ata, io);
       else
-	 goto __proxify;
+         goto __proxify;
    }
 
    if(io->port == ATA_DEVICE_REG(ata->base))
@@ -220,9 +220,9 @@ int dev_ata(ata_t *ata, io_insn_t *io)
    if(io->port == ATA_ERR_REG(ata->base))
    {
       if(io->in)
-	 debug(DEV_ATA, "ata err\n");
+         debug(DEV_ATA, "ata err\n");
       else
-	 debug(DEV_ATA, "ata feat\n");
+         debug(DEV_ATA, "ata feat\n");
 
       goto __proxify;
    }

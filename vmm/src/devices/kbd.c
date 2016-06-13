@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -46,23 +46,23 @@ int __dev_kbd_data(kbd_t *kbd, io_insn_t *io)
       if(kbd->last_cmd == KBD_CMD_READ_O_PORT)
       {
          rax->blow &= ~KBD_OUTPUT_PORT_A20;
-	 rax->blow |= (kbd->output_port.a20 ? KBD_OUTPUT_PORT_A20 : 0);
+         rax->blow |= (kbd->output_port.a20 ? KBD_OUTPUT_PORT_A20 : 0);
       }
    }
    else
    {
       if(kbd->last_cmd == KBD_CMD_WRITE_O_PORT)
       {
-	 kbd->output_port.raw = rax->blow;
+         kbd->output_port.raw = rax->blow;
 
-	 /* if(kbd->output_port.sys_rst) */
-	 /*    panic("keyboard controller system reset"); */
+         /* if(kbd->output_port.sys_rst) */
+         /*    panic("keyboard controller system reset"); */
 
-	 dev_a20_set(kbd->output_port.a20);
+         dev_a20_set(kbd->output_port.a20);
 
          /* Don't let the VM _actually_ disable the a20 line */
-	 if(!kbd->output_port.a20)
-	    rax->blow |= KBD_OUTPUT_PORT_A20;
+         if(!kbd->output_port.a20)
+            rax->blow |= KBD_OUTPUT_PORT_A20;
       }
 
       out(rax->blow, io->port);

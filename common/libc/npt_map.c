@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -203,8 +203,8 @@ static void __npg_unmap_2M(npg_pde64_t *pde)
 
       debug(PG_MAP, "clear each pte\n");
       for(i=0 ; i<PTE64_PER_PT ; i++)
-	 if(npg_present(&pt[i]))
-	    npg_zero(&pt[i]);
+         if(npg_present(&pt[i]))
+            npg_zero(&pt[i]);
 
       debug(PG_MAP, "freeing pt\n");
       pool_push_page((offset_t)pt);
@@ -275,8 +275,8 @@ static void __npg_unmap_1G(npg_pdpe_t *pdpe)
 
       debug(PG_MAP, "unmap 2M for each pde\n");
       for(i=0 ; i<PDE64_PER_PD ; i++)
-	 if(npg_present(&pd[i]))
-	    __npg_unmap_2M(&pd[i]);
+         if(npg_present(&pd[i]))
+            __npg_unmap_2M(&pd[i]);
 
       debug(PG_MAP, "freeing pd\n");
       pool_push_page((offset_t)pd);
@@ -395,7 +395,7 @@ static void _npg_unmap_512G(offset_t addr, uint64_t __unused__ attr)
    debug(PG_MAP, "unmap 1G for each pdpe\n");
    for(i=0 ; i<PDPE_PER_PDP ; i++)
       if(npg_present(&pdp[i]))
-	 __npg_unmap_1G(&pdp[i]);
+         __npg_unmap_1G(&pdp[i]);
 }
 
 static void _npg_unmap_1G(offset_t addr, uint64_t __unused__ attr)
@@ -518,8 +518,8 @@ static npg_op_t npg_512G_op =
 };
 
 static inline offset_t __npg_bk_op(offset_t start, offset_t end,
-				   offset_t upper, uint64_t attr,
-				   npg_op_t *op, uint8_t act)
+                                   offset_t upper, uint64_t attr,
+                                   npg_op_t *op, uint8_t act)
 {
    offset_t addr;
 
@@ -530,11 +530,11 @@ static inline offset_t __npg_bk_op(offset_t start, offset_t end,
 
       if(__aligned(start, op->sz) && diff_tbl)
       {
-	 op->fnc[act](start, attr);
-	 addr = start_up;
+         op->fnc[act](start, attr);
+         addr = start_up;
       }
       else
-	 addr = __npg_bk_op(start, end, start_up, attr, op->nxt, act);
+         addr = __npg_bk_op(start, end, start_up, attr, op->nxt, act);
    }
    else
       addr = __align(start, op->sz);
@@ -549,7 +549,7 @@ static inline offset_t __npg_bk_op(offset_t start, offset_t end,
 }
 
 static inline void __npg_fw_op(offset_t start, offset_t end, uint64_t attr,
-			       npg_op_t *op, uint8_t act)
+                               npg_op_t *op, uint8_t act)
 {
    offset_t addr = start;
 
@@ -595,5 +595,5 @@ void npg_unmap(offset_t start, offset_t end)
 void npg_setup_a20()
 {
    debug(PG_MAP, "A20 %s (wrap-around not implemented)\n"
-	 , info->vm.dev.mem.a20?"on":"off");
+         , info->vm.dev.mem.a20?"on":"off");
 }

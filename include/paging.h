@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -73,10 +73,10 @@ typedef struct npg_configuration
 #define npg_get_active_paging()   (info->vm.cpu.active_npg)
 #define npg_set_active_paging(_x) (info->vm.cpu.active_npg = (_x))
 
-#define npg_set_active_paging_cpu()				\
-   ({								\
-      npg_cr3_set(npg_get_active_paging()->pml4);		\
-      npg_set_asid(npg_get_active_paging()->asid);		\
+#define npg_set_active_paging_cpu()                             \
+   ({                                                           \
+      npg_cr3_set(npg_get_active_paging()->pml4);               \
+      npg_set_asid(npg_get_active_paging()->asid);              \
    })
 
 /*

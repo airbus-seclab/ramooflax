@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ static int vmx_db_pending_discarded()
    {
       vmcs_read(vm_state.activity);
       if(vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SHUTDOWN ||
-	 vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SIPI)
-	 return 1;
+         vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SIPI)
+         return 1;
    }
    else
    {
@@ -48,13 +48,13 @@ static int vmx_db_pending_discarded()
       case VMCS_EVT_INFO_TYPE_HW_INT:
       case VMCS_EVT_INFO_TYPE_HW_EXCP:
       case VMCS_EVT_INFO_TYPE_PS_EXCP:
-	 return 1;
+         return 1;
 
       case VMCS_EVT_INFO_TYPE_SW_INT:
       case VMCS_EVT_INFO_TYPE_SW_EXCP:
-	 vmcs_read(vm_state.interrupt);
-	 if(!vm_state.interrupt.mss)
-	    return 1;
+         vmcs_read(vm_state.interrupt);
+         if(!vm_state.interrupt.mss)
+            return 1;
       }
    }
 
@@ -93,13 +93,13 @@ static int vmx_db_check_pending_any()
 #ifdef CONFIG_VMX_DB_DBG
       if(vm_state.rflags.tf)
       {
-	 vmcs_read(vm_state.activity);
-	 vmcs_read(vm_state.interrupt);
-	 debug(VMX_DB,
-	       "TF is set, pending #DB: be:%d bs:%d sti:%d mss:%d activity:0x%x\n"
-	       ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
-	       ,vm_state.interrupt.sti, vm_state.interrupt.mss
-	       ,vm_state.activity.raw);
+         vmcs_read(vm_state.activity);
+         vmcs_read(vm_state.interrupt);
+         debug(VMX_DB,
+               "TF is set, pending #DB: be:%d bs:%d sti:%d mss:%d activity:0x%x\n"
+               ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
+               ,vm_state.interrupt.sti, vm_state.interrupt.mss
+               ,vm_state.activity.raw);
       }
 #endif
       return VM_IGNORE;
@@ -140,8 +140,8 @@ void vmx_check_dbgctl()
 
    if(vm_state.dbg_excp.be || vm_state.dbg_excp.bs)
       debug(VMX_DB, "pending #DB: be:%d bs:%d 0x%X\n"
-	    ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
-	    ,vm_state.dbg_excp.raw);
+            ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
+            ,vm_state.dbg_excp.raw);
 #endif
 
    if(!vm_state.interrupt.sti && !vm_state.interrupt.mss &&
@@ -150,8 +150,8 @@ void vmx_check_dbgctl()
 
 #ifdef CONFIG_VMX_DB_DBG
    debug(VMX_DB, "pending #DB: sti:%d mss:%d activity:0x%x\n"
-	 ,vm_state.interrupt.sti, vm_state.interrupt.mss
-	 ,vm_state.activity.raw);
+         ,vm_state.interrupt.sti, vm_state.interrupt.mss
+         ,vm_state.activity.raw);
 #endif
 
    vmcs_read(vm_state.ia32_dbgctl);
@@ -180,11 +180,11 @@ void vmx_db_show_pending()
    vmcs_read(vm_state.dbg_excp);
 
    debug(VMX_DB,
-	 "pending #DB: be:%d bs:%d raw:0x%X sti:%d mss:%d activity:0x%x btf:%d\n"
-	 ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
-	 ,vm_state.dbg_excp.raw
-	 ,vm_state.interrupt.sti, vm_state.interrupt.mss
-	 ,vm_state.activity.raw
-	 ,vm_state.ia32_dbgctl.btf);
+         "pending #DB: be:%d bs:%d raw:0x%X sti:%d mss:%d activity:0x%x btf:%d\n"
+         ,vm_state.dbg_excp.be, vm_state.dbg_excp.bs
+         ,vm_state.dbg_excp.raw
+         ,vm_state.interrupt.sti, vm_state.interrupt.mss
+         ,vm_state.activity.raw
+         ,vm_state.ia32_dbgctl.btf);
 #endif
 }

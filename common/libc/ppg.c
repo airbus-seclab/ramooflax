@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -36,15 +36,15 @@ void ppg_desc_init()
    {
       if(vmm_area(addr))
       {
-	 dsc->cnt     = 1;
-	 dsc->flg.vmm = 1;
-	 /* cdll_fill(ppg->vmm.list, dsc); */
-	 /* ppg->vmm.nr++; */
+         dsc->cnt     = 1;
+         dsc->flg.vmm = 1;
+         /* cdll_fill(ppg->vmm.list, dsc); */
+         /* ppg->vmm.nr++; */
       }
       /* else */
       /* { */
-      /* 	 /\* cdll_fill(ppg->vm.list, dsc); *\/ */
-      /* 	 /\* ppg->vm.nr++; *\/ */
+      /*         /\* cdll_fill(ppg->vm.list, dsc); *\/ */
+      /*         /\* ppg->vm.nr++; *\/ */
       /* } */
 
       addr += PAGE_SIZE;

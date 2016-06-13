@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -49,9 +49,9 @@ typedef struct dbg_hard
 #define ___dbg_hard                (info->vmm.ctrl.dbg.hard)
 #define dbg_hard_dr6_dirty()       (___dbg_hard.sts.dr6)
 #define dbg_hard_set_dr6_dirty(_x) (___dbg_hard.sts.dr6=(_x))
-#define dbg_hard_dr6_clean()			\
+#define dbg_hard_dr6_clean()                    \
    ({                                           \
-      dbg_hard_set_dr6_dirty(0);		\
+      dbg_hard_set_dr6_dirty(0);                \
       __dr6.wlow = 0x0ff0;                      \
       __post_access(__dr6);                     \
    })

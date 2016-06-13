@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,8 +27,8 @@ extern info_data_t *info;
 void mac_str(mac_addr_t *mac, char *str)
 {
    snprintf(str, MAC_STR_SZ, "%x:%x:%x:%x:%x:%x"
-	    ,mac->byte[0],mac->byte[1],mac->byte[2]
-	    ,mac->byte[3],mac->byte[4],mac->byte[5]);
+            ,mac->byte[0],mac->byte[1],mac->byte[2]
+            ,mac->byte[3],mac->byte[4],mac->byte[5]);
 }
 
 int mac_cmp(mac_addr_t *m1, mac_addr_t *m2)

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ static void vm_dev_init()
       e1k_info_t *e1k = &info->hrd.dev.net.arch;
       npg_unmap(e1k->base.linear, e1k->base.linear + (128<<10));
       debug(E1000, "protect e1000 mmio space [0x%X - 0x%X]\n"
-	    ,e1k->base.linear, e1k->base.linear + (128<<10));
+            ,e1k->base.linear, e1k->base.linear + (128<<10));
    }
 #endif
 #endif

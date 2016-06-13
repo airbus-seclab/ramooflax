@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -67,12 +67,12 @@ static inline size_t pmem_vm_pg_size(pg_cnt_t __unused__ *pg)
 static inline size_t pmem_vm_pg_pool_size(pg_cnt_t *pg)
 {
    return (pg->pdp*sizeof(npg_pdp_t)  +
-	   pg->pd *sizeof(npg_pd64_t) +
-	   pg->pt *sizeof(npg_pt64_t));
+           pg->pd *sizeof(npg_pd64_t) +
+           pg->pt *sizeof(npg_pt64_t));
 }
 
 static inline offset_t pmem_vm_pg_alloc(vm_t *vm, offset_t area,
-					pg_cnt_t __unused__ *pg)
+                                        pg_cnt_t __unused__ *pg)
 {
    vm->cpu.dflt_npg.pml4 = (npg_pml4e_t*)area;
    area += sizeof(npg_pml4_t);
@@ -112,10 +112,10 @@ static inline void pmem_pg_predict(pg_cnt_t *vmm, pg_cnt_t *vm)
       vm->pt = max_pt;
 
    debug(PMEM,
-	 "vmm needs %D pdp %D pd %D pt\n"
-	 "vm  needs %D pdp %D pd %D pt\n"
-	 ,vmm->pdp, vmm->pd, vmm->pt
-	 ,vm->pdp,  vm->pd,  vm->pt);
+         "vmm needs %D pdp %D pd %D pt\n"
+         "vm  needs %D pdp %D pd %D pt\n"
+         ,vmm->pdp, vmm->pd, vmm->pt
+         ,vm->pdp,  vm->pd,  vm->pt);
 }
 
 static int pmem_pool_opt_hdl(char *str, void *arg)
@@ -184,20 +184,20 @@ void pmem_init(mbi_t *mbi)
    pool_desc_sz = sizeof(pool_pg_desc_t)*(pool_sz/PAGE_SIZE);
 
    fixed = (VMM_MIN_STACK_SIZE
-	    + pool_sz
-	    + VMM_IO_POOL_SZ
-	    + pmem_vmm_pg_size(&vmm_pg)
-	    + pmem_vm_pg_size(&vm_pg)
-	    + sizeof(vmc_t)
+            + pool_sz
+            + VMM_IO_POOL_SZ
+            + pmem_vmm_pg_size(&vmm_pg)
+            + pmem_vm_pg_size(&vm_pg)
+            + sizeof(vmc_t)
 #ifdef CONFIG_HAS_NET
-	    + net_mem_size_arch()
+            + net_mem_size_arch()
 #endif
-	    + sizeof(vmm_sgmem_t)
-	    + vmm_elf_sz + sizeof(long)
-	    + smap_sz
-	    + pool_desc_sz
-	    + ppg_dsc_sz
-	    + sizeof(info_data_t));
+            + sizeof(vmm_sgmem_t)
+            + vmm_elf_sz + sizeof(long)
+            + smap_sz
+            + pool_desc_sz
+            + ppg_dsc_sz
+            + sizeof(info_data_t));
 
    info->area.start = page_align(info->area.end - fixed);
    if(info->area.start >= info->area.end)

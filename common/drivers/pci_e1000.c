@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ void pci_cfg_e1k(net_info_t *net)
    {
       dvd.device = PCI_CFG_DEVICE_i82540EM;
       if(!pci_search(pci_check_dvd, dvd.raw, 1, pci))
-	 goto __not_found;
+         goto __not_found;
    }
 
    pci->addr.reg = PCI_CFG_CLASS_REV_OFFSET;
@@ -54,8 +54,8 @@ void pci_cfg_e1k(net_info_t *net)
 
    pci_cfg_read(pci);
    debug(PCI_E1000, "e1k CMD/STS 0x%x 0x%x | CMD io %d mm %d dma %d\n"
-	 ,pci->cs.cmd.raw, pci->cs.sts.raw
-	 ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+         ,pci->cs.cmd.raw, pci->cs.sts.raw
+         ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
 
    /* BAR regs */
    if(!pci_read_bar(pci, 0))

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -65,16 +65,16 @@ typedef struct controller_user
 
 #define __ctrl_set_cr_mask(_cr,_m) (_cr = _m & 0x1ff)  /* until cr8 */
 
-#define ctrl_usr_set_cr_rd(_m)				\
-   ({							\
-      __ctrl_set_cr_mask(info->vmm.ctrl.usr.cr_rd, _m);	\
-      __update_cr_read_mask();				\
+#define ctrl_usr_set_cr_rd(_m)                          \
+   ({                                                   \
+      __ctrl_set_cr_mask(info->vmm.ctrl.usr.cr_rd, _m); \
+      __update_cr_read_mask();                          \
    })
 
-#define ctrl_usr_set_cr_wr(_m)				\
-   ({							\
-      __ctrl_set_cr_mask(info->vmm.ctrl.usr.cr_wr, _m);	\
-      __update_cr_write_mask();				\
+#define ctrl_usr_set_cr_wr(_m)                          \
+   ({                                                   \
+      __ctrl_set_cr_mask(info->vmm.ctrl.usr.cr_wr, _m); \
+      __update_cr_write_mask();                         \
    })
 
 #define CTRL_OS_AFFINITY_UNKNOWN    0
@@ -113,31 +113,31 @@ void ctrl_usr_reset();
 int     __ctrl_active_cr3_check(int);
 #define ctrl_active_cr3_check()        __ctrl_active_cr3_check(3)
 
-#define ctrl_pmem_recv(_a,_l)			\
+#define ctrl_pmem_recv(_a,_l)                   \
    __vm_recv_pmem(_a,_l)
 
-#define ctrl_pmem_send(_a,_l)			\
+#define ctrl_pmem_send(_a,_l)                   \
    __vm_send_pmem(_a,_l)
 
-#define ctrl_pmem_read(_a,_l)			\
+#define ctrl_pmem_read(_a,_l)                   \
    __vm_read_pmem(_a,_l)
 
-#define ctrl_pmem_write(_a,_l)			\
+#define ctrl_pmem_write(_a,_l)                  \
    __vm_write_pmem(_a,_l)
 
 #define ctrl_vmem_read_with(_c,_a,_d,_l)   __vm_read_vmem(_c,_a,_d,_l)
 #define ctrl_vmem_write_with(_c,_a,_d,_l)  __vm_write_vmem(_c,_a,_d,_l)
 
-#define ctrl_vmem_recv(_a,_l)				\
+#define ctrl_vmem_recv(_a,_l)                           \
    __vm_recv_vmem(info->vmm.ctrl.active_cr3,_a,_l)
 
-#define ctrl_vmem_send(_a,_l)				\
+#define ctrl_vmem_send(_a,_l)                           \
    __vm_send_vmem(info->vmm.ctrl.active_cr3,_a,_l)
 
-#define ctrl_vmem_read(_a,_d,_l)			\
+#define ctrl_vmem_read(_a,_d,_l)                        \
    __vm_read_vmem(info->vmm.ctrl.active_cr3,_a,_d,_l)
 
-#define ctrl_vmem_write(_a,_d,_l)			\
+#define ctrl_vmem_write(_a,_d,_l)                       \
    __vm_write_vmem(info->vmm.ctrl.active_cr3,_a,_d,_l)
 
 #endif

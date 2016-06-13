@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -41,14 +41,14 @@ static inline int __dev_uart_tx(uart_t *uart, io_insn_t *io)
 
       rc = dev_io_insn(io, &uart->buffer[uart->index], &sz);
       if(rc != VM_DONE)
-	 return rc;
+         return rc;
 
       uart->index += sz.done;
 
       if(uart->index >= DEV_UART_BUFF_LEN)
       {
-	 uart->index = DEV_UART_BUFF_LEN;
-	 __dev_uart_flush(uart);
+         uart->index = DEV_UART_BUFF_LEN;
+         __dev_uart_flush(uart);
       }
 
    } while(sz.miss);
@@ -70,7 +70,7 @@ static inline int __dev_uart_dla(uart_t *uart, io_insn_t *io)
       rc = dev_io_insn(io, &uart->dla.msb, &sz);
 
    debug(DEV_UART, "%s dla msb 0x%x lsb 0x%x\n"
-	 ,io->in?"in":"out", uart->dla.msb, uart->dla.lsb);
+         ,io->in?"in":"out", uart->dla.msb, uart->dla.lsb);
    return rc;
 }
 
@@ -201,10 +201,10 @@ int dev_uart(uart_t *uart, io_insn_t *io)
    if(io->port <= SERIAL_IER(uart->base))
    {
       if(uart->lcr.dla)
-	 return __dev_uart_dla(uart, io);
+         return __dev_uart_dla(uart, io);
 
       if(io->port == SERIAL_TXRX(uart->base))
-	 return __dev_uart_xfr(uart, io);
+         return __dev_uart_xfr(uart, io);
 
       return __dev_uart_ier(uart, io);
    }
@@ -212,7 +212,7 @@ int dev_uart(uart_t *uart, io_insn_t *io)
    if(io->port == SERIAL_IIR(uart->base))
    {
       if(io->in)
-	 return __dev_uart_iir(uart, io);
+         return __dev_uart_iir(uart, io);
 
       return __dev_uart_fcr(uart, io);
    }

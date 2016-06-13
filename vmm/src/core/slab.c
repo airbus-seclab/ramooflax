@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ static offset_t slab_req_page(slab_t *slab)
       ppg_dsc_t *ppgd = ppg_get_desc(addr);
 
       if(!ppgd)
-	 return 0;
+         return 0;
 
       ppgd->slab = slab;
    }
@@ -199,10 +199,10 @@ size_t slab_grow(slab_t *slab, size_t nr)
    {
       addr = slab_req_page(slab);
       if(!addr)
-	 goto __no_more;
+         goto __no_more;
 
       for(i=0 ; i<np ; i++, addr += slab->sz)
-	 cdll_fill(slab->obj, (slab_obj_t*)addr);
+         cdll_fill(slab->obj, (slab_obj_t*)addr);
 
       slab->nr += np;
       nr += np;
@@ -254,7 +254,7 @@ slab_t* slab_new(size_t asz, size_t nr)
    else if(sz == slab->sz)
    {
       if(!slab_grow(slab, nr))
-	 return (slab_t*)0;
+         return (slab_t*)0;
 
       debug(SLAB, " + cache extended to %D obj\n", slab->nr);
       return slab;

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -246,18 +246,18 @@ typedef union pic_operation_control_word_3
    struct
    {
       uint8_t   reg:2;   /* (00) reserved
-			 ** (01) reserved
-			 ** (10) Next Read on Base Register returns Interrupt Request Register
-			 ** (11) Next Read on Base Register returns In-Service Register
-			 */
+                         ** (01) reserved
+                         ** (10) Next Read on Base Register returns Interrupt Request Register
+                         ** (11) Next Read on Base Register returns In-Service Register
+                         */
       uint8_t   poll:1;  /* (1) Poll command, (0) No poll command */
       uint8_t   one:1;   /* MUST BE SET TO 1 */
       uint8_t   zero:1;
       uint8_t   smm:2;   /* (00) reserved
-			 ** (01) reserved
-			 ** (10) Reset Special Mask Mode
-			 ** (11) Set Special Mask Mode
-			 */
+                         ** (01) reserved
+                         ** (10) Reset Special Mask Mode
+                         ** (11) Set Special Mask Mode
+                         */
       uint8_t   zero2:1;
 
    } __attribute__((packed));

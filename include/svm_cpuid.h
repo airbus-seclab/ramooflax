@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,29 +33,29 @@
 #define CPUID_AMD_EDX_EXT_PROC_FEAT_PGE_BIT  13
 #define CPUID_AMD_EDX_EXT_PROC_FEAT_PAT_BIT  16
 
-#define svm_supported()					\
-   ({							\
-      uint32_t c=0,d;					\
-      cpuid_ext_proc_feat(c,d);				\
-      (c & CPUID_AMD_ECX_EXT_PROC_FEAT_SVM)?1:0;	\
+#define svm_supported()                                 \
+   ({                                                   \
+      uint32_t c=0,d;                                   \
+      cpuid_ext_proc_feat(c,d);                         \
+      (c & CPUID_AMD_ECX_EXT_PROC_FEAT_SVM)?1:0;        \
    })
 
-#define check_cpu_skillz()						\
-   ({									\
-      uint32_t c=0,d;							\
-      uint32_t efeat =							\
-	 CPUID_EDX_EXT_PROC_FEAT_PSE |					\
-	 CPUID_EDX_EXT_PROC_FEAT_PAE |					\
-	 CPUID_EDX_EXT_PROC_FEAT_PAT |					\
-	 CPUID_EDX_EXT_PROC_FEAT_LM;					\
-      cpuid_ext_proc_feat(c,d);						\
-      if((d & efeat) != efeat)						\
-	 panic("AMD cpu not skilled enough: pse %d pae %d pat %d lm %d", \
-	       (d&CPUID_EDX_EXT_PROC_FEAT_PSE)?1:0,			\
-	       (d&CPUID_EDX_EXT_PROC_FEAT_PAE)?1:0,			\
-	       (d&CPUID_EDX_EXT_PROC_FEAT_PAT)?1:0,			\
-	       (d&CPUID_EDX_EXT_PROC_FEAT_LM)?1:0			\
-	    );								\
+#define check_cpu_skillz()                                              \
+   ({                                                                   \
+      uint32_t c=0,d;                                                   \
+      uint32_t efeat =                                                  \
+         CPUID_EDX_EXT_PROC_FEAT_PSE |                                  \
+         CPUID_EDX_EXT_PROC_FEAT_PAE |                                  \
+         CPUID_EDX_EXT_PROC_FEAT_PAT |                                  \
+         CPUID_EDX_EXT_PROC_FEAT_LM;                                    \
+      cpuid_ext_proc_feat(c,d);                                         \
+      if((d & efeat) != efeat)                                          \
+         panic("AMD cpu not skilled enough: pse %d pae %d pat %d lm %d", \
+               (d&CPUID_EDX_EXT_PROC_FEAT_PSE)?1:0,                     \
+               (d&CPUID_EDX_EXT_PROC_FEAT_PAE)?1:0,                     \
+               (d&CPUID_EDX_EXT_PROC_FEAT_PAT)?1:0,                     \
+               (d&CPUID_EDX_EXT_PROC_FEAT_LM)?1:0                       \
+            );                                                          \
    })
 
 /*
@@ -136,8 +136,8 @@ typedef union amd_svm_features
    {
       struct
       {
-	 uint32_t    svm_rev:8;    /* SVM revision */
-	 uint32_t    rsrvd0:24;
+         uint32_t    svm_rev:8;    /* SVM revision */
+         uint32_t    rsrvd0:24;
 
       } __attribute__((packed));
 
@@ -146,20 +146,20 @@ typedef union amd_svm_features
 
       struct
       {
-	 uint32_t    npt:1;           /* Nested Page Tables */
-	 uint32_t    lbr:1;           /* LBR virt */
-	 uint32_t    lock:1;          /* SVM Lock */
-	 uint32_t    nrip:1;          /* Next RIP save */
-	 uint32_t    tscrate:1;       /* TSC Rate MSR */
-	 uint32_t    vmcb_clean:1;    /* VMCB clean bits */
-	 uint32_t    flush_asid:1;    /* Flush by ASID (extended TLB control) */
-	 uint32_t    decode_assist:1; /* decode insns */
-	 uint32_t    rsrvd3:1;
-	 uint32_t    rsrvd4:1;
-	 uint32_t    pause:1;         /* pause intercept filter */
-	 uint32_t    rsrvd5:1;
+         uint32_t    npt:1;           /* Nested Page Tables */
+         uint32_t    lbr:1;           /* LBR virt */
+         uint32_t    lock:1;          /* SVM Lock */
+         uint32_t    nrip:1;          /* Next RIP save */
+         uint32_t    tscrate:1;       /* TSC Rate MSR */
+         uint32_t    vmcb_clean:1;    /* VMCB clean bits */
+         uint32_t    flush_asid:1;    /* Flush by ASID (extended TLB control) */
+         uint32_t    decode_assist:1; /* decode insns */
+         uint32_t    rsrvd3:1;
+         uint32_t    rsrvd4:1;
+         uint32_t    pause:1;         /* pause intercept filter */
+         uint32_t    rsrvd5:1;
          uint32_t    pause_trsh:1;    /* pause intercept filter threshold */
-	 uint32_t    rsrvd6:19;
+         uint32_t    rsrvd6:19;
 
       } __attribute__((packed));
 
@@ -167,25 +167,25 @@ typedef union amd_svm_features
 
 } __attribute__((packed)) amd_svm_feat_t;
 
-#define cpuid_amd_svm_features(feat)					\
+#define cpuid_amd_svm_features(feat)                                    \
    __cpuid_4(CPUID_AMD_SVM_FEATURES,(feat).eax,(feat).ebx,(feat).ecx,(feat).edx)
 
-#define cpuid_check_amd_svm_feature(feature)				\
+#define cpuid_check_amd_svm_feature(feature)                            \
    ({amd_svm_feat_t feats; cpuid_amd_svm_features(feats);(feats.edx&(feature))?1:0;})
 
-#define svm_lock_supported()					\
+#define svm_lock_supported()                                    \
    cpuid_check_amd_svm_feature(CPUID_AMD_SVM_LOCK_FEATURE)
 
-#define svm_npt_supported()					\
+#define svm_npt_supported()                                     \
    cpuid_check_amd_svm_feature(CPUID_AMD_SVM_NPT_FEATURE)
 
-#define svm_lbr_supported()					\
+#define svm_lbr_supported()                                     \
    cpuid_check_amd_svm_feature(CPUID_AMD_SVM_LBR_FEATURE)
 
-#define svm_decode_assist_supported()					\
+#define svm_decode_assist_supported()                                   \
    cpuid_check_amd_svm_feature(CPUID_AMD_SVM_DECODE_ASSIST_FEATURE)
 
-#define svm_flush_asid_supported()					\
+#define svm_flush_asid_supported()                                      \
    cpuid_check_amd_svm_feature(CPUID_AMD_SVM_FLUSH_BY_ASID_FEATURE)
 
 #endif

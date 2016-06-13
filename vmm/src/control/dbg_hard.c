@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -79,8 +79,8 @@ void dbg_hard_protect()
    ctrl_traps_set_update(1);
 
    debug(DBG_HARD, "installed #DB intercept (%d|%d)\n"
-	 ,dbg_hard_stp_enabled()
-	 ,dbg_hard_brk_enabled());
+         ,dbg_hard_stp_enabled()
+         ,dbg_hard_brk_enabled());
 }
 
 void dbg_hard_release()
@@ -95,8 +95,8 @@ void dbg_hard_release()
    ctrl_traps_set_update(1);
 
    debug(DBG_HARD, "removed #DB intercept (%d|%d)\n"
-	 ,dbg_hard_stp_enabled()
-	 ,dbg_hard_brk_enabled());
+         ,dbg_hard_stp_enabled()
+         ,dbg_hard_brk_enabled());
 }
 
 void dbg_hard_setup()

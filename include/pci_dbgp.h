@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -38,9 +38,9 @@ typedef struct pci_config_space_class_code
 
 } __attribute__((packed)) pci_cfg_class_t;
 
-#define pci_class_is_ehci(_cc_)				\
-   ((_cc_).class.base == PCI_CFG_EHCI_CLASS_BASE &&	\
-    (_cc_).class.sub  == PCI_CFG_EHCI_CLASS_SUB  &&	\
+#define pci_class_is_ehci(_cc_)                         \
+   ((_cc_).class.base == PCI_CFG_EHCI_CLASS_BASE &&     \
+    (_cc_).class.sub  == PCI_CFG_EHCI_CLASS_SUB  &&     \
     (_cc_).class.pi   == PCI_CFG_EHCI_CLASS_PI)
 
 typedef union pci_config_space_ehci_bar

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,9 +26,9 @@
 ** - init loader with grub multiboot info
 */
 entry:
-	cli
-	movl	$__kernel_start__, %esp
-	pushl	$0
-	popf
-	movl	%ebx, %eax
-	jmp	init
+        cli
+        movl    $__kernel_start__, %esp
+        pushl   $0
+        popf
+        movl    %ebx, %eax
+        jmp     init

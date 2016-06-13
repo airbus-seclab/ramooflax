@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -226,11 +226,11 @@ typedef union control_register_4
 #define __valid_cr_regs(_gpr,_cr)     (_gpr <= GPR64_RAX && _cr <= 4 && _cr != 1)
 #define __valid_cr_access()           (__rmode() || !__cpl)
 
-#define __invalid_cr0_setup(_cr)				\
+#define __invalid_cr0_setup(_cr)                                \
    (((_cr)->pg && !(_cr)->pe) || ((_cr)->nw && !(_cr)->cd))
 
-#define __invalid_cr0_lmode_check(_cr,_update)				\
-   (((_update)&CR0_PG) && (_cr)->pg &&					\
+#define __invalid_cr0_lmode_check(_cr,_update)                          \
+   (((_update)&CR0_PG) && (_cr)->pg &&                                  \
     __efer.lme && (!__cr4.pae || __cs.attributes.l))
 
 int  __resolve_cr0_wr(cr0_reg_t*);

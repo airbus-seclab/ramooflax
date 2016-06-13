@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -73,8 +73,8 @@ void   arp_init();
 #endif
 
 typedef size_t (*arp_gen_t)(arp_hdr_t*,
-			    mac_addr_t*, mac_addr_t*,
-			    ip_addr_t, ip_addr_t);
+                            mac_addr_t*, mac_addr_t*,
+                            ip_addr_t, ip_addr_t);
 
 size_t arp_who_has_pkt(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
 size_t arp_is_at_pkt(arp_hdr_t*, mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);

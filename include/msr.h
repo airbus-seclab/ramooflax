@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -48,10 +48,10 @@ typedef union raw_msr_entry
 #define rd_msr32(iNdex,vAl)    asm volatile("rdmsr":"=a"((vAl)):"c"((iNdex)):"edx")
 #define wr_msr32(iNdex,vAl)    asm volatile("wrmsr"::"c"((iNdex)),"a"((vAl)))
 
-#define rd_msr64(iNdex,hiGh,loW)				\
+#define rd_msr64(iNdex,hiGh,loW)                                \
    asm volatile("rdmsr" :"=d"((hiGh)),"=a"((loW)):"c"((iNdex)))
 
-#define wr_msr64(iNdex,hiGh,loW)					\
+#define wr_msr64(iNdex,hiGh,loW)                                        \
      asm volatile("wrmsr" ::"d"((hiGh)),"a"((loW)),"c"((iNdex)))
 
 #define __rd_msr(eax,ecx,edx)            rd_msr64(ecx,edx,eax)
@@ -83,17 +83,17 @@ typedef union ia32_apic_base_msr
 
 } __attribute__((packed)) ia32_apic_base_msr_t;
 
-#define rd_msr_ia32_apic_base(val)			\
+#define rd_msr_ia32_apic_base(val)                      \
    rd_msr64(IA32_APIC_BASE_MSR,(val).edx,(val).eax)
-#define wr_msr_ia32_apic_base(val)			\
+#define wr_msr_ia32_apic_base(val)                      \
    wr_msr64(IA32_APIC_BASE_MSR,(val).edx,(val).eax)
 
-#define apic_set_enable(_x_)					\
-   ({								\
-      ia32_apic_base_msr_t apic;				\
-      rd_msr_ia32_apic_base(apic);				\
-      apic.enable = (_x_);					\
-      wr_msr_ia32_apic_base(apic);				\
+#define apic_set_enable(_x_)                                    \
+   ({                                                           \
+      ia32_apic_base_msr_t apic;                                \
+      rd_msr_ia32_apic_base(apic);                              \
+      apic.enable = (_x_);                                      \
+      wr_msr_ia32_apic_base(apic);                              \
    })
 
 #define apic_enable()    apic_set_enable(1)
@@ -107,9 +107,9 @@ typedef union ia32_apic_base_msr
 #define IA32_SYSENTER_EIP_MSR               0x176UL
 
 #define rd_msr_ia32_sysenter_cs(val)      rd_msr32(IA32_SYSENTER_CS_MSR,val.raw)
-#define rd_msr_ia32_sysenter_esp(val)			\
+#define rd_msr_ia32_sysenter_esp(val)                   \
    rd_msr64(IA32_SYSENTER_ESP_MSR,(val).high,(val).low)
-#define rd_msr_ia32_sysenter_eip(val)			\
+#define rd_msr_ia32_sysenter_eip(val)                   \
    rd_msr64(IA32_SYSENTER_EIP_MSR,(val).high,(val).low)
 
 /*

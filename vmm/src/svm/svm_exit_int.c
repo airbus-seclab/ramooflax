@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ extern info_data_t *info;
 /*       vm_ctrls.int_ctrl.v_irq = enable?1:0; */
 
 /*       if(enable) */
-/* 	 vm_ctrls.int_ctrl.v_intr_vector = irq; */
+/*       vm_ctrls.int_ctrl.v_intr_vector = irq; */
 /*    } */
 /* } */
 

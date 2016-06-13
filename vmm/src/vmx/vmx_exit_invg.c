@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -34,17 +34,17 @@ static void vmx_invg_cr_dr_msr()
 
    if(x.low != vm_state.cr0.low)
       printf(WRN"cr0 setting\n"
-	     "cr0         = %b\n"
-	     "cr0 fixed 1 = %b\n"
-	     "cr0 allow 1 = %b\n"
-	     ,vm_state.cr0.low
-	     ,info->vm.vmx_fx_cr0.fixed_1.raw
-	     ,info->vm.vmx_fx_cr0.allow_1.raw);
+             "cr0         = %b\n"
+             "cr0 fixed 1 = %b\n"
+             "cr0 allow 1 = %b\n"
+             ,vm_state.cr0.low
+             ,info->vm.vmx_fx_cr0.fixed_1.raw
+             ,info->vm.vmx_fx_cr0.allow_1.raw);
 
    uguest = vm_exec_ctrls.proc.proc2 & vm_exec_ctrls.proc2.uguest;
    if(!uguest && !(vm_state.cr0.pe & vm_state.cr0.pg))
       printf(WRN"cr0 setting (uguest %d pe %d pg %d\n"
-	     ,uguest, vm_state.cr0.pe, vm_state.cr0.pg);
+             ,uguest, vm_state.cr0.pe, vm_state.cr0.pg);
 
    x.raw = 0;
    x.low = vm_state.cr4.low;
@@ -52,32 +52,32 @@ static void vmx_invg_cr_dr_msr()
 
    if(x.low != vm_state.cr4.low)
       printf(WRN"cr4 setting\n"
-	     "cr4         = %b\n"
-	     "cr4 fixed 1 = %b\n"
-	     "cr4 allow 1 = %b\n"
-	     ,vm_state.cr4.low
-	     ,info->vm.vmx_fx_cr4.fixed_1.raw
-	     ,info->vm.vmx_fx_cr4.allow_1.raw);
+             "cr4         = %b\n"
+             "cr4 fixed 1 = %b\n"
+             "cr4 allow 1 = %b\n"
+             ,vm_state.cr4.low
+             ,info->vm.vmx_fx_cr4.fixed_1.raw
+             ,info->vm.vmx_fx_cr4.allow_1.raw);
 
    if(vm_entry_ctrls.entry.load_dbgctl)
    {
       if(vm_state.ia32_dbgctl.r1 ||
-	 vm_state.ia32_dbgctl.r2 ||
-	 vm_state.ia32_dbgctl.r3)
+         vm_state.ia32_dbgctl.r2 ||
+         vm_state.ia32_dbgctl.r3)
       {
-	 printf(WRN"ia32 dbgctl rsv setting\n");
-	 goto __log_dbgctl;
+         printf(WRN"ia32 dbgctl rsv setting\n");
+         goto __log_dbgctl;
       }
 
       if(vm_state.dr7.high)
       {
-	 printf(WRN"ia32 dbgctl (dr7)\n");
+         printf(WRN"ia32 dbgctl (dr7)\n");
 
       __log_dbgctl:
-	 printf("ia32 dbg ctl rsv bits   : %d %d %D\n"
-		"ia32 dbg ctl dr7 [63-32]: 0x%x\n"
-		,vm_state.ia32_dbgctl.r1, vm_state.ia32_dbgctl.r2
-		,vm_state.ia32_dbgctl.r3, vm_state.dr7.high);
+         printf("ia32 dbg ctl rsv bits   : %d %d %D\n"
+                "ia32 dbg ctl dr7 [63-32]: 0x%x\n"
+                ,vm_state.ia32_dbgctl.r1, vm_state.ia32_dbgctl.r2
+                ,vm_state.ia32_dbgctl.r3, vm_state.dr7.high);
       }
    }
 
@@ -102,15 +102,15 @@ static void vmx_invg_cr_dr_msr()
 
    __log_sysenter:
       printf("sysenter esp = 0x%X eip = 0x%X\n"
-	     ,vm_state.ia32_sysenter_esp.raw
-	     ,vm_state.ia32_sysenter_eip.raw);
+             ,vm_state.ia32_sysenter_esp.raw
+             ,vm_state.ia32_sysenter_eip.raw);
    }
 
    if(vm_entry_ctrls.entry.load_ia32_perf &&
       (vm_state.ia32_perf.r1 || vm_state.ia32_perf.r2))
       printf(WRN"ia32 perf rsv setting\n"
-	     "ia32 perf rsv bits : %d %d %D\n"
-	     ,vm_state.ia32_perf.r1, vm_state.ia32_perf.r2);
+             "ia32 perf rsv bits : %d %d %D\n"
+             ,vm_state.ia32_perf.r1, vm_state.ia32_perf.r2);
 
    if(vm_entry_ctrls.entry.load_ia32_pat &&
       ((vm_state.ia32_pat.pa0 == 2 || vm_state.ia32_pat.pa0 == 3) ||
@@ -126,16 +126,16 @@ static void vmx_invg_cr_dr_msr()
    if(vm_entry_ctrls.entry.load_ia32_efer)
    {
       if(vm_state.ia32_efer.r0 || vm_state.ia32_efer.r1)
-	 printf(WRN"ia32 efer rsv setting\n"
-		"ia32 efer rsv bits : %d %d\n"
-		,vm_state.ia32_efer.r0, vm_state.ia32_efer.r1);
+         printf(WRN"ia32 efer rsv setting\n"
+                "ia32 efer rsv bits : %d %d\n"
+                ,vm_state.ia32_efer.r0, vm_state.ia32_efer.r1);
 
       if(vm_state.ia32_efer.lma != vm_entry_ctrls.entry.ia32e)
-	 printf(WRN"efer lma setting\n");
+         printf(WRN"efer lma setting\n");
 
       if((!uguest && !vm_state.cr0.pg) &&
-	 (vm_state.ia32_efer.lma != vm_state.ia32_efer.lme))
-	 printf(WRN"efer lme setting\n");
+         (vm_state.ia32_efer.lma != vm_state.ia32_efer.lme))
+         printf(WRN"efer lme setting\n");
    }
 }
 
@@ -188,28 +188,28 @@ static void vmx_invg_segments()
    if(vm_state.rflags.vm)
    {
       if((vm_state.cs.base.raw != (uint64_t)vm_state.cs.selector.index*16) ||
-	 (vm_state.ss.base.raw != (uint64_t)vm_state.ss.selector.index*16) ||
-	 (vm_state.ds.base.raw != (uint64_t)vm_state.ds.selector.index*16) ||
-	 (vm_state.es.base.raw != (uint64_t)vm_state.es.selector.index*16) ||
-	 (vm_state.fs.base.raw != (uint64_t)vm_state.fs.selector.index*16) ||
-	 (vm_state.gs.base.raw != (uint64_t)vm_state.gs.selector.index*16))
-	 printf(WRN"v86 segment base\n");
+         (vm_state.ss.base.raw != (uint64_t)vm_state.ss.selector.index*16) ||
+         (vm_state.ds.base.raw != (uint64_t)vm_state.ds.selector.index*16) ||
+         (vm_state.es.base.raw != (uint64_t)vm_state.es.selector.index*16) ||
+         (vm_state.fs.base.raw != (uint64_t)vm_state.fs.selector.index*16) ||
+         (vm_state.gs.base.raw != (uint64_t)vm_state.gs.selector.index*16))
+         printf(WRN"v86 segment base\n");
 
       if(vm_state.cs.limit.raw != 0xffff ||
-	 vm_state.cs.limit.raw != 0xffff ||
-	 vm_state.cs.limit.raw != 0xffff ||
-	 vm_state.cs.limit.raw != 0xffff ||
-	 vm_state.cs.limit.raw != 0xffff ||
-	 vm_state.cs.limit.raw != 0xffff)
-	 printf(WRN"v86 segment limit\n");
+         vm_state.cs.limit.raw != 0xffff ||
+         vm_state.cs.limit.raw != 0xffff ||
+         vm_state.cs.limit.raw != 0xffff ||
+         vm_state.cs.limit.raw != 0xffff ||
+         vm_state.cs.limit.raw != 0xffff)
+         printf(WRN"v86 segment limit\n");
 
       if(vm_state.cs.attributes.raw != 0xf3 ||
-	 vm_state.ss.attributes.raw != 0xf3 ||
-	 vm_state.ds.attributes.raw != 0xf3 ||
-	 vm_state.es.attributes.raw != 0xf3 ||
-	 vm_state.fs.attributes.raw != 0xf3 ||
-	 vm_state.gs.attributes.raw != 0xf3)
-	 printf(WRN"v86 segment attr\n");
+         vm_state.ss.attributes.raw != 0xf3 ||
+         vm_state.ds.attributes.raw != 0xf3 ||
+         vm_state.es.attributes.raw != 0xf3 ||
+         vm_state.fs.attributes.raw != 0xf3 ||
+         vm_state.gs.attributes.raw != 0xf3)
+         printf(WRN"v86 segment attr\n");
    }
 
    if(!canonical_linear(vm_state.tr.base.raw) ||
@@ -235,64 +235,64 @@ static void vmx_invg_segments()
    if(!vm_state.rflags.vm)
    {
       if(!(vm_state.cs.attributes.type == 9  ||
-	   vm_state.cs.attributes.type == 11 ||
-	   vm_state.cs.attributes.type == 13 ||
-	   vm_state.cs.attributes.type == 15))
+           vm_state.cs.attributes.type == 11 ||
+           vm_state.cs.attributes.type == 13 ||
+           vm_state.cs.attributes.type == 15))
       {
-	 if(!uguest)
-	    printf(WRN"CS type\n");
-	 else if(vm_state.cs.attributes.type != 3)
-	    printf(WRN"CS type while uguest\n");
+         if(!uguest)
+            printf(WRN"CS type\n");
+         else if(vm_state.cs.attributes.type != 3)
+            printf(WRN"CS type while uguest\n");
       }
 
       if(!vm_state.cs.attributes.s)
-	 printf(WRN"CS desc (sys)\n");
+         printf(WRN"CS desc (sys)\n");
 
       if(!vm_state.cs.attributes.p)
-	 printf(WRN"CS present bit\n");
+         printf(WRN"CS present bit\n");
 
       if(vm_state.cs.attributes.r1 || vm_state.cs.attributes.r2)
-	 printf(WRN"CS reserved bits\n");
+         printf(WRN"CS reserved bits\n");
 
       if(vm_entry_ctrls.entry.ia32e &&
-	 vm_state.cs.attributes.l &&
-	 vm_state.cs.attributes.d)
-	 printf(WRN"CS.attr.d while entering ia32e\n");
+         vm_state.cs.attributes.l &&
+         vm_state.cs.attributes.d)
+         printf(WRN"CS.attr.d while entering ia32e\n");
 
       vmx_check_seg_limit("CS", &vm_state.cs);
 
       if(vm_state.cs.attributes.type == 3 &&
-	 (vm_state.cs.attributes.dpl || vm_state.ss.attributes.dpl))
-	 printf(WRN"CS/SS dpl (type 3)\n");
+         (vm_state.cs.attributes.dpl || vm_state.ss.attributes.dpl))
+         printf(WRN"CS/SS dpl (type 3)\n");
 
       if((vm_state.cs.attributes.type == 9 || vm_state.cs.attributes.type == 11) &&
-	 vm_state.cs.attributes.dpl != vm_state.ss.attributes.dpl)
-	 printf(WRN"CS dpl (type 9/11)\n");
+         vm_state.cs.attributes.dpl != vm_state.ss.attributes.dpl)
+         printf(WRN"CS dpl (type 9/11)\n");
 
       if((vm_state.cs.attributes.type == 13 || vm_state.cs.attributes.type == 15) &&
-	 vm_state.cs.attributes.dpl > vm_state.ss.attributes.dpl)
-	 printf(WRN"CS dpl (type 13/15)\n");
+         vm_state.cs.attributes.dpl > vm_state.ss.attributes.dpl)
+         printf(WRN"CS dpl (type 13/15)\n");
 
       if(!vm_state.ss.attributes.u &&
-	 (!vm_state.ss.attributes.s ||
-	  !(vm_state.ss.attributes.type == 3 || vm_state.ss.attributes.type == 7)))
-	 printf(WRN"SS type/sys\n");
+         (!vm_state.ss.attributes.s ||
+          !(vm_state.ss.attributes.type == 3 || vm_state.ss.attributes.type == 7)))
+         printf(WRN"SS type/sys\n");
 
       if(!uguest && vm_state.ss.attributes.dpl != vm_state.ss.selector.rpl)
-	 printf(WRN"SS dpl\n");
+         printf(WRN"SS dpl\n");
 
       if(uguest && !vm_state.cr0.pe && vm_state.ss.attributes.dpl)
-	 printf(WRN"SS dpl (pe=0)\n");
+         printf(WRN"SS dpl (pe=0)\n");
 
       if(!vm_state.ss.attributes.u)
       {
-	 if(!vm_state.ss.attributes.p)
-	    printf(WRN"SS present bit\n");
+         if(!vm_state.ss.attributes.p)
+            printf(WRN"SS present bit\n");
 
-	 if(vm_state.ss.attributes.r1 || vm_state.ss.attributes.r2)
-	    printf(WRN"SS rsv bits\n");
+         if(vm_state.ss.attributes.r1 || vm_state.ss.attributes.r2)
+            printf(WRN"SS rsv bits\n");
 
-	 vmx_check_seg_limit("SS", &vm_state.ss);
+         vmx_check_seg_limit("SS", &vm_state.ss);
       }
 
       vmx_check_seg_type("DS", &vm_state.ds, uguest);
@@ -325,16 +325,16 @@ static void vmx_invg_segments()
    if(!vm_state.ldtr.attributes.u)
    {
       if(vm_state.ldtr.attributes.type != 2)
-	 printf(WRN"LDTR type\n");
+         printf(WRN"LDTR type\n");
 
       if(vm_state.ldtr.attributes.s)
-	 printf(WRN"LDTR sys\n");
+         printf(WRN"LDTR sys\n");
 
       if(!vm_state.ldtr.attributes.p)
-	 printf(WRN"LDTR not present\n");
+         printf(WRN"LDTR not present\n");
 
       if(vm_state.ldtr.attributes.r1 || vm_state.ldtr.attributes.r2)
-	 printf(WRN"LDTR rsv bits\n");
+         printf(WRN"LDTR rsv bits\n");
 
       vmx_check_seg_limit("LDTR", &vm_state.ldtr);
    }
@@ -360,7 +360,7 @@ static void vmx_invg_loc()
    if(vm_entry_ctrls.entry.ia32e && vm_state.cs.attributes.l)
    {
       if(!canonical_linear(vm_state.rip.raw))
-	 printf(WRN"RIP non-canonical address\n");
+         printf(WRN"RIP non-canonical address\n");
    }
    else if(vm_state.rip.high)
       printf(WRN"RIP upper bits\n");
@@ -395,25 +395,25 @@ static void vmx_invg_nonreg()
    if(vm_entry_ctrls.int_info.v)
    {
       if(vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_HALT &&
-	 (
-	    !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_INT ||
-	      vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_NMI)
-	    ||
-	    !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_EXCP &&
-	      (vm_entry_ctrls.int_info.vector == DB_EXCP ||
-	       vm_entry_ctrls.int_info.vector == MC_EXCP))
-	    ||
-	    !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_OTHER &&
-	      vm_entry_ctrls.int_info.vector == 0)
-	    ))
-	 printf(WRN"activity state (HLT) event entry\n");
+         (
+            !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_INT ||
+              vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_NMI)
+            ||
+            !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_EXCP &&
+              (vm_entry_ctrls.int_info.vector == DB_EXCP ||
+               vm_entry_ctrls.int_info.vector == MC_EXCP))
+            ||
+            !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_OTHER &&
+              vm_entry_ctrls.int_info.vector == 0)
+            ))
+         printf(WRN"activity state (HLT) event entry\n");
       else if(vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SHUTDOWN &&
-	      !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_EXCP &&
-		(vm_entry_ctrls.int_info.vector == NMI_EXCP ||
-		 vm_entry_ctrls.int_info.vector == MC_EXCP)))
-	 printf(WRN"activity state (SHTDWN)\n");
+              !(vm_entry_ctrls.int_info.type == VMCS_EVT_INFO_TYPE_HW_EXCP &&
+                (vm_entry_ctrls.int_info.vector == NMI_EXCP ||
+                 vm_entry_ctrls.int_info.vector == MC_EXCP)))
+         printf(WRN"activity state (SHTDWN)\n");
       else if(vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SIPI)
-	 printf(WRN"activity state (SIPI) event entry\n");
+         printf(WRN"activity state (SIPI) event entry\n");
    }
 
    if(vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_SIPI &&
@@ -457,9 +457,9 @@ static void vmx_invg_nonreg()
       vm_state.activity.raw == VMX_VMCS_GUEST_ACTIVITY_STATE_HALT)
    {
       if(((vm_state.rflags.tf && !vm_state.ia32_dbgctl.btf) && !vm_state.dbg_excp.bs)
-      	 ||
-      	 ((!vm_state.rflags.tf || vm_state.ia32_dbgctl.btf) && vm_state.dbg_excp.bs))
-	 printf(WRN"pending #DB bs/tf/btf\n");
+         ||
+         ((!vm_state.rflags.tf || vm_state.ia32_dbgctl.btf) && vm_state.dbg_excp.bs))
+         printf(WRN"pending #DB bs/tf/btf\n");
    }
 
    if(vm_state.vmcs_link_ptr.raw != -1ULL)
@@ -469,24 +469,24 @@ static void vmx_invg_nonreg()
       loc_t   l = {.linear = vm_state.vmcs_link_ptr.raw};
 
       if(vm_state.vmcs_link_ptr.wlow & 0xfff)
-	 printf(WRN"vmcs link ptr\n");
+         printf(WRN"vmcs link ptr\n");
 
       if(vm_state.vmcs_link_ptr.raw > info->vmm.cpu.max_paddr)
-	 printf(WRN"vmcs link ptr (max paddr)\n");
+         printf(WRN"vmcs link ptr (max paddr)\n");
 
       x.raw = *l.u32;
       printf(WRN"vmcs link ptr [0x%X] = 0x%x\n"
-	     ,vm_state.vmcs_link_ptr.raw, x.raw);
+             ,vm_state.vmcs_link_ptr.raw, x.raw);
 
       if((x.raw & 0x7fffffff) != info->vm.vmx_info.revision_id)
-	 printf(WRN"vmcs link ptr revision id\n");
+         printf(WRN"vmcs link ptr revision id\n");
 
       if((x.raw>>31) != vm_exec_ctrls.proc2.vmcs_shdw)
-	 printf(WRN"vmcs link ptr shadow\n");
+         printf(WRN"vmcs link ptr shadow\n");
 
       current.raw = (offset_t)&info->vm.cpu.vmc->vm_cpu_vmcs;
       if(vm_entry_ctrls.entry.smm && vm_state.vmcs_link_ptr.raw == current.raw)
-	 printf(WRN"vmcs link ptr SMM/current\n");
+         printf(WRN"vmcs link ptr SMM/current\n");
    }
 }
 

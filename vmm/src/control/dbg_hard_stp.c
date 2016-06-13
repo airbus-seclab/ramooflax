@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -146,15 +146,15 @@ int dbg_hard_stp_event()
       return VM_IGNORE;
 
    debug(DBG_HARD_STP, "sstep event [req %s]\n"
-	 ,dbg_hard_stp_requestor()?"vmm":"usr");
+         ,dbg_hard_stp_requestor()?"vmm":"usr");
 
    if(dbg_soft_resuming())
    {
       int rc = dbg_soft_resume_post();
       if(rc != VM_DONE)
       {
-	 debug(DBG_HARD_STP, "sstep soft resume failed !\n");
-	 return rc;
+         debug(DBG_HARD_STP, "sstep soft resume failed !\n");
+         return rc;
       }
    }
 

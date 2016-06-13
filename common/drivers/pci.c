@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -56,13 +56,13 @@ int pci_check_cap(pci_cfg_val_t *pci, uint32_t val)
 
       while(next_cap)
       {
-	 pci->addr.reg = next_cap;
-	 pci_cfg_read(pci);
+         pci->addr.reg = next_cap;
+         pci_cfg_read(pci);
 
-	 if(pci->cp.id == cap.id)
-	    return 1;
+         if(pci->cp.id == cap.id)
+            return 1;
 
-	 next_cap = pci->cp.next & 0xfc;
+         next_cap = pci->cp.next & 0xfc;
       }
    }
 
@@ -96,31 +96,31 @@ int pci_search(pci_search_t match, uint32_t val, size_t nth, pci_cfg_val_t *pci)
 
       for(dev=0 ; dev<32 ; dev++)
       {
-	 pci->addr.dev = dev;
+         pci->addr.dev = dev;
 
-	 for(fnc=0 ; fnc<8 ; fnc++)
-	 {
-	    pci->addr.fnc = fnc;
+         for(fnc=0 ; fnc<8 ; fnc++)
+         {
+            pci->addr.fnc = fnc;
 
-	    pci->addr.reg = PCI_CFG_DEV_VDR_OFFSET;
-	    pci_cfg_read(pci);
+            pci->addr.reg = PCI_CFG_DEV_VDR_OFFSET;
+            pci_cfg_read(pci);
 
-	    if(pci->dv.vendor == 0xffff)
-	       continue;
+            if(pci->dv.vendor == 0xffff)
+               continue;
 
-	    if(match(pci, val))
-	    {
-	       debug(PCI, "pci match b%d d%d f%d r%d = 0x%x\n"
-		     ,pci->addr.bus, pci->addr.dev, pci->addr.fnc
-		     ,pci->addr.reg, pci->data.raw);
+            if(match(pci, val))
+            {
+               debug(PCI, "pci match b%d d%d f%d r%d = 0x%x\n"
+                     ,pci->addr.bus, pci->addr.dev, pci->addr.fnc
+                     ,pci->addr.reg, pci->data.raw);
 
-	       if(++found == nth)
-		  return 1;
+               if(++found == nth)
+                  return 1;
 
-	       pci_bk.addr.raw = pci->addr.raw;
-	       pci_bk.data.raw = pci->data.raw;
-	    }
-	 }
+               pci_bk.addr.raw = pci->addr.raw;
+               pci_bk.data.raw = pci->data.raw;
+            }
+         }
       }
    }
 

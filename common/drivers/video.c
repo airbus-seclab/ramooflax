@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -53,15 +53,15 @@ void video_write(uint8_t *buffer, size_t size)
       switch( buffer[i] )
       {
       case 0xa:
-	 newline();
+         newline();
       case 0xd:
-	 col = 0;
-	 break;
+         col = 0;
+         break;
       default:
-	 screen[col+VGA_TXT_C_NR*line] = 0x0f00|buffer[i];
-	 newcol();
-	 if(! col)
-	    newline();
+         screen[col+VGA_TXT_C_NR*line] = 0x0f00|buffer[i];
+         newcol();
+         if(! col)
+            newline();
       }
    }
 }

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include <debug.h>
 
 static char __hextable[] = {'0','1','2','3','4','5','6','7',
-			    '8','9','a','b','c','d','e','f'};
+                            '8','9','a','b','c','d','e','f'};
 
 void __uint8_to_hex(uint8_t *data, uint8_t value)
 {
@@ -103,7 +103,7 @@ int hex_to_uint64(uint8_t *data, size_t len, uint64_t *value)
       uint8_t nibble = __to_nibble(data[--len]);
 
       if(nibble == BAD_NIBBLE)
-	 return 0;
+         return 0;
 
       v |= ((uint64_t)nibble)<<shift;
       shift += 4;
@@ -128,7 +128,7 @@ int dec_to_uint64(uint8_t *data, size_t len, uint64_t *value)
       uint8_t x = data[--len];
 
       if(x < '0' || x > '9')
-	 return 0;
+         return 0;
 
       x -= '0';
       v += x*f;

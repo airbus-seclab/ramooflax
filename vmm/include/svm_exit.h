@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -96,22 +96,22 @@
 */
 #define SVM_VMEXIT_FIRST_RESOLVER      SVM_VMEXIT_INTR
 #define SVM_VMEXIT_LAST_RESOLVER       SVM_VMEXIT_MWAIT_COND
-#define SVM_VMEXIT_RESOLVERS_NR					\
+#define SVM_VMEXIT_RESOLVERS_NR                                 \
    (SVM_VMEXIT_LAST_RESOLVER - SVM_VMEXIT_FIRST_RESOLVER + 1)
 
-#define svm_vmexit_resolve(x)					\
+#define svm_vmexit_resolve(x)                                   \
    (svm_vmexit_resolvers[(x) - SVM_VMEXIT_FIRST_RESOLVER]())
 
-#define svm_set_vmexit_resolver(x,f)					\
+#define svm_set_vmexit_resolver(x,f)                                    \
    (svm_vmexit_resolvers[(x) - SVM_VMEXIT_FIRST_RESOLVER] = (f))
 
-#define svm_vmexit_resolver_string(x)					\
+#define svm_vmexit_resolver_string(x)                                   \
    (svm_vmexit_resolver_string[(x) - SVM_VMEXIT_FIRST_RESOLVER])
 
-#define __svm_vmexit_on_excp()						\
+#define __svm_vmexit_on_excp()                                          \
    range(vm_ctrls.exit_code.low, SVM_VMEXIT_EXCP_START, SVM_VMEXIT_EXCP_END)
 
-#define __svm_vmexit_on_event()						\
+#define __svm_vmexit_on_event()                                         \
    (range(vm_ctrls.exit_code.low, SVM_VMEXIT_EXCP_START, SVM_VMEXIT_VINTR) || \
     range(vm_ctrls.exit_code.low, SVM_VMEXIT_TASK, SVM_VMEXIT_SHUTDOWN)    || \
     vm_ctrls.exit_code.low == SVM_VMEXIT_NPF)

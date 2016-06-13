@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -123,11 +123,11 @@ int __dev_pic_icw4(pic_t *pic, uint8_t data)
    {
       if(pic->base == PIC2)
       {
-	 debug(DEV_PIC, "forcing slave to non auto EOI !\n");
-	 pic->icw4.aeoi = 0;
+         debug(DEV_PIC, "forcing slave to non auto EOI !\n");
+         pic->icw4.aeoi = 0;
       }
       else
-	 debug(DEV_PIC, "pic aeoi set !\n");
+         debug(DEV_PIC, "pic aeoi set !\n");
    }
 
    pic->wait_icw = 0;
@@ -177,22 +177,22 @@ int __dev_pic_status(pic_t *pic, io_insn_t *io)
    if((io->port & 1) == 0)
    {
       if(pic->ocw3.poll)
-	 target = &pic->poll;
+         target = &pic->poll;
       else if(pic->ocw3.reg == 2)
-	 target = &pic->irr;
+         target = &pic->irr;
       else if(pic->ocw3.reg == 3)
-	 target = &pic->isr;
+         target = &pic->isr;
       else
       {
-	 debug(DEV_PIC, "read status from bad register (0x%x) !\n", pic->ocw3.reg);
-	 return VM_FAIL;
+         debug(DEV_PIC, "read status from bad register (0x%x) !\n", pic->ocw3.reg);
+         return VM_FAIL;
       }
 
       *target = in(io->port);
 
       /* XXX: never signal interrupt for uart1 */
       if(pic->base == PIC1 && !pic->ocw3.poll)
-	 *target &= ~(1<<PIC_UART1_IRQ);
+         *target &= ~(1<<PIC_UART1_IRQ);
    }
    else
       target = &pic->imr.raw;
@@ -232,34 +232,34 @@ int dev_pic(pic_t *pic, io_insn_t *io)
       int     rc = dev_io_insn(io, &data, &sz);
 
       if(rc != VM_DONE)
-	 return rc;
+         return rc;
 
       /* ICW1/OCW2/OCW3 */
       if((io->port & 1) == 0)
       {
-	 if(is_pic_icw1(data))
-	    return __dev_pic_icw1(pic, data);
-	 else if(is_pic_ocw2(data))
-	    return __dev_pic_ocw2(pic, data);
-	 else if(is_pic_ocw3(data))
-	    return __dev_pic_ocw3(pic, data);
-	 else
-	 {
-	    debug(DEV_PIC, "invalid command (0x%x) !\n", data);
-	    return VM_FAIL;
-	 }
+         if(is_pic_icw1(data))
+            return __dev_pic_icw1(pic, data);
+         else if(is_pic_ocw2(data))
+            return __dev_pic_ocw2(pic, data);
+         else if(is_pic_ocw3(data))
+            return __dev_pic_ocw3(pic, data);
+         else
+         {
+            debug(DEV_PIC, "invalid command (0x%x) !\n", data);
+            return VM_FAIL;
+         }
       }
       /* IMR/ICW2/ICW3/ICW4 : complete/uncomplete configuration */
       else
       {
-	 if(pic->wait_icw < 2)
-	    return __dev_pic_imr(pic, data);
-	 else if(pic->wait_icw == 2)
-	    return __dev_pic_icw2(pic, data);
-	 else if(pic->wait_icw == 3)
-	    return __dev_pic_icw3(pic, data);
-	 else
-	    return __dev_pic_icw4(pic, data);
+         if(pic->wait_icw < 2)
+            return __dev_pic_imr(pic, data);
+         else if(pic->wait_icw == 2)
+            return __dev_pic_icw2(pic, data);
+         else if(pic->wait_icw == 3)
+            return __dev_pic_icw3(pic, data);
+         else
+            return __dev_pic_icw4(pic, data);
       }
    }
 
@@ -288,7 +288,7 @@ int dev_pic_acting(uint8_t irq, uint32_t *vector)
    {
       /* only master */
       if(pic->icw4.aeoi)
-	 pic_eoi(pic->base);
+         pic_eoi(pic->base);
 
       return VM_DONE;
    }
@@ -302,16 +302,16 @@ int dev_pic_acting(uint8_t irq, uint32_t *vector)
 
    /* disabled irq line */
    debug(DEV_PIC,
-	  "#DIS_IRQ: irq %d (%d) (base:%d) vector %d\n",
-	  irq, r_irq, pic->icw2.raw, *vector
+          "#DIS_IRQ: irq %d (%d) (base:%d) vector %d\n",
+          irq, r_irq, pic->icw2.raw, *vector
      );
 
    debug(DEV_PIC,
-	  "pic :\n"
-	  " irr %b\n"
-	  " imr %b\n"
-	  " isr %b\n",
-	  pic_imr(pic->base), pic_isr(pic->base), pic_irr(pic->base)
+          "pic :\n"
+          " irr %b\n"
+          " imr %b\n"
+          " isr %b\n",
+          pic_imr(pic->base), pic_isr(pic->base), pic_irr(pic->base)
      );
 
    return VM_FAIL;

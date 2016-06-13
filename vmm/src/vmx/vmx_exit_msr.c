@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ static int __vmx_vmexit_resolve_msr_mtrr_def(uint8_t wr)
       info->vm.mtrr_def.high = info->vm.cpu.gpr->rdx.low;
 
       if(update.e)
-	 vmx_ept_remap();
+         vmx_ept_remap();
    }
    else
    {
@@ -67,13 +67,13 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
       vmcs_dirty(vm_state.ia32_efer);
 
       if(info->vm.efer.lma && !info->vm.efer.lme)
-	 info->vm.efer.lma = 0;
+         info->vm.efer.lma = 0;
 
       if(update.lme && __cr0.pg)
       {
-	 debug(VMX_MSR, "modifying LME while paging-on #GP\n");
-	 __inject_exception(GP_EXCP, 0, 0);
-	 return VM_FAULT;
+         debug(VMX_MSR, "modifying LME while paging-on #GP\n");
+         __inject_exception(GP_EXCP, 0, 0);
+         return VM_FAULT;
       }
    }
    else

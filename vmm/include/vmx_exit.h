@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -82,25 +82,25 @@
 
 #define VMX_VMEXIT_FIRST_RESOLVER      VMX_VMEXIT_EXCP_NMI
 #define VMX_VMEXIT_LAST_RESOLVER       VMX_VMEXIT_XSETBV
-#define VMX_VMEXIT_RESOLVERS_NR					\
+#define VMX_VMEXIT_RESOLVERS_NR                                 \
    (VMX_VMEXIT_LAST_RESOLVER - VMX_VMEXIT_FIRST_RESOLVER + 1)
 
-#define vmx_vmexit_resolve(x)						\
-   ({									\
-      int rc = VM_FAIL;							\
-      if(x <= VMX_VMEXIT_LAST_RESOLVER)					\
-	 rc = vmx_vmexit_resolvers[(x)]();				\
-      rc;								\
+#define vmx_vmexit_resolve(x)                                           \
+   ({                                                                   \
+      int rc = VM_FAIL;                                                 \
+      if(x <= VMX_VMEXIT_LAST_RESOLVER)                                 \
+         rc = vmx_vmexit_resolvers[(x)]();                              \
+      rc;                                                               \
    })
 
 #define __vmx_vmexit_on_excp()   (vm_exit_info.reason.basic == VMX_VMEXIT_EXCP_NMI)
 
-#define __vmx_vmexit_on_ept()				\
-   (vm_exit_info.reason.basic == VMX_VMEXIT_EPT ||	\
+#define __vmx_vmexit_on_ept()                           \
+   (vm_exit_info.reason.basic == VMX_VMEXIT_EPT ||      \
     vm_exit_info.reason.basic == VMX_VMEXIT_EPT_CONF)
 
-#define __vmx_vmexit_on_event()						\
-   (vm_exit_info.reason.basic <= VMX_VMEXIT_NMI_WIN ||			\
+#define __vmx_vmexit_on_event()                                         \
+   (vm_exit_info.reason.basic <= VMX_VMEXIT_NMI_WIN ||                  \
     vm_exit_info.reason.basic == VMX_VMEXIT_MACH_CHECK)
 
 #define __vmx_vmexit_on_insn()  (!__vmx_vmexit_on_ept() && !__vmx_vmexit_on_event())

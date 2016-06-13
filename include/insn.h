@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -76,11 +76,11 @@
 /*
 ** rdtsc
 */
-#define rdtsc()							\
-   ({								\
-      raw64_t x;						\
-      asm volatile ("lfence;rdtsc":"=a"(x.low),"=d"(x.high));	\
-      x.raw;							\
+#define rdtsc()                                                 \
+   ({                                                           \
+      raw64_t x;                                                \
+      asm volatile ("lfence;rdtsc":"=a"(x.low),"=d"(x.high));   \
+      x.raw;                                                    \
    })
 
 /*
@@ -90,25 +90,25 @@
 #define outw(_d_,_p_)   asm volatile ("outw %%ax,  %%dx"::"a"(_d_),"d"(_p_))
 #define outl(_d_,_p_)   asm volatile ("outl %%eax, %%dx"::"a"(_d_),"d"(_p_))
 
-#define inb(_p_)						\
-   ({								\
-      uint8_t _d_;						\
-      asm volatile ("inb %%dx,%%al":"=a"(_d_):"d"(_p_));	\
-      _d_;							\
+#define inb(_p_)                                                \
+   ({                                                           \
+      uint8_t _d_;                                              \
+      asm volatile ("inb %%dx,%%al":"=a"(_d_):"d"(_p_));        \
+      _d_;                                                      \
    })
 
-#define inw(_p_)						\
-   ({								\
-      uint16_t _d_;						\
-      asm volatile ("inw %%dx,%%ax":"=a"(_d_):"d"(_p_));	\
-      _d_;							\
+#define inw(_p_)                                                \
+   ({                                                           \
+      uint16_t _d_;                                             \
+      asm volatile ("inw %%dx,%%ax":"=a"(_d_):"d"(_p_));        \
+      _d_;                                                      \
    })
 
-#define inl(_p_)						\
-   ({								\
-      uint32_t _d_;						\
-      asm volatile("inl %%dx, %%eax":"=a"(_d_):"d"(_p_));	\
-      _d_;							\
+#define inl(_p_)                                                \
+   ({                                                           \
+      uint32_t _d_;                                             \
+      asm volatile("inl %%dx, %%eax":"=a"(_d_):"d"(_p_));       \
+      _d_;                                                      \
    })
 
 #define out(_d,_p)  outb(_d,_p)
@@ -147,25 +147,25 @@
 /*
 ** 16/32/64 bits swap
 */
-#define swap16(_x_)						\
-   ({								\
-      uint16_t _v_;						\
-      asm volatile ("ror $8, %%ax":"=a"(_v_):"a"(_x_));		\
-      _v_;							\
+#define swap16(_x_)                                             \
+   ({                                                           \
+      uint16_t _v_;                                             \
+      asm volatile ("ror $8, %%ax":"=a"(_v_):"a"(_x_));         \
+      _v_;                                                      \
    })
 
-#define swap32(_x_)					\
-   ({							\
-      uint32_t _v_;					\
-      asm volatile ("bswap %%eax":"=a"(_v_):"a"(_x_));	\
-      _v_;						\
+#define swap32(_x_)                                     \
+   ({                                                   \
+      uint32_t _v_;                                     \
+      asm volatile ("bswap %%eax":"=a"(_v_):"a"(_x_));  \
+      _v_;                                              \
    })
 
-#define swap64(_x_)					\
-   ({							\
-      uint64_t _v_;					\
-      asm volatile ("bswap %%rax":"=a"(_v_):"a"(_x_));	\
-      _v_;						\
+#define swap64(_x_)                                     \
+   ({                                                   \
+      uint64_t _v_;                                     \
+      asm volatile ("bswap %%rax":"=a"(_v_):"a"(_x_));  \
+      _v_;                                              \
    })
 
 /*

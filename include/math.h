@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -35,23 +35,23 @@ static inline uint32_t pgcd(uint32_t a, uint32_t b)
 #define min(a,b)  ((a)<(b)?(a):(b))
 
 #ifdef __X86_64__
-#define __divrm(a,b,r,m)						\
+#define __divrm(a,b,r,m)                                                \
    asm volatile ("div %%rcx":"=a"(r),"=d"(m):"a"(a),"d"(0),"c"(b))
 #else
-#define __divrm(a,b,r,m)						\
+#define __divrm(a,b,r,m)                                                \
    asm volatile ("div %%ecx":"=a"(r),"=d"(m):"a"(a),"d"(0),"c"(b))
 #endif
 
-#define adc16(a,b)							\
-   ({									\
-      uint16_t v;							\
-      asm volatile (							\
-	 "add %%dx, %%ax\n"						\
-	 "adc $0, %%ax"							\
-	 :"=a"(v)							\
-	 :"a"((a)),"d"((b))						\
-	 :"memory");							\
-      v;								\
+#define adc16(a,b)                                                      \
+   ({                                                                   \
+      uint16_t v;                                                       \
+      asm volatile (                                                    \
+         "add %%dx, %%ax\n"                                             \
+         "adc $0, %%ax"                                                 \
+         :"=a"(v)                                                       \
+         :"a"((a)),"d"((b))                                             \
+         :"memory");                                                    \
+      v;                                                                \
    })
 
 #endif

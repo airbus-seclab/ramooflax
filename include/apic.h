@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,10 +28,10 @@
 
 #define IMCR_REG      0x70
 
-#define __imcr_set(_x_)				\
-   ({						\
-      out(IMCR_REG, IMCR_ADDR);			\
-      out((_x_), IMCR_DATA);			\
+#define __imcr_set(_x_)                         \
+   ({                                           \
+      out(IMCR_REG, IMCR_ADDR);                 \
+      out((_x_), IMCR_DATA);                    \
    })
 
 #define imcr_set_pic()     __imcr_set(0)

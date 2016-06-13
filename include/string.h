@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,13 +25,13 @@
 /*
 ** Size is number of store operations to repeat
 */
-#define __fix_str_dir(__op__,a,b,c,l)		\
-   ({						\
-      xflags_reg_t save;			\
-      save_flags(save);				\
-      asm volatile ("cld");			\
-      __op__(a,b,c,l);				\
-      load_flags(save);				\
+#define __fix_str_dir(__op__,a,b,c,l)           \
+   ({                                           \
+      xflags_reg_t save;                        \
+      save_flags(save);                         \
+      asm volatile ("cld");                     \
+      __op__(a,b,c,l);                          \
+      load_flags(save);                         \
    })
 
 

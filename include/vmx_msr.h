@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -55,13 +55,13 @@ typedef union ia32_efer_msr
 #define rd_msr_ia32_efer(val)      rd_msr64(IA32_EFER_MSR,(val).edx,(val).eax)
 #define wr_msr_ia32_efer(val)      wr_msr64(IA32_EFER_MSR,(val).edx,(val).eax)
 
-#define set_ia32_efer(_n,_v)			\
-   ({						\
-      ia32_efer_msr_t efer;			\
-      rd_msr_ia32_efer(efer);			\
-      if(_v) efer.raw |=  (1ULL<<(_n));		\
-      else   efer.raw &= ~(1ULL<<(_n));		\
-      wr_msr_ia32_efer(efer);			\
+#define set_ia32_efer(_n,_v)                    \
+   ({                                           \
+      ia32_efer_msr_t efer;                     \
+      rd_msr_ia32_efer(efer);                   \
+      if(_v) efer.raw |=  (1ULL<<(_n));         \
+      else   efer.raw &= ~(1ULL<<(_n));         \
+      wr_msr_ia32_efer(efer);                   \
    })
 
 #define lm_enable()           set_ia32_efer(IA32_EFER_LME_BIT,1)
@@ -305,24 +305,24 @@ typedef union vmx_ept_vpid_cap_msr
 ** prefer using 'allow_1' instead of 'fixed_0'
 */
 #define __build_vmx_fixed_type(_ft, _ftf) \
-   typedef union _ft {			  \
-					  \
-      struct				  \
-	 {				  \
-	    _ftf allow_0;		  \
-	    _ftf allow_1;		  \
-	    				  \
-	 } __attribute__((packed));	  \
-					  \
-      struct				  \
-	 {				  \
-	    _ftf fixed_1;		  \
-	    _ftf fixed_0;		  \
-	    				  \
-	 } __attribute__((packed));	  \
-					  \
-      msr_t;				  \
-					  \
+   typedef union _ft {                    \
+                                          \
+      struct                              \
+         {                                \
+            _ftf allow_0;                 \
+            _ftf allow_1;                 \
+                                          \
+         } __attribute__((packed));       \
+                                          \
+      struct                              \
+         {                                \
+            _ftf fixed_1;                 \
+            _ftf fixed_0;                 \
+                                          \
+         } __attribute__((packed));       \
+                                          \
+      msr_t;                              \
+                                          \
    } __attribute__((packed)) _ft##_t
 
 /*
@@ -364,16 +364,16 @@ __build_vmx_fixed_type(vmx_entry_ctls_msr, vmcs_entry_ctl_vect_t);
 */
 __build_vmx_fixed_type(vmx_fixed_cr_msr, raw32_t);
 
-#define rd_msr_vmx_fixed_cr0(val)		\
-   ({						\
-      rd_msr32(0x486UL,(val).allow_0.raw);	\
-      rd_msr32(0x487UL,(val).allow_1.raw);	\
+#define rd_msr_vmx_fixed_cr0(val)               \
+   ({                                           \
+      rd_msr32(0x486UL,(val).allow_0.raw);      \
+      rd_msr32(0x487UL,(val).allow_1.raw);      \
    })
 
-#define rd_msr_vmx_fixed_cr4(val)		\
-   ({				       		\
-      rd_msr32(0x488UL,(val).allow_0.raw);	\
-      rd_msr32(0x489UL,(val).allow_1.raw);	\
+#define rd_msr_vmx_fixed_cr4(val)               \
+   ({                                           \
+      rd_msr32(0x488UL,(val).allow_0.raw);      \
+      rd_msr32(0x489UL,(val).allow_1.raw);      \
    })
 
 #define vmx_allow_cr0_pe_disable(_fx)  (!(_fx.fixed_1.raw & (1<<0)))

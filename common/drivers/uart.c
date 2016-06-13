@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -104,8 +104,8 @@ static inline void __uart_write(uint16_t port, buffer_t *buf, size_t max)
    {
       if(__uart_can_send(port))
       {
-	 __uart_send_char(port, buf->data.u8[buf->sz]);
-	 buf->sz++;
+         __uart_send_char(port, buf->data.u8[buf->sz]);
+         buf->sz++;
       }
    }
 }
@@ -139,7 +139,7 @@ void uart_flush()
    while(s)
       if(__uart_can_send(SERIAL_COM1))
       {
-	 __uart_send_char(SERIAL_COM1, 0);
-	 s--;
+         __uart_send_char(SERIAL_COM1, 0);
+         s--;
       }
 }

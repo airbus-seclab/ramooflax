@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -103,8 +103,8 @@ static int dbg_soft_set_bp(dbg_soft_bp_t *bp, void *arg)
       rc = ctrl_vmem_read_with(&bp->cr3, addr, &bp->byte, 1);
       if(rc != VM_DONE)
       {
-	 debug(DBG_SOFT, "set soft bp @ 0x%X failed\n", addr);
-	 return rc;
+         debug(DBG_SOFT, "set soft bp @ 0x%X failed\n", addr);
+         return rc;
       }
 
       debug(DBG_SOFT, "set soft bp @ 0x%X\n", addr);
@@ -145,7 +145,7 @@ static int dbg_soft_for_each(dbg_soft_hdl_t hdl, void *arg, int stop)
 
    for(i=0 ; i<DBG_SOFT_NR ; i++)
       if((rc=hdl(&info->vmm.ctrl.dbg.soft.list[i], arg)) & stop)
-	 break;
+         break;
 
    return rc;
 }
@@ -218,7 +218,7 @@ int dbg_soft_del(offset_t addr)
    {
       info->vmm.ctrl.dbg.soft.cnt--;
       if(info->vmm.ctrl.dbg.soft.cnt == 0)
-	 dbg_soft_disable();
+         dbg_soft_disable();
       return VM_DONE;
    }
 

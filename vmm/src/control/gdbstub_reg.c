@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -44,48 +44,48 @@ static void __gdb_reg_access_gpr(
    __gdb_reg_access_fix_sz(size);
 }
 
-#define __gen_gdb_reg_acc(_rEg_,_sZ_)					\
-   static void __gdb_reg_access_##_rEg_(				\
+#define __gen_gdb_reg_acc(_rEg_,_sZ_)                                   \
+   static void __gdb_reg_access_##_rEg_(                                \
       loc_t *loc, size_t *size, uint8_t __unused__ idx, uint8_t __unused__ wr) \
-   {									\
-      loc->u##_sZ_ = &__##_rEg_.raw;					\
-      *size = sizeof(uint##_sZ_##_t);					\
+   {                                                                    \
+      loc->u##_sZ_ = &__##_rEg_.raw;                                    \
+      *size = sizeof(uint##_sZ_##_t);                                   \
    }
 
-#define __gen_gdb_reg_acc_cond(_rEg1_,_sZ_)				\
-   static void __gdb_reg_access_##_rEg1_(				\
+#define __gen_gdb_reg_acc_cond(_rEg1_,_sZ_)                             \
+   static void __gdb_reg_access_##_rEg1_(                               \
       loc_t *loc, size_t *size, uint8_t __unused__ idx, uint8_t __cused__ wr) \
-   {									\
-      __cond_access(wr,__##_rEg1_);					\
-      loc->u##_sZ_ = &__##_rEg1_.raw;					\
-      *size = sizeof(uint##_sZ_##_t);					\
+   {                                                                    \
+      __cond_access(wr,__##_rEg1_);                                     \
+      loc->u##_sZ_ = &__##_rEg1_.raw;                                   \
+      *size = sizeof(uint##_sZ_##_t);                                   \
    }
 
-#define __gen_gdb_reg_acc_cond_2(_rEg1_,_rEg2_,_sZ_)			\
-   static void __gdb_reg_access_##_rEg1_##_##_rEg2_(			\
+#define __gen_gdb_reg_acc_cond_2(_rEg1_,_rEg2_,_sZ_)                    \
+   static void __gdb_reg_access_##_rEg1_##_##_rEg2_(                    \
       loc_t *loc, size_t *size, uint8_t __unused__ idx, uint8_t __cused__ wr) \
-   {									\
-      __cond_access(wr,__##_rEg1_._rEg2_);				\
-      loc->u##_sZ_ = (uint##_sZ_##_t*)&__##_rEg1_._rEg2_.raw;		\
-      *size = sizeof(uint##_sZ_##_t);					\
+   {                                                                    \
+      __cond_access(wr,__##_rEg1_._rEg2_);                              \
+      loc->u##_sZ_ = (uint##_sZ_##_t*)&__##_rEg1_._rEg2_.raw;           \
+      *size = sizeof(uint##_sZ_##_t);                                   \
    }
 
-#define __gen_gdb_reg_acc_cond_fix(_rEg_,_sZ_)				\
-   static void __gdb_reg_access_##_rEg_(				\
+#define __gen_gdb_reg_acc_cond_fix(_rEg_,_sZ_)                          \
+   static void __gdb_reg_access_##_rEg_(                                \
       loc_t *loc, size_t *size, uint8_t __unused__ idx, uint8_t __cused__ wr) \
-   {									\
-      __cond_access(wr,__##_rEg_);					\
-      loc->u##_sZ_ = &__##_rEg_.raw;					\
-      __gdb_reg_access_fix_sz(size);					\
+   {                                                                    \
+      __cond_access(wr,__##_rEg_);                                      \
+      loc->u##_sZ_ = &__##_rEg_.raw;                                    \
+      __gdb_reg_access_fix_sz(size);                                    \
    }
 
-#define __gen_gdb_reg_acc_cache(_rEg_,_sZ_)				\
-   static void __gdb_reg_access_##_rEg_(				\
+#define __gen_gdb_reg_acc_cache(_rEg_,_sZ_)                             \
+   static void __gdb_reg_access_##_rEg_(                                \
       loc_t *loc, size_t *size, uint8_t __unused__ idx, uint8_t __unused__ wr) \
-   {									\
-      __gdb_register_cache = get_##_rEg_();				\
-      loc->addr = (void*)&__gdb_register_cache;				\
-      *size = sizeof(uint##_sZ_##_t);					\
+   {                                                                    \
+      __gdb_register_cache = get_##_rEg_();                             \
+      loc->addr = (void*)&__gdb_register_cache;                         \
+      *size = sizeof(uint##_sZ_##_t);                                   \
    }
 
 /*

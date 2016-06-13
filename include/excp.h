@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -61,21 +61,21 @@
 /*
 ** Contributory exceptions
 */
-#define contributory_exception(_e_)				\
-   ((_e_) == GP_EXCP || (_e_) == NP_EXCP || (_e_) == TS_EXCP ||	\
+#define contributory_exception(_e_)                             \
+   ((_e_) == GP_EXCP || (_e_) == NP_EXCP || (_e_) == TS_EXCP || \
     (_e_) == DE_EXCP || (_e_) == SS_EXCP)
 
 /*
 ** Double fault condition
 */
-#define double_fault(_e1_,_e2_)						\
+#define double_fault(_e1_,_e2_)                                         \
    ((_e1_ == PF_EXCP && (_e2_ == PF_EXCP || contributory_exception(_e2_))) || \
     (contributory_exception(_e1_) && contributory_exception(_e2_)))
 
 /*
 ** Triple fault condition
 */
-#define triple_fault(_e_)	    ((_e_) == DF_EXCP)
+#define triple_fault(_e_)           ((_e_) == DF_EXCP)
 
 /*
 ** Selector error code

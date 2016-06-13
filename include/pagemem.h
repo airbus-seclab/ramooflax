@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -182,17 +182,17 @@ typedef union page_table_entry
  ************************* 64 bits long mode paging *********************
  ************************************************************************/
 
-#define valid_pae_pdpe(_p)			\
-   ({						\
-      int x = 1;				\
-      if((_p)->pae.p)				\
-      {						\
-	 if((_p)->pae.r0 || (_p)->pae.r1)	\
-	    x = 0;				\
-	 if((_p)->raw > info->vm.cpu.max_paddr)	\
-	    x = 0;				\
-      }						\
-      x;					\
+#define valid_pae_pdpe(_p)                      \
+   ({                                           \
+      int x = 1;                                \
+      if((_p)->pae.p)                           \
+      {                                         \
+         if((_p)->pae.r0 || (_p)->pae.r1)       \
+            x = 0;                              \
+         if((_p)->raw > info->vm.cpu.max_paddr) \
+            x = 0;                              \
+      }                                         \
+      x;                                        \
    })
 
 typedef union page_map_level_4_entry
@@ -430,16 +430,16 @@ typedef pte64_t (pt64_t)[PTE64_PER_PT];
 
 
 
-#define pg_set_entry(_e_,_attr_,_pfn_)		\
-   ({						\
-      (_e_)->raw  = (_attr_)|PG_P;		\
-      (_e_)->addr = _pfn_;			\
+#define pg_set_entry(_e_,_attr_,_pfn_)          \
+   ({                                           \
+      (_e_)->raw  = (_attr_)|PG_P;              \
+      (_e_)->addr = _pfn_;                      \
    })
 
-#define pg_set_large_entry(_e_,_attr_,_pfn_)	\
-   ({						\
-      (_e_)->raw       = (_attr_)|PG_PS|PG_P;	\
-      (_e_)->page.addr = _pfn_;			\
+#define pg_set_large_entry(_e_,_attr_,_pfn_)    \
+   ({                                           \
+      (_e_)->raw       = (_attr_)|PG_PS|PG_P;   \
+      (_e_)->page.addr = _pfn_;                 \
    })
 
 #endif

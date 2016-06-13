@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -103,16 +103,16 @@ void net_test_recv()
       len = net_read(data, sizeof(data));
 
       if(!len)
-	 continue;
+         continue;
 
       /* debug(NET, "net rcv (%D):\n", len); */
 
 /* #ifdef CONFIG_NET_DBG */
 /*       { */
-/* 	 size_t i; */
-/* 	 for(i=0 ; i<len ; i++) */
-/* 	    debug(NET, "%c", data[i]); */
-/* 	 debug(NET,"\n"); */
+/*       size_t i; */
+/*       for(i=0 ; i<len ; i++) */
+/*          debug(NET, "%c", data[i]); */
+/*       debug(NET,"\n"); */
 /*       } */
 /* #endif */
    }
@@ -146,8 +146,8 @@ size_t net_gen_eth_arp_pkt(mac_addr_t *mac, loc_t pkt)
 }
 
 size_t _net_gen_arp_pkt(arp_gen_t builder, mac_addr_t *mac, loc_t pkt,
-			mac_addr_t *hs, mac_addr_t *hd,
-			ip_addr_t s, ip_addr_t d)
+                        mac_addr_t *hs, mac_addr_t *hd,
+                        ip_addr_t s, ip_addr_t d)
 {
    arp_hdr_t *hdr;
    loc_t      arp;
@@ -168,19 +168,19 @@ size_t net_gen_arp_who_has_pkt(ip_addr_t ip, loc_t pkt)
    mac_rst(&null, 0);
 
    return _net_gen_arp_pkt(arp_who_has_pkt, &broad, pkt,
-			   &net->mac, &null, net->ip, ip);
+                           &net->mac, &null, net->ip, ip);
 }
 
 size_t net_gen_arp_is_at_pkt(mac_addr_t *mac, ip_addr_t ip, loc_t pkt)
 {
    net_info_t *net = &info->hrd.dev.net;
    return _net_gen_arp_pkt(arp_is_at_pkt, mac, pkt,
-			   &net->mac, mac, net->ip, ip);
+                           &net->mac, mac, net->ip, ip);
 }
 
 size_t _net_gen_ip_pkt(ip_gen_t builder,
-		       ip_addr_t src, ip_addr_t dst,
-		       loc_t pkt, size_t dlen)
+                       ip_addr_t src, ip_addr_t dst,
+                       loc_t pkt, size_t dlen)
 {
    ip_hdr_t  *hdr;
    loc_t      ip;
@@ -193,9 +193,9 @@ size_t _net_gen_ip_pkt(ip_gen_t builder,
    {
 #ifdef CONFIG_NET_DBG
       {
-	 char ips[IP_STR_SZ];
-	 ip_str(dst, ips);
-	 debug(NET, "can't find %s MAC addr\n", ips);
+         char ips[IP_STR_SZ];
+         ip_str(dst, ips);
+         debug(NET, "can't find %s MAC addr\n", ips);
       }
 #endif
       return 0;
@@ -205,9 +205,9 @@ size_t _net_gen_ip_pkt(ip_gen_t builder,
 }
 
 size_t _net_gen_icmp_pkt(icmp_gen_t builder,
-			 ip_addr_t ip, loc_t pkt,
-			 uint16_t id, uint16_t seq,
-			 void *data, size_t len)
+                         ip_addr_t ip, loc_t pkt,
+                         uint16_t id, uint16_t seq,
+                         void *data, size_t len)
 {
    net_info_t *net = &info->hrd.dev.net;
    icmp_hdr_t *hdr;
@@ -217,18 +217,18 @@ size_t _net_gen_icmp_pkt(icmp_gen_t builder,
    hdr = (icmp_hdr_t*)icmp.addr;
 
    return _net_gen_ip_pkt(ip_icmp_pkt, net->ip, ip, pkt,
-			  builder(hdr, id, seq, data, len));
+                          builder(hdr, id, seq, data, len));
 }
 
 size_t net_gen_ping_pkt(ip_addr_t ip, loc_t pkt, uint16_t seq)
 {
    return _net_gen_icmp_pkt(icmp_echo_request, ip, pkt,
-			    0x1337, seq, (void*)"ram00flax!", 10);
+                            0x1337, seq, (void*)"ram00flax!", 10);
 }
 
 size_t net_gen_pong_pkt(ip_addr_t ip, loc_t pkt,
-			uint16_t id, uint16_t seq,
-			void *data, size_t len)
+                        uint16_t id, uint16_t seq,
+                        void *data, size_t len)
 {
    return _net_gen_icmp_pkt(icmp_echo_reply, ip, pkt, id, seq, data, len);
 }
@@ -243,7 +243,7 @@ size_t net_gen_udp_pkt(ip_addr_t ip, uint16_t port, loc_t pkt, size_t dlen)
    hdr = (udp_hdr_t*)udp.addr;
 
    return _net_gen_ip_pkt(ip_udp_pkt, net->ip, ip, pkt,
-			  udp_pkt(hdr, net->port, port, dlen));
+                          udp_pkt(hdr, net->port, port, dlen));
 }
 
 static size_t __net_write(net_info_t *net, buffer_t *buf)
@@ -331,7 +331,7 @@ size_t net_read(uint8_t *data, size_t len)
       size_t sz = __net_read(net, &buf);
 
       if(sz < buf.sz)
-	 return cnt;
+         return cnt;
 
       cnt += sz;
       buf.data.linear += sz;

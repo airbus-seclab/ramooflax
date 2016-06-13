@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -64,21 +64,21 @@ typedef enum { false=0, true } bool_t;
 /*
 ** Cast pointer from value
 */
-#define setptr(field, offset) ({		\
-	 loc_t x = { .linear = offset };	\
-	 field = (typeof (field))x.addr;	\
+#define setptr(field, offset) ({                \
+         loc_t x = { .linear = offset };        \
+         field = (typeof (field))x.addr;        \
       })
 
 /*
 ** Remove warnings
 */
-#define __unused__		  __attribute__ ((unused))
+#define __unused__                __attribute__ ((unused))
 
 /*
 ** Register passing on abi-x86_64:
 **  1 %rdi, 2 %rsi, 3 %rdx, 4 %rcx
 */
-#define __regparm__(_n_)	  __attribute__ ((regparm((_n_))))
+#define __regparm__(_n_)          __attribute__ ((regparm((_n_))))
 
 /*
 ** Decomposition of 16 bis
@@ -123,14 +123,14 @@ typedef union raw_32_bits_entry
    {
       union
       {
-	 struct
-	 {
-	    uint8_t blow;
-	    uint8_t bhigh;
+         struct
+         {
+            uint8_t blow;
+            uint8_t bhigh;
 
-	 } __attribute__((packed));
+         } __attribute__((packed));
 
-	 uint16_t wlow;
+         uint16_t wlow;
 
       } __attribute__((packed));
 
@@ -163,26 +163,26 @@ typedef union raw_64_bits_entry
    {
       union
       {
-	 struct
-	 {
-	    union
-	    {
-	       struct
-	       {
-		  uint8_t blow;
-		  uint8_t bhigh;
+         struct
+         {
+            union
+            {
+               struct
+               {
+                  uint8_t blow;
+                  uint8_t bhigh;
 
-	       } __attribute__((packed));
+               } __attribute__((packed));
 
-	       uint16_t wlow;
+               uint16_t wlow;
 
-	    } __attribute__((packed));
+            } __attribute__((packed));
 
-	    uint16_t whigh;
+            uint16_t whigh;
 
-	 } __attribute__((packed));
+         } __attribute__((packed));
 
-	 uint32_t  low;
+         uint32_t  low;
 
       } __attribute__((packed));
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ size_t udp_pkt(udp_hdr_t *hdr, uint16_t sport, uint16_t dport, size_t dlen)
       data.linear += sizeof(udp_hdr_t);
       printf("snd UDP data (%D): ", dlen);
       for(i=0 ; i<dlen ; i++)
-	 printf("%c", data.u8[i]);
+         printf("%c", data.u8[i]);
       printf("\n");
    }
 #endif
@@ -57,7 +57,7 @@ int udp_dissect(loc_t pkt, size_t len, buffer_t *rcv)
    hdr->len = swap16(hdr->len);
 
    debug(UDP, "rcv UDP src %d dst %d hdr len %d pkt len %D\n"
-	 ,hdr->src, hdr->dst, hdr->len, len);
+         ,hdr->src, hdr->dst, hdr->len, len);
 
    rcv->data.linear = pkt.linear + sizeof(udp_hdr_t);
    rcv->sz = min(len, hdr->len) - sizeof(udp_hdr_t);
@@ -67,7 +67,7 @@ int udp_dissect(loc_t pkt, size_t len, buffer_t *rcv)
       size_t i;
       printf("rcv UDP data (%d): ", rcv->sz);
       for(i=0 ; i<rcv->sz ; i++)
-	 printf("%c", rcv->data.u8[i]);
+         printf("%c", rcv->data.u8[i]);
       printf("\n");
    }
 #endif

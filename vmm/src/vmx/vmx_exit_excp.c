@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,8 +40,8 @@ void __vmx_clear_event_injection()
 int __vmx_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
 {
    __vmx_prepare_event_injection(vm_entry_ctrls.int_info,
-				 VMCS_EVT_INFO_TYPE_HW_EXCP,
-				 vector);
+                                 VMCS_EVT_INFO_TYPE_HW_EXCP,
+                                 vector);
    switch(vector)
    {
    case PF_EXCP:
@@ -76,7 +76,7 @@ int vmx_vmexit_resolve_excp()
    {
    case GP_EXCP:
       if(__rmode())
-	 return vmx_vmexit_resolve_rmode_gp();
+         return vmx_vmexit_resolve_rmode_gp();
       break;
    case DB_EXCP:
       vm_state.dr6.wlow = vm_exit_info.qualification.wlow;

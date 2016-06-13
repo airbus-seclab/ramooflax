@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -65,8 +65,8 @@ int  gdb_get_byte(uint8_t*, size_t, uint8_t*);
 int  gdb_get_number(uint8_t*, size_t, uint64_t*, uint8_t);
 
 int __gdb_setup_reg_op(uint8_t*, size_t,
-		       raw64_t**, size_t*,
-		       raw64_t*, uint8_t, uint8_t);
+                       raw64_t**, size_t*,
+                       raw64_t*, uint8_t, uint8_t);
 int  __gdb_setup_brk_op(uint8_t*, size_t, uint64_t*, size_t*, offset_t*);
 int  __gdb_setup_mem_op(uint8_t*, size_t, offset_t*, size_t*, loc_t*);
 

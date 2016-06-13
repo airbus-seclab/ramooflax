@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -98,9 +98,9 @@ size_t net_write(uint8_t*, size_t);
 size_t _net_gen_eth_pkt(eth_gen_t, mac_addr_t*, loc_t);
 size_t _net_gen_ip_pkt(ip_gen_t, ip_addr_t, ip_addr_t, loc_t, size_t);
 size_t _net_gen_arp_pkt(arp_gen_t, mac_addr_t*, loc_t,
-			mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
+                        mac_addr_t*, mac_addr_t*, ip_addr_t, ip_addr_t);
 size_t _net_gen_icmp_pkt(icmp_gen_t, ip_addr_t, loc_t,
-			 uint16_t, uint16_t, void*, size_t);
+                         uint16_t, uint16_t, void*, size_t);
 
 size_t net_gen_eth_ip_pkt(mac_addr_t*, loc_t);
 size_t net_gen_eth_arp_pkt(mac_addr_t*, loc_t);

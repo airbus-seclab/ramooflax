@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@
 */
 #define __pre_access(_fld_)                 vmcs_read(_fld_)
 #define __set_accessed(_fld_)               vmcs_set_read(_fld_)
-#define __post_access(_fld_)		    vmcs_dirty(_fld_)
+#define __post_access(_fld_)                vmcs_dirty(_fld_)
 #define __cond_access(_wr_,_fld_)           vmcs_cond(_wr_,_fld_)
 
 /*
@@ -136,14 +136,14 @@
 
 #ifdef CONFIG_VMX_FEAT_VPID
 #define __flush_asid_tlbs(_t)    invvpid(_t)
-#define npg_set_asid(_x)			\
-   ({						\
-      __exec_ctrls.vpid.raw = (_x);		\
-      vmcs_dirty(__exec_ctrls.vpid);		\
+#define npg_set_asid(_x)                        \
+   ({                                           \
+      __exec_ctrls.vpid.raw = (_x);             \
+      vmcs_dirty(__exec_ctrls.vpid);            \
    })
 #else
 #define __flush_asid_tlbs(_t)    ({})
-#define npg_set_asid(_x)	 ({})
+#define npg_set_asid(_x)         ({})
 #endif
 
 /* prevent "unused argument" warnings */
@@ -151,20 +151,20 @@
 #define __flush_tlb()            __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()        __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
 
-#define __update_npg_cache(_x)	 ({})
-#define __update_npg_pdpe()	 vmx_ept_update_pdpe()
+#define __update_npg_cache(_x)   ({})
+#define __update_npg_pdpe()      vmx_ept_update_pdpe()
 
 #define npg_cr3                        __exec_ctrls.eptp
-#define npg_cr3_set(_addr)				\
-   ({							\
-      __exec_ctrls.eptp.addr = page_nr((_addr));	\
-      vmcs_dirty(__exec_ctrls.eptp);			\
+#define npg_cr3_set(_addr)                              \
+   ({                                                   \
+      __exec_ctrls.eptp.addr = page_nr((_addr));        \
+      vmcs_dirty(__exec_ctrls.eptp);                    \
    })
 
-#define npg_get_asid()				\
-   ({						\
-      vmcs_read(__exec_ctrls.vpid);		\
-      __exec_ctrls.vpid.raw;			\
+#define npg_get_asid()                          \
+   ({                                           \
+      vmcs_read(__exec_ctrls.vpid);             \
+      __exec_ctrls.vpid.raw;                    \
    })
 
 #define npg_err_t                               vmcs_exit_info_ept_t
@@ -174,64 +174,64 @@
 //#define npg_write_fault(_e)                     ((_e).w && (_e).final)
 #define npg_write_fault(_e)                     ((_e).w)
 
-#define npg_error()				\
-   ({						\
-      vmcs_read(__exit_info.qualification);	\
-      __exit_info.qualification.ept;		\
+#define npg_error()                             \
+   ({                                           \
+      vmcs_read(__exit_info.qualification);     \
+      __exit_info.qualification.ept;            \
    })
 
-#define npg_fault()				\
-   ({						\
-      vmcs_read(__exit_info.guest_physical);	\
-      __exit_info.guest_physical.raw;		\
+#define npg_fault()                             \
+   ({                                           \
+      vmcs_read(__exit_info.guest_physical);    \
+      __exit_info.guest_physical.raw;           \
    })
 
 /*
 ** Masks
 */
 #define __exception_bitmap      __exec_ctrls.excp_bitmap
-#define __update_exception_mask()		\
-   ({						\
-      __exception_bitmap.raw =			\
-	 info->vm.cpu.dflt_excp  |		\
-	 info->vmm.ctrl.usr.excp |		\
-	 info->vmm.ctrl.dbg.excp;		\
-      vmcs_dirty(__exec_ctrls.excp_bitmap);	\
+#define __update_exception_mask()               \
+   ({                                           \
+      __exception_bitmap.raw =                  \
+         info->vm.cpu.dflt_excp  |              \
+         info->vmm.ctrl.usr.excp |              \
+         info->vmm.ctrl.dbg.excp;               \
+      vmcs_dirty(__exec_ctrls.excp_bitmap);     \
    })
 
 /*
 ** Instructions
 */
-#define __vmexit_on_insn()						\
+#define __vmexit_on_insn()                                              \
    (__vmx_vmexit_on_insn() || info->vm.cpu.emu_sts == EMU_STS_DONE)
 
-#define __insn_sz()				\
-   ({						\
-      vmcs_read(__exit_info.insn_len);		\
-      __exit_info.insn_len.raw;			\
+#define __insn_sz()                             \
+   ({                                           \
+      vmcs_read(__exit_info.insn_len);          \
+      __exit_info.insn_len.raw;                 \
    })
 
 /*
 ** CR registers
 */
-#define __cr0_cache_update(_guest)			\
-   ({							\
-      /* XXX: set EPT as UC */				\
-      debug(CR0, "cr0 cache update not implemented\n");	\
+#define __cr0_cache_update(_guest)                      \
+   ({                                                   \
+      /* XXX: set EPT as UC */                          \
+      debug(CR0, "cr0 cache update not implemented\n"); \
    })
 
-#define __cr0_update(_gst)			\
-   ({						\
-      __cr0.low = __cr0_real.low = (_gst)->low;	\
-      __post_access(__cr0);			\
-      __post_access(__cr0_real);		\
+#define __cr0_update(_gst)                      \
+   ({                                           \
+      __cr0.low = __cr0_real.low = (_gst)->low; \
+      __post_access(__cr0);                     \
+      __post_access(__cr0_real);                \
    })
 
-#define __cr4_update(_gst)			\
-   ({						\
-      __cr4.low = __cr4_real.low = (_gst)->low;	\
-      __post_access(__cr4);			\
-      __post_access(__cr4_real);		\
+#define __cr4_update(_gst)                      \
+   ({                                           \
+      __cr4.low = __cr4_real.low = (_gst)->low; \
+      __post_access(__cr4);                     \
+      __post_access(__cr4_real);                \
    })
 
 
@@ -239,69 +239,69 @@
 #include <vmx_exit_cr.h>
 #endif
 
-#define __update_cr_read_mask()	 __vmx_vmexit_cr_update_mask()
+#define __update_cr_read_mask()  __vmx_vmexit_cr_update_mask()
 #define __update_cr_write_mask() __vmx_vmexit_cr_update_mask()
 
-#define __allow_dr_access()		\
-   ({					\
-      vmcs_read(vm_exec_ctrls.proc);	\
-      vm_exec_ctrls.proc.mdr = 0;	\
-      vmcs_dirty(vm_exec_ctrls.proc);	\
+#define __allow_dr_access()             \
+   ({                                   \
+      vmcs_read(vm_exec_ctrls.proc);    \
+      vm_exec_ctrls.proc.mdr = 0;       \
+      vmcs_dirty(vm_exec_ctrls.proc);   \
    })
 
-#define __deny_dr_access()		\
-   ({					\
-      vmcs_read(vm_exec_ctrls.proc);	\
-      vm_exec_ctrls.proc.mdr = 1;	\
-      vmcs_dirty(vm_exec_ctrls.proc);	\
+#define __deny_dr_access()              \
+   ({                                   \
+      vmcs_read(vm_exec_ctrls.proc);    \
+      vm_exec_ctrls.proc.mdr = 1;       \
+      vmcs_dirty(vm_exec_ctrls.proc);   \
    })
 
-#define __allow_pushf()	         (XXX)
-#define __deny_pushf()	         (XXX)
-#define __allow_popf()	         (XXX)
+#define __allow_pushf()          (XXX)
+#define __deny_pushf()           (XXX)
+#define __allow_popf()           (XXX)
 #define __deny_popf()            (XXX)
 #define __allow_iret()           (XXX)
 #define __deny_iret()            (XXX)
 
 #ifdef CONFIG_VMX_FEAT_EXIT_DT
-#define __allow_dt_access()		\
-   ({					\
-      vmcs_read(vm_exec_ctrls.proc2);	\
-      vm_exec_ctrls.proc2.dt = 0;	\
-      vmcs_dirty(vm_exec_ctrls.proc2);	\
+#define __allow_dt_access()             \
+   ({                                   \
+      vmcs_read(vm_exec_ctrls.proc2);   \
+      vm_exec_ctrls.proc2.dt = 0;       \
+      vmcs_dirty(vm_exec_ctrls.proc2);  \
    })
 
-#define __deny_dt_access()		\
-   ({					\
-      vmcs_read(vm_exec_ctrls.proc2);	\
-      vm_exec_ctrls.proc2.dt = 1;	\
-      vmcs_dirty(vm_exec_ctrls.proc2);	\
+#define __deny_dt_access()              \
+   ({                                   \
+      vmcs_read(vm_exec_ctrls.proc2);   \
+      vm_exec_ctrls.proc2.dt = 1;       \
+      vmcs_dirty(vm_exec_ctrls.proc2);  \
    })
 #else
 /*
 ** XXX: ept map/unmap descriptor table page(s)
 */
-#define __allow_dt_access()		debug_warning()
-#define __deny_dt_access()		debug_warning()
+#define __allow_dt_access()             debug_warning()
+#define __deny_dt_access()              debug_warning()
 #endif
 
 #define __allow_gdt_access()     ({ __allow_dt_access(); })
 #define __deny_gdt_access()      ({ __deny_dt_access(); })
 
-#define __allow_soft_int()						\
-   ({									\
-      __allow_dt_access();						\
-      __idtr.limit.wlow = info->vm.idt_limit_saved;			\
-      vmcs_dirty(__idtr.limit);						\
+#define __allow_soft_int()                                              \
+   ({                                                                   \
+      __allow_dt_access();                                              \
+      __idtr.limit.wlow = info->vm.idt_limit_saved;                     \
+      vmcs_dirty(__idtr.limit);                                         \
    })
 
-#define __deny_soft_int()						\
-   ({									\
-      __deny_dt_access();						\
-      vmcs_read(__idtr.limit);						\
-      info->vm.idt_limit_saved = __idtr.limit.wlow;			\
-      __idtr.limit.wlow = info->vm.idt_limit_rmode;			\
-      vmcs_dirty(__idtr.limit);						\
+#define __deny_soft_int()                                               \
+   ({                                                                   \
+      __deny_dt_access();                                               \
+      vmcs_read(__idtr.limit);                                          \
+      info->vm.idt_limit_saved = __idtr.limit.wlow;                     \
+      __idtr.limit.wlow = info->vm.idt_limit_rmode;                     \
+      vmcs_dirty(__idtr.limit);                                         \
    })
 
 #define __allow_hrdw_int()       (XXX)
@@ -315,28 +315,28 @@
 */
 #define __exit_reason              __exit_info.reason.basic
 #define __vmexit_on_excp()         __vmx_vmexit_on_excp()
-#define __exception_vector	   __exit_info.int_info.vector
+#define __exception_vector         __exit_info.int_info.vector
 #define __exception_error          __exit_info.int_err_code
 #define __exception_fault         (__exit_info.qualification.raw & 0xffffffffUL)
 
 #define __clear_event_injection()  __vmx_clear_event_injection()
 #define __injecting_event()       (__entry_ctrls.int_info.v?1:0)
 #define __injected_event_type      __entry_ctrls.int_info.type
-#define __injected_event()			\
-   ({						\
-      raw64_t _ev;				\
-      _ev.low  = __entry_ctrls.int_info.raw;	\
-      _ev.high = __entry_ctrls.err_code.raw;	\
-      _ev.raw;					\
+#define __injected_event()                      \
+   ({                                           \
+      raw64_t _ev;                              \
+      _ev.low  = __entry_ctrls.int_info.raw;    \
+      _ev.high = __entry_ctrls.err_code.raw;    \
+      _ev.raw;                                  \
    })
 
-#define __vmx_prepare_event_injection(_ev, _type, _vector)	\
-   ({								\
-      _ev.raw    = 0;						\
-      _ev.vector = _vector;					\
-      _ev.type   = _type;					\
-      _ev.v      = 1;						\
-      vmcs_dirty(_ev);						\
+#define __vmx_prepare_event_injection(_ev, _type, _vector)      \
+   ({                                                           \
+      _ev.raw    = 0;                                           \
+      _ev.vector = _vector;                                     \
+      _ev.type   = _type;                                       \
+      _ev.v      = 1;                                           \
+      vmcs_dirty(_ev);                                          \
    })
 
 #define __setup_iwe(_on_,_nr_)   \
@@ -346,18 +346,18 @@
 #define __inject_exception(a,b,c)   __vmx_vmexit_inject_exception(a,b,c)
 #define __inject_intr(a)            __vmx_vmexit_inject_interrupt(a)
 
-#define __interrupt_shadow					\
-   ({								\
-      vmcs_read(__state.interrupt);				\
-      (__state.interrupt.sti || __state.interrupt.mss);		\
+#define __interrupt_shadow                                      \
+   ({                                                           \
+      vmcs_read(__state.interrupt);                             \
+      (__state.interrupt.sti || __state.interrupt.mss);         \
    })
 
-#define __clear_interrupt_shadow()				\
-   ({								\
-      vmcs_read(__state.interrupt);				\
-      __state.interrupt.sti = 0;				\
-      __state.interrupt.mss = 0;				\
-      vmcs_dirty(__state.interrupt);				\
+#define __clear_interrupt_shadow()                              \
+   ({                                                           \
+      vmcs_read(__state.interrupt);                             \
+      __state.interrupt.sti = 0;                                \
+      __state.interrupt.mss = 0;                                \
+      vmcs_dirty(__state.interrupt);                            \
    })
 
 #define __interrupts_on()           __rflags.IF
@@ -381,73 +381,73 @@
 /*
 ** XXX: Only if segment is usable (should check segment)
 */
-#define __string_io_linear(_tgt,_iO)		\
+#define __string_io_linear(_tgt,_iO)            \
    (_tgt = __exit_info.guest_linear.raw)
 
-#define __vmx_update_efer_lma()				\
-   ({							\
-      vmcs_read(vm_state.ia32_efer);			\
-      vmcs_read(vm_entry_ctrls.entry);			\
-      vm_entry_ctrls.entry.ia32e =			\
-	 vm_state.ia32_efer.lme  =			\
-	 vm_state.ia32_efer.lma  = info->vm.efer.lma;	\
-      vmcs_dirty(vm_entry_ctrls.entry);			\
-      vmcs_dirty(vm_state.ia32_efer);			\
+#define __vmx_update_efer_lma()                         \
+   ({                                                   \
+      vmcs_read(vm_state.ia32_efer);                    \
+      vmcs_read(vm_entry_ctrls.entry);                  \
+      vm_entry_ctrls.entry.ia32e =                      \
+         vm_state.ia32_efer.lme  =                      \
+         vm_state.ia32_efer.lma  = info->vm.efer.lma;   \
+      vmcs_dirty(vm_entry_ctrls.entry);                 \
+      vmcs_dirty(vm_state.ia32_efer);                   \
    })
 
-#define __efer_update(pg)			\
-   ({						\
-      int __up = 0;				\
-						\
-      if(pg && __cr4.pae && info->vm.efer.lme)	\
-      {						\
-	 info->vm.efer.lma = 1;			\
-	 __up = 1;				\
-      }						\
-      else if(!pg && info->vm.efer.lma)		\
-      {						\
-	 info->vm.efer.lma = 0;			\
-	 __up = 1;				\
-      }						\
-      						\
-      if(__up)					\
-	 __vmx_update_efer_lma();		\
+#define __efer_update(pg)                       \
+   ({                                           \
+      int __up = 0;                             \
+                                                \
+      if(pg && __cr4.pae && info->vm.efer.lme)  \
+      {                                         \
+         info->vm.efer.lma = 1;                 \
+         __up = 1;                              \
+      }                                         \
+      else if(!pg && info->vm.efer.lma)         \
+      {                                         \
+         info->vm.efer.lma = 0;                 \
+         __up = 1;                              \
+      }                                         \
+                                                \
+      if(__up)                                  \
+         __vmx_update_efer_lma();               \
    })
 
-#define vmx_disable_preempt_timer()			\
-   ({							\
-      vmcs_read(vm_exit_ctrls.exit);			\
-      vmcs_read(vm_exec_ctrls.pin);			\
-      vm_exit_ctrls.exit.save_preempt_timer = 0;	\
-      vm_exec_ctrls.pin.preempt = 0;			\
-      vmcs_dirty(vm_exec_ctrls.pin);			\
-      vmcs_dirty(vm_exit_ctrls.exit);			\
+#define vmx_disable_preempt_timer()                     \
+   ({                                                   \
+      vmcs_read(vm_exit_ctrls.exit);                    \
+      vmcs_read(vm_exec_ctrls.pin);                     \
+      vm_exit_ctrls.exit.save_preempt_timer = 0;        \
+      vm_exec_ctrls.pin.preempt = 0;                    \
+      vmcs_dirty(vm_exec_ctrls.pin);                    \
+      vmcs_dirty(vm_exit_ctrls.exit);                   \
    })
 
 /*
 ** Last Branch Record
 */
-#define __enable_lbr()				\
-   ({						\
-      /* XXX: protect MSR access from guest */	\
-      __state.ia32_dbgctl.lbr = 1;		\
-      __state.ia32_dbgctl.freeze_smm_en = 1;	\
-      vmcs_dirty(__state.ia32_dbgctl);		\
+#define __enable_lbr()                          \
+   ({                                           \
+      /* XXX: protect MSR access from guest */  \
+      __state.ia32_dbgctl.lbr = 1;              \
+      __state.ia32_dbgctl.freeze_smm_en = 1;    \
+      vmcs_dirty(__state.ia32_dbgctl);          \
    })
 
-#define __disable_lbr()				\
-   ({						\
-      /* XXX: release MSR access from guest */	\
-      __state.ia32_dbgctl.lbr = 0;		\
-      __state.ia32_dbgctl.freeze_smm_en = 0;	\
-      vmcs_dirty(__state.ia32_dbgctl);		\
+#define __disable_lbr()                         \
+   ({                                           \
+      /* XXX: release MSR access from guest */  \
+      __state.ia32_dbgctl.lbr = 0;              \
+      __state.ia32_dbgctl.freeze_smm_en = 0;    \
+      vmcs_dirty(__state.ia32_dbgctl);          \
    })
 
-#define __setup_lbr()				\
-   ({						\
-      msr_t m;					\
-      rd_msr64(LBR_TOS_MSR, m.edx, m.eax);	\
-      info->vm.lbr_tos = m.raw;			\
+#define __setup_lbr()                           \
+   ({                                           \
+      msr_t m;                                  \
+      rd_msr64(LBR_TOS_MSR, m.edx, m.eax);      \
+      info->vm.lbr_tos = m.raw;                 \
    })
 
 #define __lbr_from()       __lbr_nehalem(info->vm.lbr_tos+LBR_FROM_IP_MSR)

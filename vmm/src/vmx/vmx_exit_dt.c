@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -137,7 +137,7 @@ int vmx_vmexit_resolve_dt()
       uint64_t val = info->vm.cpu.gpr->raw[reg].raw & addr_msk;
 
       if(dt_insn->scale)
-	 val *= (1ULL<<dt_insn->scale);
+         val *= (1ULL<<dt_insn->scale);
 
       dt_addr += val;
    }
@@ -166,16 +166,16 @@ int vmx_vmexit_resolve_dt()
    if(dt_insn->type < VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_LGDT)
    {
       if(dt_insn->type == VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_SGDT)
-	 __vmx_vmexit_sgdt(&dt_reg);
+         __vmx_vmexit_sgdt(&dt_reg);
       else
-	 __vmx_vmexit_sidt(&dt_reg);
+         __vmx_vmexit_sidt(&dt_reg);
 
       dt_reg.base.raw &= op_msk;
       rc = vm_write_mem(dt_addr, (uint8_t*)&dt_reg, sz);
       if(rc != VM_DONE)
       {
-	 debug(VMX_DT, "could not write vm mem @0x%X\n", dt_addr);
-	 return rc;
+         debug(VMX_DT, "could not write vm mem @0x%X\n", dt_addr);
+         return rc;
       }
    }
    else
@@ -183,16 +183,16 @@ int vmx_vmexit_resolve_dt()
       rc = vm_read_mem(dt_addr, (uint8_t*)&dt_reg, sz);
       if(rc != VM_DONE)
       {
-	 debug(VMX_DT, "could not read vm mem @0x%X\n", dt_addr);
-	 return rc;
+         debug(VMX_DT, "could not read vm mem @0x%X\n", dt_addr);
+         return rc;
       }
 
       dt_reg.base.raw &= op_msk;
 
       if(dt_insn->type == VMCS_VM_EXIT_INFORMATION_VMX_INSN_INFORMATION_TYPE_LGDT)
-	 rc = __vmx_vmexit_lgdt(&dt_reg);
+         rc = __vmx_vmexit_lgdt(&dt_reg);
       else
-	 rc = __vmx_vmexit_lidt(&dt_reg);
+         rc = __vmx_vmexit_lidt(&dt_reg);
    }
 
    vmcs_read(vm_exit_info.insn_len);

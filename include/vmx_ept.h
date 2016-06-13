@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ typedef struct invvpid_descriptor
    {
       struct
       {
-	 uint64_t   vpid:16;
-	 uint64_t   reserved:48;
+         uint64_t   vpid:16;
+         uint64_t   reserved:48;
 
       } __attribute__((packed));
 
@@ -51,13 +51,13 @@ typedef struct invvpid_descriptor
 
 } __attribute__((packed)) invvpid_desc_t;
 
-#define invvpid(_type)							\
-   ({									\
-      invvpid_desc_t desc;						\
-      desc.addr = desc.low = 0ULL;					\
-      vmcs_read(vm_exec_ctrls.vpid);					\
-      desc.vpid = (vm_exec_ctrls.vpid.raw);				\
-      asm volatile("invvpid %1, %%rax"::"a"(_type),"m"(desc):"memory");	\
+#define invvpid(_type)                                                  \
+   ({                                                                   \
+      invvpid_desc_t desc;                                              \
+      desc.addr = desc.low = 0ULL;                                      \
+      vmcs_read(vm_exec_ctrls.vpid);                                    \
+      desc.vpid = (vm_exec_ctrls.vpid.raw);                             \
+      asm volatile("invvpid %1, %%rax"::"a"(_type),"m"(desc):"memory"); \
    })
 
 /*
@@ -96,13 +96,13 @@ typedef struct invept_descriptor
 #define VMCS_EPT_INV_SINGLE_ALL    1
 #define VMCS_EPT_INV_ALL           2
 
-#define invept(_type)							\
-   ({									\
-      invept_desc_t desc;						\
-      vmcs_read(vm_exec_ctrls.eptp);					\
-      desc.eptp.raw = (vm_exec_ctrls.eptp.raw);				\
-      desc.r1 = 0ULL;							\
-      asm volatile("invept %1, %%rax"::"a"(_type),"m"(desc):"memory");	\
+#define invept(_type)                                                   \
+   ({                                                                   \
+      invept_desc_t desc;                                               \
+      vmcs_read(vm_exec_ctrls.eptp);                                    \
+      desc.eptp.raw = (vm_exec_ctrls.eptp.raw);                         \
+      desc.r1 = 0ULL;                                                   \
+      asm volatile("invept %1, %%rax"::"a"(_type),"m"(desc):"memory");  \
    })
 
 /*
@@ -261,17 +261,17 @@ typedef union ept_page_table_entry_64
 #define ept_pg_has_pvl_w(_e_)        (ept_pg_get_pvl(_e_) & VMX_EPT_PVL_W)
 #define ept_pg_has_pvl_x_only(_e_)   (ept_pg_get_pvl(_e_) == VMX_EPT_PVL_X)
 
-#define __ept_dft_attr(_pvl)			\
-   ({						\
-      uint64_t type, attr;			\
-						\
-      if(info->vm.mtrr_def.e)			\
-	 type = info->vm.mtrr_def.type;		\
-      else					\
-	 type = VMX_EPT_MEM_TYPE_UC;		\
-						\
-      attr = (type<<3) | _pvl;			\
-      attr;					\
+#define __ept_dft_attr(_pvl)                    \
+   ({                                           \
+      uint64_t type, attr;                      \
+                                                \
+      if(info->vm.mtrr_def.e)                   \
+         type = info->vm.mtrr_def.type;         \
+      else                                      \
+         type = VMX_EPT_MEM_TYPE_UC;            \
+                                                \
+      attr = (type<<3) | _pvl;                  \
+      attr;                                     \
    })
 
 #define ept_dft_attr     __ept_dft_attr(ept_dft_pvl)
@@ -286,38 +286,38 @@ uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
 #define ept_pg_writable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_W)
 
 /* keep mem type and mtrr info */
-#define ept_zero(_e_)				\
-   ({						\
-      if((_e_)->raw & ept_has_mtrr)		\
-	 (_e_)->raw &= VMX_EPT_KEEP_MTRR_TYPE;	\
-      else					\
-	 (_e_)->raw = 0;			\
+#define ept_zero(_e_)                           \
+   ({                                           \
+      if((_e_)->raw & ept_has_mtrr)             \
+         (_e_)->raw &= VMX_EPT_KEEP_MTRR_TYPE;  \
+      else                                      \
+         (_e_)->raw = 0;                        \
    })
 
-#define ept_pg_set_attr(_e_,_atTr_)					\
-   ({									\
-      if(((_atTr_) & ept_has_mtrr) && ((_e_)->raw & ept_has_mtrr))	\
-      	 (_e_)->raw = __ept_mtrr_resolve((_e_)->raw,_atTr_);		\
-      else								\
-	 (_e_)->raw = _atTr_;						\
+#define ept_pg_set_attr(_e_,_atTr_)                                     \
+   ({                                                                   \
+      if(((_atTr_) & ept_has_mtrr) && ((_e_)->raw & ept_has_mtrr))      \
+         (_e_)->raw = __ept_mtrr_resolve((_e_)->raw,_atTr_);            \
+      else                                                              \
+         (_e_)->raw = _atTr_;                                           \
    })
 
-#define ept_pg_set_entry(_e_,_attr_,_pfn_)	\
-   ({						\
-      (_e_)->raw  = (_attr_) & ~(0xfUL<<3);	\
-      (_e_)->addr = _pfn_;			\
+#define ept_pg_set_entry(_e_,_attr_,_pfn_)      \
+   ({                                           \
+      (_e_)->raw  = (_attr_) & ~(0xfUL<<3);     \
+      (_e_)->addr = _pfn_;                      \
    })
 
-#define ept_pg_set_page_entry(_e_,_attr_,_pfn_)		\
-   ({							\
-      ept_pg_set_attr(_e_,_attr_);			\
-      (_e_)->addr = _pfn_;				\
+#define ept_pg_set_page_entry(_e_,_attr_,_pfn_)         \
+   ({                                                   \
+      ept_pg_set_attr(_e_,_attr_);                      \
+      (_e_)->addr = _pfn_;                              \
    })
 
-#define ept_pg_set_large_page_entry(_e_,_attr_,_pfn_)	\
-   ({							\
-      ept_pg_set_attr(_e_,((_attr_)|PG_PS));		\
-      (_e_)->page.addr = _pfn_;				\
+#define ept_pg_set_large_page_entry(_e_,_attr_,_pfn_)   \
+   ({                                                   \
+      ept_pg_set_attr(_e_,((_attr_)|PG_PS));            \
+      (_e_)->page.addr = _pfn_;                         \
    })
 
 

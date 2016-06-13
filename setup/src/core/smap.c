@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -43,15 +43,15 @@ void smap_parse(mbi_t *mbi, smap_t *smap, offset_t *area, offset_t *acme)
       sme = (smap_e_t*)&mme->addr;
 
       debug(SMAP,"smap entry: base 0x%X | len 0x%X | type %d\n",
-	    sme->base, sme->len, sme->type );
+            sme->base, sme->len, sme->type );
 
       if(mme->size > sizeof(smap_e_t))
-	 panic("smap entry too big");
+         panic("smap entry too big");
 
       top = sme->base + sme->len;
 
       if(sme->type == SMAP_TYPE_AVL && sme->base == 0x100000ULL)
-	 *area = top;
+         *area = top;
 
       mmap.linear += mme->size + sizeof(mme->size);
       smap->nr++;
@@ -81,7 +81,7 @@ void smap_init(mbi_t *mbi, smap_t *smap, offset_t top)
       memcpy((void*)sme_o, (void*)sme_i, sizeof(smap_e_t));
 
       if(sme_o->type == SMAP_TYPE_AVL && sme_o->base == 0x100000ULL)
-	 sme_o->len = top - sme_o->base;
+         sme_o->len = top - sme_o->base;
 
       mmap.linear += mme->size + sizeof(mme->size);
       sme_o++;

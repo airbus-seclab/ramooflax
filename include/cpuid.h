@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,13 +24,13 @@
 /*
 ** CPUID
 */
-#define __cpuid_1(idx,eax)						\
+#define __cpuid_1(idx,eax)                                              \
    asm volatile ("cpuid":"=a"(eax):"a"(idx):"ebx","ecx","edx")
 
-#define __cpuid_2(idx,ecx,edx)						\
+#define __cpuid_2(idx,ecx,edx)                                          \
    asm volatile ("cpuid":"=c"(ecx),"=d"(edx):"a"(idx),"c"(ecx):"ebx")
 
-#define __cpuid_4_no_pic(idx,eax,ebx,ecx,edx)				\
+#define __cpuid_4_no_pic(idx,eax,ebx,ecx,edx)                           \
    asm volatile ("cpuid":"=a"(eax),"=b"(ebx),"=c"(ecx),"=d"(edx):"a"(idx),"c"(ecx))
 
 /*
@@ -38,16 +38,16 @@
 ** gcc as base register for 32 bits PIE/PIC
 */
 #ifndef __X86_64__
-#define __cpuid_4_pic(idx,eax,ebx,ecx,edx)				\
-   asm volatile (							\
-      "xchg  %%esi, %%ecx  \n"						\
-      "push  %%ebx         \n"						\
-      "cpuid               \n"						\
-      "movl  %%ebx, %1     \n"						\
-      "popl  %%ebx         \n"						\
-      "xchg  %%esi, %%ecx  \n"						\
-      :"=a"(eax),"=r"(ebx),"=S"(ecx),"=d"(edx)				\
-      :"a"(idx),"S"(ecx)						\
+#define __cpuid_4_pic(idx,eax,ebx,ecx,edx)                              \
+   asm volatile (                                                       \
+      "xchg  %%esi, %%ecx  \n"                                          \
+      "push  %%ebx         \n"                                          \
+      "cpuid               \n"                                          \
+      "movl  %%ebx, %1     \n"                                          \
+      "popl  %%ebx         \n"                                          \
+      "xchg  %%esi, %%ecx  \n"                                          \
+      :"=a"(eax),"=r"(ebx),"=S"(ecx),"=d"(edx)                          \
+      :"a"(idx),"S"(ecx)                                                \
       :"cc" )
 #else
 /*
@@ -224,18 +224,18 @@ typedef union cpuid_feature_info_ebx
 
 #define cpuid_features(eCx,eDx)        __cpuid_2(CPUID_FEATURE_INFO,eCx,eDx)
 
-#define cpuid_has_c_feat(feAt)	\
-   ({		       		\
-      uint32_t c=0,d;		\
-      cpuid_features(c,d);	\
-      (c & (feAt))?1:0;		\
+#define cpuid_has_c_feat(feAt)  \
+   ({                           \
+      uint32_t c=0,d;           \
+      cpuid_features(c,d);      \
+      (c & (feAt))?1:0;         \
    })
 
-#define cpuid_has_d_feat(feAt)	\
-   ({				\
-      uint32_t c,d=0;		\
-      cpuid_features(c,d);	\
-      (d & (feAt))?1:0;		\
+#define cpuid_has_d_feat(feAt)  \
+   ({                           \
+      uint32_t c,d=0;           \
+      cpuid_features(c,d);      \
+      (d & (feAt))?1:0;         \
    })
 
 #define perf_cap_supported()  cpuid_has_c_feat(CPUID_ECX_FEAT_PDCM)
@@ -247,11 +247,11 @@ typedef union cpuid_feature_info_ebx
 ** CPUID Maximum supported extension
 */
 #define CPUID_MAX_EXT                   0x80000000
-#define cpuid_max_ext()			\
-   ({					\
-      uint32_t eax;			\
-      __cpuid_1(CPUID_MAX_EXT,eax);	\
-      eax;				\
+#define cpuid_max_ext()                 \
+   ({                                   \
+      uint32_t eax;                     \
+      __cpuid_1(CPUID_MAX_EXT,eax);     \
+      eax;                              \
    })
 
 /*
@@ -293,11 +293,11 @@ typedef union cpuid_feature_info_ebx
 
 #define cpuid_ext_proc_feat(eCx,eDx)       __cpuid_2(CPUID_EXT_PROC_FEAT,eCx,eDx)
 
-#define page_1G_supported()			\
-   ({						\
-      uint32_t c=0,d;				\
-      cpuid_ext_proc_feat(c,d);			\
-      (d & CPUID_EDX_EXT_PROC_FEAT_P1G)?1:0;	\
+#define page_1G_supported()                     \
+   ({                                           \
+      uint32_t c=0,d;                           \
+      cpuid_ext_proc_feat(c,d);                 \
+      (d & CPUID_EDX_EXT_PROC_FEAT_P1G)?1:0;    \
    })
 
 

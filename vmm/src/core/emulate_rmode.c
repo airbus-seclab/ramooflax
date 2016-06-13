@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ static void emulate_rmode_far_jump(fptr_t *fptr)
    __rip.low = fptr->offset.raw;
 
    debug(EMU_RMODE_FAR, "far jump to 0x%x:0x%x\n",
-   	 __cs.selector.raw, __rip.wlow);
+         __cs.selector.raw, __rip.wlow);
 
    __post_access(__cs.selector);
    __post_access(__cs.base);
@@ -68,8 +68,8 @@ static void emulate_rmode_far_call(fptr_t *fptr, uint16_t insn_sz)
    emulate_rmode_push(__rip.wlow+insn_sz);
 
    debug(EMU_RMODE_FAR,
-	 "far call saved frame 0x%x:0x%x\n",
-   	 __cs.selector.raw, __rip.wlow+insn_sz);
+         "far call saved frame 0x%x:0x%x\n",
+         __cs.selector.raw, __rip.wlow+insn_sz);
 
    emulate_rmode_far_jump(fptr);
 }
@@ -106,14 +106,14 @@ int emulate_rmode_interrupt(uint8_t vector, uint16_t insn_sz)
    fptr_t  fptr;
 
    debug(EMU_RMODE_INT, "int 0x%x (ax 0x%x)\n"
-	 , vector, info->vm.cpu.gpr->rax.wlow);
+         , vector, info->vm.cpu.gpr->rax.wlow);
 
    if(vector == BIOS_MISC_INTERRUPT)
    {
       int rc = emulate_int15();
 
       if(rc != VM_DONE_LET_RIP)
-	 return rc;
+         return rc;
    }
 
    ivt = (ivt_e_t*)0;

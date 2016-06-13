@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -95,56 +95,56 @@ int resolve_exception()
    }
 
    return __resolve_exception(__exception_vector,
-			      __exception_error.raw,
-			      __exception_fault);
+                              __exception_error.raw,
+                              __exception_fault);
 }
 
 void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
 {
    debug(EXCP,
-	 "\nvmm native exception -= %s =-\n"
-	 " . excp #%d error 0x%X\n"
-	 " . cs:rip 0x%X:0x%X\n"
-	 " . ss:rsp 0x%X:0x%X\n"
-	 " . rflags 0x%X\n"
-	 "\n- general registers\n"
-	 "rax     : 0x%X\n"
-	 "rcx     : 0x%X\n"
-	 "rdx     : 0x%X\n"
-	 "rbx     : 0x%X\n"
-	 "rsp     : 0x%X\n"
-	 "rbp     : 0x%X\n"
-	 "rsi     : 0x%X\n"
-	 "rdi     : 0x%X\n"
-	 "r08     : 0x%X\n"
-	 "r09     : 0x%X\n"
-	 "r10     : 0x%X\n"
-	 "r11     : 0x%X\n"
-	 "r12     : 0x%X\n"
-	 "r13     : 0x%X\n"
-	 "r14     : 0x%X\n"
-	 "r15     : 0x%X\n"
-	 ,exception_names[ctx->nr.blow]
-	 ,ctx->nr.blow, ctx->err.raw
-	 ,ctx->cs.raw,  ctx->rip.raw
-	 ,ctx->ss.raw,  ctx->rsp.raw
-	 ,ctx->rflags.raw
-	 ,ctx->gpr.rax.raw
-	 ,ctx->gpr.rcx.raw
-	 ,ctx->gpr.rdx.raw
-	 ,ctx->gpr.rbx.raw
-	 ,ctx->gpr.rsp.raw
-	 ,ctx->gpr.rbp.raw
-	 ,ctx->gpr.rsi.raw
-	 ,ctx->gpr.rdi.raw
-	 ,ctx->gpr.r8.raw
-	 ,ctx->gpr.r9.raw
-	 ,ctx->gpr.r10.raw
-	 ,ctx->gpr.r11.raw
-	 ,ctx->gpr.r12.raw
-	 ,ctx->gpr.r13.raw
-	 ,ctx->gpr.r14.raw
-	 ,ctx->gpr.r15.raw);
+         "\nvmm native exception -= %s =-\n"
+         " . excp #%d error 0x%X\n"
+         " . cs:rip 0x%X:0x%X\n"
+         " . ss:rsp 0x%X:0x%X\n"
+         " . rflags 0x%X\n"
+         "\n- general registers\n"
+         "rax     : 0x%X\n"
+         "rcx     : 0x%X\n"
+         "rdx     : 0x%X\n"
+         "rbx     : 0x%X\n"
+         "rsp     : 0x%X\n"
+         "rbp     : 0x%X\n"
+         "rsi     : 0x%X\n"
+         "rdi     : 0x%X\n"
+         "r08     : 0x%X\n"
+         "r09     : 0x%X\n"
+         "r10     : 0x%X\n"
+         "r11     : 0x%X\n"
+         "r12     : 0x%X\n"
+         "r13     : 0x%X\n"
+         "r14     : 0x%X\n"
+         "r15     : 0x%X\n"
+         ,exception_names[ctx->nr.blow]
+         ,ctx->nr.blow, ctx->err.raw
+         ,ctx->cs.raw,  ctx->rip.raw
+         ,ctx->ss.raw,  ctx->rsp.raw
+         ,ctx->rflags.raw
+         ,ctx->gpr.rax.raw
+         ,ctx->gpr.rcx.raw
+         ,ctx->gpr.rdx.raw
+         ,ctx->gpr.rbx.raw
+         ,ctx->gpr.rsp.raw
+         ,ctx->gpr.rbp.raw
+         ,ctx->gpr.rsi.raw
+         ,ctx->gpr.rdi.raw
+         ,ctx->gpr.r8.raw
+         ,ctx->gpr.r9.raw
+         ,ctx->gpr.r10.raw
+         ,ctx->gpr.r11.raw
+         ,ctx->gpr.r12.raw
+         ,ctx->gpr.r13.raw
+         ,ctx->gpr.r14.raw
+         ,ctx->gpr.r15.raw);
 
    switch(ctx->nr.blow)
    {
@@ -158,21 +158,21 @@ void __regparm__(1) vmm_excp_hdlr(int64_r0_ctx_t *ctx)
 
    case PF_EXCP:
       debug(EXCP,
-	    "#PF details: p:%d wr:%d us:%d id:%d addr 0x%X\n"
-	    ,ctx->err.pf.p
-	    ,ctx->err.pf.wr
-	    ,ctx->err.pf.us
-	    ,ctx->err.pf.id
-	    ,get_cr2());
+            "#PF details: p:%d wr:%d us:%d id:%d addr 0x%X\n"
+            ,ctx->err.pf.p
+            ,ctx->err.pf.wr
+            ,ctx->err.pf.us
+            ,ctx->err.pf.id
+            ,get_cr2());
       break;
 
    case GP_EXCP:
       debug(EXCP,
-	    "#GP details: ext:%d idt:%d ti:%d index:%d\n"
-	    ,ctx->err.sl.ext
-	    ,ctx->err.sl.idt
-	    ,ctx->err.sl.ti
-	    ,ctx->err.sl.idx);
+            "#GP details: ext:%d idt:%d ti:%d index:%d\n"
+            ,ctx->err.sl.ext
+            ,ctx->err.sl.idt
+            ,ctx->err.sl.ti
+            ,ctx->err.sl.idx);
       break;
    }
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -138,7 +138,7 @@ static void vmx_cpu_features()
    if(!feat.lock)
    {
       if(!feat.vmx)
-	 feat.vmx = 1;
+         feat.vmx = 1;
 
       feat.lock = 1;
       wr_msr_feature_ctrl(feat);
@@ -201,16 +201,16 @@ static void vmx_cpu_skillz()
 #endif
 
    debug(VMX_CPU,
-	 "\n- vm cpu features\n"
-	 "1GB pages support   : %s\n"
-	 "2MB pages support   : %s\n"
-	 "max physical addr   : 0x%X\n"
-	 "max linear addr     : 0x%X\n"
-	 "mtrr variable count : %d\n"
-	 ,info->vm.cpu.skillz.pg_1G?"yes":"no"
-	 ,info->vm.cpu.skillz.pg_2M?"yes":"no"
-	 ,info->vm.cpu.max_paddr, info->vm.cpu.max_vaddr
-	 ,info->vm.mtrr_cap.vcnt);
+         "\n- vm cpu features\n"
+         "1GB pages support   : %s\n"
+         "2MB pages support   : %s\n"
+         "max physical addr   : 0x%X\n"
+         "max linear addr     : 0x%X\n"
+         "mtrr variable count : %d\n"
+         ,info->vm.cpu.skillz.pg_1G?"yes":"no"
+         ,info->vm.cpu.skillz.pg_2M?"yes":"no"
+         ,info->vm.cpu.max_paddr, info->vm.cpu.max_vaddr
+         ,info->vm.mtrr_cap.vcnt);
 }
 
 void vmx_vm_cpu_skillz_init()

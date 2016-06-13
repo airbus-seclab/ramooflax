@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ void ehci_acquire(dbgp_info_t *dbgp_i)
       pci_cfg_read(pci);
 
       if(!legsup->bios_sem && legsup->os_sem)
-	 break;
+         break;
 
       legsup->os_sem = 1;
       pci_cfg_write(pci);
@@ -112,7 +112,7 @@ void ehci_release(dbgp_info_t *dbgp_i)
       pci_cfg_read(pci);
 
       if(!legsup->os_sem && legsup->bios_sem)
-	 break;
+         break;
 
       legsup->os_sem = 0;
       pci_cfg_write(pci);
@@ -184,9 +184,9 @@ void ehci_reset(dbgp_info_t *dbgp_i)
 /*       int i; */
 /*       for(i=0;i<dbgp_i->ehci_cap->hcs.n_ports;i++) */
 /*       { */
-/* 	 ehci_portsc_reg_t portsc; */
-/* 	 portsc.raw = dbgp_i->ehci_opr->portsc[i].raw; */
-/* 	 debug(EHCI,"%d|%d ", portsc.conn_chg, portsc.conn); */
+/*       ehci_portsc_reg_t portsc; */
+/*       portsc.raw = dbgp_i->ehci_opr->portsc[i].raw; */
+/*       debug(EHCI,"%d|%d ", portsc.conn_chg, portsc.conn); */
 /*       } */
 /*       debug(EHCI,"\n"); */
 /*    } */
@@ -341,7 +341,7 @@ int __ehci_port_debounce_from_disabled(dbgp_info_t *dbgp_i)
 
       /* high or full speed device, need reset */
       if(portsc.line_sts != 1)
-	 return EHCI_PSC_DBC2RST;
+         return EHCI_PSC_DBC2RST;
 
       /* low-speed so transfert and wait disabled */
       debug(EHCI,"low-speed detected, need high-speed\n");
@@ -374,8 +374,8 @@ void __ehci_port_reset(dbgp_info_t *dbgp_i)
 
       do
       {
-	 io_wait(10000);
-	 portsc.raw = dbgp_i->ehci_psc->raw;
+         io_wait(10000);
+         portsc.raw = dbgp_i->ehci_psc->raw;
 
       } while(portsc.over);
    }
@@ -417,8 +417,8 @@ int __ehci_port_reset_from_debounce(dbgp_info_t *dbgp_i)
       /* high-speed device connected */
       if(portsc.enbl)
       {
-	 __ehci_port_hs_active_from_reset(dbgp_i);
-	 return EHCI_PSC_RST2HS;
+         __ehci_port_hs_active_from_reset(dbgp_i);
+         return EHCI_PSC_RST2HS;
       }
 
       /* full-speed so transfert and wait disabled */
@@ -456,7 +456,7 @@ void __ehci_port_transfert_companion(dbgp_info_t *dbgp_i)
       usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
    } while(!(usbsts.port_change && portsc.conn_chg &&
-	     portsc.own && !portsc.conn && !portsc.enbl));
+             portsc.own && !portsc.conn && !portsc.enbl));
    debug(EHCI,"done.\n");
 }
 
@@ -545,7 +545,7 @@ void ehci_detect(dbgp_info_t *dbgp_i, int transition)
    do
    {
       while(transition != EHCI_PSC_DBC2RST)
-	 transition = __ehci_port_debounce_from_disabled(dbgp_i);
+         transition = __ehci_port_debounce_from_disabled(dbgp_i);
 
       transition = __ehci_port_reset_from_debounce(dbgp_i);
 
@@ -574,14 +574,14 @@ void __ehci_light_show(dbgp_info_t *dbgp_i)
    dbgp.pid.raw  = dbgp_i->ehci_dbg->pid.raw;
 
    debug(EHCI,
-	 "D e%d o%d w%d r%d x%x p%x | "
-	 "E r%d h%d c%d | "
-	 "P e%d c%d s%d r%d\n"
-	 ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr
-	 ,dbgp.ctrl.err, dbgp.ctrl.excp
-	 ,dbgp.pid.raw
-	 ,usbcmd.run,usbsts.hlt,cfgflg.cf
-	 ,portsc.enbl, portsc.conn, portsc.suspend, portsc.reset);
+         "D e%d o%d w%d r%d x%x p%x | "
+         "E r%d h%d c%d | "
+         "P e%d c%d s%d r%d\n"
+         ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr
+         ,dbgp.ctrl.err, dbgp.ctrl.excp
+         ,dbgp.pid.raw
+         ,usbcmd.run,usbsts.hlt,cfgflg.cf
+         ,portsc.enbl, portsc.conn, portsc.suspend, portsc.reset);
 }
 
 void __ehci_show(dbgp_info_t *dbgp_i)
@@ -603,30 +603,30 @@ void __ehci_show(dbgp_info_t *dbgp_i)
    dbgp.data.raw = dbgp_i->ehci_dbg->data.raw;
 
    debug(EHCI,"###### dbgp:\n"
-	 " - ctrl en %d own %d wr %d usd %d len %d\n"
-	 " - err %d excp 0x%x\n"
-	 " - pid tkn 0x%x snd 0x%x rcv 0x%x\n"
-	 " - addr %d ep %d\n"
-	 " - data 0x%X\n"
-	 ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr,dbgp.ctrl.used,dbgp.ctrl.dlen
-	 ,dbgp.ctrl.err, dbgp.ctrl.excp
-	 ,dbgp.pid.tkn,dbgp.pid.snd,dbgp.pid.rcv
-	 ,dbgp.dev.addr, dbgp.dev.ep
-	 ,dbgp.data.raw);
+         " - ctrl en %d own %d wr %d usd %d len %d\n"
+         " - err %d excp 0x%x\n"
+         " - pid tkn 0x%x snd 0x%x rcv 0x%x\n"
+         " - addr %d ep %d\n"
+         " - data 0x%X\n"
+         ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr,dbgp.ctrl.used,dbgp.ctrl.dlen
+         ,dbgp.ctrl.err, dbgp.ctrl.excp
+         ,dbgp.pid.tkn,dbgp.pid.snd,dbgp.pid.rcv
+         ,dbgp.dev.addr, dbgp.dev.ep
+         ,dbgp.data.raw);
 
    debug(EHCI,"###### ehci ctrl:\n"
-	 " - cmd rst %d run %d\n"
-	 " - sts err %d pch %d hlt %d\n"
-	 " - cfg %d\n",
-	 usbcmd.rst, usbcmd.run,
-	 usbsts.sys_err, usbsts.port_change, usbsts.hlt,
-	 cfgflg.cf);
+         " - cmd rst %d run %d\n"
+         " - sts err %d pch %d hlt %d\n"
+         " - cfg %d\n",
+         usbcmd.rst, usbcmd.run,
+         usbsts.sys_err, usbsts.port_change, usbsts.hlt,
+         cfgflg.cf);
 
    debug(EHCI,"###### psc:\n"
-	 " - en %d en_chg %d con %d con_chg %d own %d\n"
-	 " - susp %d rst %d line 0x%x \n",
-	 portsc.enbl, portsc.enbl_chg, portsc.conn, portsc.conn_chg, portsc.own,
-	 portsc.suspend, portsc.reset, portsc.line_sts);
+         " - en %d en_chg %d con %d con_chg %d own %d\n"
+         " - susp %d rst %d line 0x%x \n",
+         portsc.enbl, portsc.enbl_chg, portsc.conn, portsc.conn_chg, portsc.own,
+         portsc.suspend, portsc.reset, portsc.line_sts);
 }
 #endif
 
@@ -648,7 +648,7 @@ __retry:
    {
       dbgp_i->addr = dev;
       if(__dbgp_get_descriptor(dbgp_i))
-	 break;
+         break;
    }
 
    if(dev == 128)
@@ -657,7 +657,7 @@ __retry:
    if(dev != DBGP_DEV_ADDR)
    {
       if(!__dbgp_set_addr(dbgp_i))
-	 goto __fail;
+         goto __fail;
 
       dbgp_i->addr = DBGP_DEV_ADDR;
    }
@@ -667,7 +667,7 @@ __retry:
       /* retry with previous addr */
       dbgp_i->addr = dev;
       if(!__dbgp_set_debug_mode(dbgp_i))
-	 goto __fail;
+         goto __fail;
 
       dbgp_i->addr = DBGP_DEV_ADDR;
    }
@@ -789,7 +789,7 @@ int __dbgp_get_descriptor(dbgp_info_t *dbgp_i)
       return 0;
 
    debug(EHCI, "debug desc ep: in %d out %d\n",
-	 dbgp_i->desc.ep_in, dbgp_i->desc.ep_out);
+         dbgp_i->desc.ep_in, dbgp_i->desc.ep_out);
    return 1;
 }
 
@@ -942,15 +942,15 @@ __emit:
    {
       if(config.pid.rcv == EHCI_STATUS_PID_NAK)
       {
-	 buf->sz = 0;
-	 return DBGP_EMIT_OK;
+         buf->sz = 0;
+         return DBGP_EMIT_OK;
       }
 
       config.data.low  = dbgp_i->ehci_dbg->data.low;
       config.data.high = dbgp_i->ehci_dbg->data.high;
 
       if(status.dlen < buf->sz)
-	 buf->sz = status.dlen;
+         buf->sz = status.dlen;
 
       memcpy(buf->data.addr, (void*)&config.data.raw, buf->sz);
       return DBGP_EMIT_OK;
@@ -995,16 +995,16 @@ static size_t __dbgp_rw(uint8_t *data, size_t n, dbgp_rw_t fn)
    {
       if(!fn(&info->hrd.dev.dbgp, &buf))
       {
-	 debug(EHCI,"__dbgp_rw(%s): cnt %D from 0x%X bytes [0x%X]\n\n"
-	       ,(fn==_dbgp_read)?"read":"write"
-	       ,cnt, buf.data.linear, *buf.data.u64);
-	 return cnt;
+         debug(EHCI,"__dbgp_rw(%s): cnt %D from 0x%X bytes [0x%X]\n\n"
+               ,(fn==_dbgp_read)?"read":"write"
+               ,cnt, buf.data.linear, *buf.data.u64);
+         return cnt;
       }
 
       cnt += buf.sz;
 
       if(buf.sz < DBGP_PKT_SZ)
-	 return cnt;
+         return cnt;
 
       buf.data.linear += buf.sz;
    }
@@ -1014,10 +1014,10 @@ static size_t __dbgp_rw(uint8_t *data, size_t n, dbgp_rw_t fn)
       buf.sz = last;
       if(!fn(&info->hrd.dev.dbgp, &buf))
       {
-	 debug(EHCI,"__dbgp_rw(%s): cnt %D from 0x%X bytes [0x%X]\n\n"
-	       ,(fn==_dbgp_read)?"read":"write"
-	       ,cnt, buf.data.linear, *buf.data.u64);
-	 return cnt;
+         debug(EHCI,"__dbgp_rw(%s): cnt %D from 0x%X bytes [0x%X]\n\n"
+               ,(fn==_dbgp_read)?"read":"write"
+               ,cnt, buf.data.linear, *buf.data.u64);
+         return cnt;
       }
 
       cnt += buf.sz;

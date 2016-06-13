@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -68,20 +68,20 @@ void    vmx_vmlaunch();
 ** VMX insn operates on 64 bits in long mode
 ** so we ensure error code allocation
 */
-#define __vmx_insn2(fn, err, vmcs)		\
-   ({						\
-      raw64_t __err;				\
-      int     __ret = fn(&__err.raw, vmcs);	\
-      (err)->raw = __err.low;			\
-      __ret;					\
+#define __vmx_insn2(fn, err, vmcs)              \
+   ({                                           \
+      raw64_t __err;                            \
+      int     __ret = fn(&__err.raw, vmcs);     \
+      (err)->raw = __err.low;                   \
+      __ret;                                    \
    })
 
-#define __vmx_insn3(fn, err, x, enc)		\
-   ({						\
-      raw64_t __err;				\
-      int     __ret = fn(&__err.raw, x, enc);	\
-      (err)->raw = __err.low;			\
-      __ret;					\
+#define __vmx_insn3(fn, err, x, enc)            \
+   ({                                           \
+      raw64_t __err;                            \
+      int     __ret = fn(&__err.raw, x, enc);   \
+      (err)->raw = __err.low;                   \
+      __ret;                                    \
    })
 
 int  __vmx_vmxon(uint64_t*)                       __regparm__(1);

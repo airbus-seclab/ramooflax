@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -51,13 +51,13 @@ typedef union icmp_header
 
       union
       {
-	 struct
-	 {
-	    uint16_t  id;
-	    uint16_t  seq;
-	 } ping;
+         struct
+         {
+            uint16_t  id;
+            uint16_t  seq;
+         } ping;
 
-	 uint32_t rest;
+         uint32_t rest;
 
       } __attribute__((packed));
 
@@ -70,9 +70,9 @@ typedef union icmp_header
 /*
 ** Functions
 */
-#define icmp_checksum(_hdr_, _ln_)					\
-   ({									\
-      (_hdr_)->chk = 0;							\
+#define icmp_checksum(_hdr_, _ln_)                                      \
+   ({                                                                   \
+      (_hdr_)->chk = 0;                                                 \
       (_hdr_)->chk = swap16(rfc1071_checksum((uint16_t*)(_hdr_), (_ln_))); \
    })
 

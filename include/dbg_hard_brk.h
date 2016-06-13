@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -64,10 +64,10 @@ typedef struct dbg_hardware_breakpoints
 #define __hbrk_set_conf(_n,_c)     ((_c)<<___hbrk_conf_idx(_n))
 #define __hbrk_mke_conf(_t,_l)     (((((_l)&3)<<2)|((_t)&3)) & 0xf)
 
-#define __hbrk_setup_bp(_n,_t,_l)					\
+#define __hbrk_setup_bp(_n,_t,_l)                                       \
    (___hbrk.dr7.low |= __hbrk_set_conf(_n,__hbrk_mke_conf(_t,_l))|__hbrk_set_enbl(_n))
 
-#define __hbrk_delete_bp(_n)						\
+#define __hbrk_delete_bp(_n)                                            \
    (___hbrk.dr7.low &= ~(__hbrk_set_conf(_n,0xf)|(0x3<<___hbrk_enbl_idx(_n))))
 
 #define __hbrk_get_config(_n)      ((___hbrk.dr7.low>>___hbrk_conf_idx(_n)) & 0xf)
@@ -75,11 +75,11 @@ typedef struct dbg_hardware_breakpoints
 #define __hbrk_enabled(_n)         (___hbrk.dr7.blow & __hbrk_set_enbl((_n)))
 #define __hbrk_raised(_n)          (__dr6.blow & (1<<(_n)))
 
-#define dbg_hard_brk_dr7_clean()	\
-   ({					\
-      ___hbrk.dr7.low &= 0x100;		\
-      __dr7.low &= 0x100;		\
-      __post_access(__dr7);		\
+#define dbg_hard_brk_dr7_clean()        \
+   ({                                   \
+      ___hbrk.dr7.low &= 0x100;         \
+      __dr7.low &= 0x100;               \
+      __post_access(__dr7);             \
    })
 
 #define dbg_hard_brk_enabled()             (___hbrk.sts.on)

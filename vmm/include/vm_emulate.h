@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -31,22 +31,22 @@
 ** Take care about segment
 ** wrap-around
 */
-#define vm_push_16(val)				\
-   ({						\
-      loc_t stack;				\
-      vm_rsp16 -= sizeof(uint16_t);		\
-      stack.linear = vm_ss() + vm_rsp16();	\
-      *stack.u16 = (val);			\
+#define vm_push_16(val)                         \
+   ({                                           \
+      loc_t stack;                              \
+      vm_rsp16 -= sizeof(uint16_t);             \
+      stack.linear = vm_ss() + vm_rsp16();      \
+      *stack.u16 = (val);                       \
    })
 
-#define vm_pop_16()				\
-   ({						\
-      loc_t    stack;				\
-      uint16_t val;				\
-      stack.linear = vm_ss() + vm_rsp16();	\
-      val = *stack.u16;				\
-      vm_rsp16 += sizeof(uint16_t);		\
-      val;					\
+#define vm_pop_16()                             \
+   ({                                           \
+      loc_t    stack;                           \
+      uint16_t val;                             \
+      stack.linear = vm_ss() + vm_rsp16();      \
+      val = *stack.u16;                         \
+      vm_rsp16 += sizeof(uint16_t);             \
+      val;                                      \
    })
 
 

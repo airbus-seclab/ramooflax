@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ void* malloc(size_t sz)
    {
       if(!slab_grow(slab, 1))
       {
-	 debug(VMEM, "malloc: slab exhausted/can't grow\n");
-	 return (void*)0;
+         debug(VMEM, "malloc: slab exhausted/can't grow\n");
+         return (void*)0;
       }
 
       obj = cdll_pop(slab->obj);

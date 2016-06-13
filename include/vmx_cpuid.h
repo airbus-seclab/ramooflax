@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,35 +26,35 @@
 #define CPUID_ECX_FEAT_VMX_BIT          5
 #define CPUID_ECX_FEAT_VMX              (1<<CPUID_ECX_FEAT_VMX_BIT)
 
-#define vmx_supported()				\
-   ({						\
-      uint32_t c=0,d;				\
-      cpuid_features(c,d);			\
-      (c & CPUID_ECX_FEAT_VMX)?1:0;		\
+#define vmx_supported()                         \
+   ({                                           \
+      uint32_t c=0,d;                           \
+      cpuid_features(c,d);                      \
+      (c & CPUID_ECX_FEAT_VMX)?1:0;             \
    })
 
 /*
 ** CPUID Extended Processor Features
 */
-#define check_cpu_skillz()						\
-   ({									\
-      uint32_t c=0, d, ed;						\
-      uint32_t feat =							\
-	 CPUID_EDX_FEAT_PSE |						\
-	 CPUID_EDX_FEAT_PAE |						\
-	 CPUID_EDX_FEAT_PAT;						\
-      uint32_t efeat =							\
-	 CPUID_EDX_EXT_PROC_FEAT_LM;					\
-      cpuid_features(c,d);						\
-      cpuid_ext_proc_feat(c,ed);					\
-      if((( d &  feat) !=  feat) ||					\
-	 ((ed & efeat) != efeat))					\
-	 panic("cpu not skilled enough: pse %d pae %d pat %d lm %d",	\
-	       (d&CPUID_EDX_FEAT_PSE)?1:0,				\
-	       (d&CPUID_EDX_FEAT_PAE)?1:0,				\
-	       (d&CPUID_EDX_FEAT_PAT)?1:0,				\
-	       (ed&CPUID_EDX_EXT_PROC_FEAT_LM)?1:0			\
-	    );								\
+#define check_cpu_skillz()                                              \
+   ({                                                                   \
+      uint32_t c=0, d, ed;                                              \
+      uint32_t feat =                                                   \
+         CPUID_EDX_FEAT_PSE |                                           \
+         CPUID_EDX_FEAT_PAE |                                           \
+         CPUID_EDX_FEAT_PAT;                                            \
+      uint32_t efeat =                                                  \
+         CPUID_EDX_EXT_PROC_FEAT_LM;                                    \
+      cpuid_features(c,d);                                              \
+      cpuid_ext_proc_feat(c,ed);                                        \
+      if((( d &  feat) !=  feat) ||                                     \
+         ((ed & efeat) != efeat))                                       \
+         panic("cpu not skilled enough: pse %d pae %d pat %d lm %d",    \
+               (d&CPUID_EDX_FEAT_PSE)?1:0,                              \
+               (d&CPUID_EDX_FEAT_PAE)?1:0,                              \
+               (d&CPUID_EDX_FEAT_PAT)?1:0,                              \
+               (ed&CPUID_EDX_EXT_PROC_FEAT_LM)?1:0                      \
+            );                                                          \
    })
 
 /*

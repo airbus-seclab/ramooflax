@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -202,33 +202,33 @@ typedef struct pci_config_value
 
 } __attribute__((packed)) pci_cfg_val_t;
 
-#define pci_cfg_read(_pci)				\
-   ({							\
-      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);		\
-      (_pci)->data.raw = inl(PCI_CONFIG_DATA);		\
+#define pci_cfg_read(_pci)                              \
+   ({                                                   \
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);          \
+      (_pci)->data.raw = inl(PCI_CONFIG_DATA);          \
    })
 
-#define pci_cfg_write(_pci)				\
-   ({							\
-      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);		\
-      outl((_pci)->data.raw, PCI_CONFIG_DATA);		\
+#define pci_cfg_write(_pci)                             \
+   ({                                                   \
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);          \
+      outl((_pci)->data.raw, PCI_CONFIG_DATA);          \
    })
 
-#define pci_cfg_read64(_pci)				\
-   ({							\
-      pci_cfg_val_t xpci;				\
-      raw64_t       data;				\
-							\
-      xpci.addr.raw = (_pci)->addr.raw;			\
-							\
-      pci_cfg_read(&xpci);				\
-      data.low = xpci.data.raw;				\
-      							\
-      xpci.addr.reg += 4;				\
-      pci_cfg_read(&xpci);				\
-      data.high = xpci.data.raw;			\
-      							\
-      data.raw;						\
+#define pci_cfg_read64(_pci)                            \
+   ({                                                   \
+      pci_cfg_val_t xpci;                               \
+      raw64_t       data;                               \
+                                                        \
+      xpci.addr.raw = (_pci)->addr.raw;                 \
+                                                        \
+      pci_cfg_read(&xpci);                              \
+      data.low = xpci.data.raw;                         \
+                                                        \
+      xpci.addr.reg += 4;                               \
+      pci_cfg_read(&xpci);                              \
+      data.high = xpci.data.raw;                        \
+                                                        \
+      data.raw;                                         \
    })
 
 /*

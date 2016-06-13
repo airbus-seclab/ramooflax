@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ static int __get_insn(offset_t *vaddr, int *mode)
    ** In any case, the disasm engine will raise the error if any.
    */
    rc = __vm_read_vmem(&__cr3, *vaddr, info->vm.cpu.insn_cache,
-		       sizeof(info->vm.cpu.insn_cache));
+                       sizeof(info->vm.cpu.insn_cache));
 
    if(! (rc & (VM_DONE|VM_PARTIAL)))
    {
@@ -69,8 +69,8 @@ int disassemble(ud_t *disasm)
 
    ud_init(disasm);
    ud_set_input_buffer(disasm,
-		       info->vm.cpu.insn_cache,
-		       sizeof(info->vm.cpu.insn_cache));
+                       info->vm.cpu.insn_cache,
+                       sizeof(info->vm.cpu.insn_cache));
    ud_set_mode(disasm, mode);
    ud_set_syntax(disasm, UD_SYN_ATT);
    ud_set_vendor(disasm, UD_VENDOR_AMD);

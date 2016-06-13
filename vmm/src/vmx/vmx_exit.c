@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -187,9 +187,9 @@ int vmx_vmexit_idt_deliver()
 
       if(vm_exit_info.int_info.nmi && vm_exit_info.int_info.vector != DF_EXCP)
       {
-	 vmcs_read(vm_state.interrupt);
-	 vm_state.interrupt.nmi = 1;
-	 vmcs_dirty(vm_state.interrupt);
+         vmcs_read(vm_state.interrupt);
+         vm_state.interrupt.nmi = 1;
+         vmcs_dirty(vm_state.interrupt);
       }
 
       return VM_DONE;
@@ -220,11 +220,11 @@ int __vmx_vmexit_idt_deliver_rmode()
    /* { */
    /*    if(vm_exit_info.idt_info.type == VMCS_EVT_INFORMATION_TYPE_HW_INT) */
    /*    { */
-   /* 	 debug(VMX_IDT, */
-   /* 	       "idt deliver IRQ (rmode): 0x%x\n", */
-   /* 	       vm_exit_info.idt_info.vector); */
-   /* 	 irq_set_pending(vm_exit_info.idt_info.vector - IDT_IRQ_MIN); */
-   /* 	 return resolve_hard_interrupt(); */
+   /*    debug(VMX_IDT, */
+   /*          "idt deliver IRQ (rmode): 0x%x\n", */
+   /*          vm_exit_info.idt_info.vector); */
+   /*    irq_set_pending(vm_exit_info.idt_info.vector - IDT_IRQ_MIN); */
+   /*    return resolve_hard_interrupt(); */
    /*    } */
    /* } */
 
@@ -244,21 +244,21 @@ int __vmx_vmexit_idt_deliver_pmode()
    if(!vm_entry_ctrls.int_info.v)
    {
       debug(VMX_IDT, "idt[0x%x:%d] eax 0x%x\n"
-	    ,vm_exit_info.idt_info.vector
-	    ,vm_exit_info.idt_info.type
-	    ,info->vm.cpu.gpr->rax.low);
+            ,vm_exit_info.idt_info.vector
+            ,vm_exit_info.idt_info.type
+            ,info->vm.cpu.gpr->rax.low);
 
       if(vm_exit_info.idt_info.type == VMCS_EVT_INFO_TYPE_SW_INT)
       {
-	 vm_entry_ctrls.insn_len.raw = 2;
-	 vmcs_dirty(vm_entry_ctrls.insn_len);
+         vm_entry_ctrls.insn_len.raw = 2;
+         vmcs_dirty(vm_entry_ctrls.insn_len);
       }
 
       if(vm_exit_info.idt_info.v_err)
       {
-	 vmcs_read(vm_exit_info.idt_err_code);
-	 vm_entry_ctrls.err_code.raw = vm_exit_info.idt_err_code.raw;
-	 vmcs_dirty(vm_entry_ctrls.err_code);
+         vmcs_read(vm_exit_info.idt_err_code);
+         vm_entry_ctrls.err_code.raw = vm_exit_info.idt_err_code.raw;
+         vmcs_dirty(vm_entry_ctrls.err_code);
       }
 
       /*
@@ -275,7 +275,7 @@ int __vmx_vmexit_idt_deliver_pmode()
    }
 
    debug(VMX_IDT, "already injecting: %d (%d)\n"
-	 ,vm_entry_ctrls.int_info.vector, vm_entry_ctrls.int_info.type);
+         ,vm_entry_ctrls.int_info.vector, vm_entry_ctrls.int_info.type);
 
    /*
    ** cpu was delivering
@@ -290,20 +290,20 @@ int __vmx_vmexit_idt_deliver_pmode()
 
 /*       if(triple_fault(e1)) */
 /*       { */
-/* 	 debug(VMX, "triple-fault\n"); */
-/* 	 return VM_FAIL; */
+/*       debug(VMX, "triple-fault\n"); */
+/*       return VM_FAIL; */
 /*       } */
 
 /*       if(double_fault(e1, e2)) */
 /*       { */
-/* 	 debug(VMX, "double-fault: %d raised while %d\n", e2, e1); */
-/* 	 return __vmx_vmexit_inject_exception(DOUBLEFAULT_EXCEPTION, 0, 0); */
+/*       debug(VMX, "double-fault: %d raised while %d\n", e2, e1); */
+/*       return __vmx_vmexit_inject_exception(DOUBLEFAULT_EXCEPTION, 0, 0); */
 /*       } */
 
 /*       /\* handled serially *\/ */
 /*       debug(VMX_IDT, "handle serially: deliver(%d:%d)/inject(%d:%d)\n" */
-/* 	    , vm_exit_info.idt_info.type, vm_exit_info.idt_info.vector */
-/* 	    , vm_entry_ctrls.int_info.type, vm_entry_ctrls.int_info.vector); */
+/*          , vm_exit_info.idt_info.type, vm_exit_info.idt_info.vector */
+/*          , vm_entry_ctrls.int_info.type, vm_entry_ctrls.int_info.vector); */
 /*       return VM_DONE; */
 /*    } */
 

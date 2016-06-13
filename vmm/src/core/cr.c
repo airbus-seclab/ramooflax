@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -54,17 +54,17 @@ int __resolve_cr0_wr(cr0_reg_t *guest)
 
       if(cr0_update & CR0_PG)
       {
-	 updated = 1;
-	 __efer_update(guest->pg);
+         updated = 1;
+         __efer_update(guest->pg);
       }
    }
 
    if(cr0_update & CR0_PE)
    {
       if(!guest->pe)
-	 vm_enter_rmode();
+         vm_enter_rmode();
       else
-	 vm_enter_pmode();
+         vm_enter_pmode();
    }
 
    __cr0_update(guest);

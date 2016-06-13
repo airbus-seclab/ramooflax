@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -62,16 +62,16 @@ typedef union serial_efr_register
    struct
    {
       uint8_t   flow_ctl:4; /* (00xx) no tx flow
-			   ** (10xx) tx xon/xoff 1
-			   ** (01xx) tx xon/xoff 2
-			   ** (11xx) tx xon/xoff 1,2
-			   ** (xx00) no rx flow
-			   ** (xx10) rx cmp xon/xoff 1
-			   ** (xx01) rx cmp xon/xoff 2
-			   ** (1011) ...
-			   ** (0111) ...
-			   ** (1111) ...
-			   */
+                           ** (10xx) tx xon/xoff 1
+                           ** (01xx) tx xon/xoff 2
+                           ** (11xx) tx xon/xoff 1,2
+                           ** (xx00) no rx flow
+                           ** (xx10) rx cmp xon/xoff 1
+                           ** (xx01) rx cmp xon/xoff 2
+                           ** (1011) ...
+                           ** (0111) ...
+                           ** (1111) ...
+                           */
       uint8_t   ctl:1;      /* (1) to modify IER[7-4], ISR[5-4], FCR[5-4] */
       uint8_t   spc:1;      /* special character detect */
       uint8_t   a_rts:1;    /* (1) automatic RTS */
@@ -206,10 +206,10 @@ typedef union serial_lcr_register
       uint8_t  word_len:2;   /* (00) 5 bits, (01) 6 bits, (10) 7 bits, (11) 8 bits */
       uint8_t  stop:1;       /* (0) 1 stop bit, (1) 1.5 or 2 stop bits */
       uint8_t  parity:3;     /* (xx0) no parity
-			     ** (001) odd
-			     ** (011) even
-			     ** (101) mark
-			     ** (111) space */
+                             ** (001) odd
+                             ** (011) even
+                             ** (101) mark
+                             ** (111) space */
       uint8_t  brk:1;        /* (1) break enable */
       uint8_t  dla:1;        /* (1) Divisor Latch Access Bit */
 
@@ -327,8 +327,8 @@ typedef union serial_dla
 */
 #define __uart_send_char(BASE,c)     out((c), SERIAL_TX((BASE)))
 #define __uart_recv_char(BASE)       in(SERIAL_TX((BASE)))
-#define __uart_can_send(BASE)	     (in(SERIAL_LSR((BASE))) & SERIAL_LSR_THRE)
-#define __uart_can_recv(BASE)	     (in(SERIAL_LSR((BASE))) & SERIAL_LSR_DATA_READY)
+#define __uart_can_send(BASE)        (in(SERIAL_LSR((BASE))) & SERIAL_LSR_THRE)
+#define __uart_can_recv(BASE)        (in(SERIAL_LSR((BASE))) & SERIAL_LSR_DATA_READY)
 
 #define uart_enable_dla_registers(BASE)     out( 0x80, SERIAL_LCR((BASE)) )
 #define uart_set_lsb_dla_rate(BASE,x)       out( (x),  SERIAL_DLA_LSB((BASE)) )

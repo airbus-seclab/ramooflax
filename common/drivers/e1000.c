@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ static void e1k_mac_init(e1k_info_t *e1k, mac_addr_t *mac)
    if(!ra.low)
    {
       for(i=0 ; i<3 ; i++)
-	 mac->word[i] = e1k_eeprom_read(e1k, E1000_EE_MACADDR+i);
+         mac->word[i] = e1k_eeprom_read(e1k, E1000_EE_MACADDR+i);
 
       ra.as        = 0;
       ra.av        = 1;
@@ -145,10 +145,10 @@ offset_t e1k_mem_init(e1k_info_t *e1k, offset_t area)
    loc.linear += TX_DESC_NR * TX_BUFF_SZ;
 
    debug(E1000,
-	 "rdesc  0x%X, tdesc  0x%X\n"
-	 "rxbuff 0x%X, txbuff 0x%X\n"
-	 ,e1k->mem.rdesc, e1k->mem.tdesc
-	 ,e1k->mem.rx_dma.linear, e1k->mem.tx_dma.linear);
+         "rdesc  0x%X, tdesc  0x%X\n"
+         "rxbuff 0x%X, txbuff 0x%X\n"
+         ,e1k->mem.rdesc, e1k->mem.tdesc
+         ,e1k->mem.rx_dma.linear, e1k->mem.tx_dma.linear);
 
    return loc.linear;
 }
@@ -181,23 +181,23 @@ void e1k_rx_init(e1k_info_t *e1k)
       e1k->mem.rdesc[i].sts.raw = 0;
 
       debug(E1000, "set rdesc%D 0x%X buffer addr = 0x%X\n"
-	    ,i, &e1k->mem.rdesc[i], e1k->mem.rdesc[i].addr);
+            ,i, &e1k->mem.rdesc[i], e1k->mem.rdesc[i].addr);
    }
 
    /* receive ring buffer */
    debug(E1000, "read RDBAH/RDBAL = 0x%x 0x%x\n"
-	 ,e1k->rx.bah->raw, e1k->rx.bal->raw);
+         ,e1k->rx.bah->raw, e1k->rx.bal->raw);
 
    base.addr = (void*)e1k->mem.rdesc;
    e1k->rx.bah->raw = base.high;
    e1k->rx.bal->raw = base.low;
 
    debug(E1000, "read RDBAH/RDBAL = 0x%x 0x%x\n"
-	 ,e1k->rx.bah->raw, e1k->rx.bal->raw);
+         ,e1k->rx.bah->raw, e1k->rx.bal->raw);
 
    /* len/head/tail pointers */
    debug(E1000, "read RDL/RDH/RDT = 0x%x 0x%x 0x%x\n"
-	 ,e1k->rx.dl->raw, e1k->rx.dh->raw, e1k->rx.dt->raw);
+         ,e1k->rx.dl->raw, e1k->rx.dh->raw, e1k->rx.dt->raw);
 
    e1k->rx.dl->raw  = RX_DESC_NR * sizeof(e1k_rdesc_t);
    e1k->rx.dh->raw  = 0;
@@ -205,7 +205,7 @@ void e1k_rx_init(e1k_info_t *e1k)
    e1k->rx.dt->raw  = e1k->rx.tail.raw;
 
    debug(E1000, "read RDL/RDH/RDT = 0x%x 0x%x 0x%x\n"
-	 ,e1k->rx.dl->raw, e1k->rx.dh->raw, e1k->rx.dt->raw);
+         ,e1k->rx.dl->raw, e1k->rx.dh->raw, e1k->rx.dt->raw);
 
    /* receive control */
    rctl.raw = 0;
@@ -234,23 +234,23 @@ void e1k_tx_init(e1k_info_t *e1k)
    {
       e1k->mem.tdesc[i].addr = e1k->mem.tx_dma.linear + i*TX_BUFF_SZ;
       debug(E1000, "set tdesc%D 0x%X buffer addr = 0x%X\n"
-	    ,i, &e1k->mem.tdesc[i], e1k->mem.tdesc[i].addr);
+            ,i, &e1k->mem.tdesc[i], e1k->mem.tdesc[i].addr);
    }
 
    /* transmit ring buffer */
    debug(E1000, "read TDBAH/TDBAL = 0x%x 0x%x\n"
-	 ,e1k->tx.bah->raw, e1k->tx.bal->raw);
+         ,e1k->tx.bah->raw, e1k->tx.bal->raw);
 
    base.addr = (void*)e1k->mem.tdesc;
    e1k->tx.bah->raw = base.high;
    e1k->tx.bal->raw = base.low;
 
    debug(E1000, "read TDBAH/TDBAL = 0x%x 0x%x\n"
-	 ,e1k->tx.bah->raw, e1k->tx.bal->raw);
+         ,e1k->tx.bah->raw, e1k->tx.bal->raw);
 
    /* len/head/tail pointers */
    debug(E1000, "read TDL/TDH/TDT = 0x%x 0x%x 0x%x\n"
-	 ,e1k->tx.dl->raw, e1k->tx.dh->raw, e1k->tx.dt->raw);
+         ,e1k->tx.dl->raw, e1k->tx.dh->raw, e1k->tx.dt->raw);
 
    e1k->tx.dl->raw = TX_DESC_NR * sizeof(e1k_tdesc_t);
    e1k->tx.dh->raw = 0;
@@ -258,7 +258,7 @@ void e1k_tx_init(e1k_info_t *e1k)
    e1k->tx.dt->raw = e1k->tx.tail.raw;
 
    debug(E1000, "read TDL/TDH/TDT = 0x%x 0x%x 0x%x\n"
-	 ,e1k->tx.dl->raw, e1k->tx.dh->raw, e1k->tx.dt->raw);
+         ,e1k->tx.dl->raw, e1k->tx.dh->raw, e1k->tx.dt->raw);
 
    /* transmit control */
    tctl.raw = 0;
@@ -327,25 +327,25 @@ static void e1k_dbg_rx_status(net_info_t *net)
    icr.raw = e1k->icr->raw;
 
    debug(E1000,
-	 "e1k status:"
-	 " fd %d lu %d fid %d txoff %d speed %d tbi %d"
-	 " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n"
-	 ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode
-	 ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd
+         "e1k status:"
+         " fd %d lu %d fid %d txoff %d speed %d tbi %d"
+         " asdv %d pci66 %d bus64 %d pcix %d  pcispeed %d\n"
+         ,sts.fd,sts.lu,sts.fid,sts.txoff,sts.speed,sts.tbimode
+         ,sts.asdv,sts.pci66,sts.bus64,sts.pcix,sts.pcixspd
       );
 
    debug(E1000,
-	 "e1k icr:"
-	 " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d"
-	 " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d"
-	 " gpi %d:%d txdlow %d srpd %d\n"
-	 ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0
-	 ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint
-	 ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd
+         "e1k icr:"
+         " txdw %d txqe %d lsc %d rxseq %d rxdmt0 %d"
+         " rxo %d rxt0 %d mdac %d rxcfg %d phyint %d"
+         " gpi %d:%d txdlow %d srpd %d\n"
+         ,icr.txdw,icr.txqe,icr.lsc,icr.rxseq,icr.rxdmt0
+         ,icr.rxo,icr.rxt0,icr.mdac,icr.rxcfg,icr.phyint
+         ,icr.gpi_sdp6,icr.gpi_sdp7,icr.txdlow,icr.srpd
       );
 
    debug(E1000, "e1k rx fifo: h 0x%x t 0x%x hs 0x%x ts 0x%x pc 0x%x\n"
-	 ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32);
+         ,*rdfh.u32, *rdft.u32, *rdfhs.u32, *rdfts.u32, *rdfpc.u32);
 }
 
 static void e1k_dbg_pci_status(pci_cfg_val_t *pci)
@@ -353,9 +353,9 @@ static void e1k_dbg_pci_status(pci_cfg_val_t *pci)
    pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
    pci_cfg_read(pci);
    debug(PCI_E1000, "e1k CMD/STS 0x%x 0x%x\n"
-	 ,pci->cs.cmd.raw, pci->cs.sts.raw);
+         ,pci->cs.cmd.raw, pci->cs.sts.raw);
    debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
-	 ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+         ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
 
    if(!pci->cs.cmd.mm || !pci->cs.cmd.bus_master)
    {
@@ -367,15 +367,15 @@ static void e1k_dbg_pci_status(pci_cfg_val_t *pci)
 
       pci_cfg_read(pci);
       debug(PCI_E1000, "e1k CMD/STS 0x%x 0x%x\n"
-	    ,pci->cs.cmd.raw, pci->cs.sts.raw);
+            ,pci->cs.cmd.raw, pci->cs.sts.raw);
       debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
-	    ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+            ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
    }
 
    pci->addr.reg = PCI_CFG_BAR_OFFSET;
    pci_cfg_read(pci);
    debug(PCI_E1000, "e1k pci bar L: io %d type %d raw 0x%x\n"
-	 ,pci->br.io, pci->br.type, pci->br.raw);
+         ,pci->br.io, pci->br.type, pci->br.raw);
 
    if(pci->br.type == PCI_CFG_MEM_BAR_64)
    {
@@ -386,7 +386,7 @@ static void e1k_dbg_pci_status(pci_cfg_val_t *pci)
 }
 
 static void e1k_dbg_tx_pkt(e1k_info_t *e1k,
-			   volatile e1k_tdesc_t *dsc, pci_cfg_val_t *pci)
+                           volatile e1k_tdesc_t *dsc, pci_cfg_val_t *pci)
 {
    e1k_tdesc_sts_t sts;
 
@@ -399,23 +399,23 @@ static void e1k_dbg_tx_pkt(e1k_info_t *e1k,
 
       if(e1k->tx.ctl->raw == -1U)
       {
-	 int i;
+         int i;
 
-	 debug(E1000, "CTL 0x%x TCTL 0x%x\n", e1k->ctl->raw, e1k->tx.ctl->raw);
+         debug(E1000, "CTL 0x%x TCTL 0x%x\n", e1k->ctl->raw, e1k->tx.ctl->raw);
 
-	 pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
-	 pci_cfg_read(pci);
+         pci->addr.reg = PCI_CFG_CMD_STS_OFFSET;
+         pci_cfg_read(pci);
 
-	 debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
-	       ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
+         debug(PCI_E1000, "e1k CMD io %d mm %d dma %d\n"
+               ,pci->cs.cmd.io, pci->cs.cmd.mm, pci->cs.cmd.bus_master);
 
-	 for(i=0 ; i<6 ; i++)
-	 {
-	    pci->addr.reg = PCI_CFG_BAR_OFFSET + i*4;
-	    pci_cfg_read(pci);
-	    debug(E1000, "e1k BAR%d 0x%x)", i, pci->br.raw);
-	 }
-	 panic("corrupted e1k config space !");
+         for(i=0 ; i<6 ; i++)
+         {
+            pci->addr.reg = PCI_CFG_BAR_OFFSET + i*4;
+            pci_cfg_read(pci);
+            debug(E1000, "e1k BAR%d 0x%x)", i, pci->br.raw);
+         }
+         panic("corrupted e1k config space !");
       }
    } while(!sts.dd);
 

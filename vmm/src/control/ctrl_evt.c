@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ int ctrl_evt_excp(uint32_t vector)
 
    if((rc = __ctrl_evt_excp_vmm(vector)) == VM_IGNORE)
       if((rc = __ctrl_evt_excp_dbg(vector)) == VM_IGNORE)
-	 rc = __ctrl_evt_excp_usr(vector);
+         rc = __ctrl_evt_excp_usr(vector);
 
    return rc;
 }
@@ -223,10 +223,10 @@ int ctrl_evt_setup(uint8_t type, ctrl_evt_hdl_t hdl, arg_t arg)
    }
 
    debug(CTRL_EVT
-   	 , "setup ctrl evt %d hdl 0x%X arg 0x%X\n"
-   	 , info->vmm.ctrl.event.type
-   	 , info->vmm.ctrl.event.hdl
-   	 , info->vmm.ctrl.event.arg);
+         , "setup ctrl evt %d hdl 0x%X arg 0x%X\n"
+         , info->vmm.ctrl.event.type
+         , info->vmm.ctrl.event.hdl
+         , info->vmm.ctrl.event.arg);
    return 1;
 }
 

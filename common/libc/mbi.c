@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ static int __mbi_parse_opt(char **pstr, char *wopt, mbi_opt_hdl_t hdl, void *res
       /* if more options terminates value */
       if(*str)
       {
-	 ve = str; vec = *ve;
-	 *str++ = '\x00';
+         ve = str; vec = *ve;
+         *str++ = '\x00';
       }
    }
    else if(*str == ' ')
@@ -89,8 +89,8 @@ void mbi_check_boot_loader(mbi_t *mbi)
    {
       if(*str != 'G' || *(uint32_t*)str != GRUB_STR || str[5] != '0')
       {
-	 str++;
-	 continue;
+         str++;
+         continue;
       }
 
       /* fake flag to mark we detected GRUB legacy (0.9x) */

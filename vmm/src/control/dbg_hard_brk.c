@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -68,16 +68,16 @@ int dbg_hard_brk_set(offset_t addr, uint8_t type, uint8_t len, ctrl_evt_hdl_t hd
    for(n=0 ; n<DBG_HARD_BRK_NR ; n++)
       if(!__hbrk_enabled(n))
       {
-	 __hbrk_setup_bp(n, type, len);
-	 dbg_hard_brk_set_hdlr(n, hdlr);
-	 set_dr(n, addr);
+         __hbrk_setup_bp(n, type, len);
+         dbg_hard_brk_set_hdlr(n, hdlr);
+         set_dr(n, addr);
 
-	 if(type == DR7_COND_X && !dbg_hard_brk_insn_enabled())
-	    dbg_hard_brk_insn_enable();
+         if(type == DR7_COND_X && !dbg_hard_brk_insn_enabled())
+            dbg_hard_brk_insn_enable();
 
-	 dbg_hard_brk_enable();
-	 debug(DBG_HARD_BRK, "set hard bp @ 0x%X\n", get_dr(n));
-	 return VM_DONE;
+         dbg_hard_brk_enable();
+         debug(DBG_HARD_BRK, "set hard bp @ 0x%X\n", get_dr(n));
+         return VM_DONE;
       }
 
    return VM_IGNORE;
@@ -93,20 +93,20 @@ int dbg_hard_brk_del(offset_t addr, uint8_t type, uint8_t len)
    for(n=0 ; n<DBG_HARD_BRK_NR ; n++)
       if(__hbrk_enabled(n))
       {
-	 uint8_t conf = __hbrk_get_config(n);
-	 if(conf == check && addr == get_dr(n))
-	 {
-	    __hbrk_delete_bp(n);
-	    rc = VM_DONE;
-	    debug(DBG_HARD_BRK, "del hard bp @ 0x%X\n", addr);
-	 }
-	 else if(!more_x || !more)
-	 {
-	    if(__hbrk_type_of(conf) == DR7_COND_X)
-	       more_x = 1;
+         uint8_t conf = __hbrk_get_config(n);
+         if(conf == check && addr == get_dr(n))
+         {
+            __hbrk_delete_bp(n);
+            rc = VM_DONE;
+            debug(DBG_HARD_BRK, "del hard bp @ 0x%X\n", addr);
+         }
+         else if(!more_x || !more)
+         {
+            if(__hbrk_type_of(conf) == DR7_COND_X)
+               more_x = 1;
 
-	    more = 1;
-	 }
+            more = 1;
+         }
       }
 
    if(!more_x)
@@ -116,8 +116,8 @@ int dbg_hard_brk_del(offset_t addr, uint8_t type, uint8_t len)
 
       if(!more)
       {
-	 dbg_hard_brk_disable();
-	 debug(DBG_HARD_BRK, "no more hard bp\n");
+         dbg_hard_brk_disable();
+         debug(DBG_HARD_BRK, "no more hard bp\n");
       }
    }
 
@@ -166,16 +166,16 @@ int dbg_hard_brk_event(ctrl_evt_hdl_t *hdlr)
    for(n=0 ; n<DBG_HARD_BRK_NR ; n++)
       if(__hbrk_raised(n) && __hbrk_enabled(n))
       {
-	 dbg_evt_t *evt = &info->vmm.ctrl.dbg.evt;
+         dbg_evt_t *evt = &info->vmm.ctrl.dbg.evt;
 
-	 evt->type = __hbrk_get_type(n);
-	 evt->hard = n;
-	 evt->addr = get_dr(n);
-	 *hdlr     = dbg_hard_brk_get_hdlr(n);
+         evt->type = __hbrk_get_type(n);
+         evt->hard = n;
+         evt->addr = get_dr(n);
+         *hdlr     = dbg_hard_brk_get_hdlr(n);
 
-	 dbg_hard_set_dr6_dirty(1);
-	 debug(DBG_HARD_BRK, "prepared hard brk ctrl event for 0x%X\n", evt->addr);
-	 return VM_DONE;
+         dbg_hard_set_dr6_dirty(1);
+         debug(DBG_HARD_BRK, "prepared hard brk ctrl event for 0x%X\n", evt->addr);
+         return VM_DONE;
       }
 
    return VM_IGNORE;

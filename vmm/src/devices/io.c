@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ extern info_data_t *info;
 static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 {
    int rc = vm_write_mem_sz(io->dst.linear, io->src.u8,
-			    min(sz->miss, sz->available),
-			    &sz->done);
+                            min(sz->miss, sz->available),
+                            &sz->done);
 
    if(rc != VM_DONE)
       debug(DEV_IO_ERR, "io fwd ins: vm_write_mem() fail\n");
@@ -40,8 +40,8 @@ static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 static int __io_insn_string_out_fwd(io_insn_t *io, io_size_t *sz)
 {
    int rc = vm_read_mem_sz(io->src.linear, io->dst.u8,
-			   min(sz->miss, sz->available),
-			   &sz->done);
+                           min(sz->miss, sz->available),
+                           &sz->done);
 
    if(rc != VM_DONE)
       debug(DEV_IO_ERR, "io fwd outs: vm_read_mem() fail\n");
@@ -121,7 +121,7 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    else
    {
       if(io->seg != IO_S_PFX_DS)
-	 debug(DEV_IO_ERR, "segment prefix override (%d)\n",io->seg);
+         debug(DEV_IO_ERR, "segment prefix override (%d)\n",io->seg);
 
       io->dst.addr = device;
       __string_io_linear(io->src.linear, io);
@@ -131,12 +131,12 @@ static int __io_insn_string(io_insn_t *io, void *device, io_size_t *sz)
    if(io->rep)
    {
       info->vm.cpu.gpr->rcx.raw =
-	 (info->vm.cpu.gpr->rcx.raw & ~io->msk) | ((sz->miss/io->sz) & io->msk);
+         (info->vm.cpu.gpr->rcx.raw & ~io->msk) | ((sz->miss/io->sz) & io->msk);
    }
 
    if(sz->miss)
       debug(DEV_IO_ERR, "missing %d bytes, available %d, done %d !\n",
-	    sz->miss, sz->available, sz->done);
+            sz->miss, sz->available, sz->done);
 
    return rc;
 }
@@ -190,7 +190,7 @@ static void __io_pic_detect(io_insn_t *io, uint8_t data)
    if((io->port & 1) == 0)
    {
       if(is_pic_icw1(data))
-	 wait_icw2 = 1;
+         wait_icw2 = 1;
    }
    else if(wait_icw2)
    {
@@ -212,7 +212,7 @@ static int __io_string_native(io_insn_t *io, void *device)
    }
 
    debug(DEV_IO_STR, "native io string: %D bytes (cnt %D, sz %d)\n"
-	 ,io->cnt*io->sz, io->cnt, io->sz);
+         ,io->cnt*io->sz, io->cnt, io->sz);
 
    if(io->in)
       switch(io->sz)
@@ -225,7 +225,7 @@ static int __io_string_native(io_insn_t *io, void *device)
       switch(io->sz)
       {
       case 1: __io_pic_detect(io, data->blow);
-	      rep_outsb(data, io->port, io->cnt); break;
+              rep_outsb(data, io->port, io->cnt); break;
       case 2: rep_outsw(data, io->port, io->cnt); break;
       case 4: rep_outsl(data, io->port, io->cnt); break;
       }
@@ -285,8 +285,8 @@ int dev_io_insn(io_insn_t *io, void *device, io_size_t *sz)
 }
 
 static int __dev_io_proxy_filter_in(io_insn_t    *io,
-				    io_flt_hdl_t filter,  void      *arg,
-				    void         *device, io_size_t *sz)
+                                    io_flt_hdl_t filter,  void      *arg,
+                                    void         *device, io_size_t *sz)
 {
    int rc = dev_io_native(io, device);
 
@@ -302,8 +302,8 @@ static int __dev_io_proxy_filter_in(io_insn_t    *io,
 }
 
 static int __dev_io_proxy_filter_out(io_insn_t    *io,
-				     io_flt_hdl_t filter,  void      *arg,
-				     void         *device, io_size_t *sz)
+                                     io_flt_hdl_t filter,  void      *arg,
+                                     void         *device, io_size_t *sz)
 {
    int rc; /* needed if no filter */
 
@@ -315,7 +315,7 @@ static int __dev_io_proxy_filter_out(io_insn_t    *io,
    {
       rc = filter(device, arg);
       if(rc & (VM_FAIL|VM_FAULT))
-	 return rc;
+         return rc;
    }
 
    debug(DEV_IO, "proxy io out 0x%x = 0x%x\n", io->port, *(uint8_t*)device);
@@ -337,7 +337,7 @@ int dev_io_proxify_filter(io_insn_t *io, io_flt_hdl_t filter, void *arg)
    if(sz.available > VMM_IO_POOL_SZ)
    {
       debug(DEV_IO_ERR, "vmm io pool sz too small %D < %D\n"
-	    ,VMM_IO_POOL_SZ, sz.available);
+            ,VMM_IO_POOL_SZ, sz.available);
       return VM_FAIL;
    }
 

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -133,16 +133,16 @@ static void vmx_ept_map_mtrr_variable()
 
       if(m_mask.v)
       {
-	 offset_t base = m_base.base<<12;
-	 offset_t mask = m_mask.mask<<12;
-	 size_t   len  = info->vm.cpu.max_paddr - mask + 1;
-	 uint64_t attr = ept_has_mtrr|(m_base.type<<3)|ept_dft_pvl;
+         offset_t base = m_base.base<<12;
+         offset_t mask = m_mask.mask<<12;
+         size_t   len  = info->vm.cpu.max_paddr - mask + 1;
+         uint64_t attr = ept_has_mtrr|(m_base.type<<3)|ept_dft_pvl;
 
-	 debug(VMX_EPT
-	       ,"mtrr #%d base 0x%X mask 0x%X type %d [0x%X - 0x%X] (len 0x%X)\n"
-	       , i, base, mask, m_base.type, base, base+len, len);
+         debug(VMX_EPT
+               ,"mtrr #%d base 0x%X mask 0x%X type %d [0x%X - 0x%X] (len 0x%X)\n"
+               , i, base, mask, m_base.type, base, base+len, len);
 
-	 vmx_ept_map_mtrr(base, len, attr);
+         vmx_ept_map_mtrr(base, len, attr);
       }
    }
 }

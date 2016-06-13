@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,25 +37,25 @@ entry:
 ** VM-entry
 */
 svm_vmrun:
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%r11
-	pop	%r10
-	pop	%r9
-	pop	%r8
-	pop	%rdi
-	pop	%rsi
-	pop	%rbp
-	add	$8, %rsp  /* XXX: pop %rsp */
- 	pop	%rbx
- 	pop	%rdx
- 	pop	%rcx
- 	pop	%rax
-	vmload  %rax
-	sti
-	vmrun	%rax
+        pop     %r15
+        pop     %r14
+        pop     %r13
+        pop     %r12
+        pop     %r11
+        pop     %r10
+        pop     %r9
+        pop     %r8
+        pop     %rdi
+        pop     %rsi
+        pop     %rbp
+        add     $8, %rsp  /* XXX: pop %rsp */
+        pop     %rbx
+        pop     %rdx
+        pop     %rcx
+        pop     %rax
+        vmload  %rax
+        sti
+        vmrun   %rax
 
 /*
 ** VM-exit
@@ -66,30 +66,30 @@ svm_vmrun:
 **      before calling svm_vmexit_handler()
 */
 svm_vmexit:
-	cli
- 	push	%rax
- 	push	%rcx
- 	push	%rdx
- 	push	%rbx
-	sub	$8, %rsp  /* XXX: push %rsp */
-	push	%rbp
-	push	%rsi
-	push	%rdi
-	push	%r8
-	push	%r9
-	push	%r10
-	push	%r11
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
+        cli
+        push    %rax
+        push    %rcx
+        push    %rdx
+        push    %rbx
+        sub     $8, %rsp  /* XXX: push %rsp */
+        push    %rbp
+        push    %rsi
+        push    %rdi
+        push    %r8
+        push    %r9
+        push    %r10
+        push    %r11
+        push    %r12
+        push    %r13
+        push    %r14
+        push    %r15
 
-	lfence
-	rdtsc
-	mov	%edx, %edi
-	shl	$32, %rdi
-	or	%rax, %rdi
+        lfence
+        rdtsc
+        mov     %edx, %edi
+        shl     $32, %rdi
+        or      %rax, %rdi
 
-	xor	%rbp, %rbp
-	call	svm_vmexit_handler
-	jmp	svm_vmrun
+        xor     %rbp, %rbp
+        call    svm_vmexit_handler
+        jmp     svm_vmrun

@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -182,12 +182,12 @@ int __svm_vmexit_idt_deliver_rmode()
    /* { */
    /*    if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT) */
    /*    { */
-   /* 	 debug(SVM_IDT, */
-   /* 		"idt deliver IRQ (rmode): 0x%x\n", */
-   /* 		vm_ctrls.exit_int_info.vector */
-   /* 	   ); */
-   /* 	 irq_set_pending(vm_ctrls.exit_int_info.vector - VMM_IDT_IRQ_MIN); */
-   /* 	 return resolve_hard_interrupt(); */
+   /*    debug(SVM_IDT, */
+   /*           "idt deliver IRQ (rmode): 0x%x\n", */
+   /*           vm_ctrls.exit_int_info.vector */
+   /*      ); */
+   /*    irq_set_pending(vm_ctrls.exit_int_info.vector - VMM_IDT_IRQ_MIN); */
+   /*    return resolve_hard_interrupt(); */
    /*    } */
    /* } */
 
@@ -205,9 +205,9 @@ int __svm_vmexit_idt_deliver_pmode()
    if(!vm_ctrls.event_injection.v)
    {
       debug(SVM_IDT, "idt[0x%x:%d] eax 0x%x\n"
-	    ,vm_ctrls.exit_int_info.vector
-	    ,vm_ctrls.exit_int_info.type
-	    ,info->vm.cpu.gpr->rax.low);
+            ,vm_ctrls.exit_int_info.vector
+            ,vm_ctrls.exit_int_info.type
+            ,info->vm.cpu.gpr->rax.low);
 
       /*
       ** XXX: next_rip not supported, emulate it
@@ -215,32 +215,32 @@ int __svm_vmexit_idt_deliver_pmode()
       ** int1, int3, into are exceptions
       */
       if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_SOFT)
-	 vm_update_rip(2);
+         vm_update_rip(2);
 
       vm_ctrls.event_injection.raw = vm_ctrls.exit_int_info.raw;
 
       if(vm_ctrls.exit_int_info.type == VMCB_IDT_DELIVERY_TYPE_EXT &&
-	 vm_ctrls.int_shadow.raw)
+         vm_ctrls.int_shadow.raw)
       {
-	 debug(SVM_IDT, "interrupt shadow so inject virq\n");
-	 vm_ctrls.int_ctrl.raw = 0;
-	 vm_ctrls.int_ctrl.v_intr_vector = vm_ctrls.exit_int_info.vector;
+         debug(SVM_IDT, "interrupt shadow so inject virq\n");
+         vm_ctrls.int_ctrl.raw = 0;
+         vm_ctrls.int_ctrl.v_intr_vector = vm_ctrls.exit_int_info.vector;
 
-	 /* if(vm_ctrls.exit_int_info.vector < 16) */
-	 /*    vm_ctrls.int_ctrl.v_intr_prio = 15; */
-	 /* else */
-	 /*    vm_ctrls.int_ctrl.v_intr_prio = vm_ctrls.exit_int_info.vector/16; */
-	 debug_warning();
+         /* if(vm_ctrls.exit_int_info.vector < 16) */
+         /*    vm_ctrls.int_ctrl.v_intr_prio = 15; */
+         /* else */
+         /*    vm_ctrls.int_ctrl.v_intr_prio = vm_ctrls.exit_int_info.vector/16; */
+         debug_warning();
 
-	 vm_ctrls.event_injection.v = 0;
-	 vm_ctrls.int_ctrl.v_irq = 1;
+         vm_ctrls.event_injection.v = 0;
+         vm_ctrls.int_ctrl.v_irq = 1;
       }
 
       return VM_DONE;
    }
 
    debug(SVM_IDT, "already injecting: %d (%d)\n"
-	 ,vm_ctrls.event_injection.vector, vm_ctrls.event_injection.type);
+         ,vm_ctrls.event_injection.vector, vm_ctrls.event_injection.type);
 
    /*
    ** cpu was delivering
@@ -255,28 +255,28 @@ int __svm_vmexit_idt_deliver_pmode()
 
    /*    if(triple_fault(e1)) */
    /*    { */
-   /* 	 debug(SVM_IDT, "triple-fault\n"); */
-   /* 	 return VM_FAIL; */
+   /*    debug(SVM_IDT, "triple-fault\n"); */
+   /*    return VM_FAIL; */
    /*    } */
 
    /*    if(double_fault(e1, e2)) */
    /*    { */
-   /* 	 debug(SVM_IDT, "double-fault: %d raised while %d\n", e2, e1); */
-   /* 	 return __svm_vmexit_inject_exception(DF_EXCP, 0, 0); */
+   /*    debug(SVM_IDT, "double-fault: %d raised while %d\n", e2, e1); */
+   /*    return __svm_vmexit_inject_exception(DF_EXCP, 0, 0); */
    /*    } */
 
    /*    /\* handled serially *\/ */
    /*    debug(SVM_IDT, "handle serially: deliver(%d:%d)/inject(%d:%d)\n" */
-   /* 	     , vm_ctrls.exit_int_info.type, vm_ctrls.exit_int_info.vector */
-   /* 	     , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
-   /* 	); */
+   /*        , vm_ctrls.exit_int_info.type, vm_ctrls.exit_int_info.vector */
+   /*        , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
+   /*   ); */
 
    /*    return VM_DONE; */
    /* } */
 
    /* debug(SVM_IDT, "un-implemented scenario: delivering(%d:%d)/injecting(%d:%d)\n" */
-   /* 	  , vm_ctrls.exit_int_info.type, vm_ctrls.exit_int_info.vector */
-   /* 	  , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
+   /*     , vm_ctrls.exit_int_info.type, vm_ctrls.exit_int_info.vector */
+   /*     , vm_ctrls.event_injection.type, vm_ctrls.event_injection.vector */
    /*   ); */
 
    debug(SVM_IDT, "idt deliver PM: unhandled scenario\n");
@@ -284,61 +284,61 @@ int __svm_vmexit_idt_deliver_pmode()
 }
 
 /* { */
-/* 	 int_desc_t *idt; */
-/* 	 seg_desc_t *gdt; */
-/* 	 tss_t      *tss; */
-/* 	 offset_t   vaddr, paddr; */
-/* 	 size_t     psz; */
-/* 	 static int x=0; */
+/*       int_desc_t *idt; */
+/*       seg_desc_t *gdt; */
+/*       tss_t      *tss; */
+/*       offset_t   vaddr, paddr; */
+/*       size_t     psz; */
+/*       static int x=0; */
 
-/* 	 if(x==0) */
-/* 	 { */
-/* 	    vaddr = __idtr.base.raw; */
-/* 	    debug(SVM_IDT, "idt base -> 0x%X\n", vaddr); */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
-/* 	    idt = (int_desc_t*)paddr; */
+/*       if(x==0) */
+/*       { */
+/*          vaddr = __idtr.base.raw; */
+/*          debug(SVM_IDT, "idt base -> 0x%X\n", vaddr); */
+/*          pg_walk(vaddr, &paddr, &psz); */
+/*          idt = (int_desc_t*)paddr; */
 
-/* 	    vaddr = */
-/* 	       ((idt[vm_ctrls.exit_int_info.vector].offset_2<<16) | */
-/* 		idt[vm_ctrls.exit_int_info.vector].offset_1) & 0xffffffff; */
-/* 	    debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
-/* 		  ,vm_ctrls.exit_int_info.vector, vaddr); */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
+/*          vaddr = */
+/*             ((idt[vm_ctrls.exit_int_info.vector].offset_2<<16) | */
+/*              idt[vm_ctrls.exit_int_info.vector].offset_1) & 0xffffffff; */
+/*          debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
+/*                ,vm_ctrls.exit_int_info.vector, vaddr); */
+/*          pg_walk(vaddr, &paddr, &psz); */
 
-/* 	    vaddr = */
-/* 	       ((idt[NP_EXCP].offset_2<<16) | */
-/* 		idt[NP_EXCP].offset_1) & 0xffffffff; */
-/* 	    debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
-/* 		  ,NP_EXCP, vaddr); */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
+/*          vaddr = */
+/*             ((idt[NP_EXCP].offset_2<<16) | */
+/*              idt[NP_EXCP].offset_1) & 0xffffffff; */
+/*          debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
+/*                ,NP_EXCP, vaddr); */
+/*          pg_walk(vaddr, &paddr, &psz); */
 
-/* 	    vaddr = */
-/* 	       ((idt[GP_EXCP].offset_2<<16) | */
-/* 		idt[GP_EXCP].offset_1) & 0xffffffff; */
-/* 	    debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
-/* 		  ,GP_EXCP, vaddr); */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
+/*          vaddr = */
+/*             ((idt[GP_EXCP].offset_2<<16) | */
+/*              idt[GP_EXCP].offset_1) & 0xffffffff; */
+/*          debug(SVM_IDT, "idt vector[0x%x] -> 0x%X\n" */
+/*                ,GP_EXCP, vaddr); */
+/*          pg_walk(vaddr, &paddr, &psz); */
 
-/* 	    vaddr = __gdtr.base.raw; */
-/* 	    debug(SVM_IDT, "gdt base -> 0x%X\n", vaddr); */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
+/*          vaddr = __gdtr.base.raw; */
+/*          debug(SVM_IDT, "gdt base -> 0x%X\n", vaddr); */
+/*          pg_walk(vaddr, &paddr, &psz); */
 
-/* 	    gdt = (seg_desc_t*)paddr; */
-/* 	    debug(SVM_IDT, "gdt[0x%x] = 0x%X (p %d)\n" */
-/* 		  , (idt[vm_ctrls.exit_int_info.vector].selector)>>3 */
-/* 		  , gdt[(idt[vm_ctrls.exit_int_info.vector].selector)>>3].raw */
-/* 		  , gdt[(idt[vm_ctrls.exit_int_info.vector].selector)>>3].p); */
+/*          gdt = (seg_desc_t*)paddr; */
+/*          debug(SVM_IDT, "gdt[0x%x] = 0x%X (p %d)\n" */
+/*                , (idt[vm_ctrls.exit_int_info.vector].selector)>>3 */
+/*                , gdt[(idt[vm_ctrls.exit_int_info.vector].selector)>>3].raw */
+/*                , gdt[(idt[vm_ctrls.exit_int_info.vector].selector)>>3].p); */
 
-/* 	    vaddr = __tr.base.raw; */
-/* 	    debug(SVM_IDT, "tr base -> 0x%X\n", vaddr); */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
+/*          vaddr = __tr.base.raw; */
+/*          debug(SVM_IDT, "tr base -> 0x%X\n", vaddr); */
+/*          pg_walk(vaddr, &paddr, &psz); */
 
-/* 	    tss = (tss_t*)paddr; */
-/* 	    debug(SVM_IDT, "tss.esp0 -> 0x%X\n", tss->s0.esp & 0xffffffff); */
+/*          tss = (tss_t*)paddr; */
+/*          debug(SVM_IDT, "tss.esp0 -> 0x%X\n", tss->s0.esp & 0xffffffff); */
 
-/* 	    vaddr = tss->s0.esp & 0xffffffff; */
-/* 	    pg_walk(vaddr, &paddr, &psz); */
+/*          vaddr = tss->s0.esp & 0xffffffff; */
+/*          pg_walk(vaddr, &paddr, &psz); */
 
-/* 	    x++; */
-/* 	 } */
+/*          x++; */
+/*       } */
 /* } */

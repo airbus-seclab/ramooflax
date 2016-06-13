@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -58,10 +58,10 @@ void ip_str(ip_addr_t ip, char *str)
    raw32_t i = { .raw = ip };
 
    snprintf(str, IP_STR_SZ, "%d.%d.%d.%d"
-	    ,i._whigh.bhigh
-	    ,i._whigh.blow
-	    ,i._wlow.bhigh
-	    ,i._wlow.blow);
+            ,i._whigh.bhigh
+            ,i._whigh.blow
+            ,i._wlow.bhigh
+            ,i._wlow.blow);
 }
 
 int ip_from_str(char *str, ip_addr_t *ip)
@@ -78,7 +78,7 @@ int ip_from_str(char *str, ip_addr_t *ip)
       while(i < max && str[i] != '.') i++;
 
       if(i == max || !dec_to_uint64((uint8_t*)&str[n], i - n, &x) || x > 255)
-	 return 0;
+         return 0;
 
       *ip |= x<<(m--*8);
       n = ++i;
@@ -92,8 +92,8 @@ int ip_from_str(char *str, ip_addr_t *ip)
 }
 
 static size_t __ip_gen(ip_hdr_t *hdr,
-		       ip_addr_t src, ip_addr_t dst,
-		       uint8_t proto, size_t dlen)
+                       ip_addr_t src, ip_addr_t dst,
+                       uint8_t proto, size_t dlen)
 {
    size_t len = sizeof(ip_hdr_t) + dlen;
 
@@ -190,8 +190,8 @@ int ip_dissect(loc_t pkt, size_t len, buffer_t *rcv)
       ip_str(hdr->src, ips);
       ip_str(hdr->dst, ipd);
       debug(IP, "rcv IP %s src %s dst %s len %d id %d off %d mf %d df %d\n"
-	    ,__ip_proto_str(hdr->proto), ips, ipd, hdr->len
-	    ,hdr->id, hdr->frag.off, hdr->frag.mf, hdr->frag.df);
+            ,__ip_proto_str(hdr->proto), ips, ipd, hdr->len
+            ,hdr->id, hdr->frag.off, hdr->frag.mf, hdr->frag.df);
    }
 #endif
 

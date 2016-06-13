@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -142,13 +142,13 @@ static void gdb_cmd_rd_mem(uint8_t *data, size_t len)
 
       if(gdb_vmem_read(addr, store, need) != VM_DONE)
       {
-	 debug(GDBSTUB_CMD, "access failure\n");
-	 gdb_err_mem();
-	 return;
+         debug(GDBSTUB_CMD, "access failure\n");
+         gdb_err_mem();
+         return;
       }
 
       for(i=0 ; i<need ; i++)
-	 gdb_add_byte(store[i]);
+         gdb_add_byte(store[i]);
 
       addr += need;
       size -= need;
@@ -182,18 +182,18 @@ static void gdb_cmd_wr_mem(uint8_t *data, size_t len)
 
       for(i=0 ; i<can ; i++, bytes.u16++)
       {
-	 if(!__hex_to_uint8(bytes.u8, &store[i]))
-	 {
-	    debug(GDBSTUB_CMD, "gdb cmd_wr_mem invalid byte\n");
-	    gdb_unsupported();
-	 }
+         if(!__hex_to_uint8(bytes.u8, &store[i]))
+         {
+            debug(GDBSTUB_CMD, "gdb cmd_wr_mem invalid byte\n");
+            gdb_unsupported();
+         }
       }
 
       if(gdb_vmem_write(addr, store, can) != VM_DONE)
       {
-	 debug(GDBSTUB_CMD, "access failure\n");
-	 gdb_err_mem();
-	 return;
+         debug(GDBSTUB_CMD, "access failure\n");
+         gdb_err_mem();
+         return;
       }
 
       addr += can;

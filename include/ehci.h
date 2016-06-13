@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@
 
 #define ehci_pid_swap(_p_)      ((_p_) ^= 0x88)
 
-#define ehci_pid_valid(_p_)						\
-   ((_p_) == EHCI_STATUS_PID_ACK || (_p_) == EHCI_STATUS_PID_NYET ||	\
+#define ehci_pid_valid(_p_)                                             \
+   ((_p_) == EHCI_STATUS_PID_ACK || (_p_) == EHCI_STATUS_PID_NYET ||    \
     (_p_) == EHCI_DATA_PID_0     || (_p_) == EHCI_DATA_PID_1)
 
 /*

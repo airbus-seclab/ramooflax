@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -71,19 +71,19 @@ static void vmm_pagemem_init()
 
       for(j=0 ; j<pdpe_max ; j++)
       {
-	 if(info->vmm.cpu.skillz.pg_1G)
-	    pg_set_large_entry(&pdp[j], PG_KRN|PG_RW, pfn++);
-	 else
-	 {
-	    pd = info->vmm.cpu.pg.pd[j];
-	    pg_set_entry(&pdp[j], PG_KRN|PG_RW, page_nr(pd));
+         if(info->vmm.cpu.skillz.pg_1G)
+            pg_set_large_entry(&pdp[j], PG_KRN|PG_RW, pfn++);
+         else
+         {
+            pd = info->vmm.cpu.pg.pd[j];
+            pg_set_entry(&pdp[j], PG_KRN|PG_RW, page_nr(pd));
 
-	    pde_max = min(pt_nr, PDE64_PER_PD);
-	    pt_nr -= pde_max;
+            pde_max = min(pt_nr, PDE64_PER_PD);
+            pt_nr -= pde_max;
 
-	    for(k=0 ; k<pde_max ; k++)
-	       pg_set_large_entry(&pd[k], PG_KRN|PG_RW, pfn++);
-	 }
+            for(k=0 ; k<pde_max ; k++)
+               pg_set_large_entry(&pd[k], PG_KRN|PG_RW, pfn++);
+         }
       }
    }
 

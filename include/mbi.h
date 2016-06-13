@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -35,8 +35,8 @@ typedef multiboot_memory_map_t  memory_map_t;
 #define MBI_FLAG_MODS           MULTIBOOT_INFO_MODS
 #define MBI_FLAG_MMAP           MULTIBOOT_INFO_MEM_MAP
 
-#define MBH_MAGIC		MULTIBOOT_HEADER_MAGIC
-#define MBH_FLAGS		(MBI_FLAG_MEM|MBI_FLAG_BDEV)
+#define MBH_MAGIC               MULTIBOOT_HEADER_MAGIC
+#define MBH_FLAGS               (MBI_FLAG_MEM|MBI_FLAG_BDEV)
 
 #define __mbh__                 __attribute__ ((section(".mbh"),aligned(4)))
 

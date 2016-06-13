@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -119,10 +119,10 @@
 #define npg_pd64_t                     pd64_t
 #define npg_pt64_t                     pt64_t
 
-#define svm_reset_tlb_control()					\
-   ({								\
-      if(__ctrls.tlb_ctrl.tlb_control != VMCB_TLB_CTL_NONE)	\
-	 __ctrls.tlb_ctrl.tlb_control = VMCB_TLB_CTL_NONE;	\
+#define svm_reset_tlb_control()                                 \
+   ({                                                           \
+      if(__ctrls.tlb_ctrl.tlb_control != VMCB_TLB_CTL_NONE)     \
+         __ctrls.tlb_ctrl.tlb_control = VMCB_TLB_CTL_NONE;      \
    })
 
 #define npg_invlpg(_va)         invlpga((offset_t)_va)
@@ -130,18 +130,18 @@
 #define __flush_tlb()           __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb)
 #define __flush_tlb_glb()       __flush_asid_tlbs(info->vm.cpu.skillz.flush_tlb_glb)
 
-#define __update_npg_cache(gcr3)	\
-   ({					\
-      npg_cr3.pml4.pwt = (gcr3)->pwt;	\
-      npg_cr3.pml4.pcd = (gcr3)->pcd;	\
+#define __update_npg_cache(gcr3)        \
+   ({                                   \
+      npg_cr3.pml4.pwt = (gcr3)->pwt;   \
+      npg_cr3.pml4.pcd = (gcr3)->pcd;   \
    })
 
 #define npg_cr3                        __ctrls.ncr3
 #define npg_cr3_set(_addr)              (npg_cr3.addr = page_nr((_addr)))
 
 /* XXX: check bits violation (cf. 15.25.10) */
-#define __update_npg_pdpe()		({1;})
-#define npg_get_asid()	                (__ctrls.tlb_ctrl.guest_asid)
+#define __update_npg_pdpe()             ({1;})
+#define npg_get_asid()                  (__ctrls.tlb_ctrl.guest_asid)
 #define npg_set_asid(_x)                ({__ctrls.tlb_ctrl.guest_asid = (_x);})
 
 #define npg_err_t                       vmcb_exit_info_npf_t
@@ -157,23 +157,23 @@
 /*
 ** CR0 cache
 */
-#define __cr0_cache_update(_gst)	\
-   ({					\
-      cr0_reg_t cr0;			\
-      cr0.raw = get_cr0();		\
-      cr0.cd = (_gst)->cd;		\
-      cr0.nw = (_gst)->nw;		\
-      set_cr0(cr0.raw);			\
+#define __cr0_cache_update(_gst)        \
+   ({                                   \
+      cr0_reg_t cr0;                    \
+      cr0.raw = get_cr0();              \
+      cr0.cd = (_gst)->cd;              \
+      cr0.nw = (_gst)->nw;              \
+      set_cr0(cr0.raw);                 \
    })
 
-#define __cr0_update(_gst)	\
-   ({				\
-      __cr0.low = (_gst)->low;	\
+#define __cr0_update(_gst)      \
+   ({                           \
+      __cr0.low = (_gst)->low;  \
    })
 
-#define __cr4_update(_gst)	\
-   ({				\
-      __cr4.low = (_gst)->low;	\
+#define __cr4_update(_gst)      \
+   ({                           \
+      __cr4.low = (_gst)->low;  \
    })
 
 /*
@@ -183,36 +183,36 @@
 #define __cr_rd_bitmap          (__ctrls.cr_read_bitmap)
 #define __cr_wr_bitmap          (__ctrls.cr_write_bitmap)
 
-#define __update_exception_mask()	\
-   ({					\
-      __exception_bitmap.raw =		\
-	 info->vm.cpu.dflt_excp  |	\
-	 info->vmm.ctrl.usr.excp |	\
-	 info->vmm.ctrl.dbg.excp;	\
+#define __update_exception_mask()       \
+   ({                                   \
+      __exception_bitmap.raw =          \
+         info->vm.cpu.dflt_excp  |      \
+         info->vmm.ctrl.usr.excp |      \
+         info->vmm.ctrl.dbg.excp;       \
    })
 
-#define __update_cr_read_mask()				\
+#define __update_cr_read_mask()                         \
    ({ __cr_rd_bitmap = VMCB_CR_R_BITMAP | info->vmm.ctrl.usr.cr_rd; })
 
-#define __update_cr_write_mask()			\
+#define __update_cr_write_mask()                        \
    ({ __cr_wr_bitmap = VMCB_CR_W_BITMAP | info->vmm.ctrl.usr.cr_wr; })
 
-#define __allow_dr_access()		\
-   ({					\
-      __ctrls.dr_read_bitmap = 0;	\
-      __ctrls.dr_write_bitmap = 0;	\
+#define __allow_dr_access()             \
+   ({                                   \
+      __ctrls.dr_read_bitmap = 0;       \
+      __ctrls.dr_write_bitmap = 0;      \
    })
 
-#define __deny_dr_access()		\
-   ({					\
-      __ctrls.dr_read_bitmap = -1;	\
-      __ctrls.dr_write_bitmap = -1;	\
+#define __deny_dr_access()              \
+   ({                                   \
+      __ctrls.dr_read_bitmap = -1;      \
+      __ctrls.dr_write_bitmap = -1;     \
    })
 
 /*
 ** Instructions
 */
-#define __vmexit_on_insn()						\
+#define __vmexit_on_insn()                                              \
    (__svm_vmexit_on_insn() || info->vm.cpu.emu_sts == EMU_STS_DONE)
 
 /* XXX
@@ -220,11 +220,11 @@
 ** instead of directly giving size (ie. invd=2, int1=1...)
 ** we should refer to our disasm engine
 */
-#define __insn_sz()	         ({ 0; })
+#define __insn_sz()              ({ 0; })
 
-#define __allow_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 0; })
-#define __deny_pushf()	         ({ __ctrls.sys_insn_bitmap.pushf = 1; })
-#define __allow_popf()	         ({ __ctrls.sys_insn_bitmap.popf  = 0; })
+#define __allow_pushf()          ({ __ctrls.sys_insn_bitmap.pushf = 0; })
+#define __deny_pushf()           ({ __ctrls.sys_insn_bitmap.pushf = 1; })
+#define __allow_popf()           ({ __ctrls.sys_insn_bitmap.popf  = 0; })
 #define __deny_popf()            ({ __ctrls.sys_insn_bitmap.popf  = 1; })
 #define __allow_iret()           ({ __ctrls.sys_insn_bitmap.iret  = 0; })
 #define __deny_iret()            ({ __ctrls.sys_insn_bitmap.iret  = 1; })
@@ -266,15 +266,15 @@
 #define __injected_event_type      __ctrls.event_injection.type
 #define __injected_event()         __ctrls.event_injection.raw
 
-#define __svm_prepare_event_injection(_ev, _type, _vector)		\
-   ({									\
-      _ev.raw    = 0ULL;						\
-      _ev.vector = _vector;						\
-      _ev.type   = _type;						\
-      _ev.v      = 1;							\
+#define __svm_prepare_event_injection(_ev, _type, _vector)              \
+   ({                                                                   \
+      _ev.raw    = 0ULL;                                                \
+      _ev.vector = _vector;                                             \
+      _ev.type   = _type;                                               \
+      _ev.v      = 1;                                                   \
    })
 
-#define __setup_iwe(_on_,_nr_)					\
+#define __setup_iwe(_on_,_nr_)                                  \
    __svm_vmexit_setup_interrupt_window_exiting(_on_,_nr_)
 
 #define __inject_intn(n)            __svm_vmexit_inject_intn(n)
@@ -304,16 +304,16 @@
 /*
 ** XXX: check segment validity
 */
-#define __string_io_linear(_tgt,_iO)					\
-   ({									\
-      _tgt = (&__state.es + vm_ctrls.exit_info_1.io.seg)->base.raw;	\
-      if(_iO->in)							\
-	 _tgt += (info->vm.cpu.gpr->rdi.raw & _iO->msk);		\
-      else								\
-	 _tgt += (info->vm.cpu.gpr->rsi.raw & _iO->msk);		\
+#define __string_io_linear(_tgt,_iO)                                    \
+   ({                                                                   \
+      _tgt = (&__state.es + vm_ctrls.exit_info_1.io.seg)->base.raw;     \
+      if(_iO->in)                                                       \
+         _tgt += (info->vm.cpu.gpr->rdi.raw & _iO->msk);                \
+      else                                                              \
+         _tgt += (info->vm.cpu.gpr->rsi.raw & _iO->msk);                \
    })
 
-#define __efer_update(pg)		  ({})
+#define __efer_update(pg)                 ({})
 
 /*
 ** Last Branch Record
@@ -327,7 +327,7 @@
 
 /* XXX: what if IDT handler is not related to CS segment */
 #define __lbr_from_excp()         (__cs.base.raw+__state.lbr_from_excp.raw)
-#define __lbr_to_excp()	          (__cs.base.raw+__state.lbr_to_excp.raw)
+#define __lbr_to_excp()           (__cs.base.raw+__state.lbr_to_excp.raw)
 
 /*
 ** Functions

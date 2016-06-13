@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2015 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -156,10 +156,10 @@ static void gdb_vmm_wr_sysreg(uint8_t *data, size_t len)
       __resolve_cr0_wr((cr0_reg_t*)&value) == VM_FAIL)
       goto __err;
    else if(reg == (raw64_t*)&__cr3 &&
-	   __resolve_cr3_wr((cr3_reg_t*)&value) == VM_FAIL)
+           __resolve_cr3_wr((cr3_reg_t*)&value) == VM_FAIL)
       goto __err;
    else if(reg == (raw64_t*)&__cr4 &&
-	   __resolve_cr4_wr((cr4_reg_t*)&value) == VM_FAIL)
+           __resolve_cr4_wr((cr4_reg_t*)&value) == VM_FAIL)
       goto __err;
    else
       reg->raw = value.raw;
@@ -287,13 +287,13 @@ static int __gdb_vmm_parse_args(uint8_t *data, size_t len, uint64_t *args, size_
 
    for(i=0 ; i<n ; i++, data += sz)
       if(!gdb_get_number(data, sz, &args[i], 0))
-	 return 0;
+         return 0;
 
    return 1;
 }
 
 static int __gdb_vmm_mem_rw_parse(uint8_t *data, size_t len,
-				  loc_t *addr, size_t *sz)
+                                  loc_t *addr, size_t *sz)
 {
    uint64_t args[2];
 

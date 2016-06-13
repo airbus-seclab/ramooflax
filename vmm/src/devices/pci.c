@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2014 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ static int __dev_pci_addr_filter(void *data, void __unused__ *arg)
    addr->raw = ((pci_cfg_addr_t*)data)->raw;
 
    /* debug(DEV_PCI, "pci io addr filter: b%d f%d d%d r%d\n" */
-   /* 	 ,addr->bus, addr->fnc, addr->dev, addr->reg); */
+   /*    ,addr->bus, addr->fnc, addr->dev, addr->reg); */
 
    if(addr->bus != net->bus || addr->fnc != net->fnc || addr->dev != net->dev)
       goto __release_data;

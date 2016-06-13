@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,27 +26,27 @@
 /*
 ** Information data header
 */
-#define __info_data_hdr__			\
+#define __info_data_hdr__                       \
    __attribute__ ((section(".info_hdr")))
 
-#define mapped_area(_addr)			\
+#define mapped_area(_addr)                      \
    ((offset_t)(_addr) < info->hrd.mem.top)
 
-#define vmm_area(_addr)						\
+#define vmm_area(_addr)                                         \
    mem_range((offset_t)(_addr),info->area.start,info->area.end)
 
-#define vmm_area_range(_addr, _sz)				\
-   ({								\
-      int rc = 1;						\
-      if((size_t)_sz < 2)					\
-	 rc = vmm_area(_addr)?1:0;				\
-      else							\
-      {								\
-	 offset_t last = (offset_t)_addr + (size_t)_sz - 1;	\
-	 if((offset_t)_addr < last)				\
-	    rc = (vmm_area(_addr) && vmm_area(last))?1:0;	\
-      }								\
-      rc;							\
+#define vmm_area_range(_addr, _sz)                              \
+   ({                                                           \
+      int rc = 1;                                               \
+      if((size_t)_sz < 2)                                       \
+         rc = vmm_area(_addr)?1:0;                              \
+      else                                                      \
+      {                                                         \
+         offset_t last = (offset_t)_addr + (size_t)_sz - 1;     \
+         if((offset_t)_addr < last)                             \
+            rc = (vmm_area(_addr) && vmm_area(last))?1:0;       \
+      }                                                         \
+      rc;                                                       \
    })
 
 /*

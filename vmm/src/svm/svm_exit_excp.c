@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,8 +40,8 @@ void __svm_clear_event_injection()
 int __svm_vmexit_inject_exception(uint32_t vector, uint32_t error, uint64_t cr2)
 {
    __svm_prepare_event_injection(vm_ctrls.event_injection,
-				 VMCB_IDT_DELIVERY_TYPE_EXCP,
-				 vector);
+                                 VMCB_IDT_DELIVERY_TYPE_EXCP,
+                                 vector);
    switch(vector)
    {
    case PF_EXCP:

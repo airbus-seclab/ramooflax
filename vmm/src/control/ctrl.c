@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ extern info_data_t *info;
 static void ctrl_traps_enable()
 {
    debug(CTRL, "ctrl traps enable (%d|%d)\n"
-	 ,ctrl_traps_enabled(), ctrl_traps_updated());
+         ,ctrl_traps_enabled(), ctrl_traps_updated());
 
    if(dbg_hard_stp_enabled())
       dbg_hard_stp_setup_context();
@@ -45,7 +45,7 @@ static void ctrl_traps_enable()
 static void ctrl_traps_disable()
 {
    debug(CTRL, "ctrl traps disable (%d|%d)\n"
-	 ,ctrl_traps_enabled(), ctrl_traps_updated());
+         ,ctrl_traps_enabled(), ctrl_traps_updated());
 
    if(dbg_hard_stp_enabled())
       dbg_hard_stp_restore_context();
@@ -71,7 +71,7 @@ static void ctrl_traps()
    if(__ctrl_active_cr3_check(0))
    {
       if(!ctrl_traps_enabled() || ctrl_traps_updated())
-	 ctrl_traps_enable();
+         ctrl_traps_enable();
    }
    else if(ctrl_traps_enabled() || ctrl_traps_updated())
       ctrl_traps_disable();
@@ -79,10 +79,10 @@ static void ctrl_traps()
 #ifdef CONFIG_CTRL_DBG
    if(up)
       debug(CTRL, "ctrl traps state: en:%d hw:%d stp:%d soft:%d\n"
-	    ,ctrl_traps_enabled()
-	    ,dbg_hard_brk_enabled()
-	    ,dbg_hard_stp_enabled()
-	    ,dbg_soft_enabled());
+            ,ctrl_traps_enabled()
+            ,dbg_hard_brk_enabled()
+            ,dbg_hard_stp_enabled()
+            ,dbg_soft_enabled());
 #endif
 }
 
@@ -115,9 +115,9 @@ void ctrl_active_cr3_enable(cr3_reg_t cr3)
    ctrl_set_cr3(1);
 
    debug(CTRL, "active cr3: 0x%X (0x%X <=> 0x%X)\n"
-	 , info->vmm.ctrl.stored_cr3.raw
-	 , info->vmm.ctrl.active_cr3
-	 ,&info->vmm.ctrl.stored_cr3);
+         , info->vmm.ctrl.stored_cr3.raw
+         , info->vmm.ctrl.active_cr3
+         ,&info->vmm.ctrl.stored_cr3);
 }
 
 void ctrl_active_cr3_disable()

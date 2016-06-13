@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ typedef struct vmx_bazaar
 */
 #ifdef __INIT__
 void    vmx_vmm_init();
-#define vmx_vmm_start(rsp)						\
+#define vmx_vmm_start(rsp)                                              \
    asm volatile("mov %0, %%rsp ; jmp vmx_vmlaunch"::"m"(rsp):"memory")
 #endif
 

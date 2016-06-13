@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2011 EADS France, stephane duverger <stephane.duverger@eads.net>
+** Copyright (C) 2016 Airbus Group, stephane duverger <stephane.duverger@airbus.com>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,12 +33,12 @@
 **
 ** cf. vm.c
 */
-#define preempt()				\
-   ({						\
-      irq_msg.rmode   = __rmode()?1:0;		\
-      irq_msg.preempt = 1;			\
-      asm volatile ("sti ; nop ; cli");		\
-      irq_msg.preempt = 0;			\
+#define preempt()                               \
+   ({                                           \
+      irq_msg.rmode   = __rmode()?1:0;          \
+      irq_msg.preempt = 1;                      \
+      asm volatile ("sti ; nop ; cli");         \
+      irq_msg.preempt = 0;                      \
    })
 
 /*
@@ -47,14 +47,14 @@
 /* void  __vmx_vmexit_setup_interrupt_window_exiting(uint8_t, uint8_t); */
 /* void  __vmx_vmexit_inject_interrupt(uint8_t); */
 
-#define __vmx_vmexit_inject_intn(_vector)			\
-   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,	\
-				 VMCS_EVT_INFO_TYPE_SW_INT,	\
-				 _vector)
+#define __vmx_vmexit_inject_intn(_vector)                       \
+   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,       \
+                                 VMCS_EVT_INFO_TYPE_SW_INT,     \
+                                 _vector)
 
-#define __vmx_vmexit_inject_interrupt(_vector)			\
-   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,	\
-				 VMCS_EVT_INFO_TYPE_HW_INT,	\
-				 _vector)
+#define __vmx_vmexit_inject_interrupt(_vector)                  \
+   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,       \
+                                 VMCS_EVT_INFO_TYPE_HW_INT,     \
+                                 _vector)
 
 #endif
