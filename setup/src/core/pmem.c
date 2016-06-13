@@ -264,6 +264,9 @@ void pmem_init(mbi_t *mbi)
    vmm->entry = vmm->base + elf_module_entry(mod);
    elf_module_load_relocatable(mod, vmm->base);
 
+   /* erase elf module from unprotected memory */
+   memset((void*)(offset_t)mod->mod_start, 0, mod->mod_end - mod->mod_start);
+
    /* loaded vmm starts with 'info_data' pointer */
    *(info_data_t**)vmm->base = info_r;
 
