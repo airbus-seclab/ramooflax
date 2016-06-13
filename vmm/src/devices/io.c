@@ -25,7 +25,9 @@ extern info_data_t *info;
 
 static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 {
-   int rc = vm_write_mem_sz(io->dst.linear, io->src.u8, sz->miss, &sz->done);
+   int rc = vm_write_mem_sz(io->dst.linear, io->src.u8,
+			    min(sz->miss, sz->available),
+			    &sz->done);
 
    if(rc != VM_DONE)
       debug(DEV_IO_ERR, "io fwd ins: vm_write_mem() fail\n");
@@ -37,7 +39,9 @@ static int __io_insn_string_in_fwd(io_insn_t *io, io_size_t *sz)
 
 static int __io_insn_string_out_fwd(io_insn_t *io, io_size_t *sz)
 {
-   int rc = vm_read_mem_sz(io->src.linear, io->dst.u8, sz->miss, &sz->done);
+   int rc = vm_read_mem_sz(io->src.linear, io->dst.u8,
+			   min(sz->miss, sz->available),
+			   &sz->done);
 
    if(rc != VM_DONE)
       debug(DEV_IO_ERR, "io fwd outs: vm_read_mem() fail\n");
@@ -142,6 +146,12 @@ static int __io_insn_simple(io_insn_t *io, void *device, io_size_t *sz)
    if(io->rep)
    {
       debug(DEV_IO_ERR, "simple emu IO with rep prefix\n");
+      return VM_FAIL;
+   }
+
+   if(io->sz > sz->available)
+   {
+      debug(DEV_IO_ERR, "simple emu IO too big: %d %D\n", io->sz, io->available);
       return VM_FAIL;
    }
 
