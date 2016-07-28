@@ -54,8 +54,8 @@
 #endif
 
 #define debug_defined
-#define debug(who, format, ...)                 \
-   ({                                           \
+#define debug(who, format, ...)                         \
+   ({                                                   \
       offset_t _dbg_loc_;                               \
       int      _dbg_md_;                                \
       vm_get_code_addr(&_dbg_loc_, 0, &_dbg_md_);       \
@@ -74,7 +74,7 @@
 
 #ifndef debug_defined
 #define debug_defined
-#define debug(who, format, ...)  \
+#define debug(who, format, ...)                                 \
    DEBUG_CONFIG_##who##_DBG(format,printf, ## __VA_ARGS__)
 #endif
 
