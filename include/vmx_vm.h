@@ -110,6 +110,7 @@
 #define npg_present(_e)                ept_pg_present(_e)
 #define npg_readable(_e)               ept_pg_readable(_e)
 #define npg_writable(_e)               ept_pg_writable(_e)
+#define npg_executable(_e)             ept_pg_executable(_e)
 #define npg_large(_e)                  pg_large(_e)
 #define npg_zero(_e)                   ept_zero(_e)
 

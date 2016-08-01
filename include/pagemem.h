@@ -423,12 +423,28 @@ typedef pte64_t (pt64_t)[PTE64_PER_PT];
 #define pg_large(_e_)                ((_e_)->page.ps)
 #define pg_zero(_e_)                 ((_e_)->raw = 0)
 
+#define pg64_executable(_e_)         \
+   ({ uint8_t x;                     \
+      if(__efer.nxe)                 \
+         x = !(_e_)->nx;             \
+      else x = 1;                    \
+      x;                             \
+   })
+
+#define pg_executable(_e_)                              \
+   ({                                                   \
+      uint8_t x;                                        \
+      if(_xx_lmode() || __cr4.pae)                      \
+         x = pg64_executable(_e_);                      \
+      else                                              \
+         x = pg_present(_e_);                           \
+      x;                                                \
+   })
+
 /* XXX: what about NX bit ? */
 #define pg_get_attr(_e_)             ((_e_)->raw & (PG_USR|PG_RW))
 #define pg_set_pvl(_e_,_p_)          ({(_e_)->blow &= ~7;(_e_)->blow |= (_p_);})
 #define pg_has_pvl_w(_e)             ((_e_)->blow & PG_RW)
-
-
 
 #define pg_set_entry(_e_,_attr_,_pfn_)          \
    ({                                           \

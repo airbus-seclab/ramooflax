@@ -29,9 +29,9 @@ static int __get_insn(offset_t *vaddr, int *mode)
 
    vm_get_code_addr(vaddr, 0, mode);
 
-   /* VMM request to vm vmem
+   /* VMM request to vm memory
    **
-   ** __vm_access_vmem() may fail if next page is not mapped:
+   ** __vm_access_linear() may fail if next page is not mapped:
    **
    ** 1 - the insn is big and located between 2 pages.
    ** This is an error because the OS should have mapped the necessary
@@ -40,14 +40,14 @@ static int __get_insn(offset_t *vaddr, int *mode)
    **
    ** 2 - the insn is short and located at the end of a page
    ** (less than 15 bytes from page end) so that we can't read 15 bytes.
-   ** This is not an error and __vm_access_vmem() may have successfully read
+   ** This is not an error and __vm_access_mem() may have successfully read
    ** bytes in the current page (VM_PARTIAL). This might be enough to correctly
    ** disasm the insn.
    **
    ** In any case, the disasm engine will raise the error if any.
    */
-   rc = __vm_read_vmem(&__cr3, *vaddr, info->vm.cpu.insn_cache,
-                       sizeof(info->vm.cpu.insn_cache));
+   rc = __vm_read_mem(&__cr3, *vaddr,
+                      info->vm.cpu.insn_cache, sizeof(info->vm.cpu.insn_cache));
 
    if(! (rc & (VM_DONE|VM_PARTIAL)))
    {

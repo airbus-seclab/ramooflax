@@ -215,6 +215,9 @@ int   __vm_send_vmem(cr3_reg_t*, offset_t, size_t);
 int   __vm_read_vmem(cr3_reg_t*, offset_t, uint8_t*, size_t);
 int   __vm_write_vmem(cr3_reg_t*, offset_t, uint8_t*, size_t);
 
+int   __vm_read_mem(cr3_reg_t*, offset_t, uint8_t*, size_t);
+int   __vm_write_mem(cr3_reg_t*, offset_t, uint8_t*, size_t);
+
 int   vm_read_mem(offset_t, uint8_t*, size_t);
 int   vm_write_mem(offset_t, uint8_t*, size_t);
 int   vm_read_mem_sz(offset_t, uint8_t*, size_t, size_t*);

@@ -106,12 +106,32 @@ void npg_setup_a20();
 #define PG_WALK_TYPE_PTE64     5
 #define PG_WALK_TYPE_PTE32     6
 
+#define PG_WALK_ATTR_USER      (1<<0)
+#define PG_WALK_ATTR_READ      (1<<1)
+#define PG_WALK_ATTR_WRITE     (1<<2)
+#define PG_WALK_ATTR_EXEC      (1<<3)
+
 typedef struct page_walk_info
 {
-   offset_t addr;
-   int      type;
-   size_t   size;
    void     *entry;
+   offset_t  addr;
+   size_t    size;
+
+   union
+   {
+      struct
+      {
+         uint8_t  u:1;
+         uint8_t  r:1;
+         uint8_t  w:1;
+         uint8_t  x:1;
+         uint8_t  type:3;
+
+      } __attribute__((packed));
+
+      uint8_t attr;
+
+   } __attribute__((packed));
 
 } __attribute__((packed)) pg_wlk_t;
 

@@ -36,6 +36,9 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, pg_wlk_t *wlk)
 
    debug(PG_WLK, "(n)cr3 0x%X\n", pg->pml4);
 
+   wlk->attr = 0;
+   wlk->u = 1;
+
    pml4e = &pg->pml4[pml4_idx(vaddr)];
    debug(PG_WLK, "(n)pml4e @ 0x%X = 0x%X\n", (offset_t)pml4e, pml4e->raw);
 
@@ -46,6 +49,10 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, pg_wlk_t *wlk)
       wlk->entry = (void*)pml4e;
       return VM_FAULT;
    }
+
+   wlk->r = npg_readable(pml4e);
+   wlk->w = npg_writable(pml4e);
+   wlk->x = npg_executable(pml4e);
 
    pdp  = (npg_pdpe_t*)page_addr(pml4e->addr);
    pdpe = &pdp[pdp_idx(vaddr)];
@@ -58,6 +65,10 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, pg_wlk_t *wlk)
       wlk->entry = (void*)pdpe;
       return VM_FAULT;
    }
+
+   wlk->r &= npg_readable(pdpe);
+   wlk->w &= npg_writable(pdpe);
+   wlk->x &= npg_executable(pdpe);
 
    if(info->vm.cpu.skillz.pg_1G && npg_large(pdpe))
    {
@@ -79,6 +90,10 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, pg_wlk_t *wlk)
       wlk->entry = (void*)pde;
       return VM_FAULT;
    }
+
+   wlk->r &= npg_readable(pde);
+   wlk->w &= npg_writable(pde);
+   wlk->x &= npg_executable(pde);
 
    if(info->vm.cpu.skillz.pg_2M && npg_large(pde))
    {
@@ -105,6 +120,9 @@ int __npg_walk(vm_pgmem_t *pg, offset_t vaddr, pg_wlk_t *wlk)
    wlk->type  = PG_WALK_TYPE_PTE64;
    wlk->size  = PG_4K_SIZE;
    wlk->entry = (void*)pte;
+   wlk->r    &= npg_readable(pte);
+   wlk->w    &= npg_writable(pte);
+   wlk->x    &= npg_executable(pte);
 
 __success:
    debug(PG_WLK, "guest paddr 0x%X -> system paddr 0x%X\n", vaddr, wlk->addr);

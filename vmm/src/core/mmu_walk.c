@@ -33,6 +33,8 @@ static int __pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
    pde64_t *pd, *pde;
    pte64_t *pt, *pte;
 
+   wlk->attr = 0;
+
    pml4 = (pml4e_t*)page_addr(cr3->pml4.addr);
    if(vmm_area_range(pml4, PG_4K_SIZE))
    {
@@ -51,6 +53,11 @@ static int __pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
       return VM_FAULT;
    }
 
+   wlk->u = pml4e->lvl;
+   wlk->r = 1;
+   wlk->w = pml4e->rw;
+   wlk->x = pg64_executable(pml4e);
+
    pdp = (pdpe_t*)page_addr(pml4e->addr);
    if(vmm_area_range(pdp, PG_4K_SIZE))
    {
@@ -68,6 +75,10 @@ static int __pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
       wlk->entry = (void*)pdpe;
       return VM_FAULT;
    }
+
+   wlk->u &= pdpe->lvl;
+   wlk->w &= pdpe->rw;
+   wlk->x &= pg64_executable(pdpe);
 
    if(info->vmm.cpu.skillz.pg_1G && pg_large(pdpe))
    {
@@ -95,6 +106,10 @@ static int __pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
       wlk->entry = (void*)pde;
       return VM_FAULT;
    }
+
+   wlk->u &= pde->lvl;
+   wlk->w &= pde->rw;
+   wlk->x &= pg64_executable(pde);
 
    if(pg_large(pde))
    {
@@ -127,6 +142,9 @@ static int __pg_walk_lmode(cr3_reg_t *cr3, offset_t vaddr, pg_wlk_t *wlk)
    wlk->type  = PG_WALK_TYPE_PTE64;
    wlk->size  = PG_4K_SIZE;
    wlk->entry = (void*)pte;
+   wlk->u    &= pte->lvl;
+   wlk->w    &= pte->rw;
+   wlk->x    &= pg64_executable(pte);
 
 __success:
    debug(PG_WLK, "lmode vaddr 0x%X -> guest paddr 0x%X\n", vaddr, wlk->addr);
@@ -143,6 +161,8 @@ static int __pg_walk_pmode_pae(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
    pde64_t  *pd, *pde;
    pte64_t  *pt, *pte;
    uint32_t vaddr = _vaddr & 0xffffffff;
+
+   wlk->attr = 0;
 
    pdp = (pdpe_t*)pg_32B_addr((offset_t)cr3->pae.addr);
    if(vmm_area_range(pdp, PG_4K_SIZE))
@@ -180,6 +200,11 @@ static int __pg_walk_pmode_pae(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
       return VM_FAULT;
    }
 
+   wlk->u = pde->lvl;
+   wlk->r = 1;
+   wlk->w = pde->rw;
+   wlk->x = pg64_executable(pde);
+
    if(__cr4.pse && pg_large(pde))
    {
       wlk->addr  = pg_2M_addr((offset_t)pde->page.addr) + pg_2M_offset(vaddr);
@@ -211,6 +236,9 @@ static int __pg_walk_pmode_pae(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
    wlk->type  = PG_WALK_TYPE_PTE64;
    wlk->size  = PG_4K_SIZE;
    wlk->entry = (void*)pte;
+   wlk->u    &= pte->lvl;
+   wlk->w    &= pte->rw;
+   wlk->x    &= pg64_executable(pte);
 
 __success:
    debug(PG_WLK, "pae vaddr 0x%x -> guest paddr 0x%X\n", vaddr, wlk->addr);
@@ -226,6 +254,8 @@ static int __pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
    pde32_t  *pd, *pde;
    pte32_t  *pt, *pte;
    uint32_t vaddr = _vaddr & 0xffffffff;
+
+   wlk->attr = 0;
 
    pd = (pde32_t*)page_addr(cr3->addr);
    if(vmm_area_range(pd, PG_4K_SIZE))
@@ -244,6 +274,11 @@ static int __pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
       wlk->entry = (void*)pde;
       return VM_FAULT;
    }
+
+   wlk->u = pde->lvl;
+   wlk->r = 1;
+   wlk->w = pde->rw;
+   wlk->x = 1;
 
    if(__cr4.pse && pg_large(pde))
    {
@@ -276,6 +311,8 @@ static int __pg_walk_pmode(cr3_reg_t *cr3, offset_t _vaddr, pg_wlk_t *wlk)
    wlk->type  = PG_WALK_TYPE_PTE32;
    wlk->size  = PG_4K_SIZE;
    wlk->entry = (void*)pte;
+   wlk->u    &= pte->lvl;
+   wlk->w    &= pte->rw;
 
 __success:
    debug(PG_WLK, "pmode vaddr 0x%x -> guest paddr 0x%X\n", vaddr, wlk->addr);
