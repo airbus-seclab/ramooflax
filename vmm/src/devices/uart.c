@@ -30,7 +30,7 @@ static inline void __dev_uart_flush(uart_t *uart)
    uart->index = 0;
 }
 
-static inline int __dev_uart_tx(uart_t *uart, io_insn_t *io)
+static inline int __dev_uart_xfr(uart_t *uart, io_insn_t *io)
 {
    io_size_t sz;
    int       rc;
@@ -48,7 +48,9 @@ static inline int __dev_uart_tx(uart_t *uart, io_insn_t *io)
       if(uart->index >= DEV_UART_BUFF_LEN)
       {
          uart->index = DEV_UART_BUFF_LEN;
-         __dev_uart_flush(uart);
+
+         if(!io->in)
+            __dev_uart_flush(uart);
       }
 
    } while(sz.miss);
@@ -174,26 +176,6 @@ static inline int __dev_uart_scr(uart_t *uart, io_insn_t *io)
    int       rc = dev_io_insn(io, &uart->scr, &sz);
    debug(DEV_UART, "%s scr 0x%x\n", io->in?"in":"out", uart->scr);
    return rc;
-}
-
-/*
-** XXX
-*/
-static inline int __dev_uart_rx(/*uart_t *uart,*/ io_insn_t *io)
-{
-   uint8_t   x  = 0;
-   io_size_t sz = { .available = 1 };
-   int       rc = dev_io_insn(io, &x, &sz);
-   debug(DEV_UART, "rx 0x%x\n", x);
-   return rc;
-}
-
-static inline int __dev_uart_xfr(uart_t *uart, io_insn_t *io)
-{
-   if(io->in)
-      return __dev_uart_rx(/*uart,*/ io);
-
-   return __dev_uart_tx(uart, io);
 }
 
 int dev_uart(uart_t *uart, io_insn_t *io)
