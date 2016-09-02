@@ -554,7 +554,7 @@ void ehci_detect(dbgp_info_t *dbgp_i, int transition)
    debug(EHCI,"high-speed device connected\n");
 }
 
-#ifndef EHCI_DBG
+#ifndef CONFIG_EHCI_DBG
 void __ehci_light_show(dbgp_info_t __unused__ *dbgp_i){}
 void __ehci_show(dbgp_info_t __unused__ *dbgp_i){}
 #else
@@ -630,13 +630,6 @@ void __ehci_show(dbgp_info_t *dbgp_i)
 }
 #endif
 
-/*
-** set_addr() behaves strangely !
-** needs another request on old addr
-** before being taken into account
-** maybe this is linux dependant
-** (ie. behavior noticed with linux gadget)
-*/
 void dbgp_configure(dbgp_info_t *dbgp_i)
 {
    uint32_t dev, times;
@@ -654,6 +647,12 @@ __retry:
    if(dev == 128)
       goto __fail;
 
+#ifdef CONFIG_EHCI_SETADDR
+   /*
+   ** Linux gadget set_addr() behaves strangely !
+   ** It needs another request on old addr
+   ** before being taken into account
+   */
    if(dev != DBGP_DEV_ADDR)
    {
       if(!__dbgp_set_addr(dbgp_i))
@@ -665,12 +664,16 @@ __retry:
    if(!__dbgp_set_debug_mode(dbgp_i))
    {
       /* retry with previous addr */
+#endif
+
       dbgp_i->addr = dev;
       if(!__dbgp_set_debug_mode(dbgp_i))
          goto __fail;
 
+#ifdef CONFIG_EHCI_SETADDR
       dbgp_i->addr = DBGP_DEV_ADDR;
    }
+#endif
 
    /* success */
    return;
@@ -808,7 +811,7 @@ int __dbgp_set_addr(dbgp_info_t *dbgp_i)
    dvr.index = 0;
    dvr.len = 0;
 
-   debug(EHCI, "set addr\n");
+   debug(EHCI, "set addr %d\n", DBGP_DEV_ADDR);
    return __dbgp_setup(dbgp_i, &dvr);
 }
 

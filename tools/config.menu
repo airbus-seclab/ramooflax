@@ -60,7 +60,7 @@ data   CONFIG_MSR_PROXY:vm operations on msrs are proxyfied
 toggle ehci_opt
 title  Toggle EHCI options
 desc   ehci, select ehci options
-data   CONFIG_EHCI_FULL:force full EHCI controller init, CONFIG_EHCI_2ND:use 2nd EHCI controller if available
+data   CONFIG_EHCI_FULL:force full EHCI controller init, CONFIG_EHCI_2ND:use 2nd EHCI controller if available, CONFIG_EHCI_SETADDR:force set_addr twice (linux)
 
 toggle gdb_opt
 title  Toggle GDB options
