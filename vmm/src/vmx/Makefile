@@ -1,6 +1,7 @@
 obj :=  vmx_exit.o			\
 	vmx_exit_fail.o			\
 	vmx_exit_invg.o			\
+	vmx_exit_int.o                  \
 	vmx_exit_gp.o			\
 	vmx_exit_pf.o			\
 	vmx_exit_cr.o			\

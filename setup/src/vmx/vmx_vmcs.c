@@ -68,7 +68,9 @@ static void vmx_vmcs_exit_controls_init()
 {
    //vm_exit_ctrls.exit.save_preempt_timer = 1;
 
+   vm_exit_ctrls.exit.ack_int        = 1;
    vm_exit_ctrls.exit.host_lmode     = 1;
+
    vm_exit_ctrls.exit.load_ia32_perf = 1;
    vm_exit_ctrls.exit.load_ia32_pat  = 1;
    vm_exit_ctrls.exit.load_ia32_efer = 1;
@@ -124,6 +126,7 @@ static void vmx_vmcs_exec_controls_io_init()
 
 static void vmx_vmcs_exec_controls_init()
 {
+   /* vm_exec_ctrls.pin.eint    = 1; */
    /* vm_exec_ctrls.pin.preempt = 1; */
    /* vm_exec_ctrls.pin.nmi     = 1; */
 

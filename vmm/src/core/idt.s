@@ -21,9 +21,9 @@
 .type  resume_from_intr,"function"
 
 idt_checkmode:
-        bt      $8, irq_msg(%rip)
+        bt      $16, irq_msg(%rip) /* preemt */
         jnc     idt_common
-        btr     $9, irq_msg(%rip)
+        btr     $17, irq_msg(%rip) /* rmode */
         jnc     idt_common
         sub     $16, %rsp
         mov     %rax, (%rsp)

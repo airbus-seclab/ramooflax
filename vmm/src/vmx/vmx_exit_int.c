@@ -21,60 +21,66 @@
 #include <debug.h>
 
 extern info_data_t *info;
+extern irq_msg_t    irq_msg;
 
-/* void __vmx_vmexit_setup_interrupt_window_exiting(uint8_t enable, uint8_t irq) */
-/* { */
-/*    vmx_procbased_ctls_msr_t proc_msr; */
-/*    vmcs_exec_ctl_t          *ctls = exec_ctrls(info); */
+void __vmx_vmexit_setup_interrupt_window_exiting(uint8_t enable, uint8_t vector)
+{
+   vmcs_read(vm_exec_ctrls.proc);
 
-/*    vmcs_read( ctls->proc ); */
+   if(enable ^ vm_exec_ctrls.proc.iwe)
+   {
+      vm_exec_ctrls.proc.iwe = enable;
+      vmcs_dirty(vm_exec_ctrls.proc);
+      irq_msg.pending = vector;
+      debug(VMX_INT, "interrupt windows exiting: %s\n", enable ? "on":"off");
+   }
+}
 
-/*    if( (enable && ! ctls->proc.iwe ) || (! enable && ctls->proc.iwe) ) */
-/*    { */
-/*       ctls->proc.iwe = enable; */
+void __vmx_vmexit_inject_interrupt(uint8_t vector)
+{
+   __vmx_prepare_event_injection(vm_entry_ctrls.int_info,
+                                 VMCS_EVT_INFO_TYPE_HW_INT,
+                                 vector);
 
-/*       debug( VMX_INT, "i-w-e %s\n", enable?"on":"off" ); */
+   /* vm-entry checks  */
+   if(!vm_state.rflags.IF)
+   {
+      vm_state.rflags.IF = 1;
+      vmcs_dirty(vm_state.rflags);
+   }
 
-/*       read_msr_vmx_procbased_ctls( proc_msr ); */
-/*       ctls->proc.raw &= proc_msr.allowed_1_settings; */
-/*       ctls->proc.raw |= proc_msr.allowed_0_settings; */
+   vmcs_read(vm_state.interrupt);
 
-/*       vmcs_dirty( ctls->proc ); */
+   if(vm_state.interrupt.sti || vm_state.interrupt.mss)
+   {
+      vm_state.interrupt.sti = 0;
+      vm_state.interrupt.mss = 0;
+      vmcs_dirty(vm_state.interrupt);
+      debug(VMX_INT, "inject IRQ %d forced (interrupt shadow)\n", vector);
+   }
+}
 
-/*       info->vm.last_pending = irq; */
-/*    } */
-/* } */
+/*
+** Interrupts just enabled inside the VM
+** check if we need to inject something
+** and then disable IWE
+*/
+int vmx_vmexit_resolve_iwe()
+{
+   __vmx_vmexit_inject_interrupt(irq_msg.pending);
+   __vmx_vmexit_setup_interrupt_window_exiting(0, 0xff);
 
-/* void __vmx_vmexit_inject_interrupt(uint8_t vector) */
-/* { */
-/*    vmcs_guest_t     *state = guest_state(info); */
-/*    vmcs_entry_ctl_t *ctrls = entry_ctrls(info); */
+   return VM_DONE;
+}
 
-/*    ctrls->int_info.raw    = 0; */
-/*    ctrls->int_info.vector = vector; */
-/*    ctrls->int_info.type   = VMCS_EVT_INFORMATION_TYPE_HW_INT; */
-/*    ctrls->int_info.v      = 1; */
+/*
+** vmexit controls acknowlegde interrupt on exit
+** so it is safe to retrieve the vector here
+*/
+int vmx_vmexit_resolve_intr()
+{
+   vmcs_read(vm_exit_info.int_info);
+   irq_msg.vector = vm_exit_info.int_info.vector;
 
-/*    vmcs_dirty( ctrls->int_info ); */
-
-/*    /\* */
-/*    ** vm-entry checks */
-/*    *\/ */
-/*    if( ! state->rflags.IF ) */
-/*    { */
-/*       state->rflags.IF = 1; */
-/*       vmcs_dirty( state->rflags ); */
-/*    } */
-
-/*    vmcs_read( state->interrupt ); */
-
-/*    if( state->interrupt.sti || state->interrupt.mss ) */
-/*    { */
-/*       state->interrupt.sti = 0; */
-/*       state->interrupt.mss = 0; */
-/*       vmcs_dirty( state->interrupt ); */
-
-/*       debug( VMX_INT, "inject IRQ forced (interrupt shadow)\n" ); */
-/*    } */
-/* } */
-
+   return resolve_intr();
+}

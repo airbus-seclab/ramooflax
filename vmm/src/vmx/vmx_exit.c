@@ -46,13 +46,13 @@ info_data_t __info_data_hdr__ *info;
 /* vm-exit handlers */
 static vmexit_hdlr_t vmx_vmexit_resolvers[VMX_VMEXIT_RESOLVERS_NR] = {
    vmx_vmexit_resolve_excp,             //EXCP_NMI
-   resolve_default,                     //EXT_INT
+   vmx_vmexit_resolve_intr,             //EXT_INT
    resolve_default,                     //TRI_FAULT
    resolve_default,                     //INIT_SIG
    resolve_default,                     //SIPI
    resolve_default,                     //IO_SMI
    resolve_default,                     //OTHER_SMI
-   resolve_default,                     //INT_WIN
+   vmx_vmexit_resolve_iwe,              //INT_WIN
    resolve_default,                     //NMI_WIN
    resolve_default,                     //TASK_SW
    resolve_cpuid,                       //CPUID

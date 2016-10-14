@@ -101,6 +101,7 @@ typedef union irq_message
    struct
    {
       uint16_t  vector:8;
+      uint8_t   pending:8;
       uint16_t  preempt:1;
       uint16_t  rmode:1;
 
