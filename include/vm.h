@@ -20,20 +20,7 @@
 
 #include <config.h>
 #include <types.h>
-
-/*
-** VM-EXIT handling return codes
-** Do not use 0 value, binary tests
-** wouldn't work (ie. rc & VM_FAIL)
-*/
-#define VM_FAIL              (1<<0)
-#define VM_FAULT             (1<<1)
-#define VM_DONE              (1<<2)
-#define VM_DONE_LET_RIP      (1<<3)
-#define VM_NATIVE            (1<<4)
-#define VM_IGNORE            (1<<5)
-#define VM_INTERN            (1<<6)
-#define VM_PARTIAL           (1<<7)
+#include <vmerr.h>
 
 
 /*
