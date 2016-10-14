@@ -148,6 +148,7 @@ typedef struct vm_device
    uint8_t        pic1_icw2;   /* irq rebase */
    pci_cfg_addr_t pci_addr;    /* last filtered pci addr */
    io_flt_hdl_t   pci_filter;  /* pci data filter handler */
+   io_flt_hdl_t   sio_filter;  /* super io fitler handler */
    ata_t          ata[1];      /* vm filtered ata ctrl */
 
 } __attribute__((packed)) vm_dev_t;

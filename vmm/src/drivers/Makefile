@@ -1,5 +1,9 @@
 obj :=
 
+ifeq ($(CONFIG_HAS_UART),yes)
+obj += sio.o
+endif
+
 ifeq ($(CONFIG_HAS_VIDEO),yes)
 obj += video.o
 endif

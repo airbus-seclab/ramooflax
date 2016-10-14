@@ -18,6 +18,7 @@
 #include <dev.h>
 #include <vm.h>
 #include <paging.h>
+#include <sio.h>
 #include <dev_io_ports.h>
 #include <info_data.h>
 #include <debug.h>
@@ -50,6 +51,9 @@ int dev_access()
    if(io.port == PCI_CONFIG_ADDR || io.port == PCI_CONFIG_DATA)
       return dev_pci(&io);
 #endif
+
+   if(io.port == SIO_INDEX || io.port == SIO_DATA)
+      return dev_sio(&io);
 
    if(io.port == PS2_SYS_CTRL_PORT_A)
       return dev_ps2(&info->vm.dev.ps2, &io);

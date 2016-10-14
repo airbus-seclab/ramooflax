@@ -30,6 +30,7 @@
 #include <vmx_insn.h>
 #include <vmx_vm.h>
 #include <insn.h>
+#include <sio.h>
 #include <intr.h>
 #include <insn.h>
 #include <paging.h>
@@ -116,6 +117,8 @@ static void vmx_vmexit_tsc_rebase(raw64_t tsc)
 
 static void vmx_vmexit_pre_hdl()
 {
+   sio_check_com1();
+
    vmcs_read(vm_exit_info.reason);
 
    vmcs_read(vm_state.rflags);

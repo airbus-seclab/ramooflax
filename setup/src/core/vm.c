@@ -20,6 +20,7 @@
 #include <dev_pic.h>
 #include <dev_uart.h>
 #include <dev_io_ports.h>
+#include <sio.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -62,6 +63,9 @@ static void vm_dev_init()
             ,e1k->base.linear, e1k->base.linear + (128<<10));
    }
 #endif
+
+   /* super io */
+   __deny_io(SIO_INDEX);
 }
 
 static void vm_cpu_init()
