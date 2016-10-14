@@ -18,14 +18,15 @@
 #ifndef __GDB_STUB_H__
 #define __GDB_STUB_H__
 
+#include <config.h>
 #include <types.h>
 #include <ctrl_io.h>
+#include <mbi.h>
 
 /*
 ** Interactivity
 */
-//#define GDB_RATIO            (10UL)
-#define GDB_RATIO            (1UL)
+#define GDB_DFT_RATE         (10UL)
 
 /*
 ** Stop reasons
@@ -90,8 +91,9 @@ typedef union gdbstub_status
 
 typedef struct gdbstub
 {
-   gdbstub_sts_t  sts;     /* stub status */
-   uint8_t        reason;  /* last stop reason */
+   gdbstub_sts_t  sts;     /* stub status       */
+   uint8_t        reason;  /* last stop reason  */
+   uint64_t       rate;    /* gdb interactivity */
 
 } __attribute__((packed)) gdbstub_t;
 
@@ -123,13 +125,15 @@ typedef struct gdbstub
 #define gdb_vmem_read(_a,_b,_l)         ctrl_vmem_read(_a,_b,_l)
 #define gdb_vmem_write(_a,_b,_l)        ctrl_vmem_write(_a,_b,_l)
 
-
-
-void gdb_enable();
-void gdb_disable();
-void gdb_reset();
-int __gdb_preempt(uint8_t);
-int  gdb_preempt(uint8_t);
-void gdbstub();
+#ifdef __INIT__
+void  gdb_init(mbi_t*);
+#else
+void  gdb_enable();
+void  gdb_disable();
+void  gdb_reset();
+int   __gdb_preempt(uint8_t);
+int   gdb_preempt(uint8_t);
+void  gdbstub();
+#endif
 
 #endif

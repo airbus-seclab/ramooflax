@@ -446,7 +446,10 @@ typedef struct ehci_debug_port_info
    volatile ehci_portsc_reg_t    *ehci_psc;
    volatile ehci_dbgp_reg_t      *ehci_dbg;
 
-   pci_cfg_val_t                 pci;
+   pci_cfg_val_t                 pci;  /* generic pci config space accessor */
+   pci_cfg_val_t                 pwr;  /* power management accessor */
+   pci_cfg_dbg_cap_t             cap;  /* debug port capability */
+   pci_cfg_dev_vdr_t             dvd;
    usb_dbg_desc_t                desc;
    uint8_t                       addr;
    uint8_t                       port;

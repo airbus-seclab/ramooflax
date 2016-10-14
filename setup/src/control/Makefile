@@ -1,0 +1,1 @@
+obj := gdbstub.o

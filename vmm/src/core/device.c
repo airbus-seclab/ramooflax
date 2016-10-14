@@ -46,7 +46,7 @@ int dev_access()
    if(rc != VM_DONE)
       return rc;
 
-#ifdef CONFIG_HAS_NET
+#if defined(CONFIG_HAS_NET) || (defined(CONFIG_HAS_EHCI) && defined(CONFIG_EHCI_2ND))
    if(io.port == PCI_CONFIG_ADDR || io.port == PCI_CONFIG_DATA)
       return dev_pci(&io);
 #endif

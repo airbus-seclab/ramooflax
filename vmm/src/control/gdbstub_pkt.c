@@ -443,26 +443,30 @@ void gdb_recv_packet()
 
    do
    {
-      do
+      len = remain;
+      remain = 0;
+      ptr = &gdb_input[len];
+
+      /* XXX: we may want to gdb_set_lock(0) when nothing read */
+      /* cnt = gdb_io_read(ptr, sizeof(gdb_input) - len); */
+      /* if(!cnt) */
+      /*    gdb_set_lock(0); */
+      /* len += cnt; */
+
+      len += gdb_io_read(ptr, sizeof(gdb_input) - len);
+
+      if(len)
       {
-         len = remain;
-         remain = 0;
-         ptr = &gdb_input[len];
-         len += gdb_io_read(ptr, sizeof(gdb_input) - len);
+         remain = gdb_consume_packet(gdb_input, len);
+         debug(GDBSTUB_PKT, "remain (%D)\n", remain);
 
-         if(len)
+         if(remain && remain != len)
          {
-            remain = gdb_consume_packet(gdb_input, len);
-            debug(GDBSTUB_PKT, "remain (%D)\n", remain);
-
-            if(remain && remain != len)
-            {
-               ptr = gdb_input + (len - remain);
-               memcpy(gdb_input, ptr, remain);
-            }
+            ptr = gdb_input + (len - remain);
+            memcpy(gdb_input, ptr, remain);
          }
-      } while(remain);
-   } while(gdb_locked());
+      }
+   } while(remain || gdb_locked());
 }
 
 void gdb_send_packet()

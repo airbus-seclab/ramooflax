@@ -42,4 +42,8 @@ void dev_init(mbi_t *mbi)
 #ifdef CONFIG_HAS_NET
    net_init(mbi);
 #endif
+
+#ifdef CONFIG_GDBSTUB
+   gdb_init(mbi);
+#endif
 }

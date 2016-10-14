@@ -16,53 +16,30 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <gdbstub.h>
-#include <gdbstub_pkt.h>
-#include <gdbstub_vmm.h>
-#include <dbg.h>
 #include <debug.h>
 #include <info_data.h>
 
 extern info_data_t *info;
 
-void gdb_disable()
+static int gdb_opt_hdl(char *str, void *arg)
 {
-   gdb_vmm_disable();
-   dbg_disable();
-
-   gdb_set_enable(0);
-   gdb_set_lock(0);
+   uint64_t *data = (uint64_t*)arg;
+   return dec_to_uint64((uint8_t*)str, strlen(str), data);
 }
 
-void gdb_enable()
+static int gdb_params(gdbstub_t *gdb, mbi_t *mbi)
 {
-   gdb_set_last_stop_reason(GDB_EXIT_INT);
-   gdb_set_enable(1);
-   gdb_set_lock(1);
+   module_t      *mod = (module_t*)((offset_t)mbi->mods_addr + sizeof(module_t));
+   mbi_opt_hdl_t  hdl = (mbi_opt_hdl_t)gdb_opt_hdl;
 
-   dbg_enable();
-   gdb_vmm_enable();
+   if(!mbi_get_opt(mbi, mod, "gdb_rate", hdl, (void*)&gdb->rate))
+      gdb->rate = GDB_DFT_RATE;
+
+   return VM_DONE;
 }
 
-void gdb_reset()
+void gdb_init(mbi_t *mbi)
 {
-   gdb_disable();
-}
-
-int __gdb_preempt(uint8_t reason)
-{
-   gdb_send_stop_reason(reason);
-   gdb_set_last_stop_reason(reason);
-   gdb_set_lock(1);
-   return 1;
-}
-
-int gdb_preempt(uint8_t reason)
-{
-   return __gdb_preempt(reason);
-}
-
-void gdbstub()
-{
-   if(gdb_enabled() || (info->vmm.ctrl.vmexit_cnt.raw % info->vmm.gstub.rate) == 0)
-      gdb_recv_packet();
+   if(gdb_params(&info->vmm.gstub, mbi) != VM_DONE)
+      panic("failed to init gdbstub");
 }

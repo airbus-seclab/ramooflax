@@ -2,6 +2,10 @@
 
 SUBDIRS := core libc devices
 
+ifeq ($(CONFIG_GDBSTUB),yes)
+SUBDIRS += control
+endif
+
 ifeq ($(CONFIG_HAS_DRV),yes)
 SUBDIRS += drivers
 endif
