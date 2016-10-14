@@ -45,6 +45,8 @@
 /*
 ** Debug macro
 */
+#define warning(who, format, ...) debug(who, "(!) "format, ## __VA_ARGS__)
+
 #ifndef __INIT__
 #ifdef CONFIG_VMEXIT_TRACE
 #ifdef CONFIG_ARCH_AMD
