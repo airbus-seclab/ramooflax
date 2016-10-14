@@ -1,4 +1,4 @@
-obj := io.o ps2.o kbd.o uart.o ata.o
+obj := io.o ps2.o kbd.o uart.o ata.o acpi.o
 
 ifeq ($(CONFIG_HAS_UART),yes)
 obj += sio.o

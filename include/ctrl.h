@@ -50,6 +50,7 @@ typedef union controller_status
 #define CTRL_FILTER_NPF     (1<<0)
 #define CTRL_FILTER_HYP     (1<<1)
 #define CTRL_FILTER_CPUID   (1<<2)
+#define CTRL_FILTER_S3      (1<<3)
 
 #define CTRL_CPUID_ALL      (-1U)
 

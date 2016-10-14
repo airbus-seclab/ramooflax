@@ -88,6 +88,7 @@ class StopReason:
     npf        = 52
     hyp        = 53
     cpuid      = 54
+    s3         = 55
 
     def __init__(self, r=2, m=None, d=None):
         self.__s = {
@@ -126,6 +127,7 @@ class StopReason:
             52:"npf",
             53:"hyp",
             54:"cpuid",
+            55:"acpi s3",
             }
 
         self.reason = r

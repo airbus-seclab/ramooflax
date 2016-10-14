@@ -55,6 +55,9 @@ int dev_access()
    if(io.port == SIO_INDEX || io.port == SIO_DATA)
       return dev_sio(&io);
 
+   if(io.port == info->hrd.acpi.pm1_ctl_port)
+      return dev_acpi_pm1_ctl(&io);
+
    if(io.port == PS2_SYS_CTRL_PORT_A)
       return dev_ps2(&info->vm.dev.ps2, &io);
 

@@ -1,4 +1,4 @@
-obj :=
+obj := acpi.o
 
 ifeq ($(CONFIG_HAS_UART),yes)
 obj += sio.o

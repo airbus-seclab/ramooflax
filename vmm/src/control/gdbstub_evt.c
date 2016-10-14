@@ -71,6 +71,13 @@ static int gdbstub_evt_cpuid(arg_t __unused__ arg)
    return VM_DONE;
 }
 
+static int gdbstub_evt_suspend(arg_t __unused__ arg)
+{
+   debug(GDBSTUB_EVT, "preempt(s3)\n");
+   gdb_preempt(GDB_EXIT_S3);
+   return VM_DONE;
+}
+
 ctrl_evt_hdl_t ctrl_evt_usr_hdl[] = {
    gdbstub_evt_cr_rd,
    gdbstub_evt_cr_wr,
@@ -80,4 +87,5 @@ ctrl_evt_hdl_t ctrl_evt_usr_hdl[] = {
    gdbstub_evt_npf,
    gdbstub_evt_hyp,
    gdbstub_evt_cpuid,
+   gdbstub_evt_suspend,
 };

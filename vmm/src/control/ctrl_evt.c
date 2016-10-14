@@ -161,6 +161,36 @@ int ctrl_evt_npf()
 }
 
 /*
+** ACPI S3 Sleep Mode
+*/
+static int __ctrl_evt_suspend_vmm()
+{
+   arg_t arg = {.raw = 0};
+   return ctrl_evt_vmm_hdl[CTRL_EVT_VMM_TYPE_S3](arg);
+}
+
+static int __ctrl_evt_suspend_usr()
+{
+   if(!(info->vmm.ctrl.usr.filter & CTRL_FILTER_S3))
+      return VM_IGNORE;
+
+   arg_t arg = {.raw = 0};
+   ctrl_evt_setup(CTRL_EVT_USR_TYPE_S3, 0, arg);
+   return VM_DONE;
+}
+
+int ctrl_evt_suspend()
+{
+   int rc;
+
+   if((rc = __ctrl_evt_suspend_vmm()) == VM_IGNORE)
+      rc = __ctrl_evt_suspend_usr();
+
+   return rc;
+}
+
+
+/*
 ** Hypercall
 */
 static int __ctrl_evt_hyp_vmm()

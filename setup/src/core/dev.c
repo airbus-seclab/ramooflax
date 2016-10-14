@@ -17,6 +17,7 @@
 */
 #include <dev.h>
 #include <uart.h>
+#include <acpi.h>
 #include <debug.h>
 #include <info_data.h>
 
@@ -42,6 +43,8 @@ void dev_init(mbi_t *mbi)
 #ifdef CONFIG_HAS_NET
    net_init(mbi);
 #endif
+
+   acpi_init(mbi);
 
 #ifdef CONFIG_GDBSTUB
    gdb_init(mbi);

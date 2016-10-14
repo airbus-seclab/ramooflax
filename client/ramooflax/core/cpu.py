@@ -51,6 +51,7 @@ class CPUFilter:
     npf   = (1<<0)
     hyp   = (1<<1)
     cpuid = (1<<2)
+    s3    = (1<<3)
 
     cpuid_all = 0xffffffff # special index value
 
@@ -308,6 +309,14 @@ class CPU:
     def release_npf(self):
         self.__filter_mask_del(CPUFilter.npf)
         self.__filter.unregister(event.StopReason.npf)
+
+    def filter_acpi_s3(self, hdl):
+        self.__filter_mask_add(CPUFilter.s3)
+        self.__filter.register(event.StopReason.s3, hdl)
+
+    def release_acpi_s3(self):
+        self.__filter_mask_del(CPUFilter.s3)
+        self.__filter.unregister(event.StopReason.s3)
 
     def filter_hypercall(self, hdl):
         self.__filter_mask_add(CPUFilter.hyp)

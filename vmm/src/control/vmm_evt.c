@@ -42,9 +42,15 @@ static int vmm_evt_wcr(arg_t __unused__ arg)
    return VM_IGNORE;
 }
 
+static int vmm_evt_suspend(arg_t __unused__ arg)
+{
+   return VM_IGNORE;
+}
+
 ctrl_evt_hdl_t ctrl_evt_vmm_hdl[] = {
    vmm_evt_excp,
    vmm_evt_hyp,
    vmm_evt_npf,
    vmm_evt_wcr,
+   vmm_evt_suspend,
 };

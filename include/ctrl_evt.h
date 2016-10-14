@@ -29,6 +29,7 @@ typedef int (*ctrl_evt_hdl_t)(arg_t);
 #define CTRL_EVT_VMM_TYPE_HYP      1
 #define CTRL_EVT_VMM_TYPE_NPF      2
 #define CTRL_EVT_VMM_TYPE_WCR      3
+#define CTRL_EVT_VMM_TYPE_S3       4
 
 /*
 ** User events are post-hooks
@@ -41,6 +42,7 @@ typedef int (*ctrl_evt_hdl_t)(arg_t);
 #define CTRL_EVT_USR_TYPE_NPF      5
 #define CTRL_EVT_USR_TYPE_HYP      6
 #define CTRL_EVT_USR_TYPE_CPUID    7
+#define CTRL_EVT_USR_TYPE_S3       8
 
 typedef struct controller_event
 {
@@ -59,6 +61,7 @@ int  ctrl_evt_cr_wr(uint8_t);
 int  ctrl_evt_npf();
 int  ctrl_evt_hypercall();
 int  ctrl_evt_cpuid(uint32_t);
+int  ctrl_evt_suspend();
 
 int  ctrl_evt_setup(uint8_t, ctrl_evt_hdl_t, arg_t);
 int  ctrl_event();

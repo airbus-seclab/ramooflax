@@ -24,6 +24,7 @@
 #include <ppg.h>
 #include <io.h>
 #include <mbi.h>
+#include <acpi.h>
 
 #ifdef CONFIG_HAS_EHCI
 #include <ehci.h>
@@ -52,8 +53,9 @@ typedef struct hardware_memory_data
 
 typedef struct hardware_information_data
 {
-   hrdw_dev_t dev;
-   hrdw_mem_t mem;
+   acpi_info_t   acpi;
+   hrdw_mem_t    mem;
+   hrdw_dev_t    dev;
 
 } __attribute__((packed)) hrdw_t;
 

@@ -66,6 +66,9 @@ static void vm_dev_init()
 
    /* super io */
    __deny_io(SIO_INDEX);
+
+   /* acpi PM1_CTL register */
+   __deny_io(info->hrd.acpi.pm1_ctl_port);
 }
 
 static void vm_cpu_init()

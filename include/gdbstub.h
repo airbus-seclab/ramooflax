@@ -71,6 +71,7 @@
 #define GDB_EXIT_NPF        52
 #define GDB_EXIT_HYP        53
 #define GDB_EXIT_CPUID      54
+#define GDB_EXIT_S3         55
 
 /*
 ** GDB stub Data structures
