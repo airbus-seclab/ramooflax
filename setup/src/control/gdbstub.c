@@ -40,6 +40,8 @@ static int gdb_params(gdbstub_t *gdb, mbi_t *mbi)
 
 void gdb_init(mbi_t *mbi)
 {
+   debug(GDBSTUB, "\n- gdbstub init\n");
+
    if(gdb_params(&info->vmm.gstub, mbi) != VM_DONE)
       panic("failed to init gdbstub");
 }
