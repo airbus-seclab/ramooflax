@@ -78,7 +78,7 @@ class GDB:
         try:
             self.__sk.connect((self.ip,self.port))
         except socket.error as (err, msg):
-            fmt = "socket.connect(%s:%d) = %s" % (str(self.ip),str(self.port),msg)
+            fmt = "socket.connect(%s:%d) = %s" % (str(self.ip),self.port,msg)
             log.log("error", fmt)
             raise
 
@@ -202,8 +202,9 @@ class GDB:
             while len(self.__cache) < 4:
                 self.__cache_fill()
 
-            log_msg = "recv pkt: search [%d:] = %r" % (ws,repr(self.__cache[ws:]))
-            log.log("gdb", log_msg)
+            #log_msg = "recv pkt: search [%d:] = %r" % (ws,repr(self.__cache[ws:]))
+            #log.log("gdb", log_msg)
+            log.log("gdb", "recv pkt: search tag")
 
             tag = self.__cache[ws:].find('#')
             if tag == -1:
@@ -227,7 +228,7 @@ class GDB:
             tag -= 1
 
         if pkt[0] != '$':
-            log.log("gdb", "recv unknown pkt: %s" % repr(pkt))
+            log.log("gdb", "recv unknown pkt: [%r .. %r]" % (pkt[0], pkt[-1]))
             if sack:
                 self.nak()
             return None
