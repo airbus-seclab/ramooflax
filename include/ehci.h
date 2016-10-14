@@ -471,23 +471,24 @@ typedef struct ehci_debug_port_info
 
 #ifdef __INIT__
 void ehci_init();
-void ehci_full_init(dbgp_info_t*);
+#endif
+
+int  ehci_full_init(dbgp_info_t*);
 void ehci_fast_init(dbgp_info_t*);
-void ehci_controller_preinit(dbgp_info_t*);
+int  ehci_controller_preinit(dbgp_info_t*);
 void ehci_controller_postinit(dbgp_info_t*);
 
 void ehci_acquire(dbgp_info_t*);
-void ehci_release(dbgp_info_t*);
+int  ehci_release(dbgp_info_t*);
 void ehci_remove_smi(dbgp_info_t*);
-void ehci_reset(dbgp_info_t*);
-#endif
+int  ehci_reset(dbgp_info_t*);
 
 void ehci_dbgp_init(dbgp_info_t*);
 void ehci_dbgp_full_init(dbgp_info_t*);
 void ehci_dbgp_fast_init(dbgp_info_t*);
 void ehci_dbgp_stealth_reinit(dbgp_info_t*);
 
-void ehci_setup(dbgp_info_t*);
+int  ehci_setup(dbgp_info_t*);
 void ehci_detect(dbgp_info_t*, int);
 void ehci_ports_identify(dbgp_info_t*);
 

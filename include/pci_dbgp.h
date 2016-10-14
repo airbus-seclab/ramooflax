@@ -134,13 +134,13 @@ typedef union pci_config_space_debug_port_capability
 
 } __attribute__((packed)) pci_cfg_dbg_cap_t;
 
-
 /*
 ** Functions
 */
 struct ehci_debug_port_info;
 
 void pci_cfg_dbgp(struct ehci_debug_port_info*);
+int  pci_cfg_dbgp_bar(struct ehci_debug_port_info*, loc_t*);
 void pci_cfg_dbgp_vendor_specific(struct ehci_debug_port_info*);
 void pci_cfg_dbgp_nvidia(struct ehci_debug_port_info*);
 

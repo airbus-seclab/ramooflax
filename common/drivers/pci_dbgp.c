@@ -17,8 +17,32 @@
 */
 #include <pci_dbgp.h>
 #include <ehci.h>
-#include <print.h>
+#include <config.h>
 #include <debug.h>
+#include <info_data.h>
+
+extern info_data_t *info;
+
+int pci_cfg_dbgp_bar(dbgp_info_t *dbgp_i, loc_t *bar)
+{
+   pci_cfg_val_t *pci = &dbgp_i->pci;
+
+   if(!pci_read_bar(pci, dbgp_i->cap.nr-1))
+   {
+      debug(PCI_DBGP, "bad ehci BAR");
+      return VM_FAIL;
+   }
+
+   if(pci->br.type == PCI_CFG_MEM_BAR_64)
+   {
+      debug(PCI_DBGP, "ehci 64 bits BAR not supported");
+      return VM_FAIL;
+   }
+
+   bar->high = 0;
+   bar->low  = pci->br.raw & 0xffffff00; /* ehci bar */
+   return VM_DONE;
+}
 
 /*
 ** Retrieve EHCI Debug Port stuff :
@@ -28,32 +52,42 @@
 */
 void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
 {
-   pci_cfg_dbg_cap_t  dbg_cap;
    loc_t              base, loc;
    pci_cfg_val_t      *pci = &dbgp_i->pci;
 
    dbgp_i->port = DBGP_INVALID;
    dbgp_i->addr = 0;
 
-   debug(PCI_DBGP, "pci dbgp init\n");
+   debug(PCI_DBGP, "\n- pci dbgp init\n");
 
+   /* search DBGP */
 #ifdef CONFIG_EHCI_2ND
-   if(!pci_search(pci_check_cap, PCI_DBGP_CAP_ID, 2, pci))
+   if(!pci_search(pci_check_cap, PCI_DBGP_CAP_ID,
+                  2
 #else
-   if(!pci_search(pci_check_cap, PCI_DBGP_CAP_ID, 1, pci))
+                  1
 #endif
+                  ,pci))
       panic("no ehci debug port found");
 
-   dbg_cap.raw = pci->data.raw;
+   dbgp_i->cap.raw = pci->data.raw;
 
-   if(!pci_read_bar(pci, dbg_cap.nr-1))
-      panic("could not get ehci registers");
+   /* search power management register */
+   if(!pci_read_pwr_mgr(pci))
+      panic("no power management feature for EHCI controller\n");
 
-   if(pci->br.type == PCI_CFG_MEM_BAR_64)
-      panic("ehci 64 bits BAR not supported");
+   dbgp_i->pwr.addr.raw = pci->addr.raw;
+   dbgp_i->pwr.data.raw = pci->data.raw;
 
-   base.high = 0;
-   base.low  = pci->br.raw & 0xffffff00; /* ehci bar */
+   /* save device/vendor IDs */
+   pci->addr.reg = PCI_CFG_DEV_VDR_OFFSET;
+   pci_cfg_read(pci);
+   dbgp_i->dvd.raw = pci->dv.raw;
+
+   /* retrieve dbgp registers */
+   if(pci_cfg_dbgp_bar(dbgp_i, &base) != VM_DONE)
+      panic("could not get ehci/dbgp registers");
+
    dbgp_i->ehci_cap = (ehci_host_cap_reg_t*)base.addr;
 
    pci_cfg_dbgp_vendor_specific(dbgp_i);
@@ -67,7 +101,7 @@ void pci_cfg_dbgp(dbgp_info_t *dbgp_i)
    loc.linear = base.linear + dbgp_i->ehci_cap->length;
    dbgp_i->ehci_opr = (ehci_host_op_reg_t*)loc.addr;
 
-   loc.linear = base.linear + dbg_cap.offset;
+   loc.linear = base.linear + dbgp_i->cap.offset;
    dbgp_i->ehci_dbg = (ehci_dbgp_reg_t*)loc.addr;
 
    dbgp_i->ehci_psc = &dbgp_i->ehci_opr->portsc[dbgp_i->port - 1];

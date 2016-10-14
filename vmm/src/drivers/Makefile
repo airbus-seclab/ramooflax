@@ -9,7 +9,7 @@ obj += video.o
 endif
 
 ifeq ($(CONFIG_HAS_EHCI),yes)
-obj += ehci.o
+obj += ehci.o pci_dbgp.o pci.o
 endif
 
 ifeq ($(CONFIG_HAS_E1000),yes)
