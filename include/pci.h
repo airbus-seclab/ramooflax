@@ -159,6 +159,57 @@ typedef union pci_config_space_capability
 } __attribute__((packed)) pci_cfg_cap_t;
 
 /*
+** pci capability for power management
+*/
+#define PCI_PM_CAP_ID  0x1
+
+typedef union pci_config_space_power_management_capability
+{
+   struct
+   {
+      uint32_t  cap_id:8;
+      uint32_t  cap_next:8;
+      uint32_t  version:3;
+      uint32_t  pme_clock:1;
+      uint32_t  aux:1;
+      uint32_t  dsi:1;
+      uint32_t  rsv:3;
+      uint32_t  d1:1;
+      uint32_t  d2:1;
+      uint32_t  pme:5;
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) pci_cfg_pm_cap_t;
+
+/*
+** pci power management control/status register
+** PMCSR follows pci pm cap
+*/
+typedef union pci_config_space_power_management_register
+{
+   struct
+   {
+      uint32_t  ps:2;       /* power state D0,D1,D2,D3 */
+      uint32_t  rsv0:6;
+      uint32_t  pme_en:1;
+      uint32_t  data_sel:4;
+      uint32_t  data_scl:2;
+      uint32_t  pme_sts:1;
+      uint32_t  rsv1:6;
+      uint32_t  b2b3:1;
+      uint32_t  bpcc:1;
+      uint32_t  data:8;
+
+   } __attribute__((packed));
+
+   raw32_t;
+
+} __attribute__((packed)) pci_cfg_pm_t;
+
+/*
 ** i/o access
 */
 #define PCI_CONFIG_ADDR 0xcf8
@@ -190,6 +241,7 @@ typedef struct pci_config_value
 
    union
    {
+      pci_cfg_pm_t          pm;
       pci_cfg_dev_vdr_t     dv;
       pci_cfg_cmd_sts_t     cs;
       pci_cfg_class_rev_t   cr;
@@ -202,13 +254,25 @@ typedef struct pci_config_value
 
 } __attribute__((packed)) pci_cfg_val_t;
 
-#define pci_cfg_read(_pci)                              \
-   ({                                                   \
-      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);          \
-      (_pci)->data.raw = inl(PCI_CONFIG_DATA);          \
+#define pci_cfg_read16(_pci)                              \
+   ({                                                     \
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);            \
+      (_pci)->data.wlow = inw(PCI_CONFIG_DATA);            \
    })
 
-#define pci_cfg_write(_pci)                             \
+#define pci_cfg_write16(_pci)                           \
+   ({                                                   \
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);          \
+      outw((_pci)->data.wlow, PCI_CONFIG_DATA);          \
+   })
+
+#define pci_cfg_read32(_pci)                              \
+   ({                                                     \
+      outl((_pci)->addr.raw, PCI_CONFIG_ADDR);            \
+      (_pci)->data.raw = inl(PCI_CONFIG_DATA);            \
+   })
+
+#define pci_cfg_write32(_pci)                           \
    ({                                                   \
       outl((_pci)->addr.raw, PCI_CONFIG_ADDR);          \
       outl((_pci)->data.raw, PCI_CONFIG_DATA);          \
@@ -231,6 +295,10 @@ typedef struct pci_config_value
       data.raw;                                         \
    })
 
+#define pci_cfg_read(_pCi)    pci_cfg_read32(_pCi)
+#define pci_cfg_write(_pCi)   pci_cfg_write32(_pCi)
+
+
 /*
 ** Functions
 */
@@ -240,6 +308,7 @@ int  pci_check_cap(pci_cfg_val_t*, uint32_t);
 int  pci_check_dvd(pci_cfg_val_t*, uint32_t);
 
 int  pci_read_bar(pci_cfg_val_t*, uint32_t);
+int  pci_read_pwr_mgr(pci_cfg_val_t*);
 int  pci_search(pci_search_t, uint32_t, size_t, pci_cfg_val_t*);
 void pci_dump_registers(pci_cfg_val_t*);
 

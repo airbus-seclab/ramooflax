@@ -16,7 +16,11 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <pci.h>
+#include <config.h>
 #include <debug.h>
+#include <info_data.h>
+
+extern info_data_t *info;
 
 /*
 ** pci->addr should be initialized
@@ -31,6 +35,26 @@ int pci_read_bar(pci_cfg_val_t *pci, uint32_t idx)
    pci_cfg_read(pci);
 
    return !pci->br.io;
+}
+
+/*
+** pci->addr should be initialized
+** retrieve pci power management register
+*/
+int pci_read_pwr_mgr(pci_cfg_val_t *pci)
+{
+   if(!pci_check_cap(pci, PCI_PM_CAP_ID))
+      return 0;
+
+   debug(PCI, "pci found pwr cap for b%d d%d f%d r%d = 0x%x\n"
+         ,pci->addr.bus, pci->addr.dev, pci->addr.fnc
+         ,pci->addr.reg, pci->data.raw);
+
+   pci->addr.reg += 4;
+   pci_cfg_read(pci);
+
+   debug(PCI, "pci device power state D%d\n", pci->pm.ps);
+   return 1;
 }
 
 /*
@@ -52,7 +76,7 @@ int pci_check_cap(pci_cfg_val_t *pci, uint32_t val)
 
       pci->addr.reg = PCI_CFG_CAP_OFFSET;
       pci_cfg_read(pci);
-      next_cap =  pci->data.raw & 0xfc;
+      next_cap = pci->data.raw & 0xfc;
 
       while(next_cap)
       {
