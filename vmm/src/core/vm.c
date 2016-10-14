@@ -133,7 +133,7 @@ static int __vm_access_remote_operator(vm_access_t *access)
 
    loc.linear = access->addr;
 
-   if(access->wr)
+   if(!access->wr)
    {
       ctrl_io_write(loc.u8, access->len);
       access->done += access->len;
@@ -177,22 +177,56 @@ static int __vm_access_physical(vm_access_t *access)
    return __vm_access_system(access);
 }
 
-static int __vm_access_validate(vm_access_t *access, pg_wlk_t *wlk)
+static int __vm_access_validate(vm_access_t *access, offset_t vaddr, pg_wlk_t *wlk)
 {
+   int rc = __pg_walk(access->cr3, vaddr, wlk);
+
+   if(rc == VM_FAIL)
+   {
+      debug(VM, "failed walking vm page tables\n");
+      return rc;
+   }
+
+   /* not present */
+   if(rc == VM_FAULT)
+   {
+      if(access->rq == VM_ACC_REQ_VMM)
+         return VM_PARTIAL;
+
+      goto __pf;
+   }
+
+   /* by-pass security checks */
+   if(access->rq == VM_ACC_REQ_VMM)
+      return rc;
+
    if(access->wr && !wlk->w)
    {
       debug(VM, "vm mem access on read only page\n");
-      return VM_FAULT;
+      goto __pf;
    }
 
    if(__cpl == 3 && !wlk->u)
    {
       debug(VM, "vm mem access on supervisor page\n");
-      return VM_FAULT;
+      goto __pf;
    }
 
    /* XXX: SMAP, SMEP, EFLAGS.AC */
    return VM_DONE;
+
+__pf:
+   {
+      pf_err_t pf = {.raw = 0};
+
+      pf.wr = access->wr;
+      pf.us = (__cpl == 3);
+      __inject_exception(PF_EXCP, pf.raw, vaddr);
+
+      debug(VM, "#PF on vm access 0x%X\n", vaddr);
+      return VM_FAULT;
+   }
+
 }
 
 static int __vm_access_virtual(vm_access_t *access)
@@ -210,27 +244,9 @@ static int __vm_access_virtual(vm_access_t *access)
 
    while(len)
    {
-      rc = __pg_walk(access->cr3, vaddr, &wlk);
-      if(rc == VM_FAIL)
-      {
-         debug(VM, "failed walking vm page tables\n");
+      rc = __vm_access_validate(access, vaddr, &wlk);
+      if(rc != VM_DONE)
          return rc;
-      }
-
-      if(rc == VM_FAULT || __vm_access_validate(access, &wlk) == VM_FAULT)
-      {
-         pf_err_t pf = {.raw = 0};
-
-         if(access->rq == VM_ACC_REQ_VMM)
-            return VM_PARTIAL;
-
-         pf.wr = access->wr;
-         pf.us = (__cpl == 3);
-         __inject_exception(PF_EXCP, pf.raw, vaddr);
-
-         debug(VM, "#PF on vm access 0x%X sz 0x%X\n", vaddr, len);
-         return VM_FAULT;
-      }
 
       nxt = __align_next(vaddr, wlk.size);
       access->addr = wlk.addr;
@@ -277,14 +293,14 @@ static void __vm_access_setup(vm_access_t *access,
 /*
 ** VM physical memory access operators for VMM operations only
 */
-int __vm_recv_pmem(offset_t paddr, size_t len)
+int __vm_send_pmem(offset_t paddr, size_t len)
 {
    vm_access_t access;
    __vm_access_setup(&access, NULL, paddr, NULL, len, 0, VM_ACC_REQ_VMM, 1);
    return __vm_access_physical(&access);
 }
 
-int __vm_send_pmem(offset_t paddr, size_t len)
+int __vm_recv_pmem(offset_t paddr, size_t len)
 {
    vm_access_t access;
    __vm_access_setup(&access, NULL, paddr, NULL, len, 1, VM_ACC_REQ_VMM, 1);
@@ -308,14 +324,14 @@ int __vm_write_pmem(offset_t paddr, uint8_t *data, size_t len)
 /*
 ** VM virtual memory access operators for VMM operations only
 */
-int __vm_recv_vmem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
+int __vm_send_vmem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
 {
    vm_access_t access;
    __vm_access_setup(&access, cr3, vaddr, NULL, len, 0, VM_ACC_REQ_VMM, 1);
    return __vm_access_virtual(&access);
 }
 
-int __vm_send_vmem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
+int __vm_recv_vmem(cr3_reg_t *cr3, offset_t vaddr, size_t len)
 {
    vm_access_t access;
    __vm_access_setup(&access, cr3, vaddr, NULL, len, 1, VM_ACC_REQ_VMM, 1);
