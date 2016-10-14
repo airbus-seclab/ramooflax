@@ -125,10 +125,8 @@ static void vmx_invg_cr_dr_msr()
 
    if(vm_entry_ctrls.entry.load_ia32_efer)
    {
-      if(vm_state.ia32_efer.r0 || vm_state.ia32_efer.r1)
-         printf(WRN"ia32 efer rsv setting\n"
-                "ia32 efer rsv bits : %d %d\n"
-                ,vm_state.ia32_efer.r0, vm_state.ia32_efer.r1);
+      if(vm_state.ia32_efer.raw & (~0xd01ULL))
+         printf(WRN"ia32 efer rsv bits setting\n");
 
       if(vm_state.ia32_efer.lma != vm_entry_ctrls.entry.ia32e)
          printf(WRN"efer lma setting\n");

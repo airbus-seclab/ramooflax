@@ -59,6 +59,9 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
       info->vm.efer.low  = info->vm.cpu.gpr->rax.low;
       info->vm.efer.high = info->vm.cpu.gpr->rdx.low;
 
+      /* 63:12 reserved */
+      info->vm.efer.raw &= 0xd01;
+
       vm_state.ia32_efer.low  = info->vm.efer.low;
       vm_state.ia32_efer.high = info->vm.efer.high;
 
@@ -75,11 +78,14 @@ static int __vmx_vmexit_resolve_msr_efer(uint8_t wr)
          __inject_exception(GP_EXCP, 0, 0);
          return VM_FAULT;
       }
+
+      debug(VMX_MSR, "write EFER (shadow) 0x%X\n", info->vm.efer.raw);
    }
    else
    {
       info->vm.cpu.gpr->rax.low = info->vm.efer.low;
       info->vm.cpu.gpr->rdx.low = info->vm.efer.high;
+      debug(VMX_MSR, "read EFER (shadow) 0x%X\n", info->vm.efer.raw);
    }
 
    return VM_DONE;
