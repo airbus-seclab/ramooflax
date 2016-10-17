@@ -96,8 +96,10 @@ static int acpi_xsdt_parse(acpi_info_t *acpi)
          if(acpi_fadt_parse(acpi) != VM_DONE)
             return VM_FAIL;
       }
+#ifdef CONFIG_IOMMU
       else if(sys->signature == ACPI_DMAR)
          acpi->dmar = (acpi_dmar_t*)sys;
+#endif
    }
 
    if(!acpi->fadt)
@@ -106,11 +108,13 @@ static int acpi_xsdt_parse(acpi_info_t *acpi)
       goto __fail;
    }
 
+#ifdef CONFIG_IOMMU
    if(!acpi->dmar)
    {
       err = "dmar";
       goto __fail;
    }
+#endif
 
    return VM_DONE;
 
@@ -165,7 +169,7 @@ void acpi_init(mbi_t *mbi)
    if(acpi_params(acpi, mbi) != VM_DONE)
       goto __acpi_panic;
 
-/* success */
+   /* success */
    return;
 
 __acpi_panic:

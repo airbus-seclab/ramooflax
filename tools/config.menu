@@ -50,7 +50,7 @@ data   gen_opt, vmx_opt
 menu   gen_opt
 title  Toggle VMM options
 desc   generic, select vmm options
-data   msr_opt, ehci_opt, gdb_opt, qemu_opt
+data   msr_opt, ehci_opt, gdb_opt, qemu_opt, iommu_opt
 
 toggle msr_opt
 title  Toggle MSR options
@@ -71,6 +71,11 @@ choice qemu_opt
 title  Enable Qemu CPUID branding/vendor/serial
 desc   qemu, toggle qemu cpuid version
 data   CONFIG_CPUID_QEMU, none:Disabled, user:Active at CPL=3, all:Active at any CPL
+
+toggle iommu_opt
+title  Toggle I/O MMU options
+desc   iommu, select i/o mmu options
+data   CONFIG_IOMMU:enable I/O MMU support
 
 toggle vmx_opt
 title  Toggle Intel VMX features

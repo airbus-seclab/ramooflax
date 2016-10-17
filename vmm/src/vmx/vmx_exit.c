@@ -135,6 +135,10 @@ static void vmx_vmexit_pre_hdl()
    vmcs_read(vm_state.rsp);
 
    info->vm.cpu.gpr->rsp.raw = vm_state.rsp.raw;
+
+#ifdef CONFIG_IOMMU
+   dmar_drhd_fault_check(&info->hrd.iommu.all);
+#endif
 }
 
 static void vmx_vmexit_post_hdl(raw64_t tsc)

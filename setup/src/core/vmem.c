@@ -22,6 +22,7 @@
 #include <realmem.h>
 #include <pagemem.h>
 #include <paging.h>
+#include <iommu.h>
 #include <string.h>
 #include <debug.h>
 #include <info_data.h>
@@ -96,6 +97,10 @@ static void pagemem_init()
 {
    vmm_pagemem_init();
    vm_pagemem_init();
+
+#ifdef CONFIG_IOMMU
+   iommu_init();
+#endif
 }
 
 static void segmem_init()

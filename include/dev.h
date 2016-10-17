@@ -23,6 +23,7 @@
 #include <smap.h>
 #include <ppg.h>
 #include <io.h>
+#include <iommu.h>
 #include <mbi.h>
 #include <acpi.h>
 
@@ -53,6 +54,7 @@ typedef struct hardware_memory_data
 
 typedef struct hardware_information_data
 {
+   iommu_info_t  iommu;
    acpi_info_t   acpi;
    hrdw_mem_t    mem;
    hrdw_dev_t    dev;

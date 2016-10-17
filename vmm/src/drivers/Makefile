@@ -1,5 +1,9 @@
 obj := acpi.o
 
+ifeq ($(CONFIG_IOMMU), yes)
+obj += iommu.o
+endif
+
 ifeq ($(CONFIG_HAS_UART),yes)
 obj += sio.o
 endif

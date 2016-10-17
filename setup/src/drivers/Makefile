@@ -1,5 +1,9 @@
 obj := acpi.o
 
+ifeq ($(CONFIG_IOMMU), yes)
+obj += iommu.o
+endif
+
 ifeq ($(CONFIG_HAS_VIDEO),yes)
 obj += video.o
 endif
