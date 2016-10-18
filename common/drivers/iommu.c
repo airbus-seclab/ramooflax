@@ -18,7 +18,7 @@
 #include <iommu.h>
 #include <acpi.h>
 #include <debug.h>
-#include <paging.h>
+#include <npg.h>
 #include <pool.h>
 #include <info_data.h>
 

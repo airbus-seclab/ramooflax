@@ -41,7 +41,7 @@ typedef vmx_bazaar_t    vm_bazaar_t;
 #endif
 
 #include <realmem.h>
-#include <paging.h>
+#include <npg.h>
 #include <smap.h>
 #include <excp.h>
 #include <insn.h>

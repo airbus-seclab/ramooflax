@@ -16,7 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vm.h>
-#include <paging.h>
+#include <npg.h>
 #include <intr.h>
 #include <debug.h>
 #include <ctrl_io.h>

@@ -19,7 +19,7 @@
 #define __VM_PAGING_H__
 
 #include <types.h>
-#include <paging.h>
+#include <npg.h>
 
 typedef struct vm_paging
 {

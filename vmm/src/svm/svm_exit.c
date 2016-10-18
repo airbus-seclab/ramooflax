@@ -28,7 +28,7 @@
 #include <insn.h>
 #include <intr.h>
 #include <insn.h>
-#include <paging.h>
+#include <npg.h>
 #include <emulate.h>
 #include <ctrl.h>
 #include <db.h>

@@ -17,7 +17,7 @@
 */
 #include <dev.h>
 #include <vm.h>
-#include <paging.h>
+#include <npg.h>
 #include <sio.h>
 #include <dev_io_ports.h>
 #include <info_data.h>

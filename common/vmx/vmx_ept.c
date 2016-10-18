@@ -16,7 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <vmx_ept.h>
-#include <paging.h>
+#include <npg.h>
 #include <debug.h>
 #include <info_data.h>
 

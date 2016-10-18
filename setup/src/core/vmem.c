@@ -21,7 +21,7 @@
 #include <segmem.h>
 #include <realmem.h>
 #include <pagemem.h>
-#include <paging.h>
+#include <npg.h>
 #include <iommu.h>
 #include <string.h>
 #include <debug.h>

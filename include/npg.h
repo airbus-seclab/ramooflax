@@ -15,8 +15,8 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef __PAGING_H__
-#define __PAGING_H__
+#ifndef __NESTED_PAGING_H__
+#define __NESTED_PAGING_H__
 
 #include <config.h>
 #include <types.h>
@@ -50,20 +50,6 @@ typedef struct npg_operator
 
 } __attribute__((packed)) npg_op_t;
 
-/*
-** Actions to be applied on mapping operation
-*/
-#define NPG_DO_ADDR   (1ULL<<0)   /* update addr field of table entries  */
-#define NPG_DO_OFFSET (1ULL<<1)   /* add offset to addr field            */
-#define NPG_DO_PVL    (1ULL<<2)   /* update pvl part of table entries    */
-#define NPG_DO_CACHE  (1ULL<<3)   /* update cache part of table entries  */
-
-typedef struct npg_configuration
-{
-   uint64_t mask;
-   offset_t offset;
-
-} __attribute__((packed)) npg_conf_t;
 
 /*
 ** Controlling active nested paging

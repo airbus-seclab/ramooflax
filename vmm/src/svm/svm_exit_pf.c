@@ -16,7 +16,7 @@
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include <svm_exit_pf.h>
-#include <paging.h>
+#include <npg.h>
 #include <emulate.h>
 
 #include <info_data.h>

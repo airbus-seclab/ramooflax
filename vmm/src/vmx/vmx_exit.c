@@ -33,7 +33,7 @@
 #include <sio.h>
 #include <intr.h>
 #include <insn.h>
-#include <paging.h>
+#include <npg.h>
 #include <emulate.h>
 #include <db.h>
 #include <ctrl.h>
