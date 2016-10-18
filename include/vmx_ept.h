@@ -227,24 +227,16 @@ typedef union ept_page_table_entry_64
 
 } __attribute__((packed)) ept_pte64_t;
 
-/*
-** Macros
-*/
+
+typedef ept_pml4e_t (ept_pml4_t)[PML4E_PER_PML4];
+typedef ept_pdpe_t  (ept_pdp_t)[PDPE_PER_PDP];
+typedef ept_pde64_t (ept_pd64_t)[PDE64_PER_PD];
+typedef ept_pte64_t (ept_pt64_t)[PTE64_PER_PT];
+
 
 /*
-** Use ignored bit to tell this mapping is covered by MTRR
+** Privilege Macros
 */
-#define VMX_EPT_SET_MTRR_BIT         52
-#define ept_has_mtrr                 ((1UL)<<VMX_EPT_SET_MTRR_BIT)
-
-#define VMX_EPT_KEEP_MTRR_TYPE       (ept_has_mtrr|(7UL<<3))
-
-#define VMX_EPT_MEM_TYPE_UC          0
-#define VMX_EPT_MEM_TYPE_WC          1
-#define VMX_EPT_MEM_TYPE_WT          4
-#define VMX_EPT_MEM_TYPE_WP          5
-#define VMX_EPT_MEM_TYPE_WB          6
-
 #define VMX_EPT_PVL_R                1
 #define VMX_EPT_PVL_W                2
 #define VMX_EPT_PVL_RW               3
@@ -261,6 +253,33 @@ typedef union ept_page_table_entry_64
 #define ept_pg_has_pvl_w(_e_)        (ept_pg_get_pvl(_e_) & VMX_EPT_PVL_W)
 #define ept_pg_has_pvl_x_only(_e_)   (ept_pg_get_pvl(_e_) == VMX_EPT_PVL_X)
 
+#define ept_pg_present(_e_)         ((ept_pg_get_attr(_e_)&0x7) != 0)
+#define ept_pg_readable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_R)
+#define ept_pg_writable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_W)
+#define ept_pg_executable(_e_)      (ept_pg_get_attr(_e_) & VMX_EPT_PVL_X)
+
+
+
+/*
+** Memory Typing Macros
+*/
+
+/* Use ignored bit to tell this mapping is covered by MTRR */
+#define VMX_EPT_SET_MTRR_BIT         52
+#define ept_has_mtrr                 ((1UL)<<VMX_EPT_SET_MTRR_BIT)
+
+#define VMX_EPT_KEEP_MTRR_TYPE       (ept_has_mtrr|(7UL<<3))
+
+#define VMX_EPT_MEM_TYPE_UC          0
+#define VMX_EPT_MEM_TYPE_WC          1
+#define VMX_EPT_MEM_TYPE_WT          4
+#define VMX_EPT_MEM_TYPE_WP          5
+#define VMX_EPT_MEM_TYPE_WB          6
+
+
+/*
+** Combined pvl, type and pat : attributes
+*/
 #define __ept_dft_attr(_pvl)                    \
    ({                                           \
       uint64_t type, attr;                      \
@@ -278,13 +297,20 @@ typedef union ept_page_table_entry_64
 #define ept_dft_attr_rx  __ept_dft_attr(VMX_EPT_PVL_RX)
 #define ept_dft_attr_nx  __ept_dft_attr(VMX_EPT_PVL_RW)
 
-uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
-
 #define ept_pg_get_attr(_e_)        ((_e_)->blow & 0x7f)
-#define ept_pg_present(_e_)         ((ept_pg_get_attr(_e_)&0x7) != 0)
-#define ept_pg_readable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_R)
-#define ept_pg_writable(_e_)        (ept_pg_get_attr(_e_) & VMX_EPT_PVL_W)
-#define ept_pg_executable(_e_)      (ept_pg_get_attr(_e_) & VMX_EPT_PVL_X)
+#define ept_pg_set_attr(_e_,_atTr_)                                     \
+   ({                                                                   \
+      if(((_atTr_) & ept_has_mtrr) && ((_e_)->raw & ept_has_mtrr))      \
+         (_e_)->raw = __ept_mtrr_resolve((_e_)->raw,_atTr_);            \
+      else                                                              \
+         (_e_)->raw = _atTr_;                                           \
+   })
+
+
+
+/*
+** EPT entries setting Macros
+*/
 
 /* keep mem type and mtrr info */
 #define ept_zero(_e_)                           \
@@ -293,14 +319,6 @@ uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
          (_e_)->raw &= VMX_EPT_KEEP_MTRR_TYPE;  \
       else                                      \
          (_e_)->raw = 0;                        \
-   })
-
-#define ept_pg_set_attr(_e_,_atTr_)                                     \
-   ({                                                                   \
-      if(((_atTr_) & ept_has_mtrr) && ((_e_)->raw & ept_has_mtrr))      \
-         (_e_)->raw = __ept_mtrr_resolve((_e_)->raw,_atTr_);            \
-      else                                                              \
-         (_e_)->raw = _atTr_;                                           \
    })
 
 #define ept_pg_set_entry(_e_,_attr_,_pfn_)      \
@@ -322,20 +340,16 @@ uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
    })
 
 
-typedef ept_pml4e_t (ept_pml4_t)[PML4E_PER_PML4];
-typedef ept_pdpe_t  (ept_pdp_t)[PDPE_PER_PDP];
-typedef ept_pde64_t (ept_pd64_t)[PDE64_PER_PD];
-typedef ept_pte64_t (ept_pt64_t)[PTE64_PER_PT];
-
 /*
 ** Functions
 */
-void vmx_ept_map();
-void vmx_ept_unmap();
-void vmx_ept_remap();
+uint64_t __ept_mtrr_resolve(uint64_t, uint64_t);
+void     vmx_ept_map();
+void     vmx_ept_unmap();
+void     vmx_ept_remap();
 
 #ifndef __INIT__
-int  vmx_ept_update_pdpe();
+int      vmx_ept_update_pdpe();
 #endif
 
 #endif
