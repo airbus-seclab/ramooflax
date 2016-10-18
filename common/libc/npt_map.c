@@ -380,7 +380,7 @@ static void _npg_map_4K(offset_t addr, uint64_t attr)
       return;
 
    pte = __npg_resolve_pte(pde, addr, attr);
-   npg_set_page_entry(pte, attr, page_nr(addr));
+   npg_set_page_entry(pte, attr, pg_4K_nr(addr));
 }
 
 static void _npg_unmap_512G(offset_t addr, uint64_t __unused__ attr)
