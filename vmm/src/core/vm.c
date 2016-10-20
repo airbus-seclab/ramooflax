@@ -166,7 +166,15 @@ static int __vm_access_system_identity(vm_access_t *access)
    return access->operator(access);
 }
 
-#define __vm_access_system(_a_) __vm_access_system_identity(_a_)
+static int __vm_access_system(vm_access_t *access)
+{
+   int rc = ctrl_evt_sysmem(access);
+
+   if(rc == VM_IGNORE)
+      return __vm_access_system_identity(access);
+
+   return rc;
+}
 
 static int __vm_access_physical(vm_access_t *access)
 {

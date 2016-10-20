@@ -189,6 +189,19 @@ int ctrl_evt_suspend()
    return rc;
 }
 
+/*
+** System memory
+*/
+static int __ctrl_evt_sysmem_vmm(vm_access_t *access)
+{
+   arg_t arg = {.addr = access};
+   return ctrl_evt_vmm_hdl[CTRL_EVT_VMM_TYPE_SMEM](arg);
+}
+
+int ctrl_evt_sysmem(vm_access_t *access)
+{
+   return __ctrl_evt_sysmem_vmm(access);
+}
 
 /*
 ** Hypercall

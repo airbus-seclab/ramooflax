@@ -19,6 +19,7 @@
 #define __CTRL_EVT_H__
 
 #include <types.h>
+#include <vm.h>
 
 typedef int (*ctrl_evt_hdl_t)(arg_t);
 
@@ -30,6 +31,7 @@ typedef int (*ctrl_evt_hdl_t)(arg_t);
 #define CTRL_EVT_VMM_TYPE_NPF      2
 #define CTRL_EVT_VMM_TYPE_WCR      3
 #define CTRL_EVT_VMM_TYPE_S3       4
+#define CTRL_EVT_VMM_TYPE_SMEM     5
 
 /*
 ** User events are post-hooks
@@ -62,6 +64,7 @@ int  ctrl_evt_npf();
 int  ctrl_evt_hypercall();
 int  ctrl_evt_cpuid(uint32_t);
 int  ctrl_evt_suspend();
+int  ctrl_evt_sysmem(vm_access_t*);
 
 int  ctrl_evt_setup(uint8_t, ctrl_evt_hdl_t, arg_t);
 int  ctrl_event();
