@@ -19,6 +19,7 @@
 #define __EHCI_H__
 
 #include <types.h>
+#include <vmerr.h>
 #include <pci_dbgp.h>
 
 /*
@@ -43,13 +44,12 @@
     (_p_) == EHCI_DATA_PID_0     || (_p_) == EHCI_DATA_PID_1)
 
 /*
-** PORTSC transitions
+** PORTSC transitions: tied to vmerr.h (can VM_FAIL)
 */
-#define EHCI_PSC_DBC2DD         0 /* debounce to disabled disconnected */
-#define EHCI_PSC_DBC2RST        1 /* debounce to high/full-speed, need reset */
-
-#define EHCI_PSC_RST2DD         0 /* reset to disabled disconnected */
-#define EHCI_PSC_RST2HS         1 /* reset to high-speed */
+#define EHCI_PSC_DBC2DD  (VM_DEV_BASE<<0) /* debounce to disabled disconnected */
+#define EHCI_PSC_DBC2RST (VM_DEV_BASE<<1) /* debounce to high/full-speed, need reset */
+#define EHCI_PSC_RST2DD  (VM_DEV_BASE<<2) /* reset to disabled disconnected */
+#define EHCI_PSC_RST2HS  (VM_DEV_BASE<<3) /* reset to high-speed */
 
 /*
 ** USB standard request codes
@@ -484,12 +484,12 @@ void ehci_remove_smi(dbgp_info_t*);
 int  ehci_reset(dbgp_info_t*);
 
 void ehci_dbgp_init(dbgp_info_t*);
-void ehci_dbgp_full_init(dbgp_info_t*);
-void ehci_dbgp_fast_init(dbgp_info_t*);
+int  ehci_dbgp_full_init(dbgp_info_t*);
+int  ehci_dbgp_fast_init(dbgp_info_t*);
 void ehci_dbgp_stealth_reinit(dbgp_info_t*);
 
 int  ehci_setup(dbgp_info_t*);
-void ehci_detect(dbgp_info_t*, int);
+int  ehci_detect(dbgp_info_t*, int);
 void ehci_ports_identify(dbgp_info_t*);
 
 void dbgp_enable(dbgp_info_t*);
@@ -498,14 +498,14 @@ void dbgp_release(dbgp_info_t*);
 void dbgp_configure(dbgp_info_t*);
 
 void __ehci_port_own(dbgp_info_t*);
-void __ehci_port_leave_disabled(dbgp_info_t*);
+int  __ehci_port_leave_disabled(dbgp_info_t*);
 int  __ehci_port_debounce_from_disabled(dbgp_info_t*);
 int  __ehci_port_reset_from_debounce(dbgp_info_t*);
 int  __ehci_port_disabled_connected(dbgp_info_t*);
 
 void __ehci_port_hs_active_from_reset(dbgp_info_t*);
-void __ehci_port_transfert_companion(dbgp_info_t*);
-void __ehci_port_reset(dbgp_info_t*);
+int  __ehci_port_transfert_companion(dbgp_info_t*);
+int  __ehci_port_reset(dbgp_info_t*);
 void __ehci_port_hide(dbgp_info_t*);
 
 void __dbgp_init(dbgp_info_t*);

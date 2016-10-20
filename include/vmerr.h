@@ -32,4 +32,7 @@
 #define VM_INTERN            (1<<6)
 #define VM_PARTIAL           (1<<7)
 
+/* used for device status sharing vm error codes */
+#define VM_DEV_BASE          (1<<16)
+
 #endif

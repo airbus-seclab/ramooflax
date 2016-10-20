@@ -43,7 +43,7 @@ void ehci_init()
       ehci_fast_init(dbgp_i);
    else
 #endif
-      ehci_full_init(dbgp_i);
+      while(ehci_full_init(dbgp_i) != VM_DONE);
 
    debug(EHCI, "ehci ready\n");
 }
@@ -113,12 +113,15 @@ int ehci_full_init(dbgp_info_t *dbgp_i)
    if(ehci_warm_up(dbgp_i) != VM_DONE)
       return VM_FAIL;
 
+   __ehci_show(dbgp_i);
+
    if(ehci_controller_preinit(dbgp_i) != VM_DONE)
       return VM_FAIL;
 
-   ehci_dbgp_full_init(dbgp_i);
-   ehci_controller_postinit(dbgp_i);
+   if(ehci_dbgp_full_init(dbgp_i) != VM_DONE)
+      return VM_FAIL;
 
+   ehci_controller_postinit(dbgp_i);
    return VM_DONE;
 }
 
@@ -146,7 +149,7 @@ void ehci_acquire(dbgp_info_t *dbgp_i)
    pci_cfg_val_t       *pci = &dbgp_i->pci;
    pci_cfg_usblegsup_t *legsup = (pci_cfg_usblegsup_t*)&pci->data.raw;
 
-   debug(EHCI,"ehci acquire:");
+   debug(EHCI,"ehci acquire\n");
    pci->addr.reg = dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGSUP_OFFSET;
 
    while(1)
@@ -160,7 +163,6 @@ void ehci_acquire(dbgp_info_t *dbgp_i)
       pci_cfg_write(pci);
       io_wait(100000);
    }
-   debug(EHCI,"done.\n");
 }
 
 int ehci_release(dbgp_info_t *dbgp_i)
@@ -169,7 +171,7 @@ int ehci_release(dbgp_info_t *dbgp_i)
    pci_cfg_usblegsup_t *legsup = (pci_cfg_usblegsup_t*)&pci->data.raw;
    size_t               retry = DBGP_FAIL_TRSH;
 
-   debug(EHCI,"release ehci:");
+   debug(EHCI,"ehci release\n");
    pci->addr.reg = dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGSUP_OFFSET;
 
    while(--retry)
@@ -177,17 +179,14 @@ int ehci_release(dbgp_info_t *dbgp_i)
       pci_cfg_read(pci);
 
       if(!legsup->os_sem && legsup->bios_sem)
-      {
-         debug(EHCI,"done.\n");
          return VM_DONE;
-      }
 
       legsup->os_sem = 0;
       pci_cfg_write(pci);
       io_wait(100000);
    }
 
-   debug(EHCI,"fail.\n");
+   debug(EHCI,"ehci release failure\n");
    return VM_FAIL;
 }
 
@@ -196,7 +195,7 @@ void ehci_remove_smi(dbgp_info_t *dbgp_i)
    pci_cfg_val_t       *pci = &dbgp_i->pci;
    pci_cfg_usblegctl_t *legctl = (pci_cfg_usblegctl_t*)&pci->data.raw;
 
-   debug(EHCI,"remove ehci SMI:");
+   debug(EHCI,"ehci remove SMI\n");
    pci->addr.reg = dbgp_i->ehci_cap->hcc.eecp + PCI_CFG_USB_LEGCTL_OFFSET;
 
    pci_cfg_read(pci);
@@ -212,7 +211,6 @@ void ehci_remove_smi(dbgp_info_t *dbgp_i)
    legctl->smi_bar_enbl = 0;
 
    pci_cfg_write(pci);
-   debug(EHCI,"done.\n");
 }
 
 int ehci_reset(dbgp_info_t *dbgp_i)
@@ -225,7 +223,7 @@ int ehci_reset(dbgp_info_t *dbgp_i)
    usbcmd.run = 0;
    dbgp_i->ehci_opr->usbcmd.raw = usbcmd.raw;
 
-   debug(EHCI,"ehci halt:");
+   debug(EHCI,"ehci halt\n");
    retry = DBGP_FAIL_TRSH;
    while(--retry)
    {
@@ -233,34 +231,28 @@ int ehci_reset(dbgp_info_t *dbgp_i)
       usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
       if(usbsts.hlt)
-      {
-         debug(EHCI,"done.\n");
          break;
-      }
    }
 
    if(!retry)
       goto __fail;
 
    usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
-   usbcmd.rst = 0;
+   usbcmd.rst = 1;
    dbgp_i->ehci_opr->usbcmd.raw = usbcmd.raw;
 
-   debug(EHCI,"ehci reset:");
+   debug(EHCI,"ehci reset\n");
    retry = DBGP_FAIL_TRSH;
    while(--retry)
    {
       io_wait(1000);
       usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
       if(!usbcmd.rst)
-      {
-         debug(EHCI,"done.\n");
          return VM_DONE;
-      }
    }
 
 __fail:
-   debug(EHCI,"fail.\n");
+   debug(EHCI,"ehci reset failure\n");
    return VM_FAIL;
 }
 
@@ -279,18 +271,24 @@ __fail:
 /*    } */
 /* } */
 
-void ehci_dbgp_full_init(dbgp_info_t *dbgp_i)
+int ehci_dbgp_full_init(dbgp_info_t *dbgp_i)
 {
    debug(EHCI, "ehci dbgp full init\n");
-   ehci_detect(dbgp_i, EHCI_PSC_DBC2DD);
+   if(ehci_detect(dbgp_i, EHCI_PSC_DBC2DD) != VM_DONE)
+      return VM_FAIL;
+
    ehci_dbgp_init(dbgp_i);
+   return VM_DONE;
 }
 
-void ehci_dbgp_fast_init(dbgp_info_t *dbgp_i)
+int ehci_dbgp_fast_init(dbgp_info_t *dbgp_i)
 {
    debug(EHCI, "ehci dbgp fast init\n");
-   ehci_detect(dbgp_i, EHCI_PSC_DBC2RST);
+   if(ehci_detect(dbgp_i, EHCI_PSC_DBC2RST) != VM_DONE)
+      return VM_FAIL;
+
    ehci_dbgp_init(dbgp_i);
+   return VM_DONE;
 }
 
 void ehci_dbgp_stealth_reinit(dbgp_info_t *dbgp_i)
@@ -326,12 +324,12 @@ void ehci_dbgp_stealth_reinit(dbgp_info_t *dbgp_i)
    {
        debug(EHCI, "reset port owner\n");
       __ehci_port_own(dbgp_i);
-      ehci_dbgp_full_init(dbgp_i);
+      while(ehci_dbgp_full_init(dbgp_i) != VM_DONE);
    }
    else if(portsc.reset)
    {
       debug(EHCI, "port is in reset state\n");
-      ehci_dbgp_full_init(dbgp_i);
+      while(ehci_dbgp_full_init(dbgp_i) != VM_DONE);
    }
    else
       ehci_dbgp_fast_init(dbgp_i);
@@ -352,7 +350,7 @@ int ehci_setup(dbgp_info_t *dbgp_i)
    ehci_cfgflg_reg_t cfgflg;
    size_t            retry = DBGP_FAIL_TRSH;
 
-   debug(EHCI,"ehci setup:");
+   debug(EHCI,"ehci setup\n");
 
    usbcmd.raw = dbgp_i->ehci_opr->usbcmd.raw;
    usbcmd.light_rst    = 0;
@@ -372,13 +370,10 @@ int ehci_setup(dbgp_info_t *dbgp_i)
       usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
       if(!usbsts.hlt)
-      {
-         debug(EHCI,"done.\n");
          return VM_DONE;
-      }
    }
 
-   debug(EHCI,"fail.\n");
+   debug(EHCI,"ehci setup failure\n");
    return VM_FAIL;
 }
 
@@ -398,24 +393,34 @@ void __ehci_port_own(dbgp_info_t *dbgp_i)
    } while(portsc.own);
 }
 
-void __ehci_port_leave_disabled(dbgp_info_t *dbgp_i)
+int __ehci_port_leave_disabled(dbgp_info_t *dbgp_i)
 {
    ehci_portsc_reg_t portsc;
    ehci_usbsts_reg_t usbsts;
+   size_t            retry = DBGP_FAIL_TRSH;
 
-   do
+   while(--retry)
    {
       io_wait(1000);
       portsc.raw = dbgp_i->ehci_psc->raw;
       usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
-   } while(!(usbsts.port_change && portsc.conn_chg && portsc.conn));
+      if(usbsts.port_change && portsc.conn_chg && portsc.conn)
+         break;
+   }
+
+   if(!retry)
+   {
+      debug(EHCI, "ehci port leave disabled failed\n");
+      return VM_FAIL;
+   }
 
    portsc.conn_chg    = 1;
    usbsts.port_change = 1;
 
    dbgp_i->ehci_psc->raw = portsc.raw;
    dbgp_i->ehci_opr->usbsts.raw = usbsts.raw;
+   return VM_DONE;
 }
 
 int __ehci_port_debounce_from_disabled(dbgp_info_t *dbgp_i)
@@ -423,7 +428,8 @@ int __ehci_port_debounce_from_disabled(dbgp_info_t *dbgp_i)
    ehci_portsc_reg_t portsc;
    ehci_usbsts_reg_t usbsts;
 
-   __ehci_port_leave_disabled(dbgp_i);
+   if(__ehci_port_leave_disabled(dbgp_i) != VM_DONE)
+      return VM_FAIL;
 
    io_wait(200000); /* 100ms at least debounce time */
 
@@ -439,7 +445,8 @@ int __ehci_port_debounce_from_disabled(dbgp_info_t *dbgp_i)
 
       /* low-speed so transfert and wait disabled */
       debug(EHCI,"low-speed detected, need high-speed\n");
-      __ehci_port_transfert_companion(dbgp_i);
+      if(__ehci_port_transfert_companion(dbgp_i) != VM_DONE)
+         return VM_FAIL;
    }
 
    /* now disabled disconnected so clean-up */
@@ -455,9 +462,10 @@ int __ehci_port_debounce_from_disabled(dbgp_info_t *dbgp_i)
    return EHCI_PSC_DBC2DD;
 }
 
-void __ehci_port_reset(dbgp_info_t *dbgp_i)
+int __ehci_port_reset(dbgp_info_t *dbgp_i)
 {
    ehci_portsc_reg_t portsc;
+   size_t            retry;
 
    portsc.raw = dbgp_i->ehci_psc->raw;
 
@@ -466,35 +474,59 @@ void __ehci_port_reset(dbgp_info_t *dbgp_i)
    {
       debug(EHCI,"portsc over-current detected !\n");
 
-      do
+      retry = DBGP_FAIL_TRSH;
+      while(--retry)
       {
          io_wait(10000);
          portsc.raw = dbgp_i->ehci_psc->raw;
 
-      } while(portsc.over);
+         if(!portsc.over)
+            break;
+      }
+
+      if(!retry)
+      {
+         debug(EHCI, "ehci port reset: fail portsc\n");
+         return VM_FAIL;
+      }
    }
 
    portsc.reset = 1;
    dbgp_i->ehci_psc->raw = portsc.raw;
 
-   do
+   retry = DBGP_FAIL_TRSH;
+   while(--retry)
    {
       io_wait(1000);
       portsc.raw = dbgp_i->ehci_psc->raw;
 
-   } while(!portsc.reset);
+      if(portsc.reset)
+         break;
+   }
+
+   if(!retry)
+   {
+      debug(EHCI, "ehci port reset: failure\n");
+      return VM_FAIL;
+   }
 
    io_wait(100000); /* 50 ms at least */
 
    portsc.reset = 0;
    dbgp_i->ehci_psc->raw = portsc.raw;
 
-   do
+   retry = DBGP_FAIL_TRSH;
+   while(--retry)
    {
       io_wait(1000);
       portsc.raw = dbgp_i->ehci_psc->raw;
 
-   } while(portsc.reset);
+      if(!portsc.reset)
+         return VM_DONE;
+   }
+
+   debug(EHCI, "ehci port reset: fail clear\n");
+   return VM_FAIL;
 }
 
 int __ehci_port_reset_from_debounce(dbgp_info_t *dbgp_i)
@@ -502,7 +534,8 @@ int __ehci_port_reset_from_debounce(dbgp_info_t *dbgp_i)
    ehci_portsc_reg_t portsc;
    ehci_usbsts_reg_t usbsts;
 
-   __ehci_port_reset(dbgp_i);
+   if(__ehci_port_reset(dbgp_i) != VM_DONE)
+      return VM_FAIL;
 
    portsc.raw = dbgp_i->ehci_psc->raw;
 
@@ -517,7 +550,8 @@ int __ehci_port_reset_from_debounce(dbgp_info_t *dbgp_i)
 
       /* full-speed so transfert and wait disabled */
       debug(EHCI,"full-speed detected, need high-speed\n");
-      __ehci_port_transfert_companion(dbgp_i);
+      if(__ehci_port_transfert_companion(dbgp_i) != VM_DONE)
+         return VM_FAIL;
 
       /* now disabled disconnected so clean-up */
       portsc.raw = dbgp_i->ehci_psc->raw;
@@ -533,25 +567,30 @@ int __ehci_port_reset_from_debounce(dbgp_info_t *dbgp_i)
    return EHCI_PSC_RST2DD;
 }
 
-void __ehci_port_transfert_companion(dbgp_info_t *dbgp_i)
+int __ehci_port_transfert_companion(dbgp_info_t *dbgp_i)
 {
    ehci_portsc_reg_t portsc;
    ehci_usbsts_reg_t usbsts;
+   size_t            retry = DBGP_FAIL_TRSH;
 
    portsc.raw = dbgp_i->ehci_psc->raw;
    portsc.own = 1;
    dbgp_i->ehci_psc->raw = portsc.raw;
 
-   debug(EHCI,"companion disconnect:");
-   do
+   debug(EHCI,"ehci companion disconnect\n");
+   while(--retry)
    {
       io_wait(1000);
       portsc.raw = dbgp_i->ehci_psc->raw;
       usbsts.raw = dbgp_i->ehci_opr->usbsts.raw;
 
-   } while(!(usbsts.port_change && portsc.conn_chg &&
-             portsc.own && !portsc.conn && !portsc.enbl));
-   debug(EHCI,"done.\n");
+      if(usbsts.port_change && portsc.conn_chg &&
+         portsc.own && !portsc.conn && !portsc.enbl)
+         return VM_DONE;
+   }
+
+   debug(EHCI,"ehci companion disconnect failure\n");
+   return VM_FAIL;
 }
 
 void __ehci_port_hs_active_from_reset(dbgp_info_t *dbgp_i)
@@ -630,7 +669,7 @@ void dbgp_release(dbgp_info_t *dbgp_i)
    dbgp_i->ehci_dbg->ctrl.raw = ctrl.raw;
 }
 
-void ehci_detect(dbgp_info_t *dbgp_i, int transition)
+int ehci_detect(dbgp_info_t *dbgp_i, int transition)
 {
    dbgp_own(dbgp_i);
 
@@ -639,13 +678,20 @@ void ehci_detect(dbgp_info_t *dbgp_i, int transition)
    do
    {
       while(transition != EHCI_PSC_DBC2RST)
+      {
          transition = __ehci_port_debounce_from_disabled(dbgp_i);
+         if(transition == VM_FAIL)
+            return VM_FAIL;
+      }
 
       transition = __ehci_port_reset_from_debounce(dbgp_i);
+      if(transition == VM_FAIL)
+         return VM_FAIL;
 
    } while(transition != EHCI_PSC_RST2HS);
 
    debug(EHCI,"high-speed device connected\n");
+   return VM_DONE;
 }
 
 #ifndef CONFIG_EHCI_DBG
@@ -672,8 +718,7 @@ void __ehci_light_show(dbgp_info_t *dbgp_i)
          "E r%d h%d c%d | "
          "P e%d c%d s%d r%d\n"
          ,dbgp.ctrl.enbl,dbgp.ctrl.ownd,dbgp.ctrl.wr
-         ,dbgp.ctrl.err, dbgp.ctrl.excp
-         ,dbgp.pid.raw
+         ,dbgp.ctrl.err, dbgp.ctrl.excp,dbgp.pid.raw
          ,usbcmd.run,usbsts.hlt,cfgflg.cf
          ,portsc.enbl, portsc.conn, portsc.suspend, portsc.reset);
 }
@@ -718,9 +763,9 @@ void __ehci_show(dbgp_info_t *dbgp_i)
 
    debug(EHCI,"###### psc:\n"
          " - en %d en_chg %d con %d con_chg %d own %d\n"
-         " - susp %d rst %d line 0x%x \n",
+         " - susp %d rst %d line 0x%x force rsm %d\n",
          portsc.enbl, portsc.enbl_chg, portsc.conn, portsc.conn_chg, portsc.own,
-         portsc.suspend, portsc.reset, portsc.line_sts);
+         portsc.suspend, portsc.reset, portsc.line_sts, portsc.force_rsm);
 }
 #endif
 
@@ -1074,12 +1119,12 @@ __failure:
       dbgp_release(dbgp_i);
 
       /* ehci_dbgp_fast_init(dbgp_i); */
-      ehci_full_init(dbgp_i);
+      while(ehci_full_init(dbgp_i) != VM_DONE);
    }
 
    debug(EHCI, "__dbgp_emit failure\n");
-   __ehci_light_show(dbgp_i);
-   /* __ehci_show(dbgp_i); */
+   /* __ehci_light_show(dbgp_i); */
+   __ehci_show(dbgp_i);
    return DBGP_EMIT_FAIL;
 }
 
