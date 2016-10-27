@@ -48,7 +48,8 @@ void smap_parse(mbi_t *mbi, smap_t *smap, offset_t *area, offset_t *acme)
       if(mme->size > sizeof(smap_e_t))
          panic("smap entry too big");
 
-      top = sme->base + sme->len;
+      if(sme->base + sme->len > top)
+         top = sme->base + sme->len;
 
       if(sme->type == SMAP_TYPE_AVL && sme->base == 0x100000ULL)
          *area = top;
