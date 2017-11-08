@@ -15,6 +15,14 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.,
 ** 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+
+/*
+** 8KB kernel stack
+*/
+.section .stack, "aw", @nobits
+.byte 0
+.p2align 13
+
 .text
 .globl entry
 .type  entry,"function"
