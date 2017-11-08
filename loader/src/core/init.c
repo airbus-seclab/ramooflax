@@ -87,13 +87,22 @@ static void init_pagemem()
    lm_enable();
 }
 
+static module_t* setup_module(mbi_t *mbi)
+{
+   uint32_t count = mbi->mods_count;
+   module_t *mod  = (module_t*)mbi->mods_addr;
+   offset_t mods_end = 0;
+
+   while(count--) mods_end = ((module_t*)mbi->mods_addr)->mod_end;
+
+   elf_module_load(mod, mods_end);
+   return mod;
+}
+
 static void enter_lmode(mbi_t *mbi)
 {
-   module_t *mod;
    fptr32_t entry;
-
-   mod = (module_t*)mbi->mods_addr;
-   elf_module_load(mod);
+   module_t *mod = setup_module(mbi);
 
    entry.segment = gdt_krn_seg_sel(2);
    entry.offset  = (uint32_t)elf_module_entry(mod);

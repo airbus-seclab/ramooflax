@@ -46,7 +46,7 @@ static Elf64_Shdr* __elf_section(Elf64_Ehdr *e_hdr, Elf64_Word type)
    return (Elf64_Shdr*)0;
 }
 
-static void __elf_module_load(module_t *mod, offset_t base)
+static void __elf_module_load(module_t *mod, offset_t base, offset_t not_before)
 {
    Elf64_Ehdr *e_hdr;
    Elf64_Phdr *p_hdr;
@@ -61,8 +61,8 @@ static void __elf_module_load(module_t *mod, offset_t base)
       panic("invalid elf module");
 
    mem.linear = base + (offset_t)p_hdr->p_vaddr;
-   if(mem.linear < (offset_t)mod->mod_end)
-      panic("elf overlaps mbi module");
+   if(mem.linear < not_before)
+      panic("elf overlaps mbi modules");
 
    file.linear = (offset_t)mod->mod_start + (offset_t)p_hdr->p_offset;
    memcpy(mem.addr, file.addr, (offset_t)p_hdr->p_filesz);
@@ -82,14 +82,14 @@ static void __elf_module_load(module_t *mod, offset_t base)
    }
 }
 
-void elf_module_load(module_t *mod)
+void elf_module_load(module_t *mod, offset_t not_before)
 {
-   __elf_module_load(mod, 0);
+  __elf_module_load(mod, 0, not_before);
 }
 
 void elf_module_load_pic_static(module_t *mod, offset_t base)
 {
-   __elf_module_load(mod, base);
+  __elf_module_load(mod, base, 0);
 }
 
 void elf_module_load_relocatable(module_t *mod, offset_t base)
@@ -100,7 +100,7 @@ void elf_module_load_relocatable(module_t *mod, offset_t base)
    Elf64_Xword n;
    loc_t       rloc, fix;
 
-   __elf_module_load(mod, base);
+   __elf_module_load(mod, base, 0);
 
    e_hdr = (Elf64_Ehdr*)((offset_t)mod->mod_start);
    r_hdr = __elf_section(e_hdr, SHT_RELA);

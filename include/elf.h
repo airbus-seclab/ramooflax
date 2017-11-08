@@ -116,7 +116,7 @@ Elf64_Phdr*  elf_module_phdr(module_t*);
 Elf64_Xword  elf_module_load_size(module_t*);
 Elf64_Xword  elf_module_load_algn(module_t*);
 
-void         elf_module_load(module_t*);
+void         elf_module_load(module_t*, offset_t);
 void         elf_module_load_pic_static(module_t*, offset_t);
 void         elf_module_load_relocatable(module_t*, offset_t);
 
