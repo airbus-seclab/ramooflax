@@ -5,8 +5,9 @@ ENTRY(entry)
 
 PHDRS
 {
-   load  PT_LOAD FLAGS (6);
-   drop  PT_LOAD FLAGS (6);
+   load  PT_LOAD    FLAGS (7);
+   dyn   PT_DYNAMIC FLAGS (6);
+   drop  PT_LOAD    FLAGS (6);
 }
 
 SECTIONS
@@ -21,7 +22,7 @@ SECTIONS
    .data     : { *(.data*)      } : load
    .bss      : { *(.bss COMMON) } : load
 
-   .dynamic  : { *(.dynamic)    } : drop
+   .dynamic  : { *(.dynamic)    } : drop : dyn
    .relocs   : { *(.rel*)       } : drop
    .got.plt  : { *(.got.plt)    } : drop
 
