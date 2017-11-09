@@ -20,8 +20,11 @@
 ** 8KB kernel stack
 */
 .section .stack, "aw", @nobits
-.byte 0
-.p2align 13
+.align 16
+.space 0x2000
+
+/* .byte 0 */
+/* .p2align 13 */
 
 .text
 .globl entry

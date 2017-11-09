@@ -50,35 +50,37 @@ static void __elf_module_load(module_t *mod, offset_t base, offset_t not_before)
 {
    Elf64_Ehdr *e_hdr;
    Elf64_Phdr *p_hdr;
-   Elf64_Shdr *b_hdr;
+   size_t     i;
    sint64_t   pad;
    loc_t      file, mem;
 
    e_hdr = (Elf64_Ehdr*)((offset_t)mod->mod_start);
    p_hdr = (Elf64_Phdr*)((offset_t)e_hdr + (offset_t)e_hdr->e_phoff);
 
-   if(e_hdr->e_machine != EM_X86_64 || ! e_hdr->e_phnum || p_hdr->p_type != PT_LOAD)
+   if(e_hdr->e_machine != EM_X86_64 || ! e_hdr->e_phnum)
       panic("invalid elf module");
 
-   mem.linear = base + (offset_t)p_hdr->p_vaddr;
-   if(mem.linear < not_before)
-      panic("elf overlaps mbi modules");
-
-   file.linear = (offset_t)mod->mod_start + (offset_t)p_hdr->p_offset;
-   memcpy(mem.addr, file.addr, (offset_t)p_hdr->p_filesz);
-
-   pad = p_hdr->p_memsz - p_hdr->p_filesz;
-   if(pad > 0)
+   for(i=0 ; i<e_hdr->e_phnum ; i++, p_hdr=(Elf64_Phdr*)((offset_t)p_hdr + (offset_t)e_hdr->e_phentsize))
    {
-      mem.linear += (offset_t)p_hdr->p_filesz;
-      memset(mem.addr, 0, (size_t)pad);
-   }
+      if(p_hdr->p_type != PT_LOAD)
+         continue;
 
-   b_hdr = __elf_section(e_hdr, SHT_NOBITS);
-   if(b_hdr)
-   {
-      mem.linear = base + (offset_t)b_hdr->sh_addr;
-      memset(mem.addr, 0, (size_t)b_hdr->sh_size);
+      mem.linear = base + (offset_t)p_hdr->p_vaddr;
+      if(mem.linear < not_before)
+         panic("elf phdr overlaps mbi modules 0x%X", p_hdr->p_vaddr);
+
+      if(p_hdr->p_filesz)
+      {
+         file.linear = (offset_t)mod->mod_start + (offset_t)p_hdr->p_offset;
+         memcpy(mem.addr, file.addr, (offset_t)p_hdr->p_filesz);
+      }
+
+      pad = p_hdr->p_memsz - p_hdr->p_filesz;
+      if(pad > 0)
+      {
+         mem.linear += (offset_t)p_hdr->p_filesz;
+         memset(mem.addr, 0, (size_t)pad);
+      }
    }
 }
 
